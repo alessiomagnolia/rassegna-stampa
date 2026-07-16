@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title } = req.body;
+        const { articles, title, clientName } = req.body;
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });
@@ -34,6 +34,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
         const options = {
             title: reviewTitle,
             userName: user?.company_name || 'Utente',
+            clientName: clientName || null,
             userLogo: userLogoBase64
         };
 
