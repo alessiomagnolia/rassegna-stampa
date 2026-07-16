@@ -317,6 +317,7 @@ async function generatePDF() {
     if (state.articles.length === 0) return;
     
     const title = document.getElementById('rassegnaTitle').value.trim();
+    const clientName = document.getElementById('clientName')?.value.trim() || '';
     const btn = document.getElementById('btnGeneratePDF');
     const loading = document.getElementById('generationLoading');
     
@@ -327,7 +328,8 @@ async function generatePDF() {
         
         const response = await apiCall('POST', '/api/pdf/generate', { 
             articles: state.articles,
-            title
+            title,
+            clientName
         });
         
         showToast('PDF generato! Download in corso...', 'success');
@@ -338,6 +340,8 @@ async function generatePDF() {
         // Reset state & reload history
         state.articles = [];
         document.getElementById('rassegnaTitle').value = '';
+        const clientInput = document.getElementById('clientName');
+        if (clientInput) clientInput.value = '';
         renderArticles();
         loadHistory();
         
