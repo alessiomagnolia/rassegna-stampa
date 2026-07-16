@@ -7,6 +7,7 @@ async function initBrowser() {
         console.log('Avvio di Puppeteer...');
         browser = await puppeteer.launch({
             headless: 'new',
+            executablePath: '/usr/bin/google-chrome',
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
     }
