@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Rassegna Stampa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <nav class="navbar glass-card">
+        <div class="nav-brand">📰 Rassegna Stampa</div>
+        <div class="nav-user">
+            <div id="navCompany" class="nav-company">Caricamento...</div>
+            <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
+            <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
+        </div>
+    </nav>
+
+    <main class="container dashboard-container">
+        <!-- Settings Section -->
+        <section class="section glass-card profile-section">
+            <div class="section-header" id="toggleProfile">
+                <h2>⚙️ Profilo e Branding</h2>
+                <span class="icon-toggle">▼</span>
+            </div>
+            <div class="section-content" id="profileContent" style="display: none;">
+                <div class="profile-grid">
+                    <div class="profile-form">
+                        <div class="input-group">
+                            <label for="companyName">Nome Azienda</label>
+                            <input type="text" id="companyName">
+                        </div>
+                        <button id="btnSaveProfile" class="btn btn-secondary">Salva Nome</button>
+                    </div>
+                    
+                    <div class="logo-upload-area">
+                        <label>Logo Aziendale (Apparirà sui PDF)</label>
+                        <div id="dropZone" class="drop-zone">
+                            <div class="drop-content">
+                                <span>📁 Trascina qui il logo o clicca</span>
+                                <small>PNG, JPG, SVG (Max 5MB)</small>
+                            </div>
+                            <input type="file" id="logoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                        </div>
+                        <div id="logoPreviewContainer" class="logo-preview-container hidden">
+                            <img id="logoPreview" src="" alt="Preview">
+                            <button id="btnRemoveLogo" class="btn btn-danger btn-sm">Rimuovi</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Review Section -->
+        <section class="section glass-card main-feature-section">
+            <h2>📰 Nuova Rassegna Stampa</h2>
+            
+            <div class="input-group rassegna-title-group">
+                <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
+                <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+            </div>
+
+            <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
+                <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
+            </div>
+
+            <div class="add-article-bar">
+                <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
+                <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="extractionLoading" class="loading-state hidden">
+                <div class="shimmer-card"></div>
+                <p>Estrazione in corso... (circa 10-15 secondi)</p>
+            </div>
+
+            <!-- Articles List -->
+            <div id="articlesList" class="articles-list">
+                <!-- Cards will be injected here by JS -->
+                <div class="empty-state" id="emptyArticles">
+                    Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!
+                </div>
+            </div>
+
+            <div class="generate-actions">
+                <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
+                    📄 Genera PDF Rassegna
+                </button>
+                <div id="generationLoading" class="generation-loading hidden">
+                    <div class="spinner"></div>
+                    <span>Generazione PDF in corso, attendere prego...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section class="section glass-card history-section">
+            <h2>📚 Storico Rassegne</h2>
+            <div id="historyList" class="history-list">
+                <!-- History items injected here -->
+                <div class="empty-state">Caricamento storico...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>Rassegna Stampa Generator &copy; 2026</p>
+    </footer>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Specific logic for dashboard.html auth check
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('rs_token');
+            if (!token) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
