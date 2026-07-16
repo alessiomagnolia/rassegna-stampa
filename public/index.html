@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rassegna Stampa Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="container landing-container">
+        <header class="landing-header">
+            <h1 class="logo-text">📰 Rassegna Stampa Generator</h1>
+            <p class="tagline">Genera rassegne stampa professionali in pochi click</p>
+        </header>
+
+        <div class="features-list">
+            <div class="feature-item">
+                <span class="feature-icon">📰</span>
+                <span>Estrazione automatica contenuti</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📸</span>
+                <span>Screenshot intelligenti dei titoli</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📄</span>
+                <span>Layout PDF eleganti e pronti</span>
+            </div>
+        </div>
+
+        <div class="auth-container glass-card">
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <h2>Accedi</h2>
+                <div class="input-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="tu@azienda.com">
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+                <p class="switch-form">Non hai un account? <a href="#" id="showRegister">Registrati</a></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+                <h2>Registrati</h2>
+                <div class="input-group">
+                    <label for="registerCompanyName">Nome Azienda</label>
+                    <input type="text" id="registerCompanyName" placeholder="La Tua Azienda Spa">
+                </div>
+                <div class="input-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required placeholder="tu@azienda.com">
+                </div>
+                <div class="input-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Minimo 6 caratteri" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Crea Account</button>
+                <p class="switch-form">Hai già un account? <a href="#" id="showLogin">Accedi</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Specific logic for index.html
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('rs_token');
+            if (token) {
+                window.location.href = 'dashboard.html';
+            }
+
+            document.getElementById('showRegister').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('loginForm').classList.remove('active');
+                document.getElementById('registerForm').classList.add('active');
+            });
+
+            document.getElementById('showLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('registerForm').classList.remove('active');
+                document.getElementById('loginForm').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
