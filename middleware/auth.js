@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { getDb } = require('../database/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'rassegna-stampa-secret-key-dev';
 
@@ -15,6 +16,15 @@ const authMiddleware = (req, res, next) => {
     try {
         // Verify token
         const decoded = jwt.verify(token, JWT_SECRET);
+        
+        // Ensure user actually still exists in database
+        const db = getDb();
+        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(decoded.userId);
+        
+        if (!user) {
+            return res.status(401).json({ error: 'L\\'account è stato resettato dal sistema. Effettua nuovamente la registrazione.' });
+        }
+
         // Set userId in request object
         req.userId = decoded.userId;
         next();
