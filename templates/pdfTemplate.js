@@ -224,11 +224,11 @@ function buildPDFHTML(articles, options) {
     if (title) {
         html += `
     <div class="page cover-page">
-        ${userLogo ? \`<img src="\${userLogo}" class="cover-logo" alt="Company Logo">\` : ''}
-        <div class="cover-title">\${title}</div>
+        ${userLogo ? `<img src="${userLogo}" class="cover-logo" alt="Company Logo">` : ''}
+        <div class="cover-title">${title}</div>
         <div class="cover-decor"></div>
-        <div class="cover-subtitle">\${clientName ? \`Generata per: \${clientName}\` : ''}</div>
-        <div class="cover-date">\${dateStr}</div>
+        <div class="cover-subtitle">${clientName ? `Generata per: ${clientName}` : ''}</div>
+        <div class="cover-date">${dateStr}</div>
     </div>
         `;
     }
@@ -239,17 +239,17 @@ function buildPDFHTML(articles, options) {
     <div class="page">
         <div class="header">
             <div class="header-left">
-                \${article.logoBase64 ? \`<img src="\${article.logoBase64}" class="source-logo" alt="Source Logo">\` : ''}
+                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo" alt="Source Logo">` : ''}
                 <div class="source-info">
-                    <div class="source-name">\${article.source_name}</div>
-                    <div class="source-date">\${article.published_date}</div>
+                    <div class="source-name">${article.source_name}</div>
+                    <div class="source-date">${article.published_date}</div>
                 </div>
             </div>
-            \${userLogo ? \`<img src="\${userLogo}" class="user-logo" alt="Your Logo">\` : ''}
+            ${userLogo ? `<img src="${userLogo}" class="user-logo" alt="Your Logo">` : ''}
         </div>
 
         <div class="title-zone">
-            <div class="article-title">\${article.title}</div>
+            <div class="article-title">${article.title}</div>
         </div>
         `;
 
@@ -257,7 +257,7 @@ function buildPDFHTML(articles, options) {
         if (article.imageBase64) {
             html += `
         <div class="visual-zone">
-            <img src="\${article.imageBase64}" class="main-visual" alt="Article Image">
+            <img src="${article.imageBase64}" class="main-visual" alt="Article Image">
         </div>
             `;
         }
@@ -265,14 +265,14 @@ function buildPDFHTML(articles, options) {
         // Link above the text, text truncated
         html += `
         <div class="content-zone">
-            <a href="\${article.url}" class="article-link">\${article.url}</a>
+            <a href="${article.url}" class="article-link">${article.url}</a>
             <div class="content-text">
-                \${article.excerpt}
+                ${article.excerpt}
             </div>
         </div>
 
         <div class="footer">
-            <div class="footer-page">Pagina \${title ? index + 2 : index + 1} di \${title ? articles.length + 1 : articles.length}</div>
+            <div class="footer-page">Pagina ${title ? index + 2 : index + 1} di ${title ? articles.length + 1 : articles.length}</div>
         </div>
     </div>
         `;
