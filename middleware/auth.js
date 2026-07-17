@@ -22,7 +22,7 @@ const authMiddleware = (req, res, next) => {
         const user = db.prepare('SELECT id FROM users WHERE id = ?').get(decoded.userId);
         
         if (!user) {
-            return res.status(401).json({ error: 'L\\'account è stato resettato dal sistema. Effettua nuovamente la registrazione.' });
+            return res.status(401).json({ error: "L'account è stato resettato dal sistema. Effettua nuovamente la registrazione." });
         }
 
         // Set userId in request object
