@@ -1,5 +1,5 @@
 function buildPDFHTML(articles, options) {
-    const { title, userName, clientName, userLogo } = options;
+    const { title, userName, clientName, clientLogo, userLogo } = options;
     
     // Create Italian date string
     const today = new Date();
@@ -40,6 +40,8 @@ function buildPDFHTML(articles, options) {
             background: white;
             padding: 15mm;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
         .page:last-child {
@@ -48,16 +50,14 @@ function buildPDFHTML(articles, options) {
 
         /* --- COVER PAGE --- */
         .cover-page {
-            display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
         }
 
-        .cover-logo {
-            max-width: 120mm;
-            max-height: 60mm;
+        .client-logo {
+            max-width: 150mm;
+            max-height: 80mm;
             margin-bottom: 20mm;
             object-fit: contain;
         }
@@ -74,6 +74,7 @@ function buildPDFHTML(articles, options) {
             font-size: 16pt;
             color: #666;
             margin-bottom: 5mm;
+            text-transform: uppercase;
         }
 
         .cover-date {
@@ -89,12 +90,30 @@ function buildPDFHTML(articles, options) {
             border-radius: 2px;
         }
 
+        .agency-logo-container {
+            position: absolute;
+            bottom: 20mm;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .agency-logo {
+            max-width: 40mm;
+            max-height: 20mm;
+            object-fit: contain;
+        }
+
         /* --- ARTICLE PAGE --- */
         .header {
+            flex: 0 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 22mm;
+            height: 25mm;
             padding: 0 5mm;
             background-color: #f8f9fa;
             border-bottom: 3px solid #00d4aa;
@@ -103,40 +122,33 @@ function buildPDFHTML(articles, options) {
         }
 
         .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            width: 50%;
+            font-size: 11pt;
+            color: #666;
+            text-align: left;
         }
 
-        .source-logo {
-            height: 12mm;
-            max-width: 30mm;
+        .header-right {
+            width: 50%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .source-logo-large {
+            max-height: 18mm;
+            max-width: 100%;
             object-fit: contain;
         }
-
-        .source-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .source-name {
-            font-size: 12pt;
+        
+        .source-name-large {
+            font-size: 16pt;
             font-weight: 700;
             color: #1a1a2e;
         }
 
-        .source-date {
-            font-size: 10pt;
-            color: #666;
-        }
-
-        .user-logo {
-            height: 12mm;
-            max-width: 40mm;
-            object-fit: contain;
-        }
-
         .title-zone {
+            flex: 0 0 auto;
             padding: 0 5mm;
             margin-bottom: 8mm;
             border-left: 4px solid #7c5cff;
@@ -150,12 +162,16 @@ function buildPDFHTML(articles, options) {
         }
 
         .visual-zone {
+            flex: 0 0 auto;
             margin: 0 5mm 10mm 5mm;
             text-align: center;
             max-height: 110mm;
             overflow: hidden;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .main-visual {
@@ -168,19 +184,10 @@ function buildPDFHTML(articles, options) {
         }
 
         .content-zone {
-            display: flex;
-            flex-direction: column;
-            gap: 5mm;
+            flex: 1 1 auto; /* Automatically fills all remaining vertical space */
             padding: 0 5mm;
-            margin-bottom: 20mm;
-        }
-
-        .article-link {
-            display: block;
-            color: #0066CC;
-            text-decoration: none;
-            font-size: 10pt;
-            word-break: break-all;
+            margin-bottom: 5mm; /* Space just above the footer */
+            overflow: hidden; /* Truncates the text brutally if it overshoots */
         }
 
         .content-text {
@@ -188,27 +195,27 @@ function buildPDFHTML(articles, options) {
             line-height: 1.6;
             color: #333;
             text-align: justify;
-            
-            /* Stop text before end of page */
-            display: -webkit-box;
-            -webkit-line-clamp: 15;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .footer {
-            position: absolute;
-            bottom: 15mm;
-            left: 15mm;
-            right: 15mm;
-            height: 10mm;
+            flex: 0 0 10mm; /* Fixed height for the footer zone */
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: flex-end;
             border-top: 1px solid #e0e0e0;
             padding-top: 3mm;
-            background: white;
+            padding-left: 5mm;
+            padding-right: 5mm;
+        }
+
+        .footer-link {
+            font-size: 9pt;
+            color: #0066CC;
+            text-decoration: none;
+            max-width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .footer-page {
@@ -224,11 +231,17 @@ function buildPDFHTML(articles, options) {
     if (title) {
         html += `
     <div class="page cover-page">
-        ${userLogo ? `<img src="${userLogo}" class="cover-logo" alt="Company Logo">` : ''}
+        ${clientLogo ? `<img src="${clientLogo}" class="client-logo" alt="Client Logo">` : ''}
         <div class="cover-title">${title}</div>
         <div class="cover-decor"></div>
-        <div class="cover-subtitle">${clientName ? `Generata per: ${clientName}` : ''}</div>
+        <div class="cover-subtitle">${clientName ? clientName : ''}</div>
         <div class="cover-date">${dateStr}</div>
+        
+        ${userLogo ? `
+        <div class="agency-logo-container">
+            <img src="${userLogo}" class="agency-logo" alt="Agency Logo">
+        </div>
+        ` : ''}
     </div>
         `;
     }
@@ -237,23 +250,23 @@ function buildPDFHTML(articles, options) {
     articles.forEach((article, index) => {
         html += `
     <div class="page">
+        <!-- HEADER -->
         <div class="header">
             <div class="header-left">
-                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo" alt="Source Logo">` : ''}
-                <div class="source-info">
-                    <div class="source-name">${article.source_name}</div>
-                    <div class="source-date">${article.published_date}</div>
-                </div>
+                ${article.published_date}
             </div>
-            ${userLogo ? `<img src="${userLogo}" class="user-logo" alt="Your Logo">` : ''}
+            <div class="header-right">
+                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">` : `<div class="source-name-large">${article.source_name}</div>`}
+            </div>
         </div>
 
+        <!-- TITLE -->
         <div class="title-zone">
             <div class="article-title">${article.title}</div>
         </div>
         `;
 
-        // Always show image if available, NO SCREENSHOT
+        // Always show image if available
         if (article.imageBase64) {
             html += `
         <div class="visual-zone">
@@ -262,16 +275,17 @@ function buildPDFHTML(articles, options) {
             `;
         }
 
-        // Link above the text, text truncated
+        // CONTENT ZONE (Takes up all remaining space above the footer)
         html += `
         <div class="content-zone">
-            <a href="${article.url}" class="article-link">${article.url}</a>
             <div class="content-text">
                 ${article.excerpt}
             </div>
         </div>
 
+        <!-- FOOTER -->
         <div class="footer">
+            <a href="${article.url}" class="footer-link">${article.url}</a>
             <div class="footer-page">Pagina ${title ? index + 2 : index + 1} di ${title ? articles.length + 1 : articles.length}</div>
         </div>
     </div>
