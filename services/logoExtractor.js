@@ -44,27 +44,68 @@ async function extractLogo(url) {
         
         let logoUrl = null;
 
-        // Try priority order
-        const selectors = [
-            'header img[class*="logo"]',
-            'header img[id*="logo"]',
-            'img[class*="logo"]',
-            'img[id*="logo"]',
-            'a.logo img',
-            'meta[property="og:image"]',
-            'link[rel="apple-touch-icon"]',
-            'link[rel="icon"][type="image/png"]',
-            'link[rel="shortcut icon"]',
-            'link[rel="icon"]'
-        ];
+        // 1. Try to find the real logo image using heuristics
+        let bestScore = -1;
+        let bestImgSrc = null;
 
-        for (const selector of selectors) {
-            const element = $(selector).first();
-            if (element.length > 0) {
-                const val = element.attr('src') || element.attr('href') || element.attr('content');
-                if (val && !val.includes('avatar') && !val.includes('icon-')) {
-                    logoUrl = val;
-                    break;
+        $('img').each((i, el) => {
+            const $el = $(el);
+            const src = $el.attr('src') || $el.attr('data-src');
+            if (!src) return;
+
+            const alt = ($el.attr('alt') || '').toLowerCase();
+            const className = ($el.attr('class') || '').toLowerCase();
+            const id = ($el.attr('id') || '').toLowerCase();
+            const srcLower = src.toLowerCase();
+            
+            let score = 0;
+
+            if (className.includes('logo')) score += 10;
+            if (id.includes('logo')) score += 10;
+            if (srcLower.includes('logo')) score += 10;
+            if (alt.includes('logo')) score += 5;
+
+            const parentA = $el.closest('a');
+            if (parentA.length > 0) {
+                const href = parentA.attr('href');
+                if (href === '/' || href === originUrl || href === originUrl + '/') {
+                    score += 8;
+                }
+            }
+
+            const inHeader = $el.closest('header, nav, .header, .nav, #header, #nav').length > 0;
+            if (inHeader) score += 5;
+
+            if (srcLower.includes('icon') || srcLower.includes('avatar') || srcLower.includes('spinner')) score -= 20;
+            if (className.includes('icon') || id.includes('icon')) score -= 20;
+            if (srcLower.endsWith('.gif')) score -= 10;
+
+            if (score > bestScore && score > 0) {
+                bestScore = score;
+                bestImgSrc = src;
+            }
+        });
+
+        if (bestScore > 0 && bestImgSrc) {
+            logoUrl = bestImgSrc;
+        } else {
+            // 2. Fallback to priority order for metadata/favicons
+            const selectors = [
+                'meta[property="og:image"]',
+                'link[rel="apple-touch-icon"]',
+                'link[rel="icon"][type="image/png"]',
+                'link[rel="shortcut icon"]',
+                'link[rel="icon"]'
+            ];
+
+            for (const selector of selectors) {
+                const element = $(selector).first();
+                if (element.length > 0) {
+                    const val = element.attr('href') || element.attr('content');
+                    if (val && !val.includes('avatar') && !val.includes('icon-')) {
+                        logoUrl = val;
+                        break;
+                    }
                 }
             }
         }
