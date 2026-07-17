@@ -50,7 +50,8 @@ function buildPDFHTML(articles, options) {
 
         /* --- COVER PAGE --- */
         .cover-page {
-            justify-content: center;
+            justify-content: flex-start;
+            padding-top: 40mm;
             align-items: center;
             text-align: center;
         }
@@ -123,16 +124,16 @@ function buildPDFHTML(articles, options) {
 
         .header-left {
             width: 50%;
-            font-size: 11pt;
-            color: #666;
-            text-align: left;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
         }
 
         .header-right {
             width: 50%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+            font-size: 11pt;
+            color: #666;
+            text-align: right;
         }
 
         .source-logo-large {
@@ -165,7 +166,7 @@ function buildPDFHTML(articles, options) {
             flex: 0 0 auto;
             margin: 0 5mm 10mm 5mm;
             text-align: center;
-            max-height: 110mm;
+            max-height: 70mm;
             overflow: hidden;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -177,7 +178,7 @@ function buildPDFHTML(articles, options) {
         .main-visual {
             width: 100%;
             height: auto;
-            max-height: 110mm;
+            max-height: 70mm;
             object-fit: contain;
             object-position: top center;
             display: block;
@@ -253,10 +254,10 @@ function buildPDFHTML(articles, options) {
         <!-- HEADER -->
         <div class="header">
             <div class="header-left">
-                ${article.published_date}
+                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">` : `<div class="source-name-large">${article.source_name}</div>`}
             </div>
             <div class="header-right">
-                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">` : `<div class="source-name-large">${article.source_name}</div>`}
+                ${article.published_date}
             </div>
         </div>
 
