@@ -4,7 +4,8 @@ const state = {
     user: null,
     articles: [],
     isExtracting: false,
-    isGenerating: false
+    isGenerating: false,
+    clientLogoBase64: null
 };
 
 // --- UTILS ---
@@ -313,6 +314,26 @@ function renderArticles() {
 
 // --- PDF GENERATION ---
 
+// Client Logo Logic
+document.getElementById('clientLogoInput')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            state.clientLogoBase64 = event.target.result;
+            document.getElementById('clientLogoPreview').src = state.clientLogoBase64;
+            document.getElementById('clientLogoPreviewContainer').style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('btnRemoveClientLogo')?.addEventListener('click', function() {
+    state.clientLogoBase64 = null;
+    if(document.getElementById('clientLogoInput')) document.getElementById('clientLogoInput').value = '';
+    if(document.getElementById('clientLogoPreviewContainer')) document.getElementById('clientLogoPreviewContainer').style.display = 'none';
+});
+
 async function generatePDF() {
     if (state.articles.length === 0) return;
     
@@ -329,7 +350,8 @@ async function generatePDF() {
         const response = await apiCall('POST', '/api/pdf/generate', { 
             articles: state.articles,
             title,
-            clientName
+            clientName,
+            clientLogo: state.clientLogoBase64
         });
         
         showToast('PDF generato! Download in corso...', 'success');
@@ -339,9 +361,12 @@ async function generatePDF() {
         
         // Reset state & reload history
         state.articles = [];
+        state.clientLogoBase64 = null;
         document.getElementById('rassegnaTitle').value = '';
         const clientInput = document.getElementById('clientName');
         if (clientInput) clientInput.value = '';
+        if(document.getElementById('clientLogoInput')) document.getElementById('clientLogoInput').value = '';
+        if(document.getElementById('clientLogoPreviewContainer')) document.getElementById('clientLogoPreviewContainer').style.display = 'none';
         renderArticles();
         loadHistory();
         

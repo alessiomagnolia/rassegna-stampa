@@ -72,6 +72,15 @@
                 <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
             </div>
 
+            <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
+                <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="margin-top: 5px;">
+                <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
+                    <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
+                    <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+                </div>
+            </div>
+
             <div class="add-article-bar">
                 <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
                 <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
