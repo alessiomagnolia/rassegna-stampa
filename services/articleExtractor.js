@@ -15,6 +15,22 @@ function cleanText(html, wordLimit = 500) {
     if (!html) return '';
     // Strip HTML tags using regex
     let text = html.replace(/<[^>]*>?/gm, ' ');
+    
+    // Remove common UI artifacts and boilerplate
+    const junkPatterns = [
+        /00:00\s*00:00/g,
+        /Segui\s+.*?\s+su\s+Google\s+Discover/gi,
+        /Scegli\s+.*?\s+come\s+fonte\s+preferita/gi,
+        /Leggi\s+anche:/gi,
+        /Iscriviti\s+alla\s+newsletter/gi,
+        /Riproduzione\s+riservata/gi,
+        /Tutti\s+i\s+diritti\s+riservati/gi
+    ];
+    
+    for (const pattern of junkPatterns) {
+        text = text.replace(pattern, ' ');
+    }
+
     // Remove extra spaces
     text = text.replace(/\s+/g, ' ').trim();
     

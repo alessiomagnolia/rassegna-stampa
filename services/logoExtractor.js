@@ -46,8 +46,13 @@ async function extractLogo(url) {
 
         // Try priority order
         const selectors = [
-            'link[rel="apple-touch-icon"]',
+            'header img[class*="logo"]',
+            'header img[id*="logo"]',
+            'img[class*="logo"]',
+            'img[id*="logo"]',
+            'a.logo img',
             'meta[property="og:image"]',
+            'link[rel="apple-touch-icon"]',
             'link[rel="icon"][type="image/png"]',
             'link[rel="shortcut icon"]',
             'link[rel="icon"]'
@@ -56,8 +61,8 @@ async function extractLogo(url) {
         for (const selector of selectors) {
             const element = $(selector).first();
             if (element.length > 0) {
-                const val = element.attr('href') || element.attr('content');
-                if (val) {
+                const val = element.attr('src') || element.attr('href') || element.attr('content');
+                if (val && !val.includes('avatar') && !val.includes('icon-')) {
                     logoUrl = val;
                     break;
                 }
