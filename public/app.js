@@ -299,17 +299,35 @@ function renderArticles() {
         card.innerHTML = `
             <img src="${imgSrc}" class="article-thumb" alt="Thumb">
             <div class="article-content">
-                <div class="article-meta">
-                    ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo">` : ''}
+                <div class="article-meta" style="align-items: center;">
+                    ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" style="max-height: 24px; margin-right: 8px;">` : ''}
                     <span>${article.source_name} &bull; ${article.published_date}</span>
                 </div>
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500;">
+                        ✏️ Cambia logo testata
+                        <input type="file" accept="image/*" style="display: none;" onchange="changeArticleLogo(event, ${idx})">
+                    </label>
+                </div>
             </div>
             <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi">✖</button>
         `;
         list.appendChild(card);
     });
+}
+
+function changeArticleLogo(event, idx) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            state.articles[idx].logoBase64 = e.target.result;
+            renderArticles();
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 // --- PDF GENERATION ---
