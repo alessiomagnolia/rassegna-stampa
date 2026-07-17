@@ -20,7 +20,7 @@ router.post('/extract', authMiddleware, async (req, res) => {
 
         // Set a timeout to prevent hanging requests
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('TIMEOUT')), 45000)
+            setTimeout(() => reject(new Error('TIMEOUT')), 90000)
         );
 
         console.log(`[Extracrtion] Inizio estrazione per: ${url}`);
