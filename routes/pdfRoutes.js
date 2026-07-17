@@ -40,10 +40,16 @@ router.post('/generate', authMiddleware, async (req, res) => {
         };
 
         console.log(`[PDF] Generazione in corso per ${articles.length} articoli...`);
-        const pdfBuffer = await generatePDF(articles, options);
-        
-        const filename = `${uuidv4()}.pdf`;
+        const date = new Date().toISOString().split('T')[0];
+        let baseFilename = 'Rassegna_Stampa';
+        if (title && title.trim().length > 0) {
+            baseFilename = title.trim().replace(/[^a-z0-9]/gi, '_');
+        }
+        const filename = `${baseFilename}_${date}.pdf`;
         const outputPath = path.join(__dirname, '..', 'output', filename);
+
+        console.log(`[PDF] Generazione PDF in: ${outputPath}`);
+        const pdfBuffer = await generatePDF(articles, options);
         
         fs.writeFileSync(outputPath, pdfBuffer);
 
