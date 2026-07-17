@@ -196,6 +196,10 @@ function buildPDFHTML(articles, options) {
             line-height: 1.6;
             color: #333;
             text-align: justify;
+            
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            /* -webkit-line-clamp is set inline */
         }
 
         .footer {
@@ -277,9 +281,11 @@ function buildPDFHTML(articles, options) {
         }
 
         // CONTENT ZONE (Takes up all remaining space above the footer)
+        const clampLines = article.imageBase64 ? 14 : 32;
+        
         html += `
         <div class="content-zone">
-            <div class="content-text">
+            <div class="content-text" style="-webkit-line-clamp: ${clampLines};">
                 ${article.excerpt}
             </div>
         </div>
