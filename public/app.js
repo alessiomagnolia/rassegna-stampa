@@ -406,10 +406,11 @@ function renderArticles() {
                 </div>
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
-                <div style="margin-top: 10px;">
-                    <span onclick="openLogoArchive(${idx})" style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500;">
+                <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                    <span onclick="openLogoArchive(${idx})" style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500; background: rgba(0, 212, 170, 0.1); padding: 4px 8px; border-radius: 4px;">
                         ✏️ Cambia logo testata
                     </span>
+                    ${article.logoBase64 ? `<div style="background: white; padding: 2px 8px; border-radius: 4px; display: flex; align-items: center;"><img src="${article.logoBase64}" style="max-height: 20px; object-fit: contain;"></div>` : ''}
                 </div>
             </div>
             <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi">✖</button>
@@ -715,16 +716,15 @@ function renderLogoArchive(logos) {
 async function selectLogoFromArchive(url) {
     if (currentEditingArticleIndex === -1) return;
     try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const base64 = await fileToBase64(blob);
-        
-        state.articles[currentEditingArticleIndex].logoBase64 = base64;
+        // Assegno direttamente l'URL per evitare blocchi CORS del browser sul fetch.
+        // I tag <img> (sia nella dashboard che nel PDF tramite Puppeteer) caricheranno
+        // nativamente il link esterno.
+        state.articles[currentEditingArticleIndex].logoBase64 = url;
         renderArticles();
         closeLogoArchive();
         showToast('Logo testata aggiornato', 'success');
     } catch (err) {
         console.error(err);
-        showToast('Errore durante il download del logo', 'error');
+        showToast('Errore durante l\\'aggiornamento del logo', 'error');
     }
 }
