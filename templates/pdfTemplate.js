@@ -134,6 +134,22 @@ function buildPDFHTML(articles, options) {
             font-size: 11pt;
             color: #666;
             text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .source-type-badge {
+            display: inline-block;
+            background-color: #eef2f5;
+            color: #555;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 8px;
         }
 
         .source-logo-large {
@@ -262,7 +278,8 @@ function buildPDFHTML(articles, options) {
                 ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">` : `<div class="source-name-large">${article.source_name}</div>`}
             </div>
             <div class="header-right">
-                ${article.published_date}
+                <span class="source-type-badge">${article.source_type || 'Web'}</span>
+                <span>${article.published_date}</span>
             </div>
         </div>
 
