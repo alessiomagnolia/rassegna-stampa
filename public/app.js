@@ -725,6 +725,6 @@ async function selectLogoFromArchive(url) {
         showToast('Logo testata aggiornato', 'success');
     } catch (err) {
         console.error(err);
-        showToast('Errore durante l\\'aggiornamento del logo', 'error');
+        showToast("Errore durante l'aggiornamento del logo", 'error');
     }
 }
