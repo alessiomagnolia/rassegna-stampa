@@ -84,6 +84,7 @@
             <div class="add-article-bar">
                 <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
                 <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
+                <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
             </div>
 
             <!-- Loading State -->
@@ -126,6 +127,69 @@
     </footer>
 
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Manual Entry Modal -->
+    <div id="manualEntryModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h3>📝 Inserimento Articolo Manuale</h3>
+                <button id="btnCloseManual" class="btn-icon">✖</button>
+            </div>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Titolo Articolo *</label>
+                    <input type="text" id="manualTitle" placeholder="Titolo della notizia" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Testo Articolo *</label>
+                    <textarea id="manualText" rows="6" placeholder="Incolla qui il testo dell'articolo..." required></textarea>
+                </div>
+                
+                <div class="input-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Nome Fonte *</label>
+                        <input type="text" id="manualSourceName" placeholder="es. Corriere della Sera" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Tipologia Media</label>
+                        <select id="manualSourceType">
+                            <option value="Web">Web</option>
+                            <option value="Quotidiano Nazionale">Quotidiano Nazionale</option>
+                            <option value="Quotidiano Locale">Quotidiano Locale</option>
+                            <option value="Agenzia di Stampa">Agenzia di Stampa</option>
+                            <option value="Periodico">Periodico</option>
+                            <option value="Radio/TV">Radio/TV</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Data Pubblicazione *</label>
+                        <input type="date" id="manualDate" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Link Originale (opzionale)</label>
+                        <input type="url" id="manualUrl" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Immagine Principale (opzionale)</label>
+                    <input type="file" id="manualImage" accept="image/*">
+                </div>
+
+                <div class="input-group">
+                    <label>Logo Testata (opzionale)</label>
+                    <input type="file" id="manualLogo" accept="image/*">
+                </div>
+                
+                <button id="btnSaveManual" class="btn btn-primary btn-large" style="width: 100%; margin-top: 20px;">💾 Salva Articolo Manuale</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
     <script>

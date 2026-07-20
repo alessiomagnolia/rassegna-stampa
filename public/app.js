@@ -263,6 +263,86 @@ async function addArticle() {
     }
 }
 
+async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function saveManualArticle() {
+    const title = document.getElementById('manualTitle').value.trim();
+    const text = document.getElementById('manualText').value.trim();
+    const sourceName = document.getElementById('manualSourceName').value.trim();
+    const sourceType = document.getElementById('manualSourceType').value;
+    const date = document.getElementById('manualDate').value;
+    const url = document.getElementById('manualUrl').value.trim();
+    const imageFile = document.getElementById('manualImage').files[0];
+    const logoFile = document.getElementById('manualLogo').files[0];
+
+    if (!title || !text || !sourceName || !date) {
+        return showToast('Compila tutti i campi obbligatori (*)', 'warning');
+    }
+
+    // Format date from YYYY-MM-DD to DD/MM/YYYY
+    const d = new Date(date);
+    const formattedDate = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+
+    const btn = document.getElementById('btnSaveManual');
+    const originalText = btn.innerText;
+
+    try {
+        btn.disabled = true;
+        btn.innerText = 'Salvataggio...';
+
+        let imageBase64 = null;
+        let logoBase64 = null;
+
+        if (imageFile) {
+            imageBase64 = await fileToBase64(imageFile);
+        }
+        if (logoFile) {
+            logoBase64 = await fileToBase64(logoFile);
+        }
+
+        const newArticle = {
+            title,
+            excerpt: text,
+            source_name: sourceName,
+            source_type: sourceType,
+            published_date: formattedDate,
+            url: url || '',
+            imageBase64,
+            logoBase64,
+            screenshotBase64: null,
+            author: 'Autore non disponibile'
+        };
+
+        state.articles.push(newArticle);
+        renderArticles();
+        showToast('Articolo manuale aggiunto con successo', 'success');
+
+        // Close modal and reset form
+        document.getElementById('manualEntryModal').classList.add('hidden');
+        document.getElementById('manualTitle').value = '';
+        document.getElementById('manualText').value = '';
+        document.getElementById('manualSourceName').value = '';
+        document.getElementById('manualSourceType').value = 'Web';
+        document.getElementById('manualDate').value = '';
+        document.getElementById('manualUrl').value = '';
+        document.getElementById('manualImage').value = '';
+        document.getElementById('manualLogo').value = '';
+
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+}
+
 function removeArticle(index) {
     state.articles.splice(index, 1);
     renderArticles();
@@ -302,6 +382,16 @@ function renderArticles() {
                 <div class="article-meta" style="align-items: center;">
                     ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" style="max-height: 24px; margin-right: 8px;">` : ''}
                     <span>${article.source_name} &bull; ${article.published_date}</span>
+                </div>
+                <div style="margin-top: 5px; margin-bottom: 5px;">
+                    <select onchange="changeArticleType(event, ${idx})" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary);">
+                        <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>Web</option>
+                        <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>Quotidiano Nazionale</option>
+                        <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>Quotidiano Locale</option>
+                        <option value="Agenzia di Stampa" ${article.source_type === 'Agenzia di Stampa' ? 'selected' : ''}>Agenzia di Stampa</option>
+                        <option value="Periodico" ${article.source_type === 'Periodico' ? 'selected' : ''}>Periodico</option>
+                        <option value="Radio/TV" ${article.source_type === 'Radio/TV' ? 'selected' : ''}>Radio/TV</option>
+                    </select>
                 </div>
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
@@ -537,6 +627,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('articleUrl')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addArticle();
         });
+        
+        // Manual Entry Modal
+        document.getElementById('btnOpenManual')?.addEventListener('click', () => {
+            document.getElementById('manualEntryModal').classList.remove('hidden');
+        });
+        document.getElementById('btnCloseManual')?.addEventListener('click', () => {
+            document.getElementById('manualEntryModal').classList.add('hidden');
+        });
+        document.getElementById('btnSaveManual')?.addEventListener('click', saveManualArticle);
         
         // Generate PDF
         document.getElementById('btnGeneratePDF')?.addEventListener('click', generatePDF);
