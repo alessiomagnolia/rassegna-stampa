@@ -12,8 +12,7 @@ function buildPDFHTML(articles, options) {
     <meta charset="UTF-8">
     <title>${title}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
+        /* PDF Styles */
         @page { 
             size: A4; 
             margin: 0; 
@@ -26,7 +25,7 @@ function buildPDFHTML(articles, options) {
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             background-color: white;
             color: #333;
             -webkit-font-smoothing: antialiased;
@@ -75,7 +74,8 @@ function buildPDFHTML(articles, options) {
             font-size: 16pt;
             color: #666;
             margin-bottom: 5mm;
-            text-transform: uppercase;
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
         }
 
         .cover-date {
@@ -222,6 +222,7 @@ function buildPDFHTML(articles, options) {
             line-height: 1.6;
             color: #333;
             text-align: justify;
+            font-family: 'Times New Roman', Times, serif;
             
             display: -webkit-box;
             -webkit-box-orient: vertical;
