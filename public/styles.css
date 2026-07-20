@@ -21,6 +21,8 @@
     --radius-md: 12px;
     --radius-lg: 20px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-serif: 'Times New Roman', Times, serif;
 }
 
 * {
@@ -30,7 +32,7 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -126,7 +128,9 @@ h1, h2, h3 {
 }
 
 .tagline {
-    font-size: 1.2rem;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.3rem;
     color: var(--text-secondary);
     text-align: center;
     margin-bottom: 3rem;
