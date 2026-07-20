@@ -49,31 +49,62 @@ function buildPDFHTML(articles, options) {
 
         /* --- COVER PAGE --- */
         .cover-page {
-            justify-content: flex-start;
-            padding-top: 40mm;
-            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20mm;
             text-align: center;
+            background-color: white;
+        }
+        
+        .cover-top {
+            height: 60mm;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
         }
 
         .client-logo {
             max-width: 150mm;
-            max-height: 80mm;
-            margin-bottom: 20mm;
+            max-height: 50mm;
             object-fit: contain;
         }
 
+        .cover-center {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 15mm;
+            padding: 20mm 0;
+        }
+        
+        .cover-center::before, .cover-center::after {
+            content: '';
+            position: absolute;
+            top: 5%;
+            bottom: 5%;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, rgba(124, 92, 255, 0.5), rgba(0, 212, 170, 0.5), transparent);
+        }
+        .cover-center::before { left: 0; }
+        .cover-center::after { right: 0; }
+
         .cover-title {
-            font-size: 32pt;
+            font-size: 38pt;
             font-weight: 700;
             color: #1a1a2e;
-            margin-bottom: 10mm;
+            margin-bottom: 8mm;
             line-height: 1.2;
+            letter-spacing: -0.5px;
         }
 
         .cover-subtitle {
-            font-size: 16pt;
-            color: #666;
-            margin-bottom: 5mm;
+            font-size: 18pt;
+            color: #555;
+            margin-bottom: 6mm;
             font-family: 'Times New Roman', Times, serif;
             font-style: italic;
         }
@@ -81,24 +112,22 @@ function buildPDFHTML(articles, options) {
         .cover-date {
             font-size: 14pt;
             color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         
         .cover-decor {
-            width: 50mm;
-            height: 4px;
+            width: 30mm;
+            height: 3px;
             background: linear-gradient(90deg, #7c5cff, #00d4aa);
-            margin: 15mm auto;
+            margin: 10mm auto 15mm auto;
             border-radius: 2px;
         }
 
-        .agency-logo-container {
-            position: absolute;
-            bottom: 20mm;
-            left: 0;
-            right: 0;
+        .cover-bottom {
+            height: 40mm;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
         }
         
@@ -264,17 +293,20 @@ function buildPDFHTML(articles, options) {
     if (title) {
         html += `
     <div class="page cover-page">
-        ${clientLogo ? `<img src="${clientLogo}" class="client-logo" alt="Client Logo">` : ''}
-        <div class="cover-title">${title}</div>
-        <div class="cover-decor"></div>
-        <div class="cover-subtitle">${clientName ? clientName : ''}</div>
-        <div class="cover-date">${dateStr}</div>
-        
-        ${userLogo ? `
-        <div class="agency-logo-container">
-            <img src="${userLogo}" class="agency-logo" alt="Agency Logo">
+        <div class="cover-top">
+            ${clientLogo ? `<img src="${clientLogo}" class="client-logo" alt="Client Logo">` : ''}
         </div>
-        ` : ''}
+        
+        <div class="cover-center">
+            <div class="cover-title">${title}</div>
+            <div class="cover-decor"></div>
+            <div class="cover-subtitle">${clientName ? clientName : ''}</div>
+            <div class="cover-date">${dateStr}</div>
+        </div>
+        
+        <div class="cover-bottom">
+            ${userLogo ? `<img src="${userLogo}" class="agency-logo" alt="Agency Logo">` : ''}
+        </div>
     </div>
         `;
     }
