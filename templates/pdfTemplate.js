@@ -55,6 +55,28 @@ function buildPDFHTML(articles, options) {
             padding: 20mm;
             text-align: center;
             background-color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-bg-orb-1 {
+            position: absolute;
+            top: 20%;
+            left: -30mm;
+            width: 150mm;
+            height: 150mm;
+            background: radial-gradient(circle, rgba(124, 92, 255, 0.05) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .cover-bg-orb-2 {
+            position: absolute;
+            bottom: 20%;
+            right: -30mm;
+            width: 150mm;
+            height: 150mm;
+            background: radial-gradient(circle, rgba(0, 212, 170, 0.05) 0%, transparent 70%);
+            z-index: -1;
         }
         
         .cover-top {
@@ -80,17 +102,6 @@ function buildPDFHTML(articles, options) {
             margin: 0 15mm;
             padding: 20mm 0;
         }
-        
-        .cover-center::before, .cover-center::after {
-            content: '';
-            position: absolute;
-            top: 5%;
-            bottom: 5%;
-            width: 1px;
-            background: linear-gradient(to bottom, transparent, rgba(124, 92, 255, 0.5), rgba(0, 212, 170, 0.5), transparent);
-        }
-        .cover-center::before { left: 0; }
-        .cover-center::after { right: 0; }
 
         .cover-title {
             font-size: 38pt;
@@ -293,6 +304,10 @@ function buildPDFHTML(articles, options) {
     if (title) {
         html += `
     <div class="page cover-page">
+        <!-- Abstract Background Elements -->
+        <div class="cover-bg-orb-1"></div>
+        <div class="cover-bg-orb-2"></div>
+        
         <div class="cover-top">
             ${clientLogo ? `<img src="${clientLogo}" class="client-logo" alt="Client Logo">` : ''}
         </div>
