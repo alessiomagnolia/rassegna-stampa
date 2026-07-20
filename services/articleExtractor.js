@@ -57,6 +57,44 @@ function extractSourceName(urlStr) {
     }
 }
 
+const mediaTypesDB = {
+    'repubblica.it': 'Quotidiano Nazionale',
+    'corriere.it': 'Quotidiano Nazionale',
+    'ilsole24ore.com': 'Quotidiano Nazionale',
+    'lastampa.it': 'Quotidiano Nazionale',
+    'ilgiornale.it': 'Quotidiano Nazionale',
+    'liberoquotidiano.it': 'Quotidiano Nazionale',
+    'ilfattoquotidiano.it': 'Quotidiano Nazionale',
+    'ilgiorno.it': 'Quotidiano Nazionale',
+    'ilmessaggero.it': 'Quotidiano Nazionale',
+    'ilrestodelcarlino.it': 'Quotidiano Nazionale',
+    'lanazione.it': 'Quotidiano Nazionale',
+    'avvenire.it': 'Quotidiano Nazionale',
+    'ansa.it': 'Agenzia di Stampa',
+    'adnkronos.com': 'Agenzia di Stampa',
+    'agi.it': 'Agenzia di Stampa',
+    'lapresse.it': 'Agenzia di Stampa',
+    'dire.it': 'Agenzia di Stampa',
+    'rai.it': 'Radio/TV',
+    'mediaset.it': 'Radio/TV',
+    'tgcom24.mediaset.it': 'Radio/TV',
+    'skytg24.it': 'Radio/TV'
+};
+
+function extractSourceType(urlStr) {
+    try {
+        const hostname = new URL(urlStr).hostname.replace(/^www\./, '').toLowerCase();
+        for (const domain in mediaTypesDB) {
+            if (hostname === domain || hostname.endsWith('.' + domain)) {
+                return mediaTypesDB[domain];
+            }
+        }
+        return 'Web';
+    } catch (e) {
+        return 'Web';
+    }
+}
+
 function formatDate(dateStr) {
     if (!dateStr) {
         const now = new Date();
@@ -98,6 +136,7 @@ async function extractArticle(url) {
             author: article.author || 'Autore non disponibile',
             published_date: formatDate(article.published),
             source_name: extractSourceName(url),
+            source_type: extractSourceType(url),
             excerpt: cleanText(article.content, 500),
             imageBase64,
             logoBase64,
