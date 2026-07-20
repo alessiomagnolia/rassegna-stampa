@@ -74,7 +74,8 @@
 
             <div class="input-group rassegna-title-group" style="margin-top: 15px;">
                 <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
-                <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="margin-top: 5px;">
+                <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;">📂 Scegli Logo Cliente</label>
                 <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
                     <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
                     <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
@@ -187,6 +188,30 @@
                 </div>
                 
                 <button id="btnSaveManual" class="btn btn-primary btn-large" style="width: 100%; margin-top: 20px;">💾 Salva Articolo Manuale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logo Archive Modal -->
+    <div id="logoArchiveModal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin:0;">Archivio Loghi Testate</h3>
+                <button id="btnCloseLogoArchive" class="btn-icon" style="font-size: 1.5rem;">&times;</button>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="logoSearchInput" placeholder="🔍 Cerca nome testata (es. Corriere)..." style="font-size: 1.1rem; padding: 1rem;">
+            </div>
+
+            <div id="logoGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <!-- Logos injected here -->
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; text-align: center;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Non trovi la testata? Caricala dal tuo PC.</p>
+                <input type="file" id="manualLogoUpload" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                <label for="manualLogoUpload" class="btn btn-outline" style="cursor: pointer;">💻 Carica dal PC</label>
             </div>
         </div>
     </div>

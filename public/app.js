@@ -3,10 +3,21 @@ const state = {
     token: localStorage.getItem('rs_token'),
     user: null,
     articles: [],
+    history: [],
     isExtracting: false,
     isGenerating: false,
     clientLogoBase64: null
 };
+
+let logoArchive = [];
+let currentEditingArticleIndex = -1;
+
+// Init fetch
+fetch('/assets/logos.json')
+    .then(res => res.json())
+    .then(data => { logoArchive = data; })
+    .catch(err => console.log('Logos non caricati', err));
+
 
 // --- UTILS ---
 
@@ -396,10 +407,9 @@ function renderArticles() {
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
                 <div style="margin-top: 10px;">
-                    <label style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500;">
+                    <span onclick="openLogoArchive(${idx})" style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500;">
                         ✏️ Cambia logo testata
-                        <input type="file" accept="image/*" style="display: none;" onchange="changeArticleLogo(event, ${idx})">
-                    </label>
+                    </span>
                 </div>
             </div>
             <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi">✖</button>
@@ -639,5 +649,82 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Generate PDF
         document.getElementById('btnGeneratePDF')?.addEventListener('click', generatePDF);
+        
+        // Logo Archive Logic
+        document.getElementById('logoSearchInput')?.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = logoArchive.filter(l => l.name.toLowerCase().includes(term));
+            renderLogoArchive(filtered);
+        });
+        
+        document.getElementById('btnCloseLogoArchive')?.addEventListener('click', closeLogoArchive);
+        
+        document.getElementById('manualLogoUpload')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || currentEditingArticleIndex === -1) return;
+            try {
+                const base64 = await fileToBase64(file);
+                state.articles[currentEditingArticleIndex].logoBase64 = base64;
+                renderArticles();
+                closeLogoArchive();
+                showToast('Logo aggiornato manualmente', 'success');
+            } catch (err) {
+                showToast('Errore file', 'error');
+            }
+        });
+    }
+}
+
+// Logo Archive Functions
+function openLogoArchive(idx) {
+    currentEditingArticleIndex = idx;
+    document.getElementById('logoArchiveModal').classList.remove('hidden');
+    document.getElementById('logoSearchInput').value = '';
+    renderLogoArchive(logoArchive);
+}
+
+function closeLogoArchive() {
+    document.getElementById('logoArchiveModal').classList.add('hidden');
+    currentEditingArticleIndex = -1;
+    document.getElementById('manualLogoUpload').value = '';
+}
+
+function renderLogoArchive(logos) {
+    const grid = document.getElementById('logoGrid');
+    grid.innerHTML = '';
+    if (logos.length === 0) {
+        grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center;">Nessun logo trovato.</p>';
+        return;
+    }
+    
+    logos.forEach(logo => {
+        const div = document.createElement('div');
+        div.style.cssText = 'background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; text-align: center; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px;';
+        div.onmouseover = () => div.style.borderColor = 'var(--accent-primary)';
+        div.onmouseout = () => div.style.borderColor = 'var(--border-color)';
+        div.onclick = () => selectLogoFromArchive(logo.url);
+        
+        div.innerHTML = `
+            <img src="${logo.url}" alt="${logo.name}" style="max-width: 100%; max-height: 40px; object-fit: contain; margin-bottom: 10px;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">${logo.name}</span>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+async function selectLogoFromArchive(url) {
+    if (currentEditingArticleIndex === -1) return;
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const base64 = await fileToBase64(blob);
+        
+        state.articles[currentEditingArticleIndex].logoBase64 = base64;
+        renderArticles();
+        closeLogoArchive();
+        showToast('Logo testata aggiornato', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Errore durante il download del logo', 'error');
     }
 });
