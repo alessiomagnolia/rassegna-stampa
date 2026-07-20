@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-}
+});
 
 // Logo Archive Functions
 function openLogoArchive(idx) {
@@ -727,4 +727,4 @@ async function selectLogoFromArchive(url) {
         console.error(err);
         showToast('Errore durante il download del logo', 'error');
     }
-});
+}
