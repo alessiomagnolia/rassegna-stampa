@@ -199,6 +199,7 @@ function buildPDFHTML(articles, options) {
             
             display: -webkit-box;
             -webkit-box-orient: vertical;
+            overflow: hidden;
             /* -webkit-line-clamp is set inline */
         }
 
@@ -281,7 +282,7 @@ function buildPDFHTML(articles, options) {
         }
 
         // CONTENT ZONE (Takes up all remaining space above the footer)
-        const clampLines = article.imageBase64 ? 14 : 32;
+        const clampLines = article.imageBase64 ? 14 : 28;
         
         html += `
         <div class="content-zone">
