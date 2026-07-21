@@ -33,6 +33,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/pdf', pdfRoutes);
 
+// Proxy endpoint for external images (avoids CORS for logo archive previews)
+const https = require('https');
+const http = require('http');
+app.get('/api/proxy-image', (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).send('Missing url');
+    const protocol = url.startsWith('https') ? https : http;
+    protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (imgRes) => {
+        if (imgRes.statusCode !== 200) return res.status(404).send('Not found');
+        res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/png');
+        imgRes.pipe(res);
+    }).on('error', () => res.status(500).send('Error'));
+});
+
 // Fallback to index.html for SPA if needed (currently using multiple HTML files though)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
