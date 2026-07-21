@@ -1,12 +1,35 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../database/db');
 const { authMiddleware } = require('../middleware/auth');
 const { generatePDF } = require('../services/pdfGenerator');
 
 const router = express.Router();
+
+// Helper: fetch a remote image URL and convert to base64 data URI (server-side, no CORS)
+function fetchImageAsBase64(url) {
+    return new Promise((resolve) => {
+        if (!url) return resolve(null);
+        // If it's already a data URI, return as-is
+        if (url.startsWith('data:')) return resolve(url);
+
+        const protocol = url.startsWith('https') ? https : http;
+        protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
+            if (response.statusCode !== 200) return resolve(null);
+            const chunks = [];
+            response.on('data', chunk => chunks.push(chunk));
+            response.on('end', () => {
+                const buffer = Buffer.concat(chunks);
+                const contentType = response.headers['content-type'] || 'image/png';
+                resolve(`data:${contentType};base64,${buffer.toString('base64')}`);
+            });
+        }).on('error', () => resolve(null));
+    });
+}
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
@@ -31,6 +54,15 @@ router.post('/generate', authMiddleware, async (req, res) => {
             }
         }
 
+        // Resolve all article logos: if a logo is a remote URL, fetch it as base64 server-side
+        const resolvedArticles = await Promise.all(articles.map(async (article) => {
+            if (article.logoBase64 && !article.logoBase64.startsWith('data:')) {
+                const resolved = await fetchImageAsBase64(article.logoBase64);
+                return { ...article, logoBase64: resolved };
+            }
+            return article;
+        }));
+
         const options = {
             title: reviewTitle,
             userName: user?.company_name || 'Utente',
@@ -39,7 +71,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
             userLogo: userLogoBase64
         };
 
-        console.log(`[PDF] Generazione in corso per ${articles.length} articoli...`);
+        console.log(`[PDF] Generazione in corso per ${resolvedArticles.length} articoli...`);
         const date = new Date().toISOString().split('T')[0];
         let baseFilename = 'Rassegna_Stampa';
         if (title && title.trim().length > 0) {
@@ -49,7 +81,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
         const outputPath = path.join(__dirname, '..', 'output', filename);
 
         console.log(`[PDF] Generazione PDF in: ${outputPath}`);
-        const pdfBuffer = await generatePDF(articles, options);
+        const pdfBuffer = await generatePDF(resolvedArticles, options);
         
         fs.writeFileSync(outputPath, pdfBuffer);
 
