@@ -777,8 +777,121 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Errore file', 'error');
             }
         });
+
+        // Multi Link Modal
+        document.getElementById('btnOpenMultiLink')?.addEventListener('click', openMultiLinkModal);
+        document.getElementById('btnCloseMultiLink')?.addEventListener('click', closeMultiLinkModal);
+        document.getElementById('btnCloseMultiLinkDone')?.addEventListener('click', closeMultiLinkModal);
+        document.getElementById('btnStartMultiLink')?.addEventListener('click', startMultiLinkExtraction);
+        document.getElementById('multiLinkTextarea')?.addEventListener('input', updateMultiLinkCount);
     }
 });
+
+// ============================================================
+// MULTI LINK
+// ============================================================
+
+function openMultiLinkModal() {
+    const modal = document.getElementById('multiLinkModal');
+    // Reset to input state
+    document.getElementById('multiLinkInputArea').classList.remove('hidden');
+    document.getElementById('multiLinkProgress').classList.add('hidden');
+    document.getElementById('mlResults').classList.add('hidden');
+    document.getElementById('mlLogList').innerHTML = '';
+    document.getElementById('mlProgressBar').style.width = '0%';
+    document.getElementById('multiLinkTextarea').value = '';
+    document.getElementById('multiLinkCount').textContent = '0 link inseriti';
+    modal.classList.remove('hidden');
+    setTimeout(() => document.getElementById('multiLinkTextarea').focus(), 100);
+}
+
+function closeMultiLinkModal() {
+    document.getElementById('multiLinkModal').classList.add('hidden');
+    // If articles were added, re-render
+    renderArticles();
+}
+
+function updateMultiLinkCount() {
+    const urls = parseMultiLinkUrls();
+    const count = urls.length;
+    document.getElementById('multiLinkCount').textContent =
+        count === 0 ? '0 link inseriti' : `${count} link valido${count === 1 ? '' : 'i'}`;
+}
+
+function parseMultiLinkUrls() {
+    const raw = document.getElementById('multiLinkTextarea').value;
+    return raw.split('\n')
+        .map(l => l.trim())
+        .filter(l => {
+            if (!l) return false;
+            try { new URL(l); return true; } catch { return false; }
+        })
+        .slice(0, 50); // max 50
+}
+
+function mlLog(text, type = 'normal') {
+    const log = document.getElementById('mlLogList');
+    const item = document.createElement('div');
+    item.className = `ml-log-item ml-log-${type}`;
+    item.textContent = text;
+    log.appendChild(item);
+    log.scrollTop = log.scrollHeight;
+}
+
+async function startMultiLinkExtraction() {
+    const urls = parseMultiLinkUrls();
+    if (urls.length === 0) {
+        showToast('Incolla almeno un link valido', 'warning');
+        return;
+    }
+    if (urls.length > 50) {
+        showToast('Massimo 50 link per volta', 'warning');
+        return;
+    }
+
+    // Switch to progress view
+    document.getElementById('multiLinkInputArea').classList.add('hidden');
+    document.getElementById('multiLinkProgress').classList.remove('hidden');
+    document.getElementById('mlResults').classList.add('hidden');
+    document.getElementById('mlLogList').innerHTML = '';
+
+    const total = urls.length;
+    let succeeded = 0;
+    let failed = 0;
+
+    for (let i = 0; i < total; i++) {
+        const url = urls[i];
+        const current = i + 1;
+        const pct = Math.round((i / total) * 100);
+
+        // Update progress UI
+        document.getElementById('mlProgressBar').style.width = `${pct}%`;
+        document.getElementById('mlProgressLabel').textContent = `Estrazione ${current} di ${total}...`;
+        document.getElementById('mlProgressCount').textContent = url.length > 55 ? url.slice(0, 55) + '...' : url;
+
+        try {
+            const article = await apiCall('POST', '/api/articles/extract', { url });
+            state.articles.push(article);
+            succeeded++;
+            mlLog(`✅ ${article.source_name} — ${article.title.slice(0, 60)}${article.title.length > 60 ? '...' : ''}`, 'success');
+        } catch (err) {
+            failed++;
+            const shortUrl = url.length > 55 ? url.slice(0, 55) + '...' : url;
+            mlLog(`❌ Errore: ${shortUrl}`, 'error');
+        }
+    }
+
+    // Done!
+    document.getElementById('mlProgressBar').style.width = '100%';
+    document.getElementById('mlProgressLabel').textContent = 'Estrazione completata!';
+    document.getElementById('mlProgressCount').textContent = '';
+
+    document.getElementById('mlResultTitle').textContent =
+        `${succeeded} articolo${succeeded === 1 ? '' : 'i'} estratto${succeeded === 1 ? '' : 'i'} con successo`;
+    document.getElementById('mlResultSub').textContent =
+        failed > 0 ? `${failed} link non estratto${failed === 1 ? '' : 'i'} (errore server o sito non supportato)` : 'Tutti i link sono stati elaborati correttamente!';
+    document.getElementById('mlResults').classList.remove('hidden');
+}
 
 // Logo Archive Functions
 function openLogoArchive(idx) {
