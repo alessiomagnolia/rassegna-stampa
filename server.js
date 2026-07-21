@@ -28,10 +28,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes = require('./routes/authRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const pdfRoutes = require('./routes/pdfRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');
