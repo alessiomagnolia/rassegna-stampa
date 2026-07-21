@@ -226,7 +226,7 @@
 <!-- TOP NAVBAR -->
 <nav class="editor-navbar">
     <div class="editor-nav-left">
-        <a href="dashboard.html" class="btn btn-outline btn-sm" style="text-decoration:none;">← Dashboard</a>
+        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()">← Dashboard</button>
         <input type="text" id="editorTitle" class="editor-title-input" placeholder="Titolo rassegna...">
         <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
     </div>
@@ -635,12 +635,14 @@ async function generateAndDownload() {
 
         showToast('PDF generato e scaricato!', 'success');
 
-        // Update editor state with new title
-        if (title !== options.title) {
-            options.title = title;
-            hasCover = !!(title);
-            renderPagesList();
-        }
+        // Sync localStorage with latest articles (including any edits made in editor)
+        // so when the user goes back to dashboard, articles are up to date
+        const finalTitle = title || options.title || '';
+        options.title = finalTitle;
+        hasCover = !!(finalTitle);
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        renderPagesList();
+
     } catch (err) {
         showToast(err.message || 'Errore generazione PDF', 'error');
     } finally {
@@ -704,6 +706,18 @@ function initEvents() {
             if (selectedIdx === -1 && !hasCover) selectPage(0);
         }
     });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goBackToDashboard() {
+    // Always sync latest state to localStorage before leaving,
+    // so the dashboard can restore articles automatically.
+    const currentTitle = document.getElementById('editorTitle').value.trim();
+    options.title = currentTitle;
+    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    window.location.href = 'dashboard.html';
 }
 
 // ============================================================

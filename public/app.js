@@ -530,8 +530,10 @@ async function generatePDF() {
         if (clientInput) clientInput.value = '';
         if(document.getElementById('clientLogoInput')) document.getElementById('clientLogoInput').value = '';
         if(document.getElementById('clientLogoPreviewContainer')) document.getElementById('clientLogoPreviewContainer').style.display = 'none';
+        localStorage.removeItem('rs_editor_state'); // clear saved state after successful generation
         renderArticles();
         loadHistory();
+
         
     } catch (error) {
         showToast(error.message, 'error');
@@ -640,6 +642,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dashboard specific
     if (window.location.pathname.includes('dashboard')) {
         loadProfile();
+
+        // ── Restore editor state if coming back from editor ──
+        const savedEditorState = localStorage.getItem('rs_editor_state');
+        if (savedEditorState) {
+            try {
+                const editorState = JSON.parse(savedEditorState);
+                if (editorState.articles && editorState.articles.length > 0) {
+                    state.articles = editorState.articles;
+
+                    // Restore title
+                    const titleInput = document.getElementById('rassegnaTitle');
+                    if (titleInput && editorState.options?.title) {
+                        titleInput.value = editorState.options.title;
+                    }
+
+                    // Restore client name
+                    const clientInput = document.getElementById('clientName');
+                    if (clientInput && editorState.options?.clientName) {
+                        clientInput.value = editorState.options.clientName;
+                    }
+
+                    // Restore client logo
+                    if (editorState.options?.clientLogo) {
+                        state.clientLogoBase64 = editorState.options.clientLogo;
+                        const prev = document.getElementById('clientLogoPreview');
+                        const prevCont = document.getElementById('clientLogoPreviewContainer');
+                        if (prev) prev.src = state.clientLogoBase64;
+                        if (prevCont) prevCont.style.display = 'flex';
+                    }
+
+                    renderArticles();
+                    showToast(`${state.articles.length} articoli ripristinati dall'editor`, 'success');
+                }
+            } catch(e) {
+                localStorage.removeItem('rs_editor_state');
+            }
+        }
         
         document.getElementById('btnLogout').addEventListener('click', () => {
             localStorage.removeItem('rs_token');
