@@ -85,11 +85,12 @@ router.post('/generate', authMiddleware, async (req, res) => {
         
         fs.writeFileSync(outputPath, pdfBuffer);
 
-        // Save to history
+        // Save to history (including full articles JSON for editor reopening)
+        const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count)
-            VALUES (?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, filename, articles.length);
+            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '');
 
         res.json({
             id: info.lastInsertRowid,
@@ -131,8 +132,9 @@ router.get('/history', authMiddleware, (req, res) => {
     try {
         const db = getDb();
         const history = db.prepare(`
-            SELECT id, title, pdf_filename as filename, article_count, created_at,
-                   '/api/pdf/download/' || pdf_filename as downloadUrl
+            SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
+                   '/api/pdf/download/' || pdf_filename as downloadUrl,
+                   CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable
             FROM press_reviews 
             WHERE user_id = ? 
             ORDER BY created_at DESC
@@ -142,6 +144,35 @@ router.get('/history', authMiddleware, (req, res) => {
     } catch (error) {
         console.error('Get history error:', error);
         res.status(500).json({ error: 'Errore nel recupero dello storico.' });
+    }
+});
+
+// GET /review/:id — returns full review data including articles_json (for editor reopen)
+router.get('/review/:id', authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const db = getDb();
+        const review = db.prepare(
+            'SELECT * FROM press_reviews WHERE id = ? AND user_id = ?'
+        ).get(id, req.userId);
+
+        if (!review) {
+            return res.status(404).json({ error: 'Rassegna non trovata.' });
+        }
+
+        let articles = [];
+        try { articles = review.articles_json ? JSON.parse(review.articles_json) : []; } catch {}
+
+        res.json({
+            id: review.id,
+            title: review.title,
+            clientName: review.client_name || '',
+            clientLogo: review.client_logo || '',
+            articles
+        });
+    } catch (error) {
+        console.error('Get review error:', error);
+        res.status(500).json({ error: 'Errore nel recupero della rassegna.' });
     }
 });
 
