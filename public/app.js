@@ -815,7 +815,7 @@ function updateMultiLinkCount() {
     const urls = parseMultiLinkUrls();
     const count = urls.length;
     document.getElementById('multiLinkCount').textContent =
-        count === 0 ? '0 link inseriti' : `${count} link valido${count === 1 ? '' : 'i'}`;
+        count === 0 ? '0 link inseriti' : count === 1 ? '1 link valido' : `${count} link validi`;
 }
 
 function parseMultiLinkUrls() {
@@ -848,6 +848,11 @@ async function startMultiLinkExtraction() {
         showToast('Massimo 50 link per volta', 'warning');
         return;
     }
+
+    // Disable button to prevent double-click duplicates
+    const startBtn = document.getElementById('btnStartMultiLink');
+    startBtn.disabled = true;
+    startBtn.textContent = '⏳ In elaborazione...';
 
     // Switch to progress view
     document.getElementById('multiLinkInputArea').classList.add('hidden');
@@ -889,8 +894,12 @@ async function startMultiLinkExtraction() {
     document.getElementById('mlResultTitle').textContent =
         `${succeeded} articolo${succeeded === 1 ? '' : 'i'} estratto${succeeded === 1 ? '' : 'i'} con successo`;
     document.getElementById('mlResultSub').textContent =
-        failed > 0 ? `${failed} link non estratto${failed === 1 ? '' : 'i'} (errore server o sito non supportato)` : 'Tutti i link sono stati elaborati correttamente!';
+        failed > 0 ? `${failed} link non estratto${failed === 1 ? '' : 'i'} (sito non supportato o bloccato)` : 'Tutti i link sono stati elaborati correttamente!';
     document.getElementById('mlResults').classList.remove('hidden');
+
+    // Re-enable button for potential re-use
+    startBtn.disabled = false;
+    startBtn.textContent = '🚀 Estrai tutti';
 }
 
 // Logo Archive Functions
