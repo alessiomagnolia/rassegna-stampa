@@ -705,8 +705,10 @@ function renderLogoArchive(logos) {
         div.onmouseout = () => div.style.borderColor = 'var(--border-color)';
         div.onclick = () => selectLogoFromArchive(logo.url);
         
+        // Use proxy to load external logo images without CORS issues
+        const proxiedSrc = `/api/proxy-image?url=${encodeURIComponent(logo.url)}`;
         div.innerHTML = `
-            <img src="${logo.url}" alt="${logo.name}" style="max-width: 100%; max-height: 40px; object-fit: contain; margin-bottom: 10px;">
+            <img src="${proxiedSrc}" alt="${logo.name}" style="max-width: 100%; max-height: 40px; object-fit: contain; margin-bottom: 10px;" onerror="this.style.display='none'">
             <span style="font-size: 0.8rem; color: var(--text-secondary);">${logo.name}</span>
         `;
         grid.appendChild(div);
