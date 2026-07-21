@@ -1,26 +1,50 @@
 [
     {
         "name": "Corriere della Sera",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Corriere_della_Sera_logo.svg"
+        "url": "https://www.corriere.it/favicon-180x180.png"
     },
     {
         "name": "La Repubblica",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/La_Repubblica_logo.svg"
+        "url": "https://www.repubblica.it/favicon-180x180.png"
     },
     {
         "name": "Il Sole 24 Ore",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Il_Sole_24_Ore_logo.svg"
+        "url": "https://www.ilsole24ore.com/favicon.ico"
     },
     {
         "name": "La Stampa",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/La_Stampa_logo.svg"
+        "url": "https://www.lastampa.it/favicon-180x180.png"
     },
     {
         "name": "Il Messaggero",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Il_Messaggero_logo.svg"
+        "url": "https://www.ilmessaggero.it/favicon-180x180.png"
     },
     {
         "name": "ANSA",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/ANSA_logo.svg"
+        "url": "https://www.ansa.it/favicon.ico"
+    },
+    {
+        "name": "Il Fatto Quotidiano",
+        "url": "https://www.ilfattoquotidiano.it/favicon.ico"
+    },
+    {
+        "name": "La Gazzetta dello Sport",
+        "url": "https://www.gazzetta.it/favicon.ico"
+    },
+    {
+        "name": "Sky TG24",
+        "url": "https://tg24.sky.it/favicon.ico"
+    },
+    {
+        "name": "Il Giornale",
+        "url": "https://www.ilgiornale.it/favicon.ico"
+    },
+    {
+        "name": "Libero",
+        "url": "https://www.liberoquotidiano.it/favicon.ico"
+    },
+    {
+        "name": "Adnkronos",
+        "url": "https://www.adnkronos.com/favicon.ico"
     }
 ]
