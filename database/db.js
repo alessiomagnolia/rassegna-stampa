@@ -30,10 +30,19 @@ function initDatabase() {
             title TEXT DEFAULT 'Rassegna Stampa',
             pdf_filename TEXT NOT NULL,
             article_count INTEGER DEFAULT 0,
+            articles_json TEXT DEFAULT NULL,
+            client_name TEXT DEFAULT '',
+            client_logo TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     `).run();
+
+    // Safe migrations for existing databases (SQLite doesn't support IF NOT EXISTS on ALTER)
+    const existingCols = db.prepare("PRAGMA table_info(press_reviews)").all().map(c => c.name);
+    if (!existingCols.includes('articles_json')) db.prepare('ALTER TABLE press_reviews ADD COLUMN articles_json TEXT DEFAULT NULL').run();
+    if (!existingCols.includes('client_name'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN client_name TEXT DEFAULT ''").run();
+    if (!existingCols.includes('client_logo'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN client_logo TEXT DEFAULT ''").run();
 
     // Create articles table (if we want to cache/store them later)
     db.prepare(`
