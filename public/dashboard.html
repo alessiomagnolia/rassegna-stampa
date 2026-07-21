@@ -99,62 +99,92 @@
                 <p class="page-subtitle">Aggiungi articoli e genera il tuo PDF professionale</p>
             </div>
 
-            <div class="content-grid">
-                <!-- Setup Card -->
-                <div class="glass-card">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Configurazione</h3>
-
-                    <div class="input-group">
-                        <label for="rassegnaTitle">Titolo Rassegna <span style="color:var(--text-muted)">(opzionale)</span></label>
-                        <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
-                    </div>
-                    <div class="input-group">
-                        <label for="clientName">Nome Cliente <span style="color:var(--text-muted)">(per copertina)</span></label>
-                        <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
-                    </div>
-                    <div class="input-group" style="margin-bottom: 0;">
-                        <label>Logo Cliente <span style="color:var(--text-muted)">(per copertina)</span></label>
-                        <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                        <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer;">📂 Scegli Logo Cliente</label>
-                        <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
-                            <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain; background: white; padding: 4px 8px; border-radius: 4px;" src="">
-                            <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+            <!-- Collapsible Profilo e Branding (same as before) -->
+            <section class="section glass-card profile-section" style="margin-bottom: 2rem;">
+                <div class="section-header" id="toggleProfile">
+                    <h2>⚙️ Profilo e Branding</h2>
+                    <span class="icon-toggle">▼</span>
+                </div>
+                <div class="section-content" id="profileContent" style="display: none;">
+                    <div class="profile-grid">
+                        <div class="profile-form">
+                            <div class="input-group">
+                                <label for="companyName">Nome Azienda</label>
+                                <input type="text" id="companyName">
+                            </div>
+                            <button id="btnSaveProfile" class="btn btn-secondary">Salva Nome</button>
+                        </div>
+                        <div class="logo-upload-area">
+                            <label>Logo Aziendale (Apparirà sui PDF)</label>
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-content">
+                                    <span>📁 Trascina qui il logo o clicca</span>
+                                    <small>PNG, JPG, SVG (Max 5MB)</small>
+                                </div>
+                                <input type="file" id="logoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                            </div>
+                            <div id="logoPreviewContainer" class="logo-preview-container hidden">
+                                <img id="logoPreview" src="" alt="Preview">
+                                <button id="btnRemoveLogo" class="btn btn-danger btn-sm">Rimuovi</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Articles Card -->
-                <div class="glass-card" style="grid-column: 1 / -1;">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Articoli</h3>
+            <!-- Main Feature Section (full width, as before) -->
+            <section class="section glass-card main-feature-section">
+                <h2>📰 Nuova Rassegna Stampa</h2>
 
-                    <div class="add-article-bar">
-                        <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
-                        <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
-                        <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
-                    </div>
+                <div class="input-group rassegna-title-group">
+                    <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
+                    <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+                </div>
 
-                    <div id="extractionLoading" class="loading-state hidden">
-                        <div class="shimmer-card"></div>
-                        <p>Estrazione in corso... (circa 10-15 secondi)</p>
-                    </div>
+                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                    <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
+                    <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
+                </div>
 
-                    <div id="articlesList" class="articles-list">
-                        <div class="empty-state" id="emptyArticles">
-                            Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!
-                        </div>
-                    </div>
-
-                    <div class="generate-actions">
-                        <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
-                            📄 Genera PDF Rassegna
-                        </button>
-                        <div id="generationLoading" class="generation-loading hidden">
-                            <div class="spinner"></div>
-                            <span>Generazione PDF in corso, attendere prego...</span>
-                        </div>
+                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                    <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
+                    <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;">📂 Scegli Logo Cliente</label>
+                    <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
+                        <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
+                        <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
                     </div>
                 </div>
-            </div>
+
+                <div class="add-article-bar">
+                    <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
+                    <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
+                    <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="extractionLoading" class="loading-state hidden">
+                    <div class="shimmer-card"></div>
+                    <p>Estrazione in corso... (circa 10-15 secondi)</p>
+                </div>
+
+                <!-- Articles List -->
+                <div id="articlesList" class="articles-list">
+                    <div class="empty-state" id="emptyArticles">
+                        Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!
+                    </div>
+                </div>
+
+                <div class="generate-actions">
+                    <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
+                        📄 Genera PDF Rassegna
+                    </button>
+                    <div id="generationLoading" class="generation-loading hidden">
+                        <div class="spinner"></div>
+                        <span>Generazione PDF in corso, attendere prego...</span>
+                    </div>
+                </div>
+            </section>
         </div>
 
         <!-- PAGE: PROFILO -->
@@ -163,32 +193,14 @@
                 <h1 class="page-title">👤 Profilo</h1>
                 <p class="page-subtitle">Gestisci i tuoi dati e il branding aziendale</p>
             </div>
-            <div class="glass-card">
-                <div class="profile-grid">
-                    <div class="profile-form">
-                        <div class="input-group">
-                            <label for="companyName">Nome Azienda</label>
-                            <input type="text" id="companyName">
-                        </div>
-                        <button id="btnSaveProfile" class="btn btn-secondary">Salva Nome</button>
-                    </div>
-                    <div class="logo-upload-area">
-                        <label>Logo Aziendale <span style="color:var(--text-muted)">(apparirà sui PDF)</span></label>
-                        <div id="dropZone" class="drop-zone">
-                            <div class="drop-content">
-                                <span>📁 Trascina qui il logo o clicca</span>
-                                <small>PNG, JPG, SVG (Max 5MB)</small>
-                            </div>
-                            <input type="file" id="logoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                        </div>
-                        <div id="logoPreviewContainer" class="logo-preview-container hidden">
-                            <img id="logoPreview" src="" alt="Preview">
-                            <button id="btnRemoveLogo" class="btn btn-danger btn-sm">Rimuovi</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">👤</div>
+                <h2>Vai su "Nuova Rassegna"</h2>
+                <p>Per modificare il nome azienda e caricare il logo, apri il pannello <strong>⚙️ Profilo e Branding</strong> nella pagina principale. In futuro, questa sezione sarà dedicata ad una gestione completa del tuo profilo e delle preferenze.</p>
+                <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="document.querySelector('[data-page=rassegna]').click()">← Vai alla pagina principale</button>
             </div>
         </div>
+
 
         <!-- PAGE: STORICO -->
         <div id="page-storico" class="page-view">
