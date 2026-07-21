@@ -14,8 +14,14 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <nav class="navbar glass-card">
-        <div class="nav-brand">📰 Rassegna Stampa</div>
+    <!-- ===== TOP NAVBAR ===== -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="nav-brand">📰 Rassegna Stampa</div>
+        </div>
         <div class="nav-user">
             <div id="navCompany" class="nav-company">Caricamento...</div>
             <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
@@ -23,14 +29,141 @@
         </div>
     </nav>
 
-    <main class="container dashboard-container">
-        <!-- Settings Section -->
-        <section class="section glass-card profile-section">
-            <div class="section-header" id="toggleProfile">
-                <h2>⚙️ Profilo e Branding</h2>
-                <span class="icon-toggle">▼</span>
+    <!-- ===== SIDEBAR ===== -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-inner">
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-item active" data-page="rassegna">
+                    <span class="sidebar-icon">📰</span>
+                    <span class="sidebar-label">Nuova Rassegna</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="profilo">
+                    <span class="sidebar-icon">👤</span>
+                    <span class="sidebar-label">Profilo</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="storico">
+                    <span class="sidebar-icon">📚</span>
+                    <span class="sidebar-label">Storico Rassegne</span>
+                </a>
+
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-section-label">Strumenti AI</div>
+
+                <a href="#" class="sidebar-item sidebar-item--soon" data-page="comunicati">
+                    <span class="sidebar-icon">📣</span>
+                    <span class="sidebar-label">Comunicati Stampa</span>
+                    <span class="soon-badge">Presto</span>
+                </a>
+                <a href="#" class="sidebar-item sidebar-item--soon" data-page="linkedin">
+                    <span class="sidebar-icon">💼</span>
+                    <span class="sidebar-label">Post LinkedIn</span>
+                    <span class="soon-badge">Presto</span>
+                </a>
+
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-section-label">Gestione</div>
+
+                <a href="#" class="sidebar-item" data-page="archivio">
+                    <span class="sidebar-icon">🗃️</span>
+                    <span class="sidebar-label">Il mio Archivio</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="impostazioni">
+                    <span class="sidebar-icon">⚙️</span>
+                    <span class="sidebar-label">Impostazioni</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="contatti">
+                    <span class="sidebar-icon">✉️</span>
+                    <span class="sidebar-label">Contatti</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user-info">
+                    <div id="sidebarCompany" class="sidebar-username">—</div>
+                    <div class="sidebar-plan">Piano Base</div>
+                </div>
             </div>
-            <div class="section-content" id="profileContent" style="display: none;">
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="mainContent" class="main-content">
+
+        <!-- PAGE: NUOVA RASSEGNA -->
+        <div id="page-rassegna" class="page-view active">
+            <div class="page-header">
+                <h1 class="page-title">📰 Nuova Rassegna Stampa</h1>
+                <p class="page-subtitle">Aggiungi articoli e genera il tuo PDF professionale</p>
+            </div>
+
+            <div class="content-grid">
+                <!-- Setup Card -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Configurazione</h3>
+
+                    <div class="input-group">
+                        <label for="rassegnaTitle">Titolo Rassegna <span style="color:var(--text-muted)">(opzionale)</span></label>
+                        <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+                    </div>
+                    <div class="input-group">
+                        <label for="clientName">Nome Cliente <span style="color:var(--text-muted)">(per copertina)</span></label>
+                        <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Logo Cliente <span style="color:var(--text-muted)">(per copertina)</span></label>
+                        <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                        <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer;">📂 Scegli Logo Cliente</label>
+                        <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
+                            <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain; background: white; padding: 4px 8px; border-radius: 4px;" src="">
+                            <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Articles Card -->
+                <div class="glass-card" style="grid-column: 1 / -1;">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Articoli</h3>
+
+                    <div class="add-article-bar">
+                        <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
+                        <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
+                        <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
+                    </div>
+
+                    <div id="extractionLoading" class="loading-state hidden">
+                        <div class="shimmer-card"></div>
+                        <p>Estrazione in corso... (circa 10-15 secondi)</p>
+                    </div>
+
+                    <div id="articlesList" class="articles-list">
+                        <div class="empty-state" id="emptyArticles">
+                            Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!
+                        </div>
+                    </div>
+
+                    <div class="generate-actions">
+                        <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
+                            📄 Genera PDF Rassegna
+                        </button>
+                        <div id="generationLoading" class="generation-loading hidden">
+                            <div class="spinner"></div>
+                            <span>Generazione PDF in corso, attendere prego...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: PROFILO -->
+        <div id="page-profilo" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">👤 Profilo</h1>
+                <p class="page-subtitle">Gestisci i tuoi dati e il branding aziendale</p>
+            </div>
+            <div class="glass-card">
                 <div class="profile-grid">
                     <div class="profile-form">
                         <div class="input-group">
@@ -39,9 +172,8 @@
                         </div>
                         <button id="btnSaveProfile" class="btn btn-secondary">Salva Nome</button>
                     </div>
-                    
                     <div class="logo-upload-area">
-                        <label>Logo Aziendale (Apparirà sui PDF)</label>
+                        <label>Logo Aziendale <span style="color:var(--text-muted)">(apparirà sui PDF)</span></label>
                         <div id="dropZone" class="drop-zone">
                             <div class="drop-content">
                                 <span>📁 Trascina qui il logo o clicca</span>
@@ -56,76 +188,87 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- New Review Section -->
-        <section class="section glass-card main-feature-section">
-            <h2>📰 Nuova Rassegna Stampa</h2>
-            
-            <div class="input-group rassegna-title-group">
-                <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
-                <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+        <!-- PAGE: STORICO -->
+        <div id="page-storico" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">📚 Storico Rassegne</h1>
+                <p class="page-subtitle">Le tue rassegne generate negli ultimi 30 giorni</p>
             </div>
-
-            <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
-                <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
-            </div>
-
-            <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
-                <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;">📂 Scegli Logo Cliente</label>
-                <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
-                    <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
-                    <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+            <div class="glass-card">
+                <div id="historyList" class="history-list">
+                    <div class="empty-state">Caricamento storico...</div>
                 </div>
             </div>
+        </div>
 
-            <div class="add-article-bar">
-                <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
-                <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
-                <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
+        <!-- PAGE: COMUNICATI (placeholder) -->
+        <div id="page-comunicati" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">📣 Genera Comunicati Stampa</h1>
+                <p class="page-subtitle">Crea comunicati stampa professionali con l'intelligenza artificiale</p>
             </div>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">🚀</div>
+                <h2>In arrivo</h2>
+                <p>Questa funzionalità è in sviluppo. Potrai generare comunicati stampa professionali a partire da semplici brief testuali.</p>
+            </div>
+        </div>
 
-            <!-- Loading State -->
-            <div id="extractionLoading" class="loading-state hidden">
-                <div class="shimmer-card"></div>
-                <p>Estrazione in corso... (circa 10-15 secondi)</p>
+        <!-- PAGE: LINKEDIN (placeholder) -->
+        <div id="page-linkedin" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">💼 Genera Post LinkedIn</h1>
+                <p class="page-subtitle">Trasforma le notizie in contenuti LinkedIn pronti alla pubblicazione</p>
             </div>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">💡</div>
+                <h2>In arrivo</h2>
+                <p>Questa funzionalità è in sviluppo. Potrai convertire articoli e rassegne in post LinkedIn ottimizzati per il tuo pubblico.</p>
+            </div>
+        </div>
 
-            <!-- Articles List -->
-            <div id="articlesList" class="articles-list">
-                <!-- Cards will be injected here by JS -->
-                <div class="empty-state" id="emptyArticles">
-                    Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!
-                </div>
+        <!-- PAGE: ARCHIVIO (placeholder) -->
+        <div id="page-archivio" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">🗃️ Il mio Archivio Loghi</h1>
+                <p class="page-subtitle">I loghi delle testate e dei tuoi clienti, sempre a portata di mano</p>
             </div>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">🗂️</div>
+                <h2>In arrivo</h2>
+                <p>Potrai caricare e organizzare i loghi delle testate giornalistiche e dei tuoi clienti, disponibili in ogni rassegna con un solo click.</p>
+            </div>
+        </div>
 
-            <div class="generate-actions">
-                <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
-                    📄 Genera PDF Rassegna
-                </button>
-                <div id="generationLoading" class="generation-loading hidden">
-                    <div class="spinner"></div>
-                    <span>Generazione PDF in corso, attendere prego...</span>
-                </div>
+        <!-- PAGE: IMPOSTAZIONI (placeholder) -->
+        <div id="page-impostazioni" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">⚙️ Impostazioni</h1>
+                <p class="page-subtitle">Personalizza la piattaforma secondo le tue preferenze</p>
             </div>
-        </section>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">⚙️</div>
+                <h2>In arrivo</h2>
+                <p>Qui potrai personalizzare le impostazioni della piattaforma: notifiche, preferenze PDF, lingua e altro.</p>
+            </div>
+        </div>
 
-        <!-- History Section -->
-        <section class="section glass-card history-section">
-            <h2>📚 Storico Rassegne</h2>
-            <div id="historyList" class="history-list">
-                <!-- History items injected here -->
-                <div class="empty-state">Caricamento storico...</div>
+        <!-- PAGE: CONTATTI (placeholder) -->
+        <div id="page-contatti" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">✉️ Contatti</h1>
+                <p class="page-subtitle">Hai bisogno di aiuto? Siamo qui per te</p>
             </div>
-        </section>
+            <div class="glass-card coming-soon-card">
+                <div class="coming-soon-icon">💬</div>
+                <h2>Supporto</h2>
+                <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
+            </div>
+        </div>
+
     </main>
-
-    <footer class="app-footer">
-        <p>Rassegna Stampa Generator &copy; 2026</p>
-    </footer>
 
     <div id="toastContainer" class="toast-container"></div>
 
@@ -136,18 +279,15 @@
                 <h3>📝 Inserimento Articolo Manuale</h3>
                 <button id="btnCloseManual" class="btn-icon">✖</button>
             </div>
-            
             <div class="form-grid">
                 <div class="input-group">
                     <label>Titolo Articolo *</label>
                     <input type="text" id="manualTitle" placeholder="Titolo della notizia" required>
                 </div>
-                
                 <div class="input-group">
                     <label>Testo Articolo *</label>
                     <textarea id="manualText" rows="6" placeholder="Incolla qui il testo dell'articolo..." required></textarea>
                 </div>
-                
                 <div class="input-group" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Nome Fonte *</label>
@@ -165,7 +305,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="input-group" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Data Pubblicazione *</label>
@@ -176,17 +315,14 @@
                         <input type="url" id="manualUrl" placeholder="https://...">
                     </div>
                 </div>
-
                 <div class="input-group">
                     <label>Immagine Principale (opzionale)</label>
                     <input type="file" id="manualImage" accept="image/*">
                 </div>
-
                 <div class="input-group">
                     <label>Logo Testata (opzionale)</label>
                     <input type="file" id="manualLogo" accept="image/*">
                 </div>
-                
                 <button id="btnSaveManual" class="btn btn-primary btn-large" style="width: 100%; margin-top: 20px;">💾 Salva Articolo Manuale</button>
             </div>
         </div>
@@ -199,15 +335,11 @@
                 <h3 style="margin:0;">Archivio Loghi Testate</h3>
                 <button id="btnCloseLogoArchive" class="btn-icon" style="font-size: 1.5rem;">&times;</button>
             </div>
-            
             <div class="input-group">
                 <input type="text" id="logoSearchInput" placeholder="🔍 Cerca nome testata (es. Corriere)..." style="font-size: 1.1rem; padding: 1rem;">
             </div>
-
             <div id="logoGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                <!-- Logos injected here -->
             </div>
-
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; text-align: center;">
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Non trovi la testata? Caricala dal tuo PC.</p>
                 <input type="file" id="manualLogoUpload" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
@@ -216,14 +348,52 @@
         </div>
     </div>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
     <script>
-        // Specific logic for dashboard.html auth check
+        // Auth check
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('rs_token');
-            if (!token) {
+            if (!localStorage.getItem('rs_token')) {
                 window.location.href = 'index.html';
             }
+        });
+
+        // ---- SIDEBAR LOGIC ----
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const mainContent = document.getElementById('mainContent');
+        const toggleBtn = document.getElementById('btnToggleSidebar');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('visible');
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+        }
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        });
+        overlay.addEventListener('click', closeSidebar);
+
+        // ---- PAGE NAVIGATION ----
+        document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.dataset.page;
+
+                // Update active state
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                // Show correct page
+                document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+                const target = document.getElementById('page-' + page);
+                if (target) target.classList.add('active');
+
+                // On mobile, close sidebar after navigation
+                if (window.innerWidth < 900) closeSidebar();
+            });
         });
     </script>
 </body>

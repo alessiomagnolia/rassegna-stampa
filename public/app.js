@@ -161,6 +161,11 @@ function updateProfileUI() {
 
     // Navbar
     document.getElementById('navCompany').innerText = user.company_name || user.email;
+    
+    // Sidebar footer
+    const sidebarCompany = document.getElementById('sidebarCompany');
+    if (sidebarCompany) sidebarCompany.textContent = user.company_name || user.email;
+
     if (user.logo_path) {
         const navLogo = document.getElementById('navLogo');
         navLogo.src = user.logo_path;
