@@ -176,8 +176,11 @@
                 </div>
 
                 <div class="generate-actions">
-                    <button id="btnGeneratePDF" class="btn btn-primary btn-large btn-gradient hidden">
-                        📄 Genera PDF Rassegna
+                    <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden">
+                        ✏️ Anteprima ed Edita
+                    </button>
+                    <button id="btnGeneratePDF" class="btn btn-secondary btn-large hidden" style="margin-top: 0.75rem;">
+                        📄 Genera e Scarica subito
                     </button>
                     <div id="generationLoading" class="generation-loading hidden">
                         <div class="spinner"></div>
@@ -360,7 +363,8 @@
         </div>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="app.js?v=5"></script>
     <script>
         // Auth check
         document.addEventListener('DOMContentLoaded', () => {

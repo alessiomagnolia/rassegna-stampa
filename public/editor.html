@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Rassegna | Rassegna Stampa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <style>
+        /* ============ EDITOR LAYOUT ============ */
+        body { overflow: hidden; }
+        
+        .editor-navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 60px; z-index: 200;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem; gap: 1rem;
+            background: rgba(10,10,26,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .editor-nav-left { display: flex; align-items: center; gap: 1rem; }
+        .editor-title-input {
+            background: transparent; border: none;
+            color: var(--text-primary); font-family: var(--font-sans);
+            font-size: 1rem; font-weight: 600;
+            padding: 4px 8px; border-radius: 6px;
+            border: 1px solid transparent;
+            transition: var(--transition); min-width: 280px;
+        }
+        .editor-title-input:focus {
+            outline: none; border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.05);
+        }
+        .editor-article-count {
+            font-size: 0.8rem; color: var(--text-muted);
+            background: rgba(255,255,255,0.06); padding: 3px 10px;
+            border-radius: 20px; border: 1px solid var(--border-color);
+        }
+
+        /* ============ EDITOR BODY ============ */
+        .editor-body {
+            display: flex; height: 100vh; padding-top: 60px;
+        }
+
+        /* --- Left Panel: Page List --- */
+        .pages-panel {
+            width: 220px; flex-shrink: 0;
+            background: rgba(10,10,26,0.8); border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 1rem 0.75rem;
+        }
+        .pages-panel-label {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted);
+            margin-bottom: 0.75rem; padding: 0 0.25rem;
+        }
+        .page-thumb {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.6rem 0.75rem; border-radius: 8px;
+            cursor: pointer; margin-bottom: 4px;
+            border: 1px solid transparent;
+            transition: var(--transition); position: relative;
+        }
+        .page-thumb:hover { background: rgba(255,255,255,0.06); border-color: var(--border-color); }
+        .page-thumb.active { background: rgba(124,92,255,0.15); border-color: var(--accent-primary); }
+        .page-thumb-drag { cursor: grab; color: var(--text-muted); font-size: 1rem; flex-shrink: 0; }
+        .page-thumb-drag:active { cursor: grabbing; }
+        .page-thumb-info { flex: 1; min-width: 0; }
+        .page-thumb-num {
+            font-size: 0.65rem; color: var(--text-muted);
+            font-weight: 700; margin-bottom: 2px;
+        }
+        .page-thumb-title {
+            font-size: 0.78rem; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        .page-thumb.active .page-thumb-title { color: var(--accent-primary); }
+        .page-thumb-source {
+            font-size: 0.65rem; color: var(--text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        /* SortableJS ghost/chosen */
+        .page-thumb.sortable-ghost { opacity: 0.3; }
+        .page-thumb.sortable-chosen { background: rgba(124,92,255,0.2) !important; }
+
+        /* --- Center: Preview --- */
+        .preview-area {
+            flex: 1; overflow-y: auto;
+            display: flex; flex-direction: column;
+            align-items: center; padding: 2rem 1rem;
+            background: #1a1a2a;
+        }
+        .preview-wrapper {
+            position: relative; width: 100%; max-width: 760px;
+        }
+        .preview-edit-btn {
+            position: absolute; top: 1rem; right: 1rem; z-index: 10;
+            background: rgba(124,92,255,0.9); color: white;
+            border: none; border-radius: 8px; padding: 8px 16px;
+            font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: var(--transition);
+        }
+        .preview-edit-btn:hover { background: var(--accent-primary); box-shadow: 0 0 15px rgba(124,92,255,0.5); }
+
+        /* ============ PDF PAGE PREVIEW STYLES ============ */
+        /* These mirror the PDF template CSS to show accurate preview */
+        .pdf-page-preview {
+            width: 100%; aspect-ratio: 210/297;
+            background: white; color: #333;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            position: relative; overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            padding: 5.7% 5.7%;
+        }
+        .pdf-header {
+            flex: 0 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 1.9%; min-height: 9.4%;
+            background: #f8f9fa;
+            border-bottom: 3px solid transparent;
+            border-image: linear-gradient(to right, #7c5cff, #00d4aa) 1;
+            margin-bottom: 3.8%;
+        }
+        .pdf-header-left { width: 55%; display: flex; align-items: center; }
+        .pdf-header-right { width: 45%; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 3px; font-size: clamp(6px, 1.2vw, 11pt); color: #666; }
+        .pdf-source-logo { max-height: 7%; max-width: 100%; object-fit: contain; }
+        .pdf-source-name { font-size: clamp(8px, 1.8vw, 16pt); font-weight: 700; color: #1a1a2e; }
+        .pdf-badge { display: inline-block; background: #eef2f5; color: #555; padding: 2px 6px; border-radius: 4px; font-size: clamp(5px, 0.9vw, 7pt); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pdf-title-zone { flex: 0 0 auto; padding: 0 1.9%; margin-bottom: 3%; border-left: 4px solid #7c5cff; }
+        .pdf-source-label { font-size: clamp(5px, 0.9vw, 8pt); color: #888; font-weight: 600; text-transform: uppercase; margin-bottom: 0.75%; letter-spacing: 0.5px; }
+        .pdf-article-title { font-size: clamp(9px, 2.2vw, 20pt); font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+        .pdf-visual-zone { flex: 0 0 auto; margin: 0 1.9% 3.8%; max-height: 26%; overflow: hidden; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; }
+        .pdf-main-visual { width: 100%; max-height: 100%; object-fit: cover; display: block; }
+        .pdf-content-zone { flex: 1 1 auto; padding: 0 1.9%; margin-bottom: 1.9%; overflow: hidden; }
+        .pdf-content-text { font-size: clamp(7px, 1.2vw, 11pt); line-height: 1.6; color: #333; text-align: justify; font-family: 'Times New Roman', Times, serif; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 20; }
+        .pdf-footer { flex: 0 0 3.8%; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e0e0e0; padding-top: 1%; padding-left: 1.9%; padding-right: 1.9%; font-size: clamp(5px, 0.9vw, 9pt); color: #888; }
+        .pdf-footer-link { color: #0066CC; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Cover page preview */
+        .pdf-cover-preview {
+            width: 100%; aspect-ratio: 210/297;
+            background: white; color: #333;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            position: relative; overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            padding: 7.5% 7.5%;
+            text-align: center;
+        }
+        .pdf-cover-top { height: 22%; display: flex; align-items: flex-start; justify-content: center; }
+        .pdf-cover-client-logo { max-width: 60%; max-height: 100%; object-fit: contain; }
+        .pdf-cover-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .pdf-cover-title { font-size: clamp(14px, 3.5vw, 38pt); font-weight: 700; color: #1a1a2e; margin-bottom: 3%; line-height: 1.2; }
+        .pdf-cover-decor { width: 12%; height: 3px; background: linear-gradient(90deg, #7c5cff, #00d4aa); margin: 3% auto 4%; border-radius: 2px; }
+        .pdf-cover-subtitle { font-size: clamp(8px, 1.8vw, 18pt); color: #555; font-family: 'Times New Roman', Times, serif; font-style: italic; margin-bottom: 2%; }
+        .pdf-cover-date { font-size: clamp(6px, 1.3vw, 14pt); color: #888; letter-spacing: 2px; text-transform: uppercase; }
+        .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
+        .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
+
+        /* ============ RIGHT EDIT PANEL ============ */
+        .edit-panel {
+            position: fixed; top: 60px; right: 0; bottom: 0;
+            width: 400px; z-index: 150;
+            background: rgba(12,12,28,0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .edit-panel.open { transform: translateX(0); }
+        .edit-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .edit-panel-header h3 { font-size: 1rem; margin: 0; }
+        .edit-panel-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .edit-panel-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+
+        .edit-field { margin-bottom: 1.25rem; }
+        .edit-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
+        .edit-field input[type="text"],
+        .edit-field input[type="url"],
+        .edit-field input[type="date"],
+        .edit-field select,
+        .edit-field textarea {
+            width: 100%; padding: 0.65rem 0.9rem;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-primary);
+            font-family: inherit; font-size: 0.9rem; transition: var(--transition);
+        }
+        .edit-field textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+        .edit-field input:focus, .edit-field textarea:focus, .edit-field select:focus {
+            outline: none; border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(124,92,255,0.2);
+        }
+        .edit-image-preview {
+            width: 100%; height: 80px; object-fit: cover; border-radius: 6px;
+            border: 1px solid var(--border-color); margin-bottom: 0.5rem;
+        }
+        .edit-logo-preview {
+            max-height: 40px; max-width: 100%; object-fit: contain;
+            background: white; padding: 4px 8px; border-radius: 4px;
+            margin-bottom: 0.5rem; display: block;
+        }
+        .edit-remove-btn { font-size: 0.75rem; color: var(--danger); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+        .edit-remove-btn:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="bg-animation">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<!-- TOP NAVBAR -->
+<nav class="editor-navbar">
+    <div class="editor-nav-left">
+        <a href="dashboard.html" class="btn btn-outline btn-sm" style="text-decoration:none;">← Dashboard</a>
+        <input type="text" id="editorTitle" class="editor-title-input" placeholder="Titolo rassegna...">
+        <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
+    </div>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+        <button id="btnGeneratePDF" class="btn btn-gradient">📄 Genera e Scarica PDF</button>
+        <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
+            <div class="spinner" style="width:18px;height:18px;"></div> Generazione...
+        </div>
+    </div>
+</nav>
+
+<!-- EDITOR BODY -->
+<div class="editor-body">
+
+    <!-- LEFT: Pages List -->
+    <aside class="pages-panel">
+        <div class="pages-panel-label">Pagine</div>
+        <div id="pagesList"><!-- injected --></div>
+    </aside>
+
+    <!-- CENTER: Preview -->
+    <div class="preview-area" id="previewArea">
+        <div class="preview-wrapper" id="previewWrapper">
+            <button class="preview-edit-btn" id="btnEditPage">✏️ Modifica questa pagina</button>
+            <div id="pagePreviewContent"><!-- injected --></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- RIGHT: Edit Panel -->
+<div class="edit-panel" id="editPanel">
+    <div class="edit-panel-header">
+        <h3>✏️ Modifica articolo</h3>
+        <button class="btn-icon" id="btnCloseEditPanel">✖</button>
+    </div>
+    <div class="edit-panel-body">
+        <div class="edit-field">
+            <label>Titolo *</label>
+            <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
+        </div>
+        <div class="edit-field">
+            <label>Testo / Estratto *</label>
+            <textarea id="editExcerpt" placeholder="Testo dell'articolo..."></textarea>
+        </div>
+        <div class="edit-field" style="display:flex;gap:10px;">
+            <div style="flex:1;">
+                <label>Fonte</label>
+                <input type="text" id="editSourceName" placeholder="es. Corriere della Sera">
+            </div>
+            <div style="flex:1;">
+                <label>Tipologia</label>
+                <select id="editSourceType">
+                    <option value="Web">Web</option>
+                    <option value="Quotidiano Nazionale">Quotidiano Naz.</option>
+                    <option value="Quotidiano Locale">Quotidiano Loc.</option>
+                    <option value="Agenzia di Stampa">Agenzia</option>
+                    <option value="Periodico">Periodico</option>
+                    <option value="Radio/TV">Radio/TV</option>
+                </select>
+            </div>
+        </div>
+        <div class="edit-field">
+            <label>Data Pubblicazione</label>
+            <input type="text" id="editDate" placeholder="es. 21/07/2026">
+        </div>
+        <div class="edit-field">
+            <label>Link articolo</label>
+            <input type="url" id="editUrl" placeholder="https://...">
+        </div>
+
+        <!-- Image -->
+        <div class="edit-field">
+            <label>Immagine principale</label>
+            <div id="editImagePreviewContainer" class="hidden">
+                <img id="editImagePreview" class="edit-image-preview" src="" alt="">
+                <button class="edit-remove-btn" onclick="removeEditImage()">✕ Rimuovi immagine</button>
+            </div>
+            <input type="file" id="editImageInput" accept="image/*" class="hidden">
+            <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;">🖼️ Cambia immagine</label>
+        </div>
+
+        <!-- Logo -->
+        <div class="edit-field">
+            <label>Logo testata</label>
+            <div id="editLogoPreviewContainer" class="hidden">
+                <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
+                <button class="edit-remove-btn" onclick="removeEditLogo()">✕ Rimuovi logo</button>
+            </div>
+            <input type="file" id="editLogoInput" accept="image/*" class="hidden">
+            <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;">🏷️ Cambia logo</label>
+        </div>
+    </div>
+    <div class="edit-panel-footer">
+        <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit">💾 Salva modifiche</button>
+    </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let articles = [];
+let options = { title: '', clientName: '', clientLogo: '' };
+let selectedIdx = 0; // currently previewed article index (0 = cover if title exists)
+let hasCover = false;
+const token = localStorage.getItem('rs_token');
+
+if (!token) { window.location.href = 'index.html'; }
+
+// ============================================================
+// LOAD STATE
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const raw = localStorage.getItem('rs_editor_state');
+    if (!raw) { alert('Nessun dato trovato. Torna alla dashboard.'); window.location.href = 'dashboard.html'; return; }
+    
+    try {
+        const state = JSON.parse(raw);
+        articles = state.articles || [];
+        options = state.options || {};
+    } catch {
+        alert('Errore caricamento dati. Torna alla dashboard.');
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
+    hasCover = !!(options.title && options.title.trim());
+    document.getElementById('editorTitle').value = options.title || '';
+    document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
+
+    renderPagesList();
+    selectPage(0);
+    initSortable();
+    initEvents();
+});
+
+// ============================================================
+// RENDER LEFT PANEL
+// ============================================================
+function renderPagesList() {
+    const container = document.getElementById('pagesList');
+    container.innerHTML = '';
+
+    // Cover page thumb (if title set)
+    if (hasCover) {
+        const el = document.createElement('div');
+        el.className = 'page-thumb' + (selectedIdx === -1 ? ' active' : '');
+        el.dataset.coverPage = '1';
+        el.innerHTML = `
+            <div class="page-thumb-info">
+                <div class="page-thumb-num">COPERTINA</div>
+                <div class="page-thumb-title">${escHtml(options.title)}</div>
+            </div>`;
+        el.addEventListener('click', () => selectPage(-1));
+        container.appendChild(el);
+    }
+
+    // Article page thumbs
+    articles.forEach((art, idx) => {
+        const el = document.createElement('div');
+        el.className = 'page-thumb' + (selectedIdx === idx ? ' active' : '');
+        el.dataset.idx = idx;
+        el.innerHTML = `
+            <span class="page-thumb-drag" title="Trascina per riordinare">⠿</span>
+            <div class="page-thumb-info">
+                <div class="page-thumb-num">PAG ${hasCover ? idx + 2 : idx + 1}</div>
+                <div class="page-thumb-title">${escHtml(art.title)}</div>
+                <div class="page-thumb-source">${escHtml(art.source_name || '')}</div>
+            </div>`;
+        el.addEventListener('click', () => selectPage(idx));
+        container.appendChild(el);
+    });
+}
+
+// ============================================================
+// SELECT & PREVIEW PAGE
+// ============================================================
+function selectPage(idx) {
+    selectedIdx = idx;
+    
+    // Update active thumb
+    document.querySelectorAll('.page-thumb').forEach(el => el.classList.remove('active'));
+    if (idx === -1) {
+        document.querySelector('[data-cover-page]')?.classList.add('active');
+    } else {
+        document.querySelector(`[data-idx="${idx}"]`)?.classList.add('active');
+    }
+
+    // Render preview
+    const previewEl = document.getElementById('pagePreviewContent');
+    const editBtn = document.getElementById('btnEditPage');
+    
+    if (idx === -1) {
+        // Cover
+        previewEl.innerHTML = renderCoverPreview();
+        editBtn.style.display = 'none';
+    } else {
+        const total = articles.length;
+        const pageNum = hasCover ? idx + 2 : idx + 1;
+        const totalPages = hasCover ? total + 1 : total;
+        previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
+        editBtn.style.display = 'block';
+    }
+}
+
+// ============================================================
+// PREVIEW RENDERERS
+// ============================================================
+function renderCoverPreview() {
+    const today = new Date();
+    const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+    return `
+    <div class="pdf-cover-preview">
+        <div class="pdf-cover-top">
+            ${options.clientLogo ? `<img src="${options.clientLogo}" class="pdf-cover-client-logo" alt="Logo Cliente">` : ''}
+        </div>
+        <div class="pdf-cover-center">
+            <div class="pdf-cover-title">${escHtml(options.title || 'Rassegna Stampa')}</div>
+            <div class="pdf-cover-decor"></div>
+            ${options.clientName ? `<div class="pdf-cover-subtitle">${escHtml(options.clientName)}</div>` : ''}
+            <div class="pdf-cover-date">${dateStr}</div>
+        </div>
+        <div class="pdf-cover-bottom">
+        </div>
+    </div>`;
+}
+
+function renderArticlePreview(art, pageNum, totalPages) {
+    if (!art) return '';
+    return `
+    <div class="pdf-page-preview">
+        <div class="pdf-header">
+            <div class="pdf-header-left">
+                ${art.logoBase64
+                    ? `<img src="${art.logoBase64}" class="pdf-source-logo" alt="Logo">`
+                    : `<div class="pdf-source-name">${escHtml(art.source_name || '')}</div>`}
+            </div>
+            <div class="pdf-header-right">
+                <span>${escHtml(art.published_date || '')}</span>
+                <span class="pdf-badge">${escHtml(art.source_type || 'Web')}</span>
+            </div>
+        </div>
+        <div class="pdf-title-zone">
+            <div class="pdf-source-label">${escHtml(art.source_name || '')}</div>
+            <div class="pdf-article-title">${escHtml(art.title || '')}</div>
+        </div>
+        ${art.imageBase64 ? `
+        <div class="pdf-visual-zone">
+            <img src="${art.imageBase64}" class="pdf-main-visual" alt="Immagine">
+        </div>` : ''}
+        <div class="pdf-content-zone">
+            <div class="pdf-content-text">${escHtml(art.excerpt || '')}</div>
+        </div>
+        <div class="pdf-footer">
+            <span class="pdf-footer-link">${escHtml(art.url || '')}</span>
+            <span>Pagina ${pageNum} di ${totalPages}</span>
+        </div>
+    </div>`;
+}
+
+// ============================================================
+// SORTABLEJS — Drag & Drop Pages
+// ============================================================
+function initSortable() {
+    const list = document.getElementById('pagesList');
+    Sortable.create(list, {
+        handle: '.page-thumb-drag',
+        animation: 200,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        filter: '[data-cover-page]', // cover can't be dragged
+        onEnd(evt) {
+            // Convert DOM index → articles index (accounting for cover thumb offset)
+            const coverOffset = hasCover ? 1 : 0;
+            const oldIdx = evt.oldIndex - coverOffset;
+            const newIdx = evt.newIndex - coverOffset;
+            if (oldIdx < 0 || newIdx < 0 || oldIdx === newIdx) return;
+
+            // Reorder articles array
+            const [moved] = articles.splice(oldIdx, 1);
+            articles.splice(newIdx, 0, moved);
+
+            // Update selectedIdx
+            if (selectedIdx === oldIdx) selectedIdx = newIdx;
+            else if (selectedIdx > oldIdx && selectedIdx <= newIdx) selectedIdx--;
+            else if (selectedIdx < oldIdx && selectedIdx >= newIdx) selectedIdx++;
+
+            renderPagesList();
+            selectPage(selectedIdx);
+        }
+    });
+}
+
+// ============================================================
+// EDIT PANEL
+// ============================================================
+let editingIdx = -1;
+
+function openEditPanel(idx) {
+    editingIdx = idx;
+    const art = articles[idx];
+    
+    document.getElementById('editTitle').value = art.title || '';
+    document.getElementById('editExcerpt').value = art.excerpt || '';
+    document.getElementById('editSourceName').value = art.source_name || '';
+    document.getElementById('editSourceType').value = art.source_type || 'Web';
+    document.getElementById('editDate').value = art.published_date || '';
+    document.getElementById('editUrl').value = art.url || '';
+
+    // Image
+    const imgPrev = document.getElementById('editImagePreview');
+    const imgPrevCont = document.getElementById('editImagePreviewContainer');
+    if (art.imageBase64) {
+        imgPrev.src = art.imageBase64;
+        imgPrevCont.classList.remove('hidden');
+    } else {
+        imgPrevCont.classList.add('hidden');
+        imgPrev.src = '';
+    }
+
+    // Logo
+    const logoPrev = document.getElementById('editLogoPreview');
+    const logoPrevCont = document.getElementById('editLogoPreviewContainer');
+    if (art.logoBase64) {
+        logoPrev.src = art.logoBase64;
+        logoPrevCont.classList.remove('hidden');
+    } else {
+        logoPrevCont.classList.add('hidden');
+        logoPrev.src = '';
+    }
+
+    document.getElementById('editPanel').classList.add('open');
+}
+
+function closeEditPanel() {
+    document.getElementById('editPanel').classList.remove('open');
+    editingIdx = -1;
+}
+
+function saveEdit() {
+    if (editingIdx < 0 || editingIdx >= articles.length) return;
+    const art = articles[editingIdx];
+    art.title = document.getElementById('editTitle').value.trim();
+    art.excerpt = document.getElementById('editExcerpt').value.trim();
+    art.source_name = document.getElementById('editSourceName').value.trim();
+    art.source_type = document.getElementById('editSourceType').value;
+    art.published_date = document.getElementById('editDate').value.trim();
+    art.url = document.getElementById('editUrl').value.trim();
+
+    closeEditPanel();
+    renderPagesList();
+    selectPage(editingIdx);
+    showToast('Modifiche salvate', 'success');
+}
+
+function removeEditImage() {
+    if (editingIdx < 0) return;
+    articles[editingIdx].imageBase64 = null;
+    document.getElementById('editImagePreviewContainer').classList.add('hidden');
+    document.getElementById('editImagePreview').src = '';
+}
+function removeEditLogo() {
+    if (editingIdx < 0) return;
+    articles[editingIdx].logoBase64 = null;
+    document.getElementById('editLogoPreviewContainer').classList.add('hidden');
+    document.getElementById('editLogoPreview').src = '';
+}
+
+// ============================================================
+// GENERATE PDF
+// ============================================================
+async function generateAndDownload() {
+    const btn = document.getElementById('btnGeneratePDF');
+    const loading = document.getElementById('genLoading');
+    btn.classList.add('hidden');
+    loading.classList.remove('hidden');
+
+    try {
+        const title = document.getElementById('editorTitle').value.trim();
+        const res = await fetch('/api/pdf/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                articles,
+                title: title || options.title || '',
+                clientName: options.clientName || '',
+                clientLogo: options.clientLogo || ''
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('PDF generato e scaricato!', 'success');
+
+        // Update editor state with new title
+        if (title !== options.title) {
+            options.title = title;
+            hasCover = !!(title);
+            renderPagesList();
+        }
+    } catch (err) {
+        showToast(err.message || 'Errore generazione PDF', 'error');
+    } finally {
+        btn.classList.remove('hidden');
+        loading.classList.add('hidden');
+    }
+}
+
+// ============================================================
+// FILE INPUTS (Image & Logo in edit panel)
+// ============================================================
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// ============================================================
+// INIT EVENTS
+// ============================================================
+function initEvents() {
+    document.getElementById('btnEditPage').addEventListener('click', () => {
+        if (selectedIdx >= 0) openEditPanel(selectedIdx);
+    });
+    document.getElementById('btnCloseEditPanel').addEventListener('click', closeEditPanel);
+    document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);
+    document.getElementById('btnGeneratePDF').addEventListener('click', generateAndDownload);
+
+    // Image file input
+    document.getElementById('editImageInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || editingIdx < 0) return;
+        const b64 = await fileToBase64(file);
+        articles[editingIdx].imageBase64 = b64;
+        document.getElementById('editImagePreview').src = b64;
+        document.getElementById('editImagePreviewContainer').classList.remove('hidden');
+        e.target.value = '';
+    });
+
+    // Logo file input
+    document.getElementById('editLogoInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || editingIdx < 0) return;
+        const b64 = await fileToBase64(file);
+        articles[editingIdx].logoBase64 = b64;
+        document.getElementById('editLogoPreview').src = b64;
+        document.getElementById('editLogoPreviewContainer').classList.remove('hidden');
+        e.target.value = '';
+    });
+
+    // Title input: update hasCover state live
+    document.getElementById('editorTitle').addEventListener('input', (e) => {
+        options.title = e.target.value.trim();
+        const newHasCover = !!options.title;
+        if (newHasCover !== hasCover) {
+            hasCover = newHasCover;
+            renderPagesList();
+            if (selectedIdx === -1 && !hasCover) selectPage(0);
+        }
+    });
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span style="font-size:1.2rem">${icon}</span><div>${message}</div>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 4000);
+}
+</script>
+</body>
+</html>

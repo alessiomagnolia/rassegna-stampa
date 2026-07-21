@@ -494,8 +494,8 @@ input::placeholder {
     border-radius: var(--radius-md);
     padding: 1.2rem;
     display: grid;
-    grid-template-columns: 80px 1fr 40px;
-    gap: 1.5rem;
+    grid-template-columns: 24px 80px 1fr 40px;
+    gap: 1rem;
     align-items: start;
     transition: var(--transition);
     animation: slideUp 0.4s ease-out forwards;
@@ -506,6 +506,23 @@ input::placeholder {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
+
+/* Drag handle */
+.drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding-top: 4px;
+    user-select: none;
+    transition: color 0.2s;
+}
+.drag-handle:active { cursor: grabbing; }
+.article-card:hover .drag-handle { color: var(--text-secondary); }
+
+/* SortableJS states */
+.article-card--ghost  { opacity: 0.25; background: rgba(124,92,255,0.1); border-color: var(--accent-primary); }
+.article-card--chosen { box-shadow: 0 0 0 2px var(--accent-primary); background: var(--bg-card-hover); cursor: grabbing; }
 
 .article-thumb {
     width: 80px;

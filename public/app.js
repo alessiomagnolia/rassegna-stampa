@@ -368,6 +368,7 @@ function renderArticles() {
     const list = document.getElementById('articlesList');
     const empty = document.getElementById('emptyArticles');
     const btnGenerate = document.getElementById('btnGeneratePDF');
+    const btnEditor = document.getElementById('btnOpenEditor');
     
     if (!list) return;
 
@@ -378,21 +379,25 @@ function renderArticles() {
 
     if (state.articles.length === 0) {
         empty.classList.remove('hidden');
-        btnGenerate.classList.add('hidden');
+        if (btnGenerate) btnGenerate.classList.add('hidden');
+        if (btnEditor)   btnEditor.classList.add('hidden');
         return;
     }
 
     empty.classList.add('hidden');
-    btnGenerate.classList.remove('hidden');
+    if (btnGenerate) btnGenerate.classList.remove('hidden');
+    if (btnEditor)   btnEditor.classList.remove('hidden');
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
         card.className = 'article-card';
+        card.dataset.idx = idx;
         card.style.animationDelay = `${idx * 0.1}s`;
         
         const imgSrc = article.screenshotBase64 || article.imageBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
         
         card.innerHTML = `
+            <span class="drag-handle" title="Trascina per riordinare">⠿</span>
             <img src="${imgSrc}" class="article-thumb" alt="Thumb">
             <div class="article-content">
                 <div class="article-meta" style="align-items: center;">
@@ -421,6 +426,30 @@ function renderArticles() {
             <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi">✖</button>
         `;
         list.appendChild(card);
+    });
+
+    // Init drag-and-drop after rendering
+    initArticlesSortable();
+}
+
+function initArticlesSortable() {
+    if (typeof Sortable === 'undefined') return;
+    const list = document.getElementById('articlesList');
+    if (!list || list._sortable) return; // avoid double init
+    list._sortable = Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 200,
+        ghostClass: 'article-card--ghost',
+        chosenClass: 'article-card--chosen',
+        filter: '#emptyArticles',
+        onEnd(evt) {
+            const oldIdx = evt.oldIndex;
+            const newIdx = evt.newIndex;
+            if (oldIdx === newIdx) return;
+            const [moved] = state.articles.splice(oldIdx, 1);
+            state.articles.splice(newIdx, 0, moved);
+            renderArticles(); // re-render to fix indices in onclick handlers
+        }
     });
 }
 
@@ -458,6 +487,18 @@ document.getElementById('btnRemoveClientLogo')?.addEventListener('click', functi
     if(document.getElementById('clientLogoPreviewContainer')) document.getElementById('clientLogoPreviewContainer').style.display = 'none';
 });
 
+function openEditor() {
+    if (state.articles.length === 0) return;
+    const title    = document.getElementById('rassegnaTitle')?.value.trim() || '';
+    const clientName = document.getElementById('clientName')?.value.trim() || '';
+    const editorState = {
+        articles: state.articles,
+        options: { title, clientName, clientLogo: state.clientLogoBase64 || null }
+    };
+    localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
+    window.location.href = 'editor.html';
+}
+
 async function generatePDF() {
     if (state.articles.length === 0) return;
     
@@ -479,8 +520,6 @@ async function generatePDF() {
         });
         
         showToast('PDF generato! Download in corso...', 'success');
-        
-        // Trigger download automatically
         triggerDownload(response.downloadUrl, response.filename);
         
         // Reset state & reload history
@@ -545,7 +584,8 @@ async function loadHistory() {
                     <span class="history-meta">${date} &bull; ${item.article_count} articoli</span>
                 </div>
                 <div class="history-actions">
-                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')">Scarica</button>
+                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})">✏️ Riapri ed Edita</button>` : ''}
+                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')">⬇️ Scarica</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})">Elimina</button>
                 </div>
             `;
@@ -565,6 +605,25 @@ async function deleteHistory(id) {
         loadHistory();
     } catch (error) {
         showToast(error.message, 'error');
+    }
+}
+
+async function reopenFromHistory(reviewId) {
+    try {
+        showToast('Caricamento rassegna in corso...', 'info');
+        const data = await apiCall('GET', `/api/pdf/review/${reviewId}`);
+        const editorState = {
+            articles: data.articles,
+            options: {
+                title: data.title || '',
+                clientName: data.clientName || '',
+                clientLogo: data.clientLogo || null
+            }
+        };
+        localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
+        window.location.href = 'editor.html';
+    } catch (err) {
+        showToast('Errore nel caricamento della rassegna.', 'error');
     }
 }
 
@@ -653,8 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.getElementById('btnSaveManual')?.addEventListener('click', saveManualArticle);
         
-        // Generate PDF
+        // Generate PDF / Open Editor
         document.getElementById('btnGeneratePDF')?.addEventListener('click', generatePDF);
+        document.getElementById('btnOpenEditor')?.addEventListener('click', openEditor);
         
         // Logo Archive Logic
         document.getElementById('logoSearchInput')?.addEventListener('input', (e) => {
