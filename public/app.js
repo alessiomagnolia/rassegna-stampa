@@ -1156,7 +1156,7 @@ async function useCollection(id) {
         
         // Use these links
         document.querySelector('[data-page=rassegna]').click();
-        const urls = coll.links.map(l => l.url).join('\\n');
+        const urls = coll.links.map(l => l.url).join('\n');
         
         // Open multi-link modal and set text
         openMultiLinkModal();
@@ -1189,6 +1189,6 @@ function useSelectedNews() {
     
     // Open multi link modal
     openMultiLinkModal();
-    document.getElementById('multiLinkTextarea').value = selectedLinks.join('\\n');
+    document.getElementById('multiLinkTextarea').value = selectedLinks.join('\n');
     updateMultiLinkCount();
 }
