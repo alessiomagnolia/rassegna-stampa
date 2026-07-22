@@ -214,6 +214,23 @@
         }
         .edit-remove-btn { font-size: 0.75rem; color: var(--danger); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
         .edit-remove-btn:hover { text-decoration: underline; }
+
+        /* Toggle switch */
+        .toggle-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: rgba(255,255,255,0.1); border: 1px solid var(--border-color);
+            border-radius: 24px; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background: #666; border-radius: 50%; transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); border-color: var(--accent-primary); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: white; }
     </style>
 </head>
 <body>
@@ -318,6 +335,22 @@
             </div>
             <input type="file" id="editLogoInput" accept="image/*" class="hidden">
             <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;">🏷️ Cambia logo</label>
+        </div>
+
+        <!-- Dark Header Toggle -->
+        <div class="edit-field">
+            <label>Fascia header nel PDF</label>
+            <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--border-color);">
+                <label class="toggle-switch" title="Attiva header scuro quando il logo è bianco">
+                    <input type="checkbox" id="editDarkHeader">
+                    <span class="toggle-slider"></span>
+                </label>
+                <div>
+                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Header scuro</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
+                </div>
+                <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:32px; height:32px; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0; transition:background 0.3s;"></div>
+            </div>
         </div>
     </div>
     <div class="edit-panel-footer">
@@ -459,17 +492,21 @@ function renderCoverPreview() {
 
 function renderArticlePreview(art, pageNum, totalPages) {
     if (!art) return '';
+    const hdBg   = art.darkHeader ? '#1a1a2e' : '';
+    const hdDate = art.darkHeader ? '#cccccc' : '';
+    const hdBadgeBg = art.darkHeader ? '#2a2a3e' : '';
+    const hdBadgeColor = art.darkHeader ? '#aaaaaa' : '';
     return `
     <div class="pdf-page-preview">
-        <div class="pdf-header">
+        <div class="pdf-header" ${hdBg ? `style="background:${hdBg};"` : ''}>
             <div class="pdf-header-left">
                 ${art.logoBase64
                     ? `<img src="${art.logoBase64}" class="pdf-source-logo" alt="Logo">`
-                    : `<div class="pdf-source-name">${escHtml(art.source_name || '')}</div>`}
+                    : `<div class="pdf-source-name" ${hdBg ? 'style="color:#fff;"' : ''}>${escHtml(art.source_name || '')}</div>`}
             </div>
-            <div class="pdf-header-right">
+            <div class="pdf-header-right" ${hdDate ? `style="color:${hdDate};"` : ''}>
                 <span>${escHtml(art.published_date || '')}</span>
-                <span class="pdf-badge">${escHtml(art.source_type || 'Web')}</span>
+                <span class="pdf-badge" ${hdBadgeBg ? `style="background:${hdBadgeBg};color:${hdBadgeColor};"` : ''}>${escHtml(art.source_type || 'Web')}</span>
             </div>
         </div>
         <div class="pdf-title-zone">
@@ -561,6 +598,11 @@ function openEditPanel(idx) {
         logoPrev.src = '';
     }
 
+    // Dark header toggle
+    const darkHeaderCb = document.getElementById('editDarkHeader');
+    darkHeaderCb.checked = !!art.darkHeader;
+    updateDarkHeaderSwatch(darkHeaderCb.checked);
+
     document.getElementById('editPanel').classList.add('open');
 }
 
@@ -572,17 +614,23 @@ function closeEditPanel() {
 function saveEdit() {
     if (editingIdx < 0 || editingIdx >= articles.length) return;
     const art = articles[editingIdx];
-    art.title = document.getElementById('editTitle').value.trim();
-    art.excerpt = document.getElementById('editExcerpt').value.trim();
-    art.source_name = document.getElementById('editSourceName').value.trim();
-    art.source_type = document.getElementById('editSourceType').value;
+    art.title          = document.getElementById('editTitle').value.trim();
+    art.excerpt        = document.getElementById('editExcerpt').value.trim();
+    art.source_name    = document.getElementById('editSourceName').value.trim();
+    art.source_type    = document.getElementById('editSourceType').value;
     art.published_date = document.getElementById('editDate').value.trim();
-    art.url = document.getElementById('editUrl').value.trim();
+    art.url            = document.getElementById('editUrl').value.trim();
+    art.darkHeader     = document.getElementById('editDarkHeader').checked;
 
     closeEditPanel();
     renderPagesList();
     selectPage(editingIdx);
     showToast('Modifiche salvate', 'success');
+}
+
+function updateDarkHeaderSwatch(isDark) {
+    const swatch = document.getElementById('darkHeaderPreviewSwatch');
+    if (swatch) swatch.style.background = isDark ? '#1a1a2e' : '#f8f9fa';
 }
 
 function removeEditImage() {
@@ -694,6 +742,11 @@ function initEvents() {
         document.getElementById('editLogoPreview').src = b64;
         document.getElementById('editLogoPreviewContainer').classList.remove('hidden');
         e.target.value = '';
+    });
+
+    // Dark header toggle live swatch
+    document.getElementById('editDarkHeader').addEventListener('change', (e) => {
+        updateDarkHeaderSwatch(e.target.checked);
     });
 
     // Title input: update hasCover state live
