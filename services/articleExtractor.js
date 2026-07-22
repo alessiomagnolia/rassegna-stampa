@@ -260,10 +260,12 @@ async function extractArticle(url) {
 
     console.log(`[Estrattore] OK${usedFallback ? ' (fallback)' : ''}: ${article.title?.slice(0,60)}`);
 
+    const sourceName = extractSourceName(url);
+
     // Run heavy tasks in parallel
     const [screenshotBase64, logoBase64, imageBase64] = await Promise.all([
         takeScreenshot(url),
-        extractLogo(url),
+        extractLogo(url, sourceName),
         article.image ? downloadImageAsBase64(article.image) : Promise.resolve(null)
     ]);
 
@@ -272,7 +274,7 @@ async function extractArticle(url) {
         title: (article.title || 'Titolo non disponibile').trim(),
         author: article.author || 'Autore non disponibile',
         published_date: formatDate(article.published),
-        source_name: extractSourceName(url),
+        source_name: sourceName,
         source_type: extractSourceType(url),
         excerpt: cleanText(article.content, 500),
         imageBase64,

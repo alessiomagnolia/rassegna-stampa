@@ -1,4 +1,6 @@
 const cheerio = require('cheerio');
+const fs = require('fs');
+const path = require('path');
 
 // Simple in-memory cache
 const logoCache = new Map();
@@ -19,11 +21,34 @@ async function downloadImageAsBase64(imageUrl) {
     }
 }
 
-async function extractLogo(url) {
+async function extractLogo(url, sourceName = '') {
     try {
         const originUrl = new URL(url).origin;
         
-        // Check cache
+        // 1. Check if a local logo exists for this sourceName
+        if (sourceName) {
+            const normalizedSource = sourceName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const logosDir = path.join(__dirname, '..', 'public', 'logos');
+            if (fs.existsSync(logosDir)) {
+                const files = fs.readdirSync(logosDir);
+                const matchingFile = files.find(file => {
+                    const ext = path.extname(file);
+                    const nameWithoutExt = path.basename(file, ext).toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return nameWithoutExt === normalizedSource;
+                });
+
+                if (matchingFile) {
+                    console.log(`[Logo] Trovato logo locale per: ${sourceName} (${matchingFile})`);
+                    const filePath = path.join(logosDir, matchingFile);
+                    const buffer = fs.readFileSync(filePath);
+                    const ext = path.extname(matchingFile).toLowerCase();
+                    const contentType = ext === '.svg' ? 'image/svg+xml' : (ext === '.png' ? 'image/png' : 'image/jpeg');
+                    return `data:${contentType};base64,${buffer.toString('base64')}`;
+                }
+            }
+        }
+
+        // 2. Check cache
         if (logoCache.has(originUrl)) {
             return logoCache.get(originUrl);
         }
