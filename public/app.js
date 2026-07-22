@@ -787,6 +787,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // News Search Events
         document.getElementById('btnSearchNews')?.addEventListener('click', searchNews);
+        document.getElementById('btnResetSearchNews')?.addEventListener('click', () => {
+            document.getElementById('newsKeyword').value = '';
+            document.getElementById('newsDateFrom').value = '';
+            document.getElementById('newsDateTo').value = '';
+            currentNewsResults = [];
+            selectedNewsIndices.clear();
+            document.getElementById('newsEmptyState').classList.remove('hidden');
+            document.getElementById('newsResultsGrid').classList.add('hidden');
+            document.getElementById('newsResultsToolbar').classList.add('hidden');
+            updateNewsSelectionUI();
+        });
         document.getElementById('btnSelectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(true));
         document.getElementById('btnDeselectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(false));
         document.getElementById('btnSaveCollection')?.addEventListener('click', saveNewsCollection);
