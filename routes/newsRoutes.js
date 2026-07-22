@@ -252,22 +252,42 @@ router.get('/search', authMiddleware, async (req, res) => {
             fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
         }
         
-        // Bing News Query (provides excellent coverage of press agencies like ANSA, Adnkronos)
+        // Bing Web Query (copre blog e siti web generici non registrati come news)
         const bingEncoded = encodeURIComponent(query);
-        fetchPromises.push(
-            fetchText(`https://www.bing.com/news/search?q=${bingEncoded}&format=rss&mkt=it-IT`)
-                .then(xml => parseRSS(xml, 'Web'))
-                .catch(err => {
-                    console.error("Bing News Error:", err.message);
-                    return []; // Don't crash if Bing fails
-                })
-        );
+        const bingPages = [1, 11, 21, 31]; // 4 pages = ~40 results
+        for (const first of bingPages) {
+            fetchPromises.push(
+                fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
+                    .then(xml => parseRSS(xml, 'Web'))
+                    .catch(err => {
+                        console.error("Bing Web Error:", err.message);
+                        return []; // Don't crash if Bing fails
+                    })
+            );
+        }
 
         const resultArrays = await Promise.all(fetchPromises);
         let allResults = [];
         for (const arr of resultArrays) {
             allResults = allResults.concat(arr);
         }
+
+        // Post-filtro per data (utile perché Bing Web Search RSS potrebbe ignorare il range se non specificato bene)
+        let fromTime = 0;
+        let toTime = Infinity;
+        if (from) {
+            const parts = from.split('/');
+            if (parts.length === 3) fromTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`).getTime();
+        }
+        if (to) {
+            const parts = to.split('/');
+            if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
+        }
+        
+        allResults = allResults.filter(item => {
+            if (!item.timestamp) return true; // Keep if we can't parse date
+            return item.timestamp >= fromTime && item.timestamp <= toTime;
+        });
 
         // Deduplicate by title (since URLs might be Google News links before resolution)
         const seenTitles = new Set();
