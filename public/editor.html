@@ -469,8 +469,31 @@ function selectPage(idx) {
 }
 
 // ============================================================
-// PREVIEW RENDERERS
+// PREVIEW RENDERERS & BOLDING LOGIC
 // ============================================================
+function buildKeywordRegex(title, clientName) {
+    const stopWords = new Set([
+        'il','lo','la','i','gli','le','un','uno','una','di','da','in','con',
+        'su','per','tra','fra','che','non','più','del','dell','della','dello',
+        'dei','degli','delle','al','alla','allo','ai','agli','alle','nel',
+        'nella','nello','nei','negli','nelle','sul','sulla','sullo','sui',
+        'sugli','sulle','come','sono','era','hanno','anche','dopo','prima',
+    ]);
+    const allWords = [title, clientName].filter(Boolean).join(' ')
+        .split(/[\s\-–—_\/]+/)
+        .map(w => w.replace(/[^a-zA-ZàèéìòùÀÈÉÌÒÙ]/g, '').toLowerCase())
+        .filter(w => w.length >= 4 && !stopWords.has(w));
+    const unique = [...new Set(allWords)];
+    if (unique.length === 0) return null;
+    unique.sort((a, b) => b.length - a.length);
+    const pattern = unique.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    return new RegExp(`(?<![a-zA-ZàèéìòùÀÈÉÌÒÙ])(${pattern})(?![a-zA-ZàèéìòùÀÈÉÌÒÙ])`, 'gi');
+}
+function boldKeywords(text, regex) {
+    if (!regex || !text) return text;
+    return text.replace(regex, '<strong style="color:#1a1a2e;font-weight:700;">$1</strong>');
+}
+
 function renderCoverPreview() {
     const today = new Date();
     const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
@@ -518,7 +541,7 @@ function renderArticlePreview(art, pageNum, totalPages) {
             <img src="${art.imageBase64}" class="pdf-main-visual" alt="Immagine">
         </div>` : ''}
         <div class="pdf-content-zone">
-            <div class="pdf-content-text">${escHtml(art.excerpt || '')}</div>
+            <div class="pdf-content-text">${boldKeywords(escHtml(art.excerpt || ''), buildKeywordRegex(options.title, options.clientName))}</div>
         </div>
         <div class="pdf-footer">
             <span class="pdf-footer-link">${escHtml(art.url || '')}</span>
