@@ -93,11 +93,30 @@ function getFinalUrl(url, maxRedirects = 5) {
                 });
                 res.on('end', () => {
                     let m = html.match(/content="[^"]*url=([^"]+)"/i);
-                    if (m) return resolve(m[1].replace(/&amp;/g, '&'));
+                    if (m && !m[1].includes('google.com')) return resolve(m[1].replace(/&amp;/g, '&'));
+                    
                     m = html.match(/data-n-v-u="([^"]+)"/i);
-                    if (m) return resolve(m[1].replace(/&amp;/g, '&'));
+                    if (m && !m[1].includes('google.com')) return resolve(m[1].replace(/&amp;/g, '&'));
+                    
                     m = html.match(/data-url="([^"]+)"/i);
                     if (m && !m[1].includes('google.com')) return resolve(m[1].replace(/&amp;/g, '&'));
+                    
+                    // New Google News format (2024): Just find the first external link
+                    let aTags = html.match(/<a[^>]+href="(https?:\/\/[^"]+)"/gi);
+                    if (aTags) {
+                        for (let aTag of aTags) {
+                            let match = aTag.match(/href="(https?:\/\/[^"]+)"/i);
+                            if (match) {
+                                let matchUrl = match[1].replace(/&amp;/g, '&');
+                                if (!matchUrl.includes('google.com') && 
+                                    !matchUrl.includes('googleusercontent.com') && 
+                                    !matchUrl.includes('gstatic.com') && 
+                                    !matchUrl.includes('schema.org')) {
+                                    return resolve(matchUrl);
+                                }
+                            }
+                        }
+                    }
                     resolve(url);
                 });
                 return;
