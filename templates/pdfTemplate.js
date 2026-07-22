@@ -1,6 +1,72 @@
+const { getHeaderStyleForLogo } = require('../services/logoColorDetector');
+
+// ---------------------------------------------------------------------------
+// KEYWORD BOLDING
+// Highlights words from rassegna title and client name inside the article text
+// ---------------------------------------------------------------------------
+function buildKeywordRegex(title, clientName) {
+    const stopWords = new Set([
+        'il','lo','la','i','gli','le','un','uno','una','di','da','in','con',
+        'su','per','tra','fra','e','o','ma','che','se','non','con','più',
+        'del','dell','della','dello','dei','degli','delle','al','all','alla',
+        'allo','ai','agli','alle','nel','nell','nella','nello','nei','negli',
+        'nelle','sul','sull','sulla','sullo','sui','sugli','sulle','a','è',
+    ]);
+
+    // Collect all unique words >= 4 chars, not stop-words
+    const allWords = [title, clientName]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .map(w => w.replace(/[^a-zàèéìòù]/gi, ''))
+        .filter(w => w.length >= 4 && !stopWords.has(w));
+
+    const unique = [...new Set(allWords)];
+    if (unique.length === 0) return null;
+
+    // Sort longest first to avoid partial match issues
+    unique.sort((a, b) => b.length - a.length);
+    const pattern = unique.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    return new RegExp(`\\b(${pattern})\\b`, 'gi');
+}
+
+function boldKeywords(text, regex) {
+    if (!regex || !text) return text;
+    // text is plain-text (no HTML tags), safe to wrap
+    return text.replace(regex, '<strong>$1</strong>');
+}
+
+// ---------------------------------------------------------------------------
+// HEADER STYLE HELPER
+// ---------------------------------------------------------------------------
+function headerInlineStyle(style) {
+    if (!style) return '';
+    return `style="background-color:${style.background}; border-image:${style.borderImage} 1;"`;
+}
+
+function badgeInlineStyle(style) {
+    if (!style) return '';
+    return `style="background-color:${style.badgeBg}; color:${style.badgeColor};"`;
+}
+
+function dateInlineStyle(style) {
+    if (!style) return '';
+    return `style="color:${style.dateColor};"`;
+}
+
+// ---------------------------------------------------------------------------
+// MAIN BUILDER
+// ---------------------------------------------------------------------------
 function buildPDFHTML(articles, options) {
     const { title, userName, clientName, clientLogo, userLogo } = options;
-    
+
+    // Prepare keyword regex once for all articles
+    const keywordRegex = buildKeywordRegex(title, clientName);
+
+    // Pre-compute logo header styles for each article (CPU-only, no I/O)
+    const headerStyles = articles.map(a => getHeaderStyleForLogo(a.logoBase64));
+
     // Create Italian date string
     const today = new Date();
     const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
@@ -148,7 +214,7 @@ function buildPDFHTML(articles, options) {
             object-fit: contain;
         }
 
-        /* --- ARTICLE PAGE --- */
+        /* --- ARTICLE PAGE HEADER --- */
         .header {
             flex: 0 0 auto;
             display: flex;
@@ -251,10 +317,10 @@ function buildPDFHTML(articles, options) {
         }
 
         .content-zone {
-            flex: 1 1 auto; /* Automatically fills all remaining vertical space */
+            flex: 1 1 auto;
             padding: 0 5mm;
-            margin-bottom: 5mm; /* Space just above the footer */
-            overflow: hidden; /* Truncates the text brutally if it overshoots */
+            margin-bottom: 5mm;
+            overflow: hidden;
         }
 
         .content-text {
@@ -263,15 +329,19 @@ function buildPDFHTML(articles, options) {
             color: #333;
             text-align: justify;
             font-family: 'Times New Roman', Times, serif;
-            
             display: -webkit-box;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            /* -webkit-line-clamp is set inline */
+        }
+
+        /* Keyword highlights inside article body */
+        .content-text strong {
+            font-weight: 700;
+            color: #1a1a2e;
         }
 
         .footer {
-            flex: 0 0 10mm; /* Fixed height for the footer zone */
+            flex: 0 0 10mm;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -328,16 +398,23 @@ function buildPDFHTML(articles, options) {
 
     // 2. Article Pages
     articles.forEach((article, index) => {
+        const hs = headerStyles[index]; // may be null (no override needed)
+
+        // Bold keywords in the excerpt (plain text — safe to wrap in <strong>)
+        const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
+
         html += `
     <div class="page">
         <!-- HEADER -->
-        <div class="header">
+        <div class="header" ${headerInlineStyle(hs)}>
             <div class="header-left">
-                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">` : `<div class="source-name-large">${article.source_name}</div>`}
+                ${article.logoBase64
+                    ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">`
+                    : `<div class="source-name-large">${article.source_name}</div>`}
             </div>
-            <div class="header-right">
+            <div class="header-right" ${dateInlineStyle(hs)}>
                 <span>${article.published_date}</span>
-                <span class="source-type-badge">${article.source_type || 'Web'}</span>
+                <span class="source-type-badge" ${badgeInlineStyle(hs)}>${article.source_type || 'Web'}</span>
             </div>
         </div>
 
@@ -348,7 +425,7 @@ function buildPDFHTML(articles, options) {
         </div>
         `;
 
-        // Always show image if available
+        // Image (optional)
         if (article.imageBase64) {
             html += `
         <div class="visual-zone">
@@ -357,13 +434,12 @@ function buildPDFHTML(articles, options) {
             `;
         }
 
-        // CONTENT ZONE (Takes up all remaining space above the footer)
         const clampLines = article.imageBase64 ? 14 : 28;
-        
+
         html += `
         <div class="content-zone">
             <div class="content-text" style="-webkit-line-clamp: ${clampLines};">
-                ${article.excerpt}
+                ${processedExcerpt}
             </div>
         </div>
 
