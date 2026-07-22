@@ -348,7 +348,10 @@ router.get('/search', authMiddleware, async (req, res) => {
             return r;
         });
 
-        console.log(`[News Search] Query: "${query}" → Trovati ${uniqueResults.length} risultati unici`);
+        // Prendi i primi 100 risultati per evitare payload enormi
+        uniqueResults = uniqueResults.slice(0, 100);
+
+        console.log(`[News Search] Query: "${q}" → Trovati ${uniqueResults.length} risultati unici`);
         res.json({ results: uniqueResults, total: uniqueResults.length, query: q });
 
     } catch (err) {
