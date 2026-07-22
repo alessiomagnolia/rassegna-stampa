@@ -98,73 +98,6 @@
 
         <!-- PAGE: NUOVA RASSEGNA -->
         <div id="page-rassegna" class="page-view active">
-
-        <!-- PAGE: RICERCA NOTIZIE -->
-        <div id="page-ricerca-notizie" class="page-view">
-            <div class="page-header">
-                <h1 class="page-title">🔍 Ricerca Notizie</h1>
-                <p class="page-subtitle">Cerca notizie online per parola chiave e fascia temporale, seleziona quelle che ti servono e crea subito la tua rassegna</p>
-            </div>
-
-            <!-- SEARCH FORM -->
-            <section class="glass-card" style="padding:1.5rem; margin-bottom:1.5rem;">
-                <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:0.75rem; align-items:end;">
-                    <div class="input-group" style="margin:0;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Parola chiave</label>
-                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:44px;">
-                    </div>
-                    <div class="input-group" style="margin:0; min-width:130px;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Dal</label>
-                        <input type="date" id="newsDateFrom" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
-                    </div>
-                    <div class="input-group" style="margin:0; min-width:130px;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
-                        <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
-                    </div>
-                    <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.5rem; white-space:nowrap;">🔍 Cerca</button>
-                </div>
-            </section>
-
-            <!-- RESULTS TOOLBAR (hidden until search) -->
-            <div id="newsResultsToolbar" class="hidden" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
-                <div style="display:flex; align-items:center; gap:1rem;">
-                    <span id="newsResultCount" style="font-weight:600; font-size:0.9rem;"></span>
-                    <button id="btnSelectAllNews" class="btn btn-outline btn-sm">☑️ Seleziona tutti</button>
-                    <button id="btnDeselectAllNews" class="btn btn-outline btn-sm">☐ Deseleziona tutti</button>
-                </div>
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                    <span id="newsSelectedCount" style="font-size:0.85rem; color:var(--text-muted);">0 selezionati</span>
-                    <button id="btnSaveCollection" class="btn btn-secondary" disabled>💾 Salva raccolta</button>
-                    <button id="btnUseSelectedNews" class="btn btn-gradient" disabled>🚀 Crea rassegna ora</button>
-                </div>
-            </div>
-
-            <!-- LOADING STATE -->
-            <div id="newsLoadingState" class="hidden" style="text-align:center; padding:4rem;">
-                <div class="spinner" style="width:40px;height:40px;margin:0 auto 1rem;"></div>
-                <p style="color:var(--text-muted);">Ricerca notizie in corso...</p>
-            </div>
-
-            <!-- EMPTY STATE -->
-            <div id="newsEmptyState" style="text-align:center; padding:5rem 2rem; color:var(--text-muted);">
-                <div style="font-size:3rem; margin-bottom:1rem;">🔎</div>
-                <p style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Inizia una ricerca</p>
-                <p style="font-size:0.9rem;">Inserisci una parola chiave e (opzionalmente) un periodo per trovare le notizie</p>
-            </div>
-
-            <!-- RESULTS GRID -->
-            <div id="newsResultsGrid" class="news-results-grid hidden"></div>
-
-            <!-- SAVED COLLECTIONS -->
-            <div id="newsCollectionsSection" style="margin-top:2.5rem;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-                    <h3 style="font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">📂 Le tue raccolte salvate</h3>
-                    <button id="btnRefreshCollections" class="btn btn-outline btn-sm">🔄 Aggiorna</button>
-                </div>
-                <div id="newsCollectionsList"></div>
-            </div>
-        </div>
-
         <!-- back to rassegna page (actual content below) -->
             <div class="page-header">
                 <h1 class="page-title">📰 Nuova Rassegna Stampa</h1>
@@ -261,6 +194,72 @@
                     </div>
                 </div>
             </section>
+        </div>
+
+        <!-- PAGE: RICERCA NOTIZIE -->
+        <div id="page-ricerca-notizie" class="page-view">
+            <div class="page-header">
+                <h1 class="page-title">🔍 Ricerca Notizie</h1>
+                <p class="page-subtitle">Cerca notizie online per parola chiave e fascia temporale, seleziona quelle che ti servono e crea subito la tua rassegna</p>
+            </div>
+
+            <!-- SEARCH FORM -->
+            <section class="glass-card" style="padding:1.5rem; margin-bottom:1.5rem;">
+                <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:0.75rem; align-items:end;">
+                    <div class="input-group" style="margin:0;">
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Parola chiave</label>
+                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:44px;">
+                    </div>
+                    <div class="input-group" style="margin:0; min-width:130px;">
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Dal</label>
+                        <input type="date" id="newsDateFrom" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                    </div>
+                    <div class="input-group" style="margin:0; min-width:130px;">
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
+                        <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                    </div>
+                    <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.5rem; white-space:nowrap;">🔍 Cerca</button>
+                </div>
+            </section>
+
+            <!-- RESULTS TOOLBAR (hidden until search) -->
+            <div id="newsResultsToolbar" class="hidden" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <span id="newsResultCount" style="font-weight:600; font-size:0.9rem;"></span>
+                    <button id="btnSelectAllNews" class="btn btn-outline btn-sm">☑️ Seleziona tutti</button>
+                    <button id="btnDeselectAllNews" class="btn btn-outline btn-sm">☐ Deseleziona tutti</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <span id="newsSelectedCount" style="font-size:0.85rem; color:var(--text-muted);">0 selezionati</span>
+                    <button id="btnSaveCollection" class="btn btn-secondary" disabled>💾 Salva raccolta</button>
+                    <button id="btnUseSelectedNews" class="btn btn-gradient" disabled>🚀 Crea rassegna ora</button>
+                </div>
+            </div>
+
+            <!-- LOADING STATE -->
+            <div id="newsLoadingState" class="hidden" style="text-align:center; padding:4rem;">
+                <div class="spinner" style="width:40px;height:40px;margin:0 auto 1rem;"></div>
+                <p style="color:var(--text-muted);">Ricerca notizie in corso...</p>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="newsEmptyState" style="text-align:center; padding:5rem 2rem; color:var(--text-muted);">
+                <div style="font-size:3rem; margin-bottom:1rem;">🔎</div>
+                <p style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Inizia una ricerca</p>
+                <p style="font-size:0.9rem;">Inserisci una parola chiave e (opzionalmente) un periodo per trovare le notizie</p>
+            </div>
+
+            <!-- RESULTS GRID -->
+            <div id="newsResultsGrid" class="news-results-grid hidden"></div>
+
+            <!-- SAVED COLLECTIONS -->
+            <div id="newsCollectionsSection" style="margin-top:2.5rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                    <h3 style="font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">📂 Le tue raccolte salvate</h3>
+                    <button id="btnRefreshCollections" class="btn btn-outline btn-sm">🔄 Aggiorna</button>
+                </div>
+                <div id="newsCollectionsList"></div>
+            </div>
         </div>
 
         <!-- PAGE: PROFILO -->
