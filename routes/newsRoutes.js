@@ -64,27 +64,40 @@ function attr(xml, tagName, attrName) {
     return m ? m[1] : '';
 }
 
-function decodeGoogleNewsUrl(url) {
+async function resolveGoogleNewsUrl(url) {
     if (!url.includes('news.google.com/rss/articles/')) return url;
     try {
-        const parts = url.split('/articles/');
-        let b64 = parts[1].split('?')[0]; // remove ?oc=5
-        // Google uses URL-safe base64, so replace - with + and _ with /
-        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
-        const decoded = Buffer.from(b64, 'base64').toString('ascii');
-        // Protobuf string, URL is usually preceded by some hex characters like \b \u0012 etc
-        // Extract the http(s) link:
-        const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F]+)/);
-        if (match) {
-            return match[1];
+        const html = await fetchText(url, 2); // max 2 redirects
+        
+        // 1. Check for data-n-v-u="URL" or similar data attributes used by Google News
+        let m = html.match(/data-n-v-u="([^"]+)"/i);
+        if (m) return m[1].replace(/&amp;/g, '&');
+        
+        // 2. Check for <c-wiz data-url="URL">
+        m = html.match(/data-url="([^"]+)"/i);
+        if (m && m[1].startsWith('http') && !m[1].includes('google.com')) return m[1].replace(/&amp;/g, '&');
+
+        // 3. Check for meta refresh
+        m = html.match(/content="[^"]*url=([^"]+)"/i);
+        if (m) return m[1].replace(/&amp;/g, '&');
+        
+        // 4. Check for any href that is not google
+        const hrefs = html.match(/href="(https?:\/\/[^"]+)"/g);
+        if (hrefs) {
+            for (const match of hrefs) {
+                const href = match.split('="')[1].replace('"', '');
+                if (!href.includes('google.com') && !href.includes('gstatic.com') && !href.includes('schema.org')) {
+                    return href.replace(/&amp;/g, '&');
+                }
+            }
         }
     } catch (e) {
-        console.error("Errore decodifica URL Google News:", e);
+        console.error("Errore resolving Google News URL:", e.message);
     }
     return url;
 }
 
-function parseRSS(xmlText) {
+function parseRSS(xmlText, sourceNameDefault = '') {
     const results = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
     let match;
@@ -95,12 +108,11 @@ function parseRSS(xmlText) {
         // Google News link is inside <link> but may also be in <guid>
         let url = clean(tag(item, 'link')) || clean(tag(item, 'guid'));
         url = url.replace(/\s+/g, '');
-        url = decodeGoogleNewsUrl(url);
 
         const title = clean(tag(item, 'title'));
         const pubDate = tag(item, 'pubDate').trim();
         const description = clean(tag(item, 'description'));
-        const sourceName = clean(tag(item, 'source'));
+        const sourceName = clean(tag(item, 'source')) || sourceNameDefault;
         const sourceUrl = attr(item, 'source', 'url');
 
         if (!title || !url) continue;
@@ -152,44 +164,68 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         let fetchPromises = [];
 
+        // Google News Queries
         if (from || to) {
-            // User requested a specific date range, so we only run one query
+            let googleQuery = query;
             if (from) {
                 const parts = from.split('/');
-                if (parts.length === 3) query += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+                if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
             }
             if (to) {
                 const parts = to.split('/');
-                if (parts.length === 3) query += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+                if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
             }
             
-            const encoded = encodeURIComponent(query);
-            const rssUrl = `https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`;
-            fetchPromises.push(fetchText(rssUrl));
+            const encoded = encodeURIComponent(googleQuery);
+            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
         } else {
-            // No date range selected: we fetch BOTH standard (relevance) AND the last 24 hours
             const encodedStandard = encodeURIComponent(query);
             const encodedRecent = encodeURIComponent(query + ' when:1d');
-            
-            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`));
-            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`));
+            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
+            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
         }
+        
+        // Bing News Query (provides excellent coverage of press agencies like ANSA, Adnkronos)
+        const bingEncoded = encodeURIComponent(query);
+        fetchPromises.push(
+            fetchText(`https://www.bing.com/news/search?q=${bingEncoded}&format=rss&mkt=it-IT`)
+                .then(xml => parseRSS(xml, 'Web'))
+                .catch(err => {
+                    console.error("Bing News Error:", err.message);
+                    return []; // Don't crash if Bing fails
+                })
+        );
 
-        const xmlResponses = await Promise.all(fetchPromises);
+        const resultArrays = await Promise.all(fetchPromises);
         let allResults = [];
-        for (const xmlText of xmlResponses) {
-            allResults = allResults.concat(parseRSS(xmlText));
+        for (const arr of resultArrays) {
+            allResults = allResults.concat(arr);
         }
 
-        // Deduplicate by URL
-        const seen = new Set();
+        // Deduplicate by title (since URLs might be Google News links before resolution)
+        const seenTitles = new Set();
         let uniqueResults = [];
         for (const item of allResults) {
-            if (!seen.has(item.url)) {
-                seen.add(item.url);
+            const normalizedTitle = item.title.toLowerCase().substring(0, 50); // first 50 chars for fuzzy dedupe
+            if (!seenTitles.has(normalizedTitle)) {
+                seenTitles.add(normalizedTitle);
                 uniqueResults.push(item);
             }
         }
+        
+        // Resolve Google News URLs in parallel
+        console.log(`[News Search] Resolving URLs for ${uniqueResults.length} articles...`);
+        await Promise.all(uniqueResults.map(async (item) => {
+            if (item.url.includes('news.google.com/rss/articles/')) {
+                item.url = await resolveGoogleNewsUrl(item.url);
+                try {
+                    // Update domain and favicon based on resolved URL
+                    const domain = new URL(item.url).hostname.replace(/^www\./, '');
+                    item.domain = domain;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                } catch(e){}
+            }
+        }));
 
         // Sort by timestamp descending (newest first)
         uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
