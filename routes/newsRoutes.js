@@ -64,6 +64,26 @@ function attr(xml, tagName, attrName) {
     return m ? m[1] : '';
 }
 
+function decodeGoogleNewsUrl(url) {
+    if (!url.includes('news.google.com/rss/articles/')) return url;
+    try {
+        const parts = url.split('/articles/');
+        let b64 = parts[1].split('?')[0]; // remove ?oc=5
+        // Google uses URL-safe base64, so replace - with + and _ with /
+        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+        const decoded = Buffer.from(b64, 'base64').toString('ascii');
+        // Protobuf string, URL is usually preceded by some hex characters like \b \u0012 etc
+        // Extract the http(s) link:
+        const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F]+)/);
+        if (match) {
+            return match[1];
+        }
+    } catch (e) {
+        console.error("Errore decodifica URL Google News:", e);
+    }
+    return url;
+}
+
 function parseRSS(xmlText) {
     const results = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -74,8 +94,8 @@ function parseRSS(xmlText) {
 
         // Google News link is inside <link> but may also be in <guid>
         let url = clean(tag(item, 'link')) || clean(tag(item, 'guid'));
-        // Google News sometimes wraps URL in a redirect, keep as-is (still openable)
         url = url.replace(/\s+/g, '');
+        url = decodeGoogleNewsUrl(url);
 
         const title = clean(tag(item, 'title'));
         const pubDate = tag(item, 'pubDate').trim();
@@ -91,9 +111,11 @@ function parseRSS(xmlText) {
 
         // Parse date to DD/MM/YYYY
         let dateStr = '';
+        let timestamp = 0;
         try {
             const d = new Date(pubDate);
             if (!isNaN(d)) {
+                timestamp = d.getTime();
                 dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
             }
         } catch {}
@@ -104,6 +126,7 @@ function parseRSS(xmlText) {
             source: sourceName || domain || 'Fonte sconosciuta',
             domain,
             date: dateStr,
+            timestamp,
             snippet: description.slice(0, 220),
             favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : '',
         });
@@ -127,25 +150,58 @@ router.get('/search', authMiddleware, async (req, res) => {
         // Build query string with optional date range (Google syntax: after/before)
         let query = q.trim();
 
-        if (from) {
-            // input: DD/MM/YYYY → Google: YYYY-MM-DD
-            const parts = from.split('/');
-            if (parts.length === 3) query += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+        let fetchPromises = [];
+
+        if (from || to) {
+            // User requested a specific date range, so we only run one query
+            if (from) {
+                const parts = from.split('/');
+                if (parts.length === 3) query += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            if (to) {
+                const parts = to.split('/');
+                if (parts.length === 3) query += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            
+            const encoded = encodeURIComponent(query);
+            const rssUrl = `https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`;
+            fetchPromises.push(fetchText(rssUrl));
+        } else {
+            // No date range selected: we fetch BOTH standard (relevance) AND the last 24 hours
+            const encodedStandard = encodeURIComponent(query);
+            const encodedRecent = encodeURIComponent(query + ' when:1d');
+            
+            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`));
+            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`));
         }
-        if (to) {
-            const parts = to.split('/');
-            if (parts.length === 3) query += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+
+        const xmlResponses = await Promise.all(fetchPromises);
+        let allResults = [];
+        for (const xmlText of xmlResponses) {
+            allResults = allResults.concat(parseRSS(xmlText));
         }
 
-        const encoded = encodeURIComponent(query);
-        const rssUrl = `https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`;
+        // Deduplicate by URL
+        const seen = new Set();
+        let uniqueResults = [];
+        for (const item of allResults) {
+            if (!seen.has(item.url)) {
+                seen.add(item.url);
+                uniqueResults.push(item);
+            }
+        }
 
-        console.log(`[News Search] Query: "${query}" → ${rssUrl}`);
-        const xmlText = await fetchText(rssUrl);
-        const results = parseRSS(xmlText);
+        // Sort by timestamp descending (newest first)
+        uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
 
-        console.log(`[News Search] Trovati ${results.length} risultati`);
-        res.json({ results, total: results.length, query: q });
+        // Remove the internal timestamp before sending to client
+        uniqueResults = uniqueResults.map(r => {
+            delete r.timestamp;
+            return r;
+        });
+
+        console.log(`[News Search] Query: "${query}" → Trovati ${uniqueResults.length} risultati unici`);
+        res.json({ results: uniqueResults, total: uniqueResults.length, query: q });
 
     } catch (err) {
         console.error('[News Search] Errore:', err.message);
