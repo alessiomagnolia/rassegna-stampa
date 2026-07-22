@@ -3,6 +3,8 @@ const https = require('https');
 const http = require('http');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../database/db');
+const { GoogleDecoder } = require('google-news-url-decoder');
+const decoder = new GoogleDecoder();
 
 const router = express.Router();
 
@@ -144,6 +146,14 @@ async function resolveGoogleNewsUrl(url) {
             return match[1];
         }
     } catch(e){}
+
+    // Use the official decoder
+    try {
+        const result = await decoder.decode(url);
+        if (result && result.status && result.decoded_url) {
+            return result.decoded_url;
+        }
+    } catch(e) {}
 
     // Fallback to HTTP redirect follower
     try {
