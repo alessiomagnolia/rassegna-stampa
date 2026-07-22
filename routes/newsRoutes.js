@@ -64,36 +64,74 @@ function attr(xml, tagName, attrName) {
     return m ? m[1] : '';
 }
 
+function getFinalUrl(url, maxRedirects = 5) {
+    return new Promise((resolve) => {
+        if (maxRedirects <= 0) return resolve(url);
+        const lib = url.startsWith('https') ? https : http;
+        const req = lib.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        }, (res) => {
+            if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+                try {
+                    const next = new URL(res.headers.location, url).href;
+                    getFinalUrl(next, maxRedirects - 1).then(resolve);
+                } catch { resolve(url); }
+                return;
+            }
+            // For Google News, sometimes it returns 200 OK with an intermediate consent/redirect page.
+            // If it's 200, we can quickly check the first chunks of HTML for a meta refresh or specific redirect tag.
+            // But to avoid the bug where we download the entire publisher page and extract random links,
+            // we will only parse it if the domain is still google.com.
+            if (res.statusCode === 200 && url.includes('google.com')) {
+                let html = '';
+                res.on('data', chunk => {
+                    html += chunk.toString('utf8');
+                    // Stop reading after 15KB, Google's redirect is always at the top
+                    if (html.length > 15000) req.destroy();
+                });
+                res.on('end', () => {
+                    let m = html.match(/content="[^"]*url=([^"]+)"/i);
+                    if (m) return resolve(m[1].replace(/&amp;/g, '&'));
+                    m = html.match(/data-n-v-u="([^"]+)"/i);
+                    if (m) return resolve(m[1].replace(/&amp;/g, '&'));
+                    m = html.match(/data-url="([^"]+)"/i);
+                    if (m && !m[1].includes('google.com')) return resolve(m[1].replace(/&amp;/g, '&'));
+                    resolve(url);
+                });
+                return;
+            }
+            req.destroy();
+            resolve(url);
+        });
+        req.setTimeout(5000, () => { req.destroy(); resolve(url); });
+        req.on('error', () => resolve(url));
+    });
+}
+
 async function resolveGoogleNewsUrl(url) {
     if (!url.includes('news.google.com/rss/articles/')) return url;
+    
+    // First try the Base64 decode trick for speed
     try {
-        const html = await fetchText(url, 2); // max 2 redirects
-        
-        // 1. Check for data-n-v-u="URL" or similar data attributes used by Google News
-        let m = html.match(/data-n-v-u="([^"]+)"/i);
-        if (m) return m[1].replace(/&amp;/g, '&');
-        
-        // 2. Check for <c-wiz data-url="URL">
-        m = html.match(/data-url="([^"]+)"/i);
-        if (m && m[1].startsWith('http') && !m[1].includes('google.com')) return m[1].replace(/&amp;/g, '&');
-
-        // 3. Check for meta refresh
-        m = html.match(/content="[^"]*url=([^"]+)"/i);
-        if (m) return m[1].replace(/&amp;/g, '&');
-        
-        // 4. Check for any href that is not google
-        const hrefs = html.match(/href="(https?:\/\/[^"]+)"/g);
-        if (hrefs) {
-            for (const match of hrefs) {
-                const href = match.split('="')[1].replace('"', '');
-                if (!href.includes('google.com') && !href.includes('gstatic.com') && !href.includes('schema.org')) {
-                    return href.replace(/&amp;/g, '&');
-                }
-            }
+        const parts = url.split('/articles/');
+        let b64 = parts[1].split('?')[0];
+        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        const decoded = Buffer.from(b64, 'base64').toString('latin1');
+        const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
+        if (match && !match[1].includes('google.com')) {
+            return match[1];
         }
-    } catch (e) {
-        console.error("Errore resolving Google News URL:", e.message);
-    }
+    } catch(e){}
+
+    // Fallback to HTTP redirect follower
+    try {
+        const finalUrl = await getFinalUrl(url, 3);
+        if (finalUrl && finalUrl !== url) return finalUrl;
+    } catch(e) {}
+    
     return url;
 }
 
@@ -213,18 +251,33 @@ router.get('/search', authMiddleware, async (req, res) => {
             }
         }
         
-        // Resolve Google News URLs in parallel
+        // Resolve Google News and Bing URLs in parallel
         console.log(`[News Search] Resolving URLs for ${uniqueResults.length} articles...`);
         await Promise.all(uniqueResults.map(async (item) => {
-            if (item.url.includes('news.google.com/rss/articles/')) {
-                item.url = await resolveGoogleNewsUrl(item.url);
+            // Bing Tracking Links
+            if (item.url.includes('bing.com/news/apiclick.aspx')) {
                 try {
-                    // Update domain and favicon based on resolved URL
-                    const domain = new URL(item.url).hostname.replace(/^www\./, '');
-                    item.domain = domain;
-                    item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                    const u = new URL(item.url);
+                    if (u.searchParams.has('url')) {
+                        item.url = decodeURIComponent(u.searchParams.get('url'));
+                    }
                 } catch(e){}
             }
+            
+            // Google News RSS Links
+            if (item.url.includes('news.google.com/rss/articles/')) {
+                item.url = await resolveGoogleNewsUrl(item.url);
+            }
+
+            // Update domain and favicon based on resolved URL
+            try {
+                const domain = new URL(item.url).hostname.replace(/^www\./, '');
+                item.domain = domain;
+                item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                if (item.source === 'Web' || !item.source) {
+                    item.source = domain;
+                }
+            } catch(e){}
         }));
 
         // Sort by timestamp descending (newest first)
