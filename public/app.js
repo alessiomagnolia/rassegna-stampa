@@ -784,6 +784,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnCloseMultiLinkDone')?.addEventListener('click', closeMultiLinkModal);
         document.getElementById('btnStartMultiLink')?.addEventListener('click', startMultiLinkExtraction);
         document.getElementById('multiLinkTextarea')?.addEventListener('input', updateMultiLinkCount);
+
+        // News Search Events
+        document.getElementById('btnSearchNews')?.addEventListener('click', searchNews);
+        document.getElementById('btnSelectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(true));
+        document.getElementById('btnDeselectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(false));
+        document.getElementById('btnSaveCollection')?.addEventListener('click', saveNewsCollection);
+        document.getElementById('btnUseSelectedNews')?.addEventListener('click', useSelectedNews);
+        document.getElementById('btnRefreshCollections')?.addEventListener('click', loadNewsCollections);
+
+        // Load collections initially
+        if (state.token && document.getElementById('page-ricerca-notizie')) {
+            loadNewsCollections();
+        }
     }
 });
 
@@ -955,4 +968,227 @@ async function selectLogoFromArchive(url) {
         console.error(err);
         showToast("Errore durante l'aggiornamento del logo", 'error');
     }
+}
+
+// ============================================================
+// NEWS SEARCH & COLLECTIONS
+// ============================================================
+let currentNewsResults = [];
+let selectedNewsIndices = new Set();
+
+async function searchNews() {
+    const q = document.getElementById('newsKeyword').value.trim();
+    const from = document.getElementById('newsDateFrom').value;
+    const to = document.getElementById('newsDateTo').value;
+
+    if (!q) return showToast('Inserisci una parola chiave per la ricerca', 'warning');
+
+    const btn = document.getElementById('btnSearchNews');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳...';
+
+    document.getElementById('newsEmptyState').classList.add('hidden');
+    document.getElementById('newsResultsGrid').classList.add('hidden');
+    document.getElementById('newsResultsToolbar').classList.add('hidden');
+    document.getElementById('newsLoadingState').classList.remove('hidden');
+
+    try {
+        let url = `/api/news/search?q=${encodeURIComponent(q)}`;
+        // Convert YYYY-MM-DD to DD/MM/YYYY for backend
+        if (from) {
+            const [y, m, d] = from.split('-');
+            url += `&from=${d}/${m}/${y}`;
+        }
+        if (to) {
+            const [y, m, d] = to.split('-');
+            url += `&to=${d}/${m}/${y}`;
+        }
+
+        const data = await apiCall('GET', url);
+        currentNewsResults = data.results || [];
+        selectedNewsIndices.clear();
+        
+        document.getElementById('newsLoadingState').classList.add('hidden');
+        
+        if (currentNewsResults.length === 0) {
+            document.getElementById('newsEmptyState').classList.remove('hidden');
+            document.getElementById('newsEmptyState').innerHTML = '<div style="font-size:3rem; margin-bottom:1rem;">📭</div><p style="font-size:1.1rem; font-weight:600;">Nessun risultato trovato.</p><p style="font-size:0.9rem;">Prova con un\'altra parola chiave o allarga le date.</p>';
+        } else {
+            document.getElementById('newsResultCount').textContent = `${currentNewsResults.length} risultati trovati`;
+            document.getElementById('newsResultsToolbar').classList.remove('hidden');
+            renderNewsResults();
+            updateNewsSelectionUI();
+        }
+    } catch (err) {
+        document.getElementById('newsLoadingState').classList.add('hidden');
+        document.getElementById('newsEmptyState').classList.remove('hidden');
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function renderNewsResults() {
+    const grid = document.getElementById('newsResultsGrid');
+    grid.innerHTML = '';
+    grid.classList.remove('hidden');
+
+    currentNewsResults.forEach((news, idx) => {
+        const isSelected = selectedNewsIndices.has(idx);
+        const card = document.createElement('div');
+        card.className = `news-card ${isSelected ? 'selected' : ''}`;
+        card.onclick = () => toggleNewsSelection(idx);
+        
+        card.innerHTML = `
+            <div class="news-card-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    ${news.favicon ? `<img src="${news.favicon}" alt="" style="width:16px;height:16px;">` : '📄'}
+                    <span class="news-card-source">${news.source}</span>
+                </div>
+                <span class="news-card-date">${news.date}</span>
+            </div>
+            <h3 class="news-card-title">${news.title}</h3>
+            <p class="news-card-snippet">${news.snippet}...</p>
+            <div class="news-card-footer">
+                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-primary); font-size:0.8rem; text-decoration:none;">Apri link ↗</a>
+                <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function toggleNewsSelection(idx) {
+    if (selectedNewsIndices.has(idx)) {
+        selectedNewsIndices.delete(idx);
+    } else {
+        selectedNewsIndices.add(idx);
+    }
+    renderNewsResults();
+    updateNewsSelectionUI();
+}
+
+function toggleAllNewsSelection(select) {
+    if (select) {
+        currentNewsResults.forEach((_, idx) => selectedNewsIndices.add(idx));
+    } else {
+        selectedNewsIndices.clear();
+    }
+    renderNewsResults();
+    updateNewsSelectionUI();
+}
+
+function updateNewsSelectionUI() {
+    const count = selectedNewsIndices.size;
+    document.getElementById('newsSelectedCount').textContent = `${count} selezionat${count === 1 ? 'o' : 'i'}`;
+    const canAction = count > 0;
+    document.getElementById('btnSaveCollection').disabled = !canAction;
+    document.getElementById('btnUseSelectedNews').disabled = !canAction;
+}
+
+async function saveNewsCollection() {
+    if (selectedNewsIndices.size === 0) return;
+    const name = prompt('Dai un nome a questa raccolta (es. "Rassegna Tech Luglio"):');
+    if (!name) return;
+
+    const selectedLinks = Array.from(selectedNewsIndices).map(idx => currentNewsResults[idx]);
+    const keyword = document.getElementById('newsKeyword').value.trim();
+
+    try {
+        const btn = document.getElementById('btnSaveCollection');
+        btn.disabled = true;
+        btn.innerText = 'Salvataggio...';
+
+        await apiCall('POST', '/api/news/collections', { name, keyword, links: selectedLinks });
+        showToast('Raccolta salvata con successo!', 'success');
+        loadNewsCollections();
+    } catch (err) {
+        showToast('Errore durante il salvataggio: ' + err.message, 'error');
+    } finally {
+        updateNewsSelectionUI();
+        document.getElementById('btnSaveCollection').innerText = '💾 Salva raccolta';
+    }
+}
+
+async function loadNewsCollections() {
+    const container = document.getElementById('newsCollectionsList');
+    if (!container) return;
+    container.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">Caricamento raccolte...</div>';
+    try {
+        const collections = await apiCall('GET', '/api/news/collections');
+        if (collections.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">Nessuna raccolta salvata.</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        collections.forEach(coll => {
+            const d = new Date(coll.created_at);
+            const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}`;
+            
+            const div = document.createElement('div');
+            div.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:8px; padding:1rem; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;';
+            div.innerHTML = `
+                <div>
+                    <h4 style="margin:0 0 4px 0; font-size:1rem; color:var(--text-primary);">${coll.name}</h4>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">
+                        ${coll.link_count} link • Creato il ${dateStr} ${coll.keyword ? `• Keyword: "${coll.keyword}"` : ''}
+                    </div>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-outline btn-sm" onclick="useCollection(${coll.id})">🚀 Usa per Rassegna</button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--danger); border-color:rgba(255,107,107,0.3);" onclick="deleteCollection(${coll.id})">🗑️</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+        container.innerHTML = '<div style="color:var(--danger); font-size:0.9rem;">Errore caricamento raccolte.</div>';
+    }
+}
+
+async function useCollection(id) {
+    try {
+        const coll = await apiCall('GET', `/api/news/collections/${id}`);
+        if (!coll.links || coll.links.length === 0) return showToast('La raccolta è vuota', 'warning');
+        
+        // Use these links
+        document.querySelector('[data-page=rassegna]').click();
+        const urls = coll.links.map(l => l.url).join('\\n');
+        
+        // Open multi-link modal and set text
+        openMultiLinkModal();
+        document.getElementById('multiLinkTextarea').value = urls;
+        updateMultiLinkCount();
+        
+        showToast(`Raccolta "${coll.name}" caricata pronta per l'estrazione`, 'success');
+    } catch (err) {
+        showToast('Errore caricamento raccolta', 'error');
+    }
+}
+
+async function deleteCollection(id) {
+    if (!confirm('Sei sicuro di voler eliminare questa raccolta?')) return;
+    try {
+        await apiCall('DELETE', `/api/news/collections/${id}`);
+        showToast('Raccolta eliminata', 'success');
+        loadNewsCollections();
+    } catch (err) {
+        showToast('Errore eliminazione', 'error');
+    }
+}
+
+function useSelectedNews() {
+    if (selectedNewsIndices.size === 0) return;
+    const selectedLinks = Array.from(selectedNewsIndices).map(idx => currentNewsResults[idx].url);
+    
+    // Switch to rassegna page
+    document.querySelector('[data-page=rassegna]').click();
+    
+    // Open multi link modal
+    openMultiLinkModal();
+    document.getElementById('multiLinkTextarea').value = selectedLinks.join('\\n');
+    updateMultiLinkCount();
 }
