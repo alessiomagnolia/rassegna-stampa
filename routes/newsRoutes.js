@@ -226,44 +226,54 @@ router.get('/search', authMiddleware, async (req, res) => {
         const { q, from, to } = req.query;
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
 
-        // Build query string with optional date range (Google syntax: after/before)
-        let query = q.trim();
+        // Costruzione base query escludendo Wikipedia per migliorare la qualità
+        let baseQuery = q.trim() + ' -site:wikipedia.org -site:it.wikipedia.org';
+
+        // Creazione variazioni query per combattere il clustering
+        const variations = [
+            baseQuery,
+            baseQuery + ' notizie',
+            baseQuery + ' news',
+            baseQuery + ' oggi'
+        ];
 
         let fetchPromises = [];
 
-        // Google News Queries
-        if (from || to) {
-            let googleQuery = query;
-            if (from) {
-                const parts = from.split('/');
-                if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-            if (to) {
-                const parts = to.split('/');
-                if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+        for (const vq of variations) {
+            // Google News Queries
+            if (from || to) {
+                let googleQuery = vq;
+                if (from) {
+                    const parts = from.split('/');
+                    if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                if (to) {
+                    const parts = to.split('/');
+                    if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                
+                const encoded = encodeURIComponent(googleQuery);
+                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
+            } else {
+                const encodedStandard = encodeURIComponent(vq);
+                const encodedRecent = encodeURIComponent(vq + ' when:1d');
+                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
+                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
             }
             
-            const encoded = encodeURIComponent(googleQuery);
-            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-        } else {
-            const encodedStandard = encodeURIComponent(query);
-            const encodedRecent = encodeURIComponent(query + ' when:1d');
-            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-            fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-        }
-        
-        // Bing Web Query (copre blog e siti web generici non registrati come news)
-        const bingEncoded = encodeURIComponent(query);
-        const bingPages = [1, 11, 21, 31]; // 4 pages = ~40 results
-        for (const first of bingPages) {
-            fetchPromises.push(
-                fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
-                    .then(xml => parseRSS(xml, 'Web'))
-                    .catch(err => {
-                        console.error("Bing Web Error:", err.message);
-                        return []; // Don't crash if Bing fails
-                    })
-            );
+            // Bing Web Query (copre blog e siti web generici non registrati come news)
+            const bingEncoded = encodeURIComponent(vq);
+            const bingPages = [1, 11, 21, 31, 41, 51]; // 6 pages = ~60 results per variation
+            for (const first of bingPages) {
+                fetchPromises.push(
+                    fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
+                        .then(xml => parseRSS(xml, 'Web'))
+                        .catch(err => {
+                            console.error("Bing Web Error:", err.message);
+                            return []; // Don't crash if Bing fails
+                        })
+                );
+            }
         }
 
         const resultArrays = await Promise.all(fetchPromises);
