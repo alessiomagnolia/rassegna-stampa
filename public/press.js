@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPrId = null;
 
     // Load Initial Data
+    loadProfile();
     loadHistory();
     loadClients();
 
@@ -46,6 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCopy.textContent = 'Copiato!';
         setTimeout(() => btnCopy.textContent = originalText, 2000);
     });
+
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            localStorage.removeItem('rs_token');
+            window.location.href = 'index.html';
+        });
+    }
 
     // --- API Calls ---
 
@@ -63,6 +72,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Errore server');
         return data;
+    }
+
+    async function loadProfile() {
+        try {
+            const data = await fetchAPI('/api/auth/profile');
+            const user = data.user;
+            if (user) {
+                document.getElementById('navCompany').innerText = user.company_name || user.email;
+                if (user.logo_path) {
+                    const navLogo = document.getElementById('navLogo');
+                    navLogo.src = user.logo_path;
+                    navLogo.classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load profile', error);
+        }
     }
 
     async function loadHistory() {

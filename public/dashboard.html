@@ -33,11 +33,14 @@
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-inner">
             <nav class="sidebar-nav">
-                <a href="#" class="sidebar-item active" data-page="rassegna">
+                <a href="#" class="sidebar-item active" data-page="home">
+                    <span class="sidebar-icon">🏠</span>
+                    <span class="sidebar-label">Home</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="rassegna">
                     <span class="sidebar-icon">📰</span>
                     <span class="sidebar-label">Nuova Rassegna</span>
                 </a>
-                <a href="#" class="sidebar-item" data-page="profilo">
                     <span class="sidebar-icon">👤</span>
                     <span class="sidebar-label">Profilo</span>
                 </a>
@@ -95,8 +98,39 @@
     <!-- ===== MAIN CONTENT ===== -->
     <main id="mainContent" class="main-content">
 
+        <!-- PAGE: HOME (HUB) -->
+        <div id="page-home" class="page-view active">
+            <div class="content-header">
+                <h2>Benvenuto nella Piattaforma</h2>
+                <p class="text-muted">Seleziona lo strumento che desideri utilizzare.</p>
+            </div>
+            
+            <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <!-- Card Rassegna -->
+                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="document.querySelector('[data-page=rassegna]').click()">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📰</div>
+                    <h3 style="margin-bottom: 0.5rem;">Rassegna Stampa</h3>
+                    <p class="text-muted" style="font-size: 0.9rem;">Genera un impaginato PDF professionale a partire da link o articoli di testo.</p>
+                </div>
+                
+                <!-- Card Comunicati -->
+                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="window.location.href='press.html'">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📣</div>
+                    <h3 style="margin-bottom: 0.5rem;">Comunicati Stampa</h3>
+                    <p class="text-muted" style="font-size: 0.9rem;">Affida all'Intelligenza Artificiale la stesura del tuo comunicato stampa aziendale.</p>
+                </div>
+                
+                <!-- Card Ricerca Notizie -->
+                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="document.querySelector('[data-page=ricerca-notizie]').click()">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                    <h3 style="margin-bottom: 0.5rem;">Ricerca Notizie</h3>
+                    <p class="text-muted" style="font-size: 0.9rem;">Cerca le ultime news sul web e salvale per generare le rassegne stampa.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- PAGE: NUOVA RASSEGNA -->
-        <div id="page-rassegna" class="page-view active">
+        <div id="page-rassegna" class="page-view">
         <!-- back to rassegna page (actual content below) -->
             <div class="page-header">
                 <h1 class="page-title">📰 Nuova Rassegna Stampa</h1>

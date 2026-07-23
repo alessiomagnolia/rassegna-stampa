@@ -10,7 +10,7 @@
         body { overflow: hidden; }
         
         .app-layout {
-            display: flex; height: 100vh;
+            display: flex; height: calc(100vh - 60px);
         }
 
         /* Navbar Sidebar */
@@ -132,6 +132,19 @@
     </style>
 </head>
 <body>
+    <!-- ===== TOP NAVBAR ===== -->
+    <nav class="navbar" style="position: relative; z-index: 1000; height: 60px;">
+        <div class="nav-left">
+            <a href="dashboard.html" class="nav-brand" style="text-decoration:none; color:inherit;">📰 Rassegna Stampa</a>
+        </div>
+        <div class="nav-user">
+            <div id="navCompany" class="nav-company">Caricamento...</div>
+            <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
+            <a href="dashboard.html" class="btn btn-outline btn-sm" style="margin-right: 10px;">🏠 Home</a>
+            <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
+        </div>
+    </nav>
+
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
