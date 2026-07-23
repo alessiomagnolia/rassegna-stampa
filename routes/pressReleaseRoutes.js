@@ -1,7 +1,7 @@
 const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../database/db');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ function getGeminiClient() {
     if (!apiKey) {
         throw new Error('Chiave API di Gemini non configurata nel server (.env)');
     }
-    return new GoogleGenAI({ apiKey: apiKey });
+    return new GoogleGenerativeAI(apiKey);
 }
 
 /**
@@ -145,14 +145,10 @@ ${extra_instructions ? `Istruzioni aggiuntive: ${extra_instructions}` : ''}
 
 Scrivi ora il comunicato stampa.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                { role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }
-            ]
-        });
+        const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const response = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
 
-        const generatedText = response.text;
+        const generatedText = response.response.text();
 
         res.json({ content: generatedText });
 
