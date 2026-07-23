@@ -154,10 +154,7 @@ Scrivi ora il comunicato stampa.`;
 
     } catch (error) {
         console.error('[Press Generation] Error:', error);
-        if (error.message.includes('API key')) {
-            return res.status(500).json({ error: 'Errore di configurazione: API Key mancante o non valida nel server.' });
-        }
-        res.status(500).json({ error: 'Errore durante la generazione del comunicato stampa.' });
+        res.status(500).json({ error: 'Errore server: ' + (error.message || 'Sconosciuto') });
     }
 });
 
