@@ -696,13 +696,21 @@ async function generateAndDownload() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        // Trigger download
+        // Trigger download via fetch to include Auth token
+        const downloadRes = await fetch(data.downloadUrl, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('rs_token')}` }
+        });
+        if (!downloadRes.ok) throw new Error('Errore durante il download del PDF');
+        
+        const blob = await downloadRes.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = data.downloadUrl;
-        link.download = '';
+        link.href = objectUrl;
+        link.download = data.filename || 'Rassegna_Stampa.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
 
         showToast('PDF generato e scaricato!', 'success');
 

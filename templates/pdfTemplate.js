@@ -70,14 +70,10 @@ function buildPDFHTML(articles, options) {
 
         .page {
             width: 210mm;
-            height: 297mm;
             page-break-after: always;
             position: relative;
             background: white;
             padding: 15mm;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
         .page:last-child { page-break-after: auto; }
 
@@ -121,13 +117,13 @@ function buildPDFHTML(articles, options) {
 
         /* --- ARTICLE PAGE HEADER (default: light) --- */
         .header {
-            flex: 0 0 auto;
             display: flex; justify-content: space-between; align-items: center;
             height: 25mm; padding: 0 5mm;
             background-color: #f8f9fa;
             border-bottom: 3px solid transparent;
             border-image: linear-gradient(to right, #7c5cff, #00d4aa) 1;
             margin-bottom: 10mm;
+            page-break-inside: avoid;
         }
 
         /* Dark header variant — activated by class or auto-detection via JS */
@@ -163,30 +159,34 @@ function buildPDFHTML(articles, options) {
         .source-logo-large { max-height: 18mm; max-width: 100%; object-fit: contain; }
         .source-name-large { font-size: 16pt; font-weight: 700; color: #1a1a2e; }
 
-        .title-zone { flex: 0 0 auto; padding: 0 5mm; margin-bottom: 8mm; border-left: 4px solid #7c5cff; }
+        .title-zone { padding: 0 5mm; margin-bottom: 8mm; border-left: 4px solid #7c5cff; page-break-inside: avoid; }
         .article-source-label { font-size: 8pt; color: #888; font-weight: 600; text-transform: uppercase; margin-bottom: 2mm; letter-spacing: 0.5px; }
         .article-title { font-size: 20pt; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 
         .visual-zone {
-            flex: 0 0 auto; margin: 0 5mm 10mm; text-align: center;
-            max-height: 70mm; overflow: hidden; border-radius: 8px;
+            margin: 0 5mm 10mm; text-align: center;
+            max-height: 100mm; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex; justify-content: center; align-items: center;
+            page-break-inside: avoid;
+            overflow: hidden;
         }
-        .main-visual { width: 100%; height: auto; max-height: 70mm; object-fit: contain; object-position: top center; display: block; }
+        .main-visual { width: 100%; height: auto; max-height: 100mm; object-fit: contain; object-position: top center; display: block; }
 
-        .content-zone { flex: 1 1 auto; padding: 0 5mm; margin-bottom: 5mm; overflow: hidden; }
+        .content-zone { padding: 0 5mm; margin-bottom: 5mm; }
         .content-text {
             font-size: 11pt; line-height: 1.6; color: #333;
             text-align: justify; font-family: 'Times New Roman', Times, serif;
-            display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+            white-space: pre-wrap;
         }
         /* Bold keyword highlight */
         .content-text strong { font-weight: 700; color: #1a1a2e; }
 
         .footer {
-            flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: flex-end;
+            display: flex; justify-content: space-between; align-items: flex-end;
             border-top: 1px solid #e0e0e0; padding-top: 3mm; padding-left: 5mm; padding-right: 5mm;
+            margin-top: 15mm;
+            page-break-inside: avoid;
         }
         .footer-link { font-size: 9pt; color: #0066CC; text-decoration: none; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .footer-page { font-size: 9pt; color: #888; }
@@ -252,15 +252,13 @@ function buildPDFHTML(articles, options) {
             <img src="${article.imageBase64}" class="main-visual" alt="Article Image">
         </div>` : ''}
         <div class="content-zone">
-            <div class="content-text" style="-webkit-line-clamp: ${clampLines};">
-                ${processedExcerpt}
-            </div>
+            <div class="content-text">${processedExcerpt}</div>
         </div>
 
         <!-- FOOTER -->
         <div class="footer">
             <a href="${article.url || ''}" class="footer-link">${article.url || ''}</a>
-            <div class="footer-page">Pagina ${title ? index + 2 : index + 1} di ${title ? articles.length + 1 : articles.length}</div>
+            <div class="footer-page">Articolo ${index + 1} di ${articles.length}</div>
         </div>
     </div>
         `;
