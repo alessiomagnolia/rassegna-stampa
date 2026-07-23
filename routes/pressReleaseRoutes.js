@@ -145,7 +145,7 @@ ${extra_instructions ? `Istruzioni aggiuntive: ${extra_instructions}` : ''}
 
 Scrivi ora il comunicato stampa.`;
 
-        const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+        const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const response = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
 
         const generatedText = response.response.text();

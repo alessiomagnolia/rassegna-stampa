@@ -1,40 +1,31 @@
 const puppeteer = require('puppeteer');
 
-let browser = null;
-
-async function initBrowser() {
-    if (!browser) {
-        console.log('Avvio di Puppeteer...');
-        browser = await puppeteer.launch({
-            headless: 'new',
-            executablePath: '/usr/bin/google-chrome',
-            args: [
+// Launch a fresh browser instance optimized for low-memory servers (512MB RAM)
+async function launchBrowser() {
+    console.log('Avvio di Puppeteer...');
+    return await puppeteer.launch({
+        headless: 'new',
+        executablePath: process.env.RENDER ? '/usr/bin/google-chrome' : undefined,
+        args: [
             '--no-sandbox', 
             '--disable-setuid-sandbox', 
             '--disable-dev-shm-usage',
             '--disable-gpu'
-            ]
-        });
-    }
-    return browser;
+        ]
+    });
 }
 
-function getBrowser() {
-    return browser;
-}
-
-async function closeBrowser() {
-    if (browser) {
-        await browser.close();
-        browser = null;
-    }
-}
+// Dummy functions to prevent server.js from crashing
+function getBrowser() { return null; }
+async function initBrowser() { return await launchBrowser(); }
+async function closeBrowser() { return true; }
 
 async function takeScreenshot(url) {
+    let browser = null;
     let page = null;
     try {
-        const browserInstance = await initBrowser();
-        page = await browserInstance.newPage();
+        browser = await launchBrowser();
+        page = await browser.newPage();
         
         await page.setViewport({ width: 1280, height: 900 });
         
@@ -50,11 +41,10 @@ async function takeScreenshot(url) {
                 const text = btn.innerText.toLowerCase().trim();
                 if (acceptTexts.some(t => text === t || text.includes(t))) {
                     btn.click();
-                    break; // Just click the first one we find
+                    break;
                 }
             }
             
-            // Try to hide common overlay classes/ids just in case
             const selectorsToHide = [
                 '#iubenda-cs-banner', '.qc-cmp2-container', '#cookie-notice', 
                 '#cookie-law-info-bar', '.cookie-banner', '.cookie-consent'
@@ -65,10 +55,8 @@ async function takeScreenshot(url) {
             });
         });
 
-        // Wait a bit for banner to disappear
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Take a screenshot of the visible area
         console.log(`[Screenshot] Cattura in corso...`);
         const screenshotBuffer = await page.screenshot({ type: 'png' });
         
@@ -77,9 +65,8 @@ async function takeScreenshot(url) {
         console.error(`[Screenshot] Errore per ${url}:`, error.message);
         return null;
     } finally {
-        if (page) {
-            await page.close().catch(e => console.error('Errore chiusura pagina:', e));
-        }
+        if (page) await page.close().catch(e => console.error(e));
+        if (browser) await browser.close().catch(e => console.error(e));
     }
 }
 
@@ -87,5 +74,6 @@ module.exports = {
     initBrowser,
     getBrowser,
     closeBrowser,
+    launchBrowser,
     takeScreenshot
 };

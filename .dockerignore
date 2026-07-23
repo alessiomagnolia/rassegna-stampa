@@ -1,0 +1,6 @@
+node_modules
+npm-debug.log
+.env
+database/rassegna.db
+uploads/
+output/
