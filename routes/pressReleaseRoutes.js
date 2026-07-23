@@ -161,8 +161,8 @@ Scrivi ora il comunicato stampa.`;
         });
 
         let generatedText = '';
-        if (response.content && Array.isArray(response.content)) {
-            generatedText = response.content[0]?.text;
+        if (response.content && Array.isArray(response.content) && response.content.length > 0 && response.content[0].text) {
+            generatedText = response.content[0].text;
         } else if (response.content && typeof response.content === 'string') {
             generatedText = response.content;
         } else if (response.text) {
