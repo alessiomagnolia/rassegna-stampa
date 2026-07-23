@@ -4,6 +4,7 @@ const http = require('http');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../database/db');
 const { GoogleDecoder } = require('google-news-url-decoder');
+const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
 
 const router = express.Router();
@@ -215,6 +216,57 @@ function parseRSS(xmlText, sourceNameDefault = '') {
 }
 
 // ---------------------------------------------------------------------------
+// DuckDuckGo HTML Scraper
+// ---------------------------------------------------------------------------
+async function scrapeDuckDuckGoHTML(query) {
+    const results = [];
+    try {
+        const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7'
+        };
+        const response = await fetch(url, { headers });
+        if (!response.ok) return [];
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        $('.result__body').each((i, el) => {
+            const titleEl = $(el).find('.result__title a.result__url');
+            const title = titleEl.text().trim();
+            let link = titleEl.attr('href');
+            if (link && link.startsWith('//duckduckgo.com/l/?uddg=')) {
+                try {
+                    link = decodeURIComponent(link.split('uddg=')[1].split('&')[0]);
+                } catch(e) {}
+            } else if (link && link.startsWith('/')) {
+                link = 'https://duckduckgo.com' + link;
+            }
+            const snippet = $(el).find('.result__snippet').text().trim();
+            
+            if (title && link) {
+                let domain = '';
+                try { domain = new URL(link).hostname.replace(/^www\./, ''); } catch {}
+                results.push({
+                    title: title,
+                    url: link,
+                    source: domain || 'Web',
+                    domain: domain,
+                    date: '',
+                    timestamp: new Date().getTime() - (results.length * 1000), // maintain relative order
+                    snippet: snippet.slice(0, 220),
+                    favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
+                });
+            }
+        });
+    } catch(e) {
+        console.error("DDG Scrape Error:", e.message);
+    }
+    return results;
+}
+
+// ---------------------------------------------------------------------------
 // ROUTES
 // ---------------------------------------------------------------------------
 
@@ -227,7 +279,8 @@ router.get('/search', authMiddleware, async (req, res) => {
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
 
         // Costruzione base query escludendo Wikipedia per migliorare la qualità
-        let baseQuery = q.trim() + ' -site:wikipedia.org -site:it.wikipedia.org';
+        const exactQuery = '"' + q.trim() + '"';
+        let baseQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
 
         // Creazione variazioni query per combattere il clustering
         const variations = [
@@ -261,19 +314,8 @@ router.get('/search', authMiddleware, async (req, res) => {
                 fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
             }
             
-            // Bing Web Query (copre blog e siti web generici non registrati come news)
-            const bingEncoded = encodeURIComponent(vq);
-            const bingPages = [1, 11, 21, 31, 41, 51, 61, 71, 81, 91]; // 10 pages = ~100 results per variation
-            for (const first of bingPages) {
-                fetchPromises.push(
-                    fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
-                        .then(xml => parseRSS(xml, 'Web'))
-                        .catch(err => {
-                            console.error("Bing Web Error:", err.message);
-                            return []; // Don't crash if Bing fails
-                        })
-                );
-            }
+            // Sostituzione di Bing Web RSS con Scraper Web Completo (DuckDuckGo HTML)
+            fetchPromises.push(scrapeDuckDuckGoHTML(vq));
         }
 
         const resultArrays = await Promise.all(fetchPromises);
@@ -306,11 +348,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             'reddit.com', 'vk.com'
         ];
 
-        allResults = allResults.filter(item => {
-            if (!item.url) return false;
-            const urlLower = item.url.toLowerCase();
-            return !excludedDomains.some(domain => urlLower.includes(domain));
-        });
+        // I domini esclusi verranno filtrati più avanti, dopo aver scompattato i link di Google News
 
         // Deduplicate by title (since URLs might be Google News links before resolution)
         const seenTitles = new Set();
@@ -323,7 +361,13 @@ router.get('/search', authMiddleware, async (req, res) => {
             }
         }
         
-        // Resolve Google News and Bing URLs in parallel
+        // 1. Sort by timestamp descending (newest first)
+        uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
+
+        // 2. Prendi solo i primi 80 risultati per evitare payload enormi e tempi di decodifica eccessivi (Timeout)
+        uniqueResults = uniqueResults.slice(0, 80);
+
+        // 3. Resolve Google News and Bing URLs in parallel ONLY for the top 80 results
         console.log(`[News Search] Resolving URLs for ${uniqueResults.length} articles...`);
         await Promise.all(uniqueResults.map(async (item) => {
             // Bing Tracking Links
@@ -352,19 +396,20 @@ router.get('/search', authMiddleware, async (req, res) => {
             } catch(e){}
         }));
 
-        // Sort by timestamp descending (newest first)
-        uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
+        // 3b. Post-filtro stringente per escludere Social Network e Wikipedia DOPO la risoluzione degli URL
+        uniqueResults = uniqueResults.filter(item => {
+            if (!item.url) return false;
+            const urlLower = item.url.toLowerCase();
+            return !excludedDomains.some(domain => urlLower.includes(domain));
+        });
 
-        // Remove the internal timestamp before sending to client
+        // 4. Remove the internal timestamp before sending to client
         uniqueResults = uniqueResults.map(r => {
             delete r.timestamp;
             return r;
         });
 
-        // Prendi i primi 100 risultati per evitare payload enormi
-        uniqueResults = uniqueResults.slice(0, 100);
-
-        console.log(`[News Search] Query: "${q}" → Trovati ${uniqueResults.length} risultati unici`);
+        console.log(`[News Search] Query: "${q}" → Trovati ${uniqueResults.length} risultati unici pronti.`);
         res.json({ results: uniqueResults, total: uniqueResults.length, query: q });
 
     } catch (err) {
