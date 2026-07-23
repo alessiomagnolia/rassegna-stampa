@@ -6,10 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('rs_theme') || 'light';
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-        if (themeToggle) themeToggle.textContent = '☀️';
+        if (themeToggle) themeToggle.innerHTML = '<i data-feather="sun"></i>';
     } else {
         document.documentElement.setAttribute('data-theme', 'light');
-        if (themeToggle) themeToggle.textContent = '🌙';
+        if (themeToggle) themeToggle.innerHTML = '<i data-feather="moon"></i>';
     }
 
     if (themeToggle) {
@@ -18,32 +18,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'light');
                 localStorage.setItem('rs_theme', 'light');
-                themeToggle.textContent = '🌙';
+                themeToggle.innerHTML = '<i data-feather="moon"></i>';
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('rs_theme', 'dark');
-                themeToggle.textContent = '☀️';
+                themeToggle.innerHTML = '<i data-feather="sun"></i>';
             }
+            if (typeof feather !== 'undefined') feather.replace();
         });
     }
 
-    // Inject the SVG asterisk into the background
+    // Inject Soft Blobs for Background
     const bgContainer = document.querySelector('.bg-animation');
     if (bgContainer) {
         bgContainer.innerHTML = `
-            <svg class="asterisk-bg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 50 0 L 50 100 M 0 50 L 100 50 M 15 15 L 85 85 M 15 85 L 85 15" stroke="var(--accent-primary)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.1" />
-            </svg>
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
         `;
-        
-        // Scroll animation logic
-        const asterisk = document.querySelector('.asterisk-bg');
-        if (asterisk) {
-            window.addEventListener('scroll', () => {
-                const scrollPos = window.scrollY;
-                // Rotate 1 degree per pixel scrolled
-                asterisk.style.transform = \`translate(-50%, -50%) rotate(\${scrollPos * 0.2}deg)\`;
-            });
-        }
     }
 });

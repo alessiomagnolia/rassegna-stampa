@@ -1,0 +1,11 @@
+node_modules/
+.env
+.DS_Store
+database/*.sqlite
+database/*.db
+database/press_history.json
+database/rassegne_history.json
+uploads/
+test-*.js
+scratch/
+*.log

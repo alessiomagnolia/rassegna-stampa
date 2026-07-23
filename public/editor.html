@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
     <style>
         /* ============ EDITOR LAYOUT ============ */
         body { overflow: hidden; }
@@ -16,7 +17,7 @@
             height: 60px; z-index: 200;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 1.5rem; gap: 1rem;
-            background: rgba(10,10,26,0.95);
+            background: var(--bg-primary);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border-color);
         }
@@ -47,7 +48,7 @@
         /* --- Left Panel: Page List --- */
         .pages-panel {
             width: 220px; flex-shrink: 0;
-            background: rgba(10,10,26,0.8); border-right: 1px solid var(--border-color);
+            background: var(--bg-primary); border-right: 1px solid var(--border-color);
             overflow-y: auto; padding: 1rem 0.75rem;
         }
         .pages-panel-label {
@@ -167,7 +168,7 @@
         .edit-panel {
             position: fixed; top: 60px; right: 0; bottom: 0;
             width: 400px; z-index: 150;
-            background: rgba(12,12,28,0.98);
+            background: var(--bg-primary);
             backdrop-filter: blur(20px);
             border-left: 1px solid var(--border-color);
             transform: translateX(100%);
@@ -234,16 +235,12 @@
     </style>
 </head>
 <body>
-<div class="bg-animation">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-</div>
+<div class="bg-animation"></div>
 
 <!-- TOP NAVBAR -->
 <nav class="editor-navbar">
     <div class="editor-nav-left">
-        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()">← Dashboard</button>
+        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()"><i data-feather="arrow-left" style="width:14px;height:14px;"></i> Dashboard</button>
         <input type="text" id="editorTitle" class="editor-title-input" placeholder="Titolo rassegna...">
         <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
     </div>
@@ -814,5 +811,10 @@ function showToast(message, type = 'info') {
 }
 </script>
 <script src="ui.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof feather !== 'undefined') feather.replace();
+    });
+</script>
 </body>
 </html>

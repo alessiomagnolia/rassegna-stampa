@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
     <div class="bg-animation">
@@ -18,7 +19,7 @@
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <div class="nav-brand">📰 Rassegna Stampa</div>
+            <div class="nav-brand">Rassegna Stampa</div>
         </div>
         <div class="nav-user">
             <div id="navCompany" class="nav-company">Caricamento...</div>
@@ -33,22 +34,23 @@
         <div class="sidebar-inner">
             <nav class="sidebar-nav">
                 <a href="#" class="sidebar-item active" data-page="home">
-                    <span class="sidebar-icon">🏠</span>
+                    <span class="sidebar-icon"><i data-feather="home"></i></span>
                     <span class="sidebar-label">Home</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="rassegna">
-                    <span class="sidebar-icon">📰</span>
+                    <span class="sidebar-icon"><i data-feather="file-plus"></i></span>
                     <span class="sidebar-label">Nuova Rassegna</span>
                 </a>
-                    <span class="sidebar-icon">👤</span>
+                <a href="#" class="sidebar-item" data-page="profilo">
+                    <span class="sidebar-icon"><i data-feather="user"></i></span>
                     <span class="sidebar-label">Profilo</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="storico">
-                    <span class="sidebar-icon">📚</span>
+                    <span class="sidebar-icon"><i data-feather="book"></i></span>
                     <span class="sidebar-label">Storico Rassegne</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="ricerca-notizie">
-                    <span class="sidebar-icon">🔍</span>
+                    <span class="sidebar-icon"><i data-feather="search"></i></span>
                     <span class="sidebar-label">Ricerca Notizie</span>
                 </a>
 
@@ -56,11 +58,11 @@
                 <div class="sidebar-section-label">Strumenti AI</div>
 
                 <a href="press.html" class="sidebar-item">
-                    <span class="sidebar-icon">📣</span>
+                    <span class="sidebar-icon"><i data-feather="mic"></i></span>
                     <span class="sidebar-label">Comunicati Stampa</span>
                 </a>
                 <a href="#" class="sidebar-item sidebar-item--soon" data-page="linkedin">
-                    <span class="sidebar-icon">💼</span>
+                    <span class="sidebar-icon"><i data-feather="linkedin"></i></span>
                     <span class="sidebar-label">Post LinkedIn</span>
                     <span class="soon-badge">Presto</span>
                 </a>
@@ -69,15 +71,15 @@
                 <div class="sidebar-section-label">Gestione</div>
 
                 <a href="#" class="sidebar-item" data-page="archivio">
-                    <span class="sidebar-icon">🗃️</span>
+                    <span class="sidebar-icon"><i data-feather="archive"></i></span>
                     <span class="sidebar-label">Il mio Archivio</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="impostazioni">
-                    <span class="sidebar-icon">⚙️</span>
+                    <span class="sidebar-icon"><i data-feather="settings"></i></span>
                     <span class="sidebar-label">Impostazioni</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="contatti">
-                    <span class="sidebar-icon">✉️</span>
+                    <span class="sidebar-icon"><i data-feather="mail"></i></span>
                     <span class="sidebar-label">Contatti</span>
                 </a>
             </nav>
@@ -568,6 +570,7 @@
                 if (window.innerWidth < 900) closeSidebar();
             });
         });
+        feather.replace();
     </script>
     <script src="ui.js"></script>
 </body>

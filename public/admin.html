@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel | Rassegna Stampa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/feather-icons"></script>
     <style>
         /* ---- ADMIN-SPECIFIC OVERRIDES ---- */
         .admin-header {
@@ -195,16 +196,12 @@
     </style>
 </head>
 <body>
-    <div class="bg-animation">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
+    <div class="bg-animation"></div>
 
     <!-- LOGIN VIEW -->
     <div id="loginView" class="login-wrapper">
         <div class="login-card glass-card">
-            <div class="login-icon">🔐</div>
+            <div class="login-icon"><i data-feather="lock" style="width:48px;height:48px;"></i></div>
             <div class="login-title">Accesso Admin</div>
             <div class="login-subtitle">Area riservata al proprietario della piattaforma</div>
             <form id="adminLoginForm">
@@ -224,9 +221,9 @@
     <!-- DASHBOARD VIEW (hidden until logged in) -->
     <div id="dashboardView" class="hidden">
         <nav class="navbar glass-card">
-            <div class="nav-brand">📰 Rassegna Stampa</div>
+            <div class="nav-brand">Rassegna Stampa</div>
             <div class="nav-user">
-                <span class="admin-badge">⚙️ Admin</span>
+                <span class="admin-badge"><i data-feather="settings" style="width:12px;height:12px;"></i> Admin</span>
                 <button id="btnAdminLogout" class="btn btn-outline btn-sm" style="margin-left: 1rem;">Esci</button>
             </div>
         </nav>
@@ -234,16 +231,16 @@
         <main class="container dashboard-container">
             <div class="section glass-card">
                 <div class="admin-header">
-                    <h1>🗃️ Gestione Archivio Loghi</h1>
+                    <h1>Gestione Archivio Loghi</h1>
                     <div style="color: var(--text-muted); font-size: 0.9rem;">I loghi qui sono disponibili a tutti gli utenti della piattaforma</div>
                 </div>
 
                 <!-- ADD LOGO -->
                 <div class="add-logo-section">
-                    <h3>➕ Aggiungi nuova testata</h3>
+                    <h3>Aggiungi nuova testata</h3>
                     <div class="add-logo-tabs">
-                        <button class="tab-btn active" onclick="switchTab('url')">🔗 Tramite URL</button>
-                        <button class="tab-btn" onclick="switchTab('file')">💻 Carica file</button>
+                        <button class="tab-btn active" onclick="switchTab('url')"><i data-feather="link" style="width:14px;height:14px;"></i> Tramite URL</button>
+                        <button class="tab-btn" onclick="switchTab('file')"><i data-feather="upload" style="width:14px;height:14px;"></i> Carica file</button>
                     </div>
 
                     <!-- URL TAB -->
@@ -511,5 +508,12 @@
         }
     </script>
     <script src="ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        });
+    </script>
 </body>
 </html>
