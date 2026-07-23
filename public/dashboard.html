@@ -101,13 +101,6 @@
 
         <!-- PAGE: HOME (HUB) -->
         <div id="page-home" class="page-view active" style="position: relative; min-height: 120vh; padding-top: 4rem;">
-            
-            <!-- Fixed Background Phrases -->
-            <div class="fixed-bg-text">
-                <div class="bg-phrase phrase-1">L'Intelligenza Artificiale al servizio della tua <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Comunicazione</span>.</div>
-                <div class="bg-phrase phrase-2">Più <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Velocità</span>. Più <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Precisione</span>.</div>
-                <div class="bg-phrase phrase-3">La <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Rassegna Stampa</span> del futuro.</div>
-            </div>
 
             <!-- Content overlayed on top -->
             <div style="position: relative; z-index: 10;">
@@ -118,7 +111,7 @@
                 
                 <div class="services-stack" style="display: flex; flex-direction: column; gap: 3rem; max-width: 900px; margin: 0 auto;">
                     <!-- Card Rassegna -->
-                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=rassegna]').click()">
+                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=\'rassegna\']').click()">
                         <div class="h-card-icon"><i data-feather="file-text" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
                         <div class="h-card-content">
                             <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Rassegna Stampa</h3>
@@ -138,7 +131,7 @@
                     </div>
                     
                     <!-- Card Ricerca Notizie -->
-                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=ricerca-notizie]').click()">
+                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=\'ricerca-notizie\']').click()">
                         <div class="h-card-icon"><i data-feather="search" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
                         <div class="h-card-content">
                             <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Ricerca Notizie</h3>
@@ -554,20 +547,28 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
         const mainContent = document.getElementById('mainContent');
-        const toggleBtn = document.getElementById('sidebarToggle');
+        const toggleBtn = document.getElementById('btnToggleSidebar');
 
-        function openSidebar() {
-            sidebar.classList.add('open');
-            overlay.classList.add('visible');
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            if (window.innerWidth > 900) {
+                mainContent.classList.toggle('shifted');
+            } else {
+                overlay.classList.toggle('visible', sidebar.classList.contains('open'));
+            }
         }
-        function closeSidebar() {
+        
+        // Initialize desktop state
+        if (window.innerWidth > 900) {
+            sidebar.classList.add('open');
+            mainContent.classList.add('shifted');
+        }
+
+        toggleBtn.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', () => {
             sidebar.classList.remove('open');
             overlay.classList.remove('visible');
-        }
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
         });
-        overlay.addEventListener('click', closeSidebar);
 
         // ---- PAGE NAVIGATION ----
         document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {

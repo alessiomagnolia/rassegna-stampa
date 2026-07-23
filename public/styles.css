@@ -1010,10 +1010,8 @@ input::placeholder, textarea::placeholder {
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (min-width: 901px) {
-    .sidebar { transform: translateX(0); }
-    .sidebar-toggle { display: none; }
-    .main-content { margin-left: 260px; }
+.main-content.shifted {
+    margin-left: 260px;
 }
 
 @media (max-width: 900px) {
