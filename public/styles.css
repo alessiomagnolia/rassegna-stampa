@@ -197,13 +197,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-gradient {
-    background: transparent;
-    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white !important;
+    border: none;
 }
 
 .btn-gradient:hover {
-    background: var(--text-primary);
-    color: var(--bg-primary);
+    box-shadow: 0 4px 15px rgba(124,92,255,0.4);
+    transform: translateY(-1px);
+    color: white !important;
 }
 
 .btn-outline {

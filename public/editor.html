@@ -801,6 +801,7 @@ function goBackToDashboard() {
     const currentTitle = document.getElementById('editorTitle').value.trim();
     options.title = currentTitle;
     localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    localStorage.setItem('rs_open_page', 'rassegna');
     window.location.href = 'dashboard.html';
 }
 

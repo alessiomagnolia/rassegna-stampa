@@ -589,6 +589,15 @@
                 if (window.innerWidth < 900) closeSidebar();
             });
         });
+
+        // Restore target page if requested
+        const openPage = localStorage.getItem('rs_open_page');
+        if (openPage) {
+            localStorage.removeItem('rs_open_page');
+            const targetItem = document.querySelector(`.sidebar-item[data-page="${openPage}"]`);
+            if (targetItem) targetItem.click();
+        }
+
         feather.replace();
     </script>
     <script src="ui.js"></script>
