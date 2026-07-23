@@ -263,7 +263,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             
             // Bing Web Query (copre blog e siti web generici non registrati come news)
             const bingEncoded = encodeURIComponent(vq);
-            const bingPages = [1, 11, 21, 31, 41, 51]; // 6 pages = ~60 results per variation
+            const bingPages = [1, 11, 21, 31, 41, 51, 61, 71, 81, 91]; // 10 pages = ~100 results per variation
             for (const first of bingPages) {
                 fetchPromises.push(
                     fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
@@ -297,6 +297,19 @@ router.get('/search', authMiddleware, async (req, res) => {
         allResults = allResults.filter(item => {
             if (!item.timestamp) return true; // Keep if we can't parse date
             return item.timestamp >= fromTime && item.timestamp <= toTime;
+        });
+
+        // Post-filtro stringente per escludere Social Network e Wikipedia
+        const excludedDomains = [
+            'wikipedia.org', 'facebook.com', 'instagram.com', 'youtube.com',
+            'tiktok.com', 'twitter.com', 'x.com', 'linkedin.com', 'pinterest.com',
+            'reddit.com', 'vk.com'
+        ];
+
+        allResults = allResults.filter(item => {
+            if (!item.url) return false;
+            const urlLower = item.url.toLowerCase();
+            return !excludedDomains.some(domain => urlLower.includes(domain));
         });
 
         // Deduplicate by title (since URLs might be Google News links before resolution)
