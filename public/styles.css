@@ -287,14 +287,13 @@ input[type="url"],
 select,
 textarea {
     width: 100%;
-    padding: 0.5rem 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-color);
-    border-radius: 0;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
     transition: var(--transition);
 }
 
@@ -965,13 +964,6 @@ input::placeholder, textarea::placeholder {
     display: block;
 }
 
-/* Main Content Area */
-.main-content {
-    padding-top: 64px;
-    min-height: 100vh;
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* Page Views */
 .page-view {
     display: none;
@@ -1010,6 +1002,20 @@ input::placeholder, textarea::placeholder {
     gap: 1.5rem;
     align-items: start;
 }
+
+/* Main Content Area */
+.main-content {
+    padding-top: 64px;
+    min-height: 100vh;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 901px) {
+    .sidebar { transform: translateX(0); }
+    .sidebar-toggle { display: none; }
+    .main-content { margin-left: 260px; }
+}
+
 @media (max-width: 900px) {
     .content-grid { grid-template-columns: 1fr; }
     .main-content { margin-left: 0 !important; }
