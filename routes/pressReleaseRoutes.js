@@ -1,17 +1,18 @@
 const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../database/db');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const router = express.Router();
 
-// Funzione di utilità per inizializzare il client Gemini
-function getGeminiClient() {
-    const apiKey = process.env.GEMINI_API_KEY;
+function getAnthropicClient() {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-        throw new Error('Chiave API di Gemini non configurata nel server (.env)');
+        throw new Error('Chiave API di Anthropic non configurata nel server (.env)');
     }
-    return new GoogleGenerativeAI(apiKey);
+    return new Anthropic({
+        apiKey: apiKey,
+    });
 }
 
 /**
@@ -76,7 +77,7 @@ router.get('/:id', authMiddleware, (req, res) => {
 
 /**
  * POST /api/press/generate
- * Genera un nuovo comunicato stampa usando Gemini
+ * Genera un nuovo comunicato stampa usando Anthropic
  */
 router.post('/generate', authMiddleware, async (req, res) => {
     const { title, client_name, length, extra_instructions, manual_examples } = req.body;
@@ -86,9 +87,10 @@ router.post('/generate', authMiddleware, async (req, res) => {
     }
 
     try {
+        const anthropic = getAnthropicClient();
         const db = getDb();
-        const ai = getGeminiClient();
-        
+
+        // 1. Estrazione Esempi Manuali dalla richiesta e dal database
         let contextText = '';
         let pastExamples = [];
 
@@ -104,22 +106,26 @@ router.post('/generate', authMiddleware, async (req, res) => {
         }
 
         // Costruiamo il contesto degli esempi (Tone of Voice)
-        if (pastExamples.length > 0 || (manual_examples && manual_examples.trim())) {
+        if (pastExamples.length > 0 || (manual_examples && manual_examples.trim().length > 0)) {
             contextText += "ESEMPI PRECEDENTI DEL CLIENTE (Usa questi testi per imparare il Tone of Voice esatto, lo stile, l'impaginazione e il lessico aziendale):\n\n";
             
             pastExamples.forEach((ex, idx) => {
                 contextText += `--- ESEMPIO ${idx + 1}: ${ex.title} ---\n${ex.content}\n\n`;
             });
-
-            if (manual_examples && manual_examples.trim()) {
+            
+            if (manual_examples && manual_examples.trim().length > 0) {
                 contextText += `--- ESEMPIO MANUALE INSERITO DALL'UTENTE ---\n${manual_examples}\n\n`;
                 
-                // Salviamo l'esempio manuale nel DB come "Reference" in modo che se lo ricordi in futuro
-                if (client_name && client_name.trim()) {
-                    db.prepare(`
-                        INSERT INTO press_releases (user_id, client_name, title, content, is_reference)
-                        VALUES (?, ?, ?, ?, 1)
-                    `).run(req.userId, client_name.trim(), "Esempio caricato manualmente", manual_examples);
+                // Salviamo questo esempio come 'reference' nel DB se è stato fornito un cliente
+                if (client_name && client_name.trim() !== '') {
+                    // Controlliamo se esiste già un reference identico
+                    const existingRef = db.prepare('SELECT id FROM press_releases WHERE client_name = ? AND is_reference = 1 AND content = ?').get(client_name.trim(), manual_examples);
+                    if (!existingRef) {
+                        db.prepare(`
+                            INSERT INTO press_releases (user_id, client_name, title, content, is_reference)
+                            VALUES (?, ?, ?, ?, 1)
+                        `).run(req.userId, client_name.trim(), "Esempio caricato manualmente", manual_examples);
+                    }
                 }
             }
         }
@@ -130,10 +136,10 @@ router.post('/generate', authMiddleware, async (req, res) => {
         if (length === 'lungo') lengthInstruction = "lungo e dettagliato (circa 50-60 righe testuali)";
         if (length === 'moltolungo') lengthInstruction = "molto lungo e di grande approfondimento (oltre 80 righe testuali)";
 
-        // Prompt di Ingegneria
+        // Prompt di Ingegneria per Claude
         const systemPrompt = `Sei un Senior PR Manager ed esperto di Comunicazione Istituzionale. Il tuo compito è scrivere un Comunicato Stampa professionale e impeccabile.
 Se ti vengono forniti degli 'ESEMPI PRECEDENTI DEL CLIENTE', devi analizzarli attentamente e replicare ESATTAMENTE il loro Tone of Voice (formale/informale, caldo/istituzionale), le formule di apertura/chiusura e il lessico specifico utilizzato.
-Non aggiungere commenti tuoi. Restituisci SOLO ed ESCLUSIVAMENTE il testo del comunicato stampa in formato markdown. Inizia direttamente col testo.`;
+Non aggiungere commenti tuoi o preamboli ("Ecco il comunicato"). Restituisci SOLO ed ESCLUSIVAMENTE il testo del comunicato stampa in formato markdown. Inizia direttamente col testo del titolo.`;
 
         const userPrompt = `
 ${contextText}
@@ -145,25 +151,27 @@ ${extra_instructions ? `Istruzioni aggiuntive: ${extra_instructions}` : ''}
 
 Scrivi ora il comunicato stampa.`;
 
-        const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-        const response = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
+        const response = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-latest",
+            max_tokens: 2000,
+            system: systemPrompt,
+            messages: [
+                { role: "user", content: userPrompt }
+            ]
+        });
 
-        const generatedText = response.response.text();
+        const generatedText = response.content[0].text;
 
         res.json({ content: generatedText });
 
     } catch (error) {
         console.error('[Press Generation] Error:', error);
         
-        if (error.message && (error.message.includes('404') || error.message.includes('not found'))) {
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
-                const data = await response.json();
-                const available = data.models ? data.models.map(m => m.name.replace('models/', '')).filter(n => n.includes('gemini')).join(', ') : 'Nessuno';
-                return res.status(500).json({ error: `Modello non trovato. I modelli attualmente sbloccati per la tua API Key sono: ${available}` });
-            } catch (e) {
-                console.error('Errore nel recupero dei modelli:', e);
-            }
+        if (error.status === 401 || error.message.includes('authentication')) {
+            return res.status(500).json({ error: 'Errore di configurazione: API Key Anthropic mancante o non valida.' });
+        }
+        if (error.status === 429 || error.message.includes('credit')) {
+            return res.status(500).json({ error: 'Fondi insufficienti su Anthropic o limite di richieste raggiunto. Ricarica il saldo su console.anthropic.com' });
         }
 
         res.status(500).json({ error: 'Errore server: ' + (error.message || 'Sconosciuto') });
