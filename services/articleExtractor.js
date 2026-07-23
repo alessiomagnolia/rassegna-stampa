@@ -133,7 +133,9 @@ async function fallbackExtract(url) {
 // ---------------------------------------------------------------
 function cleanText(html, wordLimit = 500) {
     if (!html) return '';
-    let text = html.replace(/<[^>]*>?/gm, ' ');
+    
+    // Strip all tags EXCEPT <b> and <strong>
+    let text = html.replace(/<\/?(?!(?:b|strong)\b)[a-z0-9]+(?:[^>]+)?>/gmi, ' ');
     
     const junkPatterns = [
         /00:00\s*00:00/g,
@@ -148,9 +150,14 @@ function cleanText(html, wordLimit = 500) {
         text = text.replace(pattern, ' ');
     }
     text = text.replace(/\s+/g, ' ').trim();
+    
     const words = text.split(' ');
     if (words.length > wordLimit) {
-        return words.slice(0, wordLimit).join(' ') + '...';
+        text = words.slice(0, wordLimit).join(' ') + '...';
+        // Fix unclosed tags
+        if ((text.match(/<b>/gi) || []).length > (text.match(/<\/b>/gi) || []).length) text += '</b>';
+        if ((text.match(/<strong>/gi) || []).length > (text.match(/<\/strong>/gi) || []).length) text += '</strong>';
+        return text;
     }
     return text;
 }

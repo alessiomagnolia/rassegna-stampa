@@ -249,7 +249,7 @@ function buildPDFHTML(articles, options) {
         </div>
         ${article.imageBase64 ? `
         <div class="visual-zone">
-            <img src="${article.imageBase64}" class="main-visual" alt="Article Image">
+            <img src="${article.imageBase64}" class="main-visual" style="object-position: ${article.imagePosition || 'top center'};" alt="Article Image">
         </div>` : ''}
         <div class="content-zone">
             <div class="content-text">${processedExcerpt}</div>

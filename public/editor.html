@@ -320,7 +320,14 @@
             <label>Immagine principale</label>
             <div id="editImagePreviewContainer" class="hidden">
                 <img id="editImagePreview" class="edit-image-preview" src="" alt="">
-                <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; padding: 0 2px;">
+                    <select id="editImagePosition" style="width: auto; padding: 2px 6px; font-size: 0.75rem; background: rgba(255,255,255,0.1); color: #efece5; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="top center" style="color: black;">Posizione: Alto</option>
+                        <option value="center center" style="color: black;">Posizione: Centro</option>
+                        <option value="bottom center" style="color: black;">Posizione: Basso</option>
+                    </select>
+                    <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
+                </div>
             </div>
             <input type="file" id="editImageInput" accept="image/*" class="hidden">
             <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia immagine</label>
@@ -604,6 +611,7 @@ function openEditPanel(idx) {
     const imgPrevCont = document.getElementById('editImagePreviewContainer');
     if (art.imageBase64) {
         imgPrev.src = art.imageBase64;
+        document.getElementById('editImagePosition').value = art.imagePosition || 'top center';
         imgPrevCont.classList.remove('hidden');
     } else {
         imgPrevCont.classList.add('hidden');
@@ -643,6 +651,7 @@ function saveEdit() {
     art.source_type    = document.getElementById('editSourceType').value;
     art.published_date = document.getElementById('editDate').value.trim();
     art.url            = document.getElementById('editUrl').value.trim();
+    art.imagePosition  = document.getElementById('editImagePosition').value;
     art.darkHeader     = document.getElementById('editDarkHeader').checked;
 
     closeEditPanel();
