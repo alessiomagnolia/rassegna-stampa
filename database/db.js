@@ -72,6 +72,20 @@ function initDatabase() {
         )
     `).run();
 
+    // Create press_releases table for AI generation and Tone of Voice memory
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS press_releases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            client_name TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            is_reference INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `).run();
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }
