@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('rs_token');
     if (!token) {
         window.location.href = 'index.html';
         return;
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const res = await fetch(url, options);
         if (res.status === 401) {
-            localStorage.removeItem('token');
+            localStorage.removeItem('rs_token');
             window.location.href = 'index.html';
             throw new Error('Non autorizzato');
         }
