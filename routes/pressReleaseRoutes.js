@@ -139,6 +139,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
         // Prompt di Ingegneria per Claude
         const systemPrompt = `Sei un Senior PR Manager ed esperto di Comunicazione Istituzionale. Il tuo compito è scrivere un Comunicato Stampa professionale e impeccabile.
 Se ti vengono forniti degli 'ESEMPI PRECEDENTI DEL CLIENTE', devi analizzarli attentamente e replicare ESATTAMENTE il loro Tone of Voice (formale/informale, caldo/istituzionale), le formule di apertura/chiusura e il lessico specifico utilizzato.
+IMPORTANTE: Quando generi il titolo del comunicato, inserisci SEMPRE prima il soggetto (ovvero il Cliente/Azienda) seguito da due punti o da un trattino, e poi l'argomento.
 Non aggiungere commenti tuoi o preamboli ("Ecco il comunicato"). Restituisci SOLO ed ESCLUSIVAMENTE il testo del comunicato stampa in formato markdown. Inizia direttamente col testo del titolo.`;
 
         const userPrompt = `
