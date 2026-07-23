@@ -167,6 +167,22 @@ Scrivi ora il comunicato stampa.`;
     } catch (error) {
         console.error('[Press Generation] Error:', error);
         
+        if (error.status === 404 || (error.message && error.message.includes('not_found_error'))) {
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/models', {
+                    headers: {
+                        'x-api-key': process.env.ANTHROPIC_API_KEY,
+                        'anthropic-version': '2023-06-01'
+                    }
+                });
+                const data = await response.json();
+                const available = data.data ? data.data.map(m => m.id).filter(id => id.includes('claude')).join(', ') : 'Nessuno';
+                return res.status(500).json({ error: `Modello non trovato. I modelli attualmente sbloccati per la tua API Key Anthropic sono: ${available}` });
+            } catch (e) {
+                console.error('Errore nel recupero dei modelli Anthropic:', e);
+            }
+        }
+
         if (error.status === 401 || error.message.includes('authentication')) {
             return res.status(500).json({ error: 'Errore di configurazione: API Key Anthropic mancante o non valida.' });
         }
