@@ -205,6 +205,32 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--bg-primary);
 }
 
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+.btn-outline:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-primary);
+}
+
+/* Force light text for buttons in forced dark panels */
+.navbar .btn-outline,
+.sidebar .btn-outline,
+.edit-panel .btn-outline,
+.top-bar .btn-outline {
+    color: #efece5 !important;
+    border-color: rgba(255,255,255,0.3) !important;
+}
+.navbar .btn-outline:hover,
+.sidebar .btn-outline:hover,
+.edit-panel .btn-outline:hover,
+.top-bar .btn-outline:hover {
+    background: rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+}
+
 .btn-secondary, .btn-outline {
     background: transparent;
     color: var(--text-primary);
@@ -281,8 +307,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 select option {
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
 }
 
 input::placeholder, textarea::placeholder {
@@ -686,7 +712,7 @@ input::placeholder, textarea::placeholder {
 .toast {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    color: white;
+    color: var(--text-primary);
     padding: 1rem 1.5rem;
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow);

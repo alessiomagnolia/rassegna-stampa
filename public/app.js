@@ -28,11 +28,14 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
-        <span style="font-size: 1.2rem">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-        <div>${message}</div>
+        <span style="font-size: 1.2rem; display: flex; align-items: center;">
+            ${type === 'success' ? '<i data-feather="check-circle" style="color:var(--success)"></i>' : type === 'error' ? '<i data-feather="alert-circle" style="color:var(--danger)"></i>' : '<i data-feather="info" style="color:var(--accent-primary)"></i>'}
+        </span>
+        <div style="flex:1; font-size:0.9rem; line-height:1.4;">${message}</div>
     `;
     
     container.appendChild(toast);
+    feather.replace();
     
     setTimeout(() => {
         toast.classList.add('fade-out');
@@ -397,7 +400,7 @@ function renderArticles() {
         const imgSrc = article.screenshotBase64 || article.imageBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
         
         card.innerHTML = `
-            <span class="drag-handle" title="Trascina per riordinare">⠿</span>
+            <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
             <img src="${imgSrc}" class="article-thumb" alt="Thumb">
             <div class="article-content">
                 <div class="article-meta" style="align-items: center;">
@@ -417,18 +420,22 @@ function renderArticles() {
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
                 <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-                    <span onclick="openLogoArchive(${idx})" style="font-size: 0.85rem; cursor: pointer; color: #00d4aa; font-weight: 500; background: rgba(0, 212, 170, 0.1); padding: 4px 8px; border-radius: 4px;">
-                        ✏️ Cambia logo testata
-                    </span>
+                <div style="display:flex; justify-content:space-between; margin-top:0.75rem;">
+                    <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer;">
+                        <i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo testata
+                    </label>
+                    <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="handleLogoUpload(event, ${idx})">
+                </div>
                     ${article.logoBase64 ? `<div style="background: white; padding: 2px 8px; border-radius: 4px; display: flex; align-items: center;"><img src="${article.logoBase64}" style="max-height: 20px; object-fit: contain;"></div>` : ''}
                 </div>
             </div>
-            <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi">✖</button>
+            <button class="btn-icon" onclick="removeArticle(${idx})" title="Rimuovi"><i data-feather="trash-2" style="width:18px;height:18px;color:var(--danger);"></i></button>
         `;
         list.appendChild(card);
     });
 
     // Init drag-and-drop after rendering
+    feather.replace();
     initArticlesSortable();
 }
 
@@ -585,14 +592,15 @@ async function loadHistory() {
                     <strong>${item.title}</strong>
                     <span class="history-meta">${date} &bull; ${item.article_count} articoli</span>
                 </div>
-                <div class="history-actions">
-                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})">✏️ Riapri ed Edita</button>` : ''}
-                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')">⬇️ Scarica</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})">Elimina</button>
+                <div style="display:flex; justify-content:space-between; margin-top:1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica</button>
+                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Riapri ed Edita</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
             list.appendChild(div);
         });
+        feather.replace();
     } catch (error) {
         list.innerHTML = '<div class="empty-state">Errore nel caricamento dello storico.</div>';
     }
@@ -632,6 +640,7 @@ async function reopenFromHistory(reviewId) {
 // --- INITIALIZATION & EVENT LISTENERS ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    feather.replace();
     // Auth page specific
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -857,9 +866,10 @@ function mlLog(text, type = 'normal') {
     const log = document.getElementById('mlLogList');
     const item = document.createElement('div');
     item.className = `ml-log-item ml-log-${type}`;
-    item.textContent = text;
+    item.innerHTML = text;
     log.appendChild(item);
     log.scrollTop = log.scrollHeight;
+    feather.replace();
 }
 
 async function startMultiLinkExtraction() {
@@ -876,7 +886,7 @@ async function startMultiLinkExtraction() {
     // Disable button to prevent double-click duplicates
     const startBtn = document.getElementById('btnStartMultiLink');
     startBtn.disabled = true;
-    startBtn.textContent = '⏳ In elaborazione...';
+    startBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin-right:6px;"></div> In elaborazione...';
 
     // Switch to progress view
     document.getElementById('multiLinkInputArea').classList.add('hidden');
@@ -902,11 +912,11 @@ async function startMultiLinkExtraction() {
             const article = await apiCall('POST', '/api/articles/extract', { url });
             state.articles.push(article);
             succeeded++;
-            mlLog(`✅ ${article.source_name} — ${article.title.slice(0, 60)}${article.title.length > 60 ? '...' : ''}`, 'success');
+            mlLog(`<i data-feather="check" style="color:var(--success);width:14px;height:14px;vertical-align:middle;"></i> ${article.source_name} — ${article.title.slice(0, 60)}${article.title.length > 60 ? '...' : ''}`, 'success');
         } catch (err) {
             failed++;
             const shortUrl = url.length > 55 ? url.slice(0, 55) + '...' : url;
-            mlLog(`❌ Errore: ${shortUrl}`, 'error');
+            mlLog(`<i data-feather="x" style="color:var(--danger);width:14px;height:14px;vertical-align:middle;"></i> Errore: ${shortUrl}`, 'error');
         }
     }
 
@@ -923,7 +933,8 @@ async function startMultiLinkExtraction() {
 
     // Re-enable button for potential re-use
     startBtn.disabled = false;
-    startBtn.textContent = '🚀 Estrai tutti';
+    startBtn.innerHTML = '<i data-feather="zap" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Estrai tutti';
+    feather.replace();
 }
 
 // Logo Archive Functions
@@ -968,9 +979,6 @@ function renderLogoArchive(logos) {
 async function selectLogoFromArchive(url) {
     if (currentEditingArticleIndex === -1) return;
     try {
-        // Assegno direttamente l'URL per evitare blocchi CORS del browser sul fetch.
-        // I tag <img> (sia nella dashboard che nel PDF tramite Puppeteer) caricheranno
-        // nativamente il link esterno.
         state.articles[currentEditingArticleIndex].logoBase64 = url;
         renderArticles();
         closeLogoArchive();
@@ -997,7 +1005,7 @@ async function searchNews() {
     const btn = document.getElementById('btnSearchNews');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '⏳...';
+    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin-right:4px;"></div> Ricerca...';
 
     document.getElementById('newsEmptyState').classList.add('hidden');
     document.getElementById('newsResultsGrid').classList.add('hidden');
@@ -1024,7 +1032,9 @@ async function searchNews() {
         
         if (currentNewsResults.length === 0) {
             document.getElementById('newsEmptyState').classList.remove('hidden');
-            document.getElementById('newsEmptyState').innerHTML = '<div style="font-size:3rem; margin-bottom:1rem;">📭</div><p style="font-size:1.1rem; font-weight:600;">Nessun risultato trovato.</p><p style="font-size:0.9rem;">Prova con un\'altra parola chiave o allarga le date.</p>';
+            document.getElementById('newsEmptyState').innerHTML = '<div style="margin-bottom:1rem;"><i data-feather="search" style="width:48px;height:48px;color:var(--text-muted);"></i></div><p style="font-size:1.1rem; font-weight:600;">Nessun risultato trovato.</p><p style="font-size:0.9rem;">Prova con un\'altra parola chiave o allarga le date.</p>';
+            feather.replace();
+            return;
         } else {
             document.getElementById('newsResultCount').textContent = `${currentNewsResults.length} risultati trovati`;
             document.getElementById('newsResultsToolbar').classList.remove('hidden');
@@ -1038,6 +1048,7 @@ async function searchNews() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+        feather.replace();
     }
 }
 
@@ -1053,22 +1064,20 @@ function renderNewsResults() {
         card.onclick = () => toggleNewsSelection(idx);
         
         card.innerHTML = `
-            <div class="news-card-header">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    ${news.favicon ? `<img src="${news.favicon}" alt="" style="width:16px;height:16px;">` : '📄'}
-                    <span class="news-card-source">${news.source}</span>
-                </div>
-                <span class="news-card-date">${news.date}</span>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                ${news.favicon ? `<img src="${news.favicon}" alt="" style="width:16px;height:16px;">` : '<i data-feather="globe" style="width:16px;height:16px;color:var(--text-muted);"></i>'}
+                <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${news.source}</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;">${news.date}</span>
             </div>
-            <h3 class="news-card-title">${news.title}</h3>
-            <p class="news-card-snippet">${news.snippet}...</p>
-            <div class="news-card-footer">
-                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-primary); font-size:0.8rem; text-decoration:none;">Apri link ↗</a>
+            <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${news.title}</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
+                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-secondary); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
                 <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>
             </div>
         `;
         grid.appendChild(card);
     });
+    feather.replace();
 }
 
 function toggleNewsSelection(idx) {
@@ -1097,6 +1106,10 @@ function updateNewsSelectionUI() {
     const canAction = count > 0;
     document.getElementById('btnSaveCollection').disabled = !canAction;
     document.getElementById('btnUseSelectedNews').disabled = !canAction;
+    if (canAction) {
+        document.getElementById('btnSaveCollection').innerHTML = '<i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Salva raccolta';
+        feather.replace();
+    }
 }
 
 async function saveNewsCollection() {
@@ -1119,7 +1132,8 @@ async function saveNewsCollection() {
         showToast('Errore durante il salvataggio: ' + err.message, 'error');
     } finally {
         updateNewsSelectionUI();
-        document.getElementById('btnSaveCollection').innerText = '💾 Salva raccolta';
+        document.getElementById('btnSaveCollection').innerHTML = '<i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Salva raccolta';
+        feather.replace();
     }
 }
 
@@ -1144,17 +1158,18 @@ async function loadNewsCollections() {
             div.innerHTML = `
                 <div>
                     <h4 style="margin:0 0 4px 0; font-size:1rem; color:var(--text-primary);">${coll.name}</h4>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
                         ${coll.link_count} link • Creato il ${dateStr} ${coll.keyword ? `• Keyword: "${coll.keyword}"` : ''}
                     </div>
                 </div>
                 <div style="display:flex; gap:0.5rem;">
-                    <button class="btn btn-outline btn-sm" onclick="useCollection(${coll.id})">🚀 Usa per Rassegna</button>
-                    <button class="btn btn-outline btn-sm" style="color:var(--danger); border-color:rgba(255,107,107,0.3);" onclick="deleteCollection(${coll.id})">🗑️</button>
+                    <button class="btn btn-outline btn-sm" onclick="useCollection(${coll.id})"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Usa per Rassegna</button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--danger); border-color:rgba(255,107,107,0.3);" onclick="deleteCollection(${coll.id})"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
             container.appendChild(div);
         });
+        feather.replace();
     } catch (err) {
         container.innerHTML = '<div style="color:var(--danger); font-size:0.9rem;">Errore caricamento raccolte.</div>';
     }

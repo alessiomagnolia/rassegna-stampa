@@ -254,7 +254,7 @@
                                 <div class="input-group" style="margin-bottom: 1rem;">
                                     <label>URL logo *</label>
                                     <input type="url" id="urlLogoUrl" placeholder="https://logo.clearbit.com/corriere.it" oninput="previewUrlLogo()">
-                                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">💡 Suggerimento: usa <strong>https://logo.clearbit.com/nomesito.it</strong></small>
+                                    <small style="color: var(--text-muted); margin-top: 4px; display: block;"><i data-feather="info" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Suggerimento: usa <strong>https://logo.clearbit.com/nomesito.it</strong></small>
                                 </div>
                                 <button class="btn btn-primary" onclick="addLogoByUrl()">Aggiungi</button>
                             </div>
@@ -278,7 +278,7 @@
                                 <div class="input-group" style="margin-bottom: 1rem;">
                                     <label>File immagine *</label>
                                     <input type="file" id="fileLogoFile" accept="image/*" class="hidden" onchange="previewFileLogo()">
-                                    <label for="fileLogoFile" class="btn btn-outline" style="cursor: pointer; display: inline-block; margin-top: 5px;">📂 Scegli immagine</label>
+                                    <label for="fileLogoFile" class="btn btn-outline" style="cursor: pointer; display: inline-block; margin-top: 5px;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli immagine</label>
                                     <span id="fileLogoFilename" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 10px;"></span>
                                 </div>
                                 <button class="btn btn-primary" onclick="addLogoByFile()">Aggiungi</button>
@@ -421,10 +421,11 @@
                 card.innerHTML = `
                     <img src="${src}" alt="${logo.name}" onerror="this.style.opacity='0.3'">
                     <div class="logo-name">${logo.name}</div>
-                    <button class="btn-delete" onclick="deleteLogo(${idx})">🗑️ Rimuovi</button>
+                    <button class="btn-delete" onclick="deleteLogo(${idx})"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:2px;"></i> Rimuovi</button>
                 `;
                 grid.appendChild(card);
             });
+            if (typeof feather !== 'undefined') feather.replace();
         }
 
         // ---- ADD BY URL ----
@@ -501,9 +502,15 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
-            toast.innerHTML = `<span style="font-size:1.2rem">${icon}</span><div>${message}</div>`;
+            toast.innerHTML = `
+                <span style="font-size: 1.2rem; display: flex; align-items: center;">
+                    ${type === 'success' ? '<i data-feather="check-circle" style="color:var(--success)"></i>' : type === 'error' ? '<i data-feather="alert-circle" style="color:var(--danger)"></i>' : '<i data-feather="info" style="color:var(--accent-primary)"></i>'}
+                </span>
+                <div style="flex:1; font-size:0.9rem; line-height:1.4;">${message}</div>
+            `;
+            
             container.appendChild(toast);
+            if (typeof feather !== 'undefined') feather.replace();
             setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
     </script>
