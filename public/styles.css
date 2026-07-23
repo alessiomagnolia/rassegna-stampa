@@ -3,17 +3,17 @@
 :root {
     --bg-primary: #efece5; /* Warm Beige / Off-white from image */
     --bg-secondary: #ffffff;  
-    --bg-card: transparent;
+    --bg-card: rgba(255, 255, 255, 0.4);
     --text-primary: #121212;
     --text-secondary: #4a4a4a;
     --text-muted: #888888;
-    --accent-primary: #FF5A36; /* Coral Orange from image highlight */
-    --accent-secondary: #7B2CBF; /* Purple */
+    --accent-primary: #7B2CBF; /* Purple */
+    --accent-secondary: #00E676; /* Green */
     --border-color: #121212;
     --shadow: none;
-    --radius-sm: 0px;
-    --radius-md: 0px;
-    --radius-lg: 0px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
     --transition: all 0.3s ease;
     --font-sans: 'Inter', sans-serif;
     --font-serif: 'Playfair Display', serif;
@@ -23,7 +23,7 @@
 [data-theme="dark"] {
     --bg-primary: #121212; /* Dark Charcoal */
     --bg-secondary: #1a1a1a;
-    --bg-card: transparent;
+    --bg-card: rgba(30, 30, 30, 0.6);
     --text-primary: #efece5; /* Warm off-white */
     --text-secondary: #b3b3b3;
     --text-muted: #888888;
@@ -107,9 +107,9 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 400;
 }
 
-/* Highlight Text Effect from Image */
+/* Highlight Text Effect */
 .highlight-text {
-    background-color: var(--accent-primary);
+    background-color: var(--accent-secondary); /* Green highlight */
     color: #121212;
     padding: 0 0.2em;
     display: inline-block;
@@ -135,13 +135,14 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: 50px;
 }
 
-/* Minimalist Card */
+/* Minimalist Glass Card */
 .glass-card {
-    background: transparent;
-    border: none;
-    border-top: 1px solid var(--border-color);
-    padding: 2rem 0;
-    border-radius: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: var(--transition);
 }
     padding: 2rem;
@@ -357,14 +358,11 @@ input::placeholder, textarea::placeholder {
     align-items: center;
     padding: 0 1.5rem;
     z-index: 200;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    background: rgba(10, 10, 26, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-color);
+    background: rgba(10, 10, 26, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #efece5;
 }
 
 .nav-left {
@@ -374,8 +372,10 @@ input::placeholder, textarea::placeholder {
 }
 
 .nav-brand {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
+    font-family: var(--font-serif);
+    color: #efece5;
 }
 
 .nav-user {
@@ -852,7 +852,7 @@ input::placeholder, textarea::placeholder {
     padding: 0.7rem 1rem;
     border-radius: var(--radius-sm);
     text-decoration: none;
-    color: var(--text-secondary);
+    color: #b3b3b3;
     font-size: 0.92rem;
     font-weight: 500;
     transition: var(--transition);
@@ -861,7 +861,7 @@ input::placeholder, textarea::placeholder {
 }
 .sidebar-item:hover {
     background: rgba(255,255,255,0.05);
-    color: var(--text-primary);
+    color: #efece5;
 }
 .sidebar-item.active {
     background: rgba(124, 92, 255, 0.15);
@@ -912,20 +912,20 @@ input::placeholder, textarea::placeholder {
 /* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: auto;
 }
 .sidebar-username {
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #efece5;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sidebar-plan {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: #b3b3b3;
     margin-top: 2px;
 }
 

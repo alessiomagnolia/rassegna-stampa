@@ -252,8 +252,8 @@
                         <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
                         <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
                     </div>
-                    <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.5rem; white-space:nowrap;">🔍 Cerca</button>
-                    <button id="btnResetSearchNews" class="btn btn-outline" style="height:44px; padding:0 1.5rem; white-space:nowrap; border-color: rgba(255,255,255,0.2);">🔄 Nuova</button>
+                    <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.5rem; white-space:nowrap;"><i data-feather="search" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Cerca</button>
+                    <button id="btnResetSearchNews" class="btn btn-outline" style="height:44px; padding:0 1.5rem; white-space:nowrap; border-color: rgba(255,255,255,0.2);"><i data-feather="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Nuova</button>
                 </div>
             </section>
 
@@ -261,13 +261,13 @@
             <div id="newsResultsToolbar" class="hidden" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
                 <div style="display:flex; align-items:center; gap:1rem;">
                     <span id="newsResultCount" style="font-weight:600; font-size:0.9rem;"></span>
-                    <button id="btnSelectAllNews" class="btn btn-outline btn-sm">☑️ Seleziona tutti</button>
-                    <button id="btnDeselectAllNews" class="btn btn-outline btn-sm">☐ Deseleziona tutti</button>
+                    <button id="btnSelectAllNews" class="btn btn-outline btn-sm"><i data-feather="check-square" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Seleziona tutti</button>
+                    <button id="btnDeselectAllNews" class="btn btn-outline btn-sm"><i data-feather="square" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Deseleziona tutti</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:0.75rem;">
                     <span id="newsSelectedCount" style="font-size:0.85rem; color:var(--text-muted);">0 selezionati</span>
-                    <button id="btnSaveCollection" class="btn btn-secondary" disabled>💾 Salva raccolta</button>
-                    <button id="btnUseSelectedNews" class="btn btn-gradient" disabled>🚀 Crea rassegna ora</button>
+                    <button id="btnSaveCollection" class="btn btn-secondary" disabled><i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Salva raccolta</button>
+                    <button id="btnUseSelectedNews" class="btn btn-gradient" disabled><i data-feather="plus-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Crea rassegna ora</button>
                 </div>
             </div>
 
@@ -279,7 +279,7 @@
 
             <!-- EMPTY STATE -->
             <div id="newsEmptyState" style="text-align:center; padding:5rem 2rem; color:var(--text-muted);">
-                <div style="font-size:3rem; margin-bottom:1rem;">🔎</div>
+                <div style="margin-bottom:1rem;"><i data-feather="search" style="width:48px;height:48px;color:var(--text-muted);"></i></div>
                 <p style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Inizia una ricerca</p>
                 <p style="font-size:0.9rem;">Inserisci una parola chiave e (opzionalmente) un periodo per trovare le notizie</p>
             </div>
@@ -290,8 +290,8 @@
             <!-- SAVED COLLECTIONS -->
             <div id="newsCollectionsSection" style="margin-top:2.5rem;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-                    <h3 style="font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">📂 Le tue raccolte salvate</h3>
-                    <button id="btnRefreshCollections" class="btn btn-outline btn-sm">🔄 Aggiorna</button>
+                    <h3 style="font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;"><i data-feather="bookmark" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Le tue raccolte salvate</h3>
+                    <button id="btnRefreshCollections" class="btn btn-outline btn-sm"><i data-feather="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Aggiorna</button>
                 </div>
                 <div id="newsCollectionsList"></div>
             </div>
@@ -299,14 +299,15 @@
 
         <!-- PAGE: PROFILO -->
         <div id="page-profilo" class="page-view">
-            <div class="page-header">
-                <h1 class="page-title">👤 Profilo</h1>
-                <p class="page-subtitle">Gestisci i tuoi dati e il branding aziendale</p>
-            </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">👤</div>
-                <h2>Vai su "Nuova Rassegna"</h2>
-                <p>Per modificare il nome azienda e caricare il logo, apri il pannello <strong>⚙️ Profilo e Branding</strong> nella pagina principale. In futuro, questa sezione sarà dedicata ad una gestione completa del tuo profilo e delle preferenze.</p>
+            <div class="container" style="max-width: 800px; padding-top: 2rem;">
+                <h1 class="page-title"><i data-feather="user" style="width:28px;height:28px;vertical-align:middle;"></i> Profilo</h1>
+                <p class="page-subtitle">Gestisci i dettagli della tua azienda e le tue preferenze.</p>
+
+                <div class="coming-soon-box">
+                    <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
+                    <h3>Sezione in arrivo</h3>
+                    <p>Per modificare il nome azienda e caricare il logo, apri il pannello <strong>Profilo e Branding</strong> nella pagina principale.</p>
+                </div>
                 <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="document.querySelector('[data-page=rassegna]').click()">← Vai alla pagina principale</button>
             </div>
         </div>
@@ -315,7 +316,7 @@
         <!-- PAGE: STORICO -->
         <div id="page-storico" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">📚 Storico Rassegne</h1>
+                <h1 class="page-title"><i data-feather="book" style="width:28px;height:28px;vertical-align:middle;"></i> Storico Rassegne</h1>
                 <p class="page-subtitle">Le tue rassegne generate negli ultimi 30 giorni</p>
             </div>
             <div class="glass-card">
@@ -328,11 +329,11 @@
         <!-- PAGE: COMUNICATI (placeholder) -->
         <div id="page-comunicati" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">📣 Genera Comunicati Stampa</h1>
-                <p class="page-subtitle">Crea comunicati stampa professionali con l'intelligenza artificiale</p>
+                <h1 class="page-title"><i data-feather="mic" style="width:28px;height:28px;vertical-align:middle;"></i> Genera Comunicati Stampa</h1>
+                <p class="page-subtitle">Usa l'intelligenza artificiale per scrivere comunicati perfetti in pochi secondi.</p>
             </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">🚀</div>
+            <div class="coming-soon-box">
+                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>In arrivo</h2>
                 <p>Questa funzionalità è in sviluppo. Potrai generare comunicati stampa professionali a partire da semplici brief testuali.</p>
             </div>
@@ -341,11 +342,11 @@
         <!-- PAGE: LINKEDIN (placeholder) -->
         <div id="page-linkedin" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">💼 Genera Post LinkedIn</h1>
-                <p class="page-subtitle">Trasforma le notizie in contenuti LinkedIn pronti alla pubblicazione</p>
+                <h1 class="page-title"><i data-feather="linkedin" style="width:28px;height:28px;vertical-align:middle;"></i> Genera Post LinkedIn</h1>
+                <p class="page-subtitle">Trasforma le tue notizie o i tuoi comunicati in post virali per LinkedIn.</p>
             </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">💡</div>
+            <div class="coming-soon-box">
+                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>In arrivo</h2>
                 <p>Questa funzionalità è in sviluppo. Potrai convertire articoli e rassegne in post LinkedIn ottimizzati per il tuo pubblico.</p>
             </div>
@@ -354,11 +355,11 @@
         <!-- PAGE: ARCHIVIO (placeholder) -->
         <div id="page-archivio" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">🗃️ Il mio Archivio Loghi</h1>
-                <p class="page-subtitle">I loghi delle testate e dei tuoi clienti, sempre a portata di mano</p>
+                <h1 class="page-title"><i data-feather="archive" style="width:28px;height:28px;vertical-align:middle;"></i> Il mio Archivio Loghi</h1>
+                <p class="page-subtitle">Gestisci i loghi delle testate giornalistiche salvati nel tuo database personale.</p>
             </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">🗂️</div>
+            <div class="coming-soon-box">
+                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>In arrivo</h2>
                 <p>Potrai caricare e organizzare i loghi delle testate giornalistiche e dei tuoi clienti, disponibili in ogni rassegna con un solo click.</p>
             </div>
@@ -367,11 +368,11 @@
         <!-- PAGE: IMPOSTAZIONI (placeholder) -->
         <div id="page-impostazioni" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">⚙️ Impostazioni</h1>
-                <p class="page-subtitle">Personalizza la piattaforma secondo le tue preferenze</p>
+                <h1 class="page-title"><i data-feather="settings" style="width:28px;height:28px;vertical-align:middle;"></i> Impostazioni</h1>
+                <p class="page-subtitle">Configura le preferenze generali, il database e l'esportazione.</p>
             </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">⚙️</div>
+            <div class="coming-soon-box">
+                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>In arrivo</h2>
                 <p>Qui potrai personalizzare le impostazioni della piattaforma: notifiche, preferenze PDF, lingua e altro.</p>
             </div>
@@ -380,11 +381,11 @@
         <!-- PAGE: CONTATTI (placeholder) -->
         <div id="page-contatti" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">✉️ Contatti</h1>
-                <p class="page-subtitle">Hai bisogno di aiuto? Siamo qui per te</p>
+                <h1 class="page-title"><i data-feather="mail" style="width:28px;height:28px;vertical-align:middle;"></i> Contatti</h1>
+                <p class="page-subtitle">Hai bisogno di aiuto o vuoi suggerire una nuova funzione? Scrivici!</p>
             </div>
-            <div class="glass-card coming-soon-card">
-                <div class="coming-soon-icon">💬</div>
+            <div class="coming-soon-box">
+                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>Supporto</h2>
                 <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
             </div>
@@ -397,9 +398,9 @@
     <!-- Manual Entry Modal -->
     <div id="manualEntryModal" class="modal-overlay hidden">
         <div class="modal-content glass-card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h3>📝 Inserimento Articolo Manuale</h3>
-                <button id="btnCloseManual" class="btn-icon">✖</button>
+            <div class="modal-header">
+                <h3><i data-feather="edit-3" style="width:20px;height:20px;vertical-align:middle;"></i> Inserimento Articolo Manuale</h3>
+                <button id="btnCloseManual" class="btn-icon"><i data-feather="x"></i></button>
             </div>
             <div class="form-grid">
                 <div class="input-group">
@@ -445,7 +446,7 @@
                     <label>Logo Testata (opzionale)</label>
                     <input type="file" id="manualLogo" accept="image/*">
                 </div>
-                <button id="btnSaveManual" class="btn btn-primary btn-large" style="width: 100%; margin-top: 20px;">💾 Salva Articolo Manuale</button>
+                <button id="btnSaveManual" class="btn btn-primary btn-large" style="width: 100%; margin-top: 20px;"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva Articolo Manuale</button>
             </div>
         </div>
     </div>
@@ -454,12 +455,9 @@
     <div id="multiLinkModal" class="modal-overlay hidden">
         <div class="modal-content glass-card" style="max-width: 640px; width: 90%; max-height: 90vh; overflow-y: auto;">
             <!-- Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
-                <div>
-                    <h3 style="margin:0; font-size: 1.3rem;">📋 Rassegna Multi Link</h3>
-                    <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem;">Incolla fino a 50 link, uno per riga. La piattaforma estrarrà automaticamente tutti gli articoli.</p>
-                </div>
-                <button id="btnCloseMultiLink" class="btn-icon" style="font-size:1.4rem; flex-shrink:0;">&times;</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h3 style="margin:0; font-size: 1.3rem;"><i data-feather="layers" style="width:20px;height:20px;vertical-align:middle;"></i> Rassegna Multi Link</h3>
+                <button id="btnCloseMultiLink" class="btn-icon"><i data-feather="x"></i></button>
             </div>
 
             <!-- URL Textarea -->
@@ -472,7 +470,7 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
                     <span id="multiLinkCount" style="font-size:0.85rem; color:var(--text-muted);">0 link inseriti</span>
-                    <button id="btnStartMultiLink" class="btn btn-primary" style="min-width:160px;">🚀 Estrai tutti</button>
+                    <button id="btnStartMultiLink" class="btn btn-primary" style="min-width:160px;"><i data-feather="zap" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Estrai tutti</button>
                 </div>
             </div>
 
@@ -490,13 +488,13 @@
                 <!-- Results -->
                 <div id="mlResults" class="hidden" style="margin-top:1.5rem; padding:1rem; background:rgba(0,212,170,0.08); border:1px solid rgba(0,212,170,0.25); border-radius:10px;">
                     <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <span style="font-size:2rem;">✅</span>
+                        <span style="font-size:2rem;"><i data-feather="check-circle" style="color:var(--success);width:48px;height:48px;"></i></span>
                         <div>
                             <div id="mlResultTitle" style="font-weight:700; font-size:1rem;"></div>
                             <div id="mlResultSub" style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;"></div>
                         </div>
                     </div>
-                    <button id="btnCloseMultiLinkDone" class="btn btn-gradient" style="width:100%; margin-top:1rem;">✓ Chiudi e vai agli articoli</button>
+                    <button id="btnCloseMultiLinkDone" class="btn btn-gradient" style="width:100%; margin-top:1rem;">Chiudi e vai agli articoli</button>
                 </div>
             </div>
         </div>

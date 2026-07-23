@@ -17,14 +17,15 @@
             height: 60px; z-index: 200;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 1.5rem; gap: 1rem;
-            background: var(--bg-primary);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
+            background: rgba(10,10,26,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #efece5;
         }
         .editor-nav-left { display: flex; align-items: center; gap: 1rem; }
         .editor-title-input {
             background: transparent; border: none;
-            color: var(--text-primary); font-family: var(--font-sans);
+            color: #efece5; font-family: var(--font-sans);
             font-size: 1rem; font-weight: 600;
             padding: 4px 8px; border-radius: 6px;
             border: 1px solid transparent;
@@ -35,9 +36,9 @@
             background: rgba(255,255,255,0.05);
         }
         .editor-article-count {
-            font-size: 0.8rem; color: var(--text-muted);
+            font-size: 0.8rem; color: #b3b3b3;
             background: rgba(255,255,255,0.06); padding: 3px 10px;
-            border-radius: 20px; border: 1px solid var(--border-color);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* ============ EDITOR BODY ============ */
@@ -48,8 +49,9 @@
         /* --- Left Panel: Page List --- */
         .pages-panel {
             width: 220px; flex-shrink: 0;
-            background: var(--bg-primary); border-right: 1px solid var(--border-color);
+            background: rgba(10,10,26,0.95); border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto; padding: 1rem 0.75rem;
+            color: #efece5;
         }
         .pages-panel-label {
             font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -168,10 +170,11 @@
         .edit-panel {
             position: fixed; top: 60px; right: 0; bottom: 0;
             width: 400px; z-index: 150;
-            background: var(--bg-primary);
+            background: rgba(12,12,28,0.98);
             backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border-color);
+            border-left: 1px solid rgba(255,255,255,0.1);
             transform: translateX(100%);
+            color: #efece5;
             transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
             display: flex; flex-direction: column;
             overflow: hidden;
@@ -188,15 +191,15 @@
         .edit-panel-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
 
         .edit-field { margin-bottom: 1.25rem; }
-        .edit-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
+        .edit-field label { display: block; font-size: 0.8rem; font-weight: 600; color: #b3b3b3; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
         .edit-field input[type="text"],
         .edit-field input[type="url"],
         .edit-field input[type="date"],
         .edit-field select,
         .edit-field textarea {
             width: 100%; padding: 0.65rem 0.9rem;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
-            border-radius: 8px; color: var(--text-primary);
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: #efece5;
             font-family: inherit; font-size: 0.9rem; transition: var(--transition);
         }
         .edit-field textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
@@ -245,7 +248,7 @@
         <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
     </div>
     <div style="display:flex; gap:0.75rem; align-items:center;">
-        <button id="btnGeneratePDF" class="btn btn-gradient">📄 Genera e Scarica PDF</button>
+        <button id="btnGeneratePDF" class="btn btn-gradient"><i data-feather="download" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica PDF</button>
         <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
             <div class="spinner" style="width:18px;height:18px;"></div> Generazione...
         </div>
@@ -264,7 +267,7 @@
     <!-- CENTER: Preview -->
     <div class="preview-area" id="previewArea">
         <div class="preview-wrapper" id="previewWrapper">
-            <button class="preview-edit-btn" id="btnEditPage">✏️ Modifica questa pagina</button>
+            <button class="preview-edit-btn" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
     </div>
@@ -274,8 +277,8 @@
 <!-- RIGHT: Edit Panel -->
 <div class="edit-panel" id="editPanel">
     <div class="edit-panel-header">
-        <h3>✏️ Modifica articolo</h3>
-        <button class="btn-icon" id="btnCloseEditPanel">✖</button>
+        <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
+        <button class="btn-icon" id="btnCloseEditPanel"><i data-feather="x"></i></button>
     </div>
     <div class="edit-panel-body">
         <div class="edit-field">
@@ -317,10 +320,10 @@
             <label>Immagine principale</label>
             <div id="editImagePreviewContainer" class="hidden">
                 <img id="editImagePreview" class="edit-image-preview" src="" alt="">
-                <button class="edit-remove-btn" onclick="removeEditImage()">✕ Rimuovi immagine</button>
+                <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
             </div>
             <input type="file" id="editImageInput" accept="image/*" class="hidden">
-            <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;">🖼️ Cambia immagine</label>
+            <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia immagine</label>
         </div>
 
         <!-- Logo -->
@@ -328,10 +331,10 @@
             <label>Logo testata</label>
             <div id="editLogoPreviewContainer" class="hidden">
                 <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
-                <button class="edit-remove-btn" onclick="removeEditLogo()">✕ Rimuovi logo</button>
+                <button class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi logo</button>
             </div>
             <input type="file" id="editLogoInput" accept="image/*" class="hidden">
-            <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;">🏷️ Cambia logo</label>
+            <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo</label>
         </div>
 
         <!-- Dark Header Toggle -->
@@ -351,7 +354,7 @@
         </div>
     </div>
     <div class="edit-panel-footer">
-        <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit">💾 Salva modifiche</button>
+        <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva modifiche</button>
     </div>
 </div>
 
