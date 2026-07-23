@@ -70,10 +70,14 @@ function buildPDFHTML(articles, options) {
 
         .page {
             width: 210mm;
+            height: 297mm;
             page-break-after: always;
             position: relative;
             background: white;
             padding: 15mm;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         .page:last-child { page-break-after: auto; }
 
@@ -164,29 +168,31 @@ function buildPDFHTML(articles, options) {
         .article-title { font-size: 20pt; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 
         .visual-zone {
-            margin: 0 5mm 10mm; text-align: center;
-            max-height: 100mm; border-radius: 8px;
+            flex: 0 0 auto; margin: 0 5mm 10mm; text-align: center;
+            max-height: 70mm; overflow: hidden; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex; justify-content: center; align-items: center;
-            page-break-inside: avoid;
-            overflow: hidden;
         }
-        .main-visual { width: 100%; height: auto; max-height: 100mm; object-fit: contain; object-position: top center; display: block; }
+        .main-visual { width: 100%; height: auto; max-height: 70mm; object-fit: contain; object-position: top center; display: block; }
 
-        .content-zone { padding: 0 5mm; margin-bottom: 5mm; }
+        .content-zone { flex: 1 1 auto; padding: 0 5mm; margin-bottom: 5mm; overflow: hidden; position: relative; }
         .content-text {
             font-size: 11pt; line-height: 1.6; color: #333;
             text-align: justify; font-family: 'Times New Roman', Times, serif;
-            white-space: pre-wrap;
+            display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        /* Fade out at the bottom to elegantly hide any partially sliced letters */
+        .content-zone::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 10mm;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+            pointer-events: none;
         }
         /* Bold keyword highlight */
         .content-text strong { font-weight: 700; color: #1a1a2e; }
 
         .footer {
-            display: flex; justify-content: space-between; align-items: flex-end;
+            flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: flex-end;
             border-top: 1px solid #e0e0e0; padding-top: 3mm; padding-left: 5mm; padding-right: 5mm;
-            margin-top: 15mm;
-            page-break-inside: avoid;
         }
         .footer-link { font-size: 9pt; color: #0066CC; text-decoration: none; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .footer-page { font-size: 9pt; color: #888; }
@@ -252,7 +258,9 @@ function buildPDFHTML(articles, options) {
             <img src="${article.imageBase64}" class="main-visual" style="object-position: ${article.imagePosition || 'top center'};" alt="Article Image">
         </div>` : ''}
         <div class="content-zone">
-            <div class="content-text">${processedExcerpt}</div>
+            <div class="content-text" style="-webkit-line-clamp: ${clampLines};">
+                ${processedExcerpt}
+            </div>
         </div>
 
         <!-- FOOTER -->
