@@ -100,32 +100,52 @@
     <main id="mainContent" class="main-content">
 
         <!-- PAGE: HOME (HUB) -->
-        <div id="page-home" class="page-view active">
-            <div class="content-header">
-                <h2>Benvenuto nella Piattaforma</h2>
-                <p class="text-muted">Seleziona lo strumento che desideri utilizzare.</p>
-            </div>
+        <div id="page-home" class="page-view active" style="position: relative; min-height: 120vh; padding-top: 4rem;">
             
-            <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-                <!-- Card Rassegna -->
-                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="document.querySelector('[data-page=rassegna]').click()">
-                    <div style="margin-bottom: 1rem;"><i data-feather="file-text" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
-                    <h3 style="margin-bottom: 0.5rem;">Rassegna Stampa</h3>
-                    <p class="text-muted" style="font-size: 0.9rem;">Genera un impaginato PDF professionale a partire da link o articoli di testo.</p>
+            <!-- Fixed Background Phrases -->
+            <div class="fixed-bg-text">
+                <div class="bg-phrase phrase-1">L'Intelligenza Artificiale al servizio della tua <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Comunicazione</span>.</div>
+                <div class="bg-phrase phrase-2">Più <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Velocità</span>. Più <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Precisione</span>.</div>
+                <div class="bg-phrase phrase-3">La <span class="highlight-text" style="color:var(--text-primary); font-weight:800; opacity:0.8;">Rassegna Stampa</span> del futuro.</div>
+            </div>
+
+            <!-- Content overlayed on top -->
+            <div style="position: relative; z-index: 10;">
+                <div class="content-header" style="text-align: center; margin-bottom: 4rem;">
+                    <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;">La tua Suite.</h2>
+                    <p class="text-muted" style="font-size: 1.2rem;">Scegli lo strumento perfetto per il tuo lavoro quotidiano.</p>
                 </div>
                 
-                <!-- Card Comunicati -->
-                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="window.location.href='press.html'">
-                    <div style="margin-bottom: 1rem;"><i data-feather="mic" style="width:48px;height:48px;color:var(--accent-secondary);"></i></div>
-                    <h3 style="margin-bottom: 0.5rem;">Comunicati Stampa</h3>
-                    <p class="text-muted" style="font-size: 0.9rem;">Affida all'Intelligenza Artificiale la stesura del tuo comunicato stampa aziendale.</p>
-                </div>
-                
-                <!-- Card Ricerca Notizie -->
-                <div class="glass-card" style="cursor:pointer; transition: transform 0.2s;" onclick="document.querySelector('[data-page=ricerca-notizie]').click()">
-                    <div style="margin-bottom: 1rem;"><i data-feather="search" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
-                    <h3 style="margin-bottom: 0.5rem;">Ricerca Notizie</h3>
-                    <p class="text-muted" style="font-size: 0.9rem;">Cerca le ultime news sul web e salvale per generare le rassegne stampa.</p>
+                <div class="services-stack" style="display: flex; flex-direction: column; gap: 3rem; max-width: 900px; margin: 0 auto;">
+                    <!-- Card Rassegna -->
+                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=rassegna]').click()">
+                        <div class="h-card-icon"><i data-feather="file-text" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
+                        <div class="h-card-content">
+                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Rassegna Stampa</h3>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Genera un impaginato PDF professionale e accattivante a partire da link o articoli di testo. Sistema automatizzato con ritaglio intelligente delle immagini.</p>
+                        </div>
+                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                    </div>
+                    
+                    <!-- Card Comunicati -->
+                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="window.location.href='press.html'">
+                        <div class="h-card-icon"><i data-feather="mic" style="width:48px;height:48px;color:var(--accent-secondary);"></i></div>
+                        <div class="h-card-content">
+                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Comunicati Stampa</h3>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Affida all'Intelligenza Artificiale la stesura del tuo comunicato stampa aziendale. Genera testi ottimizzati per le redazioni in pochi secondi.</p>
+                        </div>
+                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                    </div>
+                    
+                    <!-- Card Ricerca Notizie -->
+                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=ricerca-notizie]').click()">
+                        <div class="h-card-icon"><i data-feather="search" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
+                        <div class="h-card-content">
+                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Ricerca Notizie</h3>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Cerca le ultime news sul web e salvale per generare istantaneamente le rassegne stampa. Motore di ricerca integrato ad alte prestazioni.</p>
+                        </div>
+                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                    </div>
                 </div>
             </div>
         </div>
