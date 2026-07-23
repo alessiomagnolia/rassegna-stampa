@@ -216,57 +216,6 @@ function parseRSS(xmlText, sourceNameDefault = '') {
 }
 
 // ---------------------------------------------------------------------------
-// DuckDuckGo HTML Scraper
-// ---------------------------------------------------------------------------
-async function scrapeDuckDuckGoHTML(query) {
-    const results = [];
-    try {
-        const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-        const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7'
-        };
-        const response = await fetch(url, { headers });
-        if (!response.ok) return [];
-        const html = await response.text();
-        const $ = cheerio.load(html);
-
-        $('.result__body').each((i, el) => {
-            const titleEl = $(el).find('.result__title a.result__url');
-            const title = titleEl.text().trim();
-            let link = titleEl.attr('href');
-            if (link && link.startsWith('//duckduckgo.com/l/?uddg=')) {
-                try {
-                    link = decodeURIComponent(link.split('uddg=')[1].split('&')[0]);
-                } catch(e) {}
-            } else if (link && link.startsWith('/')) {
-                link = 'https://duckduckgo.com' + link;
-            }
-            const snippet = $(el).find('.result__snippet').text().trim();
-            
-            if (title && link) {
-                let domain = '';
-                try { domain = new URL(link).hostname.replace(/^www\./, ''); } catch {}
-                results.push({
-                    title: title,
-                    url: link,
-                    source: domain || 'Web',
-                    domain: domain,
-                    date: '',
-                    timestamp: new Date().getTime() - (results.length * 1000), // maintain relative order
-                    snippet: snippet.slice(0, 220),
-                    favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
-                });
-            }
-        });
-    } catch(e) {
-        console.error("DDG Scrape Error:", e.message);
-    }
-    return results;
-}
-
-// ---------------------------------------------------------------------------
 // ROUTES
 // ---------------------------------------------------------------------------
 
@@ -314,8 +263,19 @@ router.get('/search', authMiddleware, async (req, res) => {
                 fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
             }
             
-            // Sostituzione di Bing Web RSS con Scraper Web Completo (DuckDuckGo HTML)
-            fetchPromises.push(scrapeDuckDuckGoHTML(vq));
+            // Ripristino Bing Web Query (copre blog e siti web generici non registrati come news)
+            const bingEncoded = encodeURIComponent(vq);
+            const bingPages = [1, 11, 21, 31, 41, 51, 61, 71, 81, 91]; // 10 pages = ~100 results per variation
+            for (const first of bingPages) {
+                fetchPromises.push(
+                    fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
+                        .then(xml => parseRSS(xml, 'Web'))
+                        .catch(err => {
+                            console.error("Bing Web Error:", err.message);
+                            return []; // Don't crash if Bing fails
+                        })
+                );
+            }
         }
 
         const resultArrays = await Promise.all(fetchPromises);
@@ -381,9 +341,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             }
             
             // Google News RSS Links
-            if (item.url.includes('news.google.com/rss/articles/')) {
+            if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                 item.url = await resolveGoogleNewsUrl(item.url);
             }
+
+            if (!item.url) return; // Salta aggiornamento se url nullo
 
             // Update domain and favicon based on resolved URL
             try {
@@ -400,7 +362,15 @@ router.get('/search', authMiddleware, async (req, res) => {
         uniqueResults = uniqueResults.filter(item => {
             if (!item.url) return false;
             const urlLower = item.url.toLowerCase();
-            return !excludedDomains.some(domain => urlLower.includes(domain));
+            const sourceLower = (item.source || '').toLowerCase();
+            
+            // Check domain in URL
+            const urlBlocked = excludedDomains.some(domain => urlLower.includes(domain));
+            
+            // Check brand names in Source (to catch unresolved Google News social links)
+            const sourceBlocked = ['facebook', 'instagram', 'youtube', 'tiktok', 'twitter', ' x ', 'linkedin', 'pinterest', 'reddit', 'wikipedia'].some(brand => sourceLower.includes(brand) || sourceLower === 'x');
+            
+            return !urlBlocked && !sourceBlocked;
         });
 
         // 4. Remove the internal timestamp before sending to client
