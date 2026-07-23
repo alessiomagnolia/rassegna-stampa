@@ -1070,6 +1070,7 @@ function renderNewsResults() {
                 <span style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;">${news.date}</span>
             </div>
             <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${news.title}</h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem; line-height:1.5;">${news.snippet}...</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
                 <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-secondary); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
                 <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>

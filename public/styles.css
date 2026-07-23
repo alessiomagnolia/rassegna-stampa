@@ -78,7 +78,7 @@ body {
 
 .blob-2 {
     width: 400px; height: 400px;
-    background: #FFD1A9;
+    background: var(--accent-secondary);
     bottom: -10%; left: 10%;
 }
 
@@ -216,15 +216,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Force light text for buttons in forced dark panels */
-.navbar .btn-outline,
-.sidebar .btn-outline,
 .edit-panel .btn-outline,
 .top-bar .btn-outline {
     color: #efece5 !important;
     border-color: rgba(255,255,255,0.3) !important;
 }
-.navbar .btn-outline:hover,
-.sidebar .btn-outline:hover,
 .edit-panel .btn-outline:hover,
 .top-bar .btn-outline:hover {
     background: rgba(255,255,255,0.1) !important;
@@ -384,11 +380,11 @@ input::placeholder, textarea::placeholder {
     align-items: center;
     padding: 0 1.5rem;
     z-index: 200;
-    background: rgba(10, 10, 26, 0.92);
+    background: var(--bg-card);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #efece5;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 .nav-left {
@@ -401,7 +397,7 @@ input::placeholder, textarea::placeholder {
     font-size: 1.25rem;
     font-weight: 700;
     font-family: var(--font-serif);
-    color: #efece5;
+    color: var(--text-primary);
 }
 
 .nav-user {
@@ -842,7 +838,7 @@ input::placeholder, textarea::placeholder {
     left: 0;
     width: 260px;
     height: calc(100vh - 64px);
-    background: rgba(10, 10, 26, 0.92);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-color);
@@ -878,7 +874,7 @@ input::placeholder, textarea::placeholder {
     padding: 0.7rem 1rem;
     border-radius: var(--radius-sm);
     text-decoration: none;
-    color: #b3b3b3;
+    color: var(--text-secondary);
     font-size: 0.92rem;
     font-weight: 500;
     transition: var(--transition);
@@ -886,8 +882,8 @@ input::placeholder, textarea::placeholder {
     position: relative;
 }
 .sidebar-item:hover {
-    background: rgba(255,255,255,0.05);
-    color: #efece5;
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
 }
 .sidebar-item.active {
     background: rgba(124, 92, 255, 0.15);
@@ -938,20 +934,20 @@ input::placeholder, textarea::placeholder {
 /* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color);
     margin-top: auto;
 }
 .sidebar-username {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #efece5;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sidebar-plan {
     font-size: 0.75rem;
-    color: #b3b3b3;
+    color: var(--text-muted);
     margin-top: 2px;
 }
 

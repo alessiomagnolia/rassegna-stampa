@@ -134,14 +134,14 @@
         <div id="page-rassegna" class="page-view">
         <!-- back to rassegna page (actual content below) -->
             <div class="page-header">
-                <h1 class="page-title">📰 Nuova Rassegna Stampa</h1>
+                <h1 class="page-title"><i data-feather="file-plus" style="width:28px;height:28px;vertical-align:middle;"></i> Nuova Rassegna Stampa</h1>
                 <p class="page-subtitle">Aggiungi articoli e genera il tuo PDF professionale</p>
             </div>
 
             <!-- Collapsible Profilo e Branding (same as before) -->
             <section class="section glass-card profile-section" style="margin-bottom: 2rem;">
                 <div class="section-header" id="toggleProfile">
-                    <h2>⚙️ Profilo e Branding</h2>
+                    <h2><i data-feather="briefcase" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Profilo e Branding</h2>
                     <span class="icon-toggle">▼</span>
                 </div>
                 <div class="section-content" id="profileContent" style="display: none;">
@@ -157,7 +157,7 @@
                             <label>Logo Aziendale (Apparirà sui PDF)</label>
                             <div id="dropZone" class="drop-zone">
                                 <div class="drop-content">
-                                    <span>📁 Trascina qui il logo o clicca</span>
+                                    <span><i data-feather="upload-cloud" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Trascina qui il logo o clicca</span>
                                     <small>PNG, JPG, SVG (Max 5MB)</small>
                                 </div>
                                 <input type="file" id="logoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
@@ -173,7 +173,7 @@
 
             <!-- Main Feature Section (full width, as before) -->
             <section class="section glass-card main-feature-section">
-                <h2>📰 Nuova Rassegna Stampa</h2>
+                <h2><i data-feather="plus-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Nuova Rassegna Stampa</h2>
 
                 <div class="input-group rassegna-title-group">
                     <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
@@ -188,7 +188,7 @@
                 <div class="input-group rassegna-title-group" style="margin-top: 15px;">
                     <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
                     <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;">📂 Scegli Logo Cliente</label>
+                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli Logo Cliente</label>
                     <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
                         <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
                         <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
@@ -197,9 +197,9 @@
 
                 <div class="add-article-bar">
                     <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
-                    <button id="btnAddArticle" class="btn btn-primary">➕ Aggiungi</button>
-                    <button id="btnOpenManual" class="btn btn-secondary">📝 Inserimento Manuale</button>
-                    <button id="btnOpenMultiLink" class="btn btn-multilink">📋 Multi Link</button>
+                    <button id="btnAddArticle" class="btn btn-primary"><i data-feather="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Aggiungi</button>
+                    <button id="btnOpenManual" class="btn btn-secondary"><i data-feather="edit" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Inserimento Manuale</button>
+                    <button id="btnOpenMultiLink" class="btn btn-multilink"><i data-feather="layers" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Multi Link</button>
                 </div>
 
                 <!-- Loading State -->
@@ -217,10 +217,10 @@
 
                 <div class="generate-actions">
                     <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden">
-                        ✏️ Anteprima ed Edita
+                        <i data-feather="eye" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Anteprima ed Edita
                     </button>
-                    <button id="btnGeneratePDF" class="btn btn-secondary btn-large hidden" style="margin-top: 0.75rem;">
-                        📄 Genera e Scarica subito
+                    <button id="btnGenerateQuick" class="btn btn-gradient" disabled>
+                        <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica subito
                     </button>
                     <div id="generationLoading" class="generation-loading hidden">
                         <div class="spinner"></div>
@@ -233,7 +233,7 @@
         <!-- PAGE: RICERCA NOTIZIE -->
         <div id="page-ricerca-notizie" class="page-view">
             <div class="page-header">
-                <h1 class="page-title">🔍 Ricerca Notizie</h1>
+                <h1 class="page-title"><i data-feather="search" style="width:28px;height:28px;vertical-align:middle;"></i> Ricerca Notizie</h1>
                 <p class="page-subtitle">Cerca notizie online per parola chiave e fascia temporale, seleziona quelle che ti servono e crea subito la tua rassegna</p>
             </div>
 
