@@ -30,12 +30,14 @@ const articleRoutes = require('./routes/articleRoutes');
 const pdfRoutes = require('./routes/pdfRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const newsRoutes = require('./routes/newsRoutes');
+const pressReleaseRoutes = require('./routes/pressReleaseRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/press', pressReleaseRoutes);
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');
