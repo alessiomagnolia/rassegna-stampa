@@ -9,9 +9,7 @@
 </head>
 <body>
     <div class="bg-animation">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
+        <!-- SVG Asterisk will be injected by ui.js -->
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
@@ -25,6 +23,7 @@
         <div class="nav-user">
             <div id="navCompany" class="nav-company">Caricamento...</div>
             <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
+            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 8px;">🌙</button>
             <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
         </div>
     </nav>
@@ -570,5 +569,6 @@
             });
         });
     </script>
+    <script src="ui.js"></script>
 </body>
 </html>
