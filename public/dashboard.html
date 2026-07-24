@@ -46,6 +46,60 @@
         </div>
     </nav>
 
+    <!-- CHECKOUT & PAYMENT MODAL -->
+    <div id="checkoutModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 500px; width: 90%; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="lock" style="color:var(--accent-primary);"></i> Pagamento Sicuro SSL
+                </h3>
+                <button id="btnCloseCheckoutModal" class="btn-icon" onclick="closeCheckoutModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <!-- Summary Box -->
+            <div style="background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.3); border-radius:10px; padding:1rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div id="checkoutPlanName" style="font-weight:700; font-size:1.1rem; color:var(--accent-primary);">Piano Professional</div>
+                    <div id="checkoutCycleLabel" style="font-size:0.8rem; color:var(--text-muted);">Fatturazione con rinnovo mensile</div>
+                </div>
+                <div id="checkoutPlanPrice" style="font-size:1.4rem; font-weight:800;">€59</div>
+            </div>
+
+            <!-- Payment Methods Tabs (Card, Apple Pay, PayPal) -->
+            <div style="display:flex; gap:8px; margin-bottom:1.25rem;">
+                <button type="button" class="btn btn-outline btn-sm active" style="flex:1; border-color:var(--accent-primary); font-size:0.75rem;"><i data-feather="credit-card" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carta di Credito</button>
+                <button type="button" class="btn btn-outline btn-sm" style="flex:1; font-size:0.75rem;"><i data-feather="smartphone" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apple / Google Pay</button>
+            </div>
+
+            <!-- Card Form Fields -->
+            <div class="field-group" style="margin-bottom:1rem;">
+                <label style="font-size:0.8rem; font-weight:600;">Intestatario Carta *</label>
+                <input type="text" id="payCardName" placeholder="Es. Mario Rossi" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+            </div>
+
+            <div class="field-group" style="margin-bottom:1rem;">
+                <label style="font-size:0.8rem; font-weight:600;">Numero Carta di Credito / Debito *</label>
+                <input type="text" id="payCardNumber" placeholder="4532 •••• •••• 8892" maxlength="19" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1.5rem;">
+                <div class="field-group">
+                    <label style="font-size:0.8rem; font-weight:600;">Scadenza (MM/AA) *</label>
+                    <input type="text" id="payCardExpiry" placeholder="12/28" maxlength="5" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                </div>
+                <div class="field-group">
+                    <label style="font-size:0.8rem; font-weight:600;">Codice CVV *</label>
+                    <input type="text" id="payCardCvc" placeholder="312" maxlength="4" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                </div>
+            </div>
+
+            <button type="button" id="btnConfirmPayment" class="btn btn-gradient btn-lg" onclick="processPayment()" style="width:100%; padding:12px;">
+                <i data-feather="check-circle" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Conferma e Paga Ora
+            </button>
+            <small style="display:block; text-align:center; color:var(--text-muted); margin-top:8px; font-size:0.75rem;">Transazione crittografata Stripe SSL 256-bit</small>
+        </div>
+    </div>
+
     <!-- ===== SIDEBAR ===== -->
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-inner">
@@ -89,6 +143,10 @@
                 <a href="#" class="sidebar-item" data-page="archivio">
                     <span class="sidebar-icon"><i data-feather="archive"></i></span>
                     <span class="sidebar-label">Il mio Archivio</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="piani">
+                    <span class="sidebar-icon"><i data-feather="credit-card"></i></span>
+                    <span class="sidebar-label">Piani & Abbonamenti</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="impostazioni">
                     <span class="sidebar-icon"><i data-feather="settings"></i></span>
@@ -499,7 +557,7 @@
                     </h3>
 
                     <div style="background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.3); border-radius:8px; padding:1rem; margin-bottom:1rem;">
-                        <div style="font-weight:700; font-size:1.1rem; color:var(--accent-primary);">Piano Professional</div>
+                        <div id="userProfilePlanName" style="font-weight:700; font-size:1.1rem; color:var(--accent-primary);">Piano Professional</div>
                         <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Rinnovo automatico attivo · Scadenza 31/12/2026</div>
                     </div>
 
@@ -508,12 +566,132 @@
                         ✓ Editor Card LinkedIn HD<br>
                         ✓ Ricerca Notizie automatizzata
                     </div>
+
+                    <button type="button" class="btn btn-outline btn-sm" onclick="document.querySelector('[data-page=piani]').click()" style="width:100%;">
+                        <i data-feather="credit-card" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Gestisci / Cambia Piano
+                    </button>
                 </div>
 
             </div>
 
             <div style="margin-top:1.5rem; display:flex; gap:12px;">
                 <button type="button" id="btnSaveFullProfile" class="btn btn-gradient btn-lg"><i data-feather="check" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Salva Modifiche Profilo</button>
+            </div>
+        </div>
+
+        <!-- PAGE: PIANI & ABBONAMENTI -->
+        <div id="page-piani" class="page-view">
+            <div class="page-header" style="text-align: center; margin-bottom: 2rem;">
+                <h1 class="page-title"><i data-feather="credit-card" style="width:28px;height:28px;vertical-align:middle;"></i> Piani & Abbonamenti</h1>
+                <p class="page-subtitle">Scegli il piano ideale per la tua agenzia o il tuo ufficio stampa</p>
+
+                <!-- Billing Switcher (Mensile / Annuale -20%) -->
+                <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:1.5rem;">
+                    <span style="font-size:0.9rem; font-weight:600; color:var(--text-secondary);">Fatturazione Mensile</span>
+                    <label style="position:relative; display:inline-block; width:48px; height:24px;">
+                        <input type="checkbox" id="billingToggle" onchange="toggleBillingCycle(this.checked)" style="opacity:0; width:0; height:0;">
+                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:var(--accent-primary); transition:.3s; border-radius:34px;"></span>
+                        <span id="billingSlider" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%;"></span>
+                    </label>
+                    <span style="font-size:0.9rem; font-weight:700; color:var(--accent-primary); display:flex; align-items:center; gap:6px;">
+                        Fatturazione Annuale <span style="background:rgba(0,230,118,0.15); color:#00e676; border:1px solid #00e676; font-size:0.75rem; padding:2px 8px; border-radius:12px;">-20% Sconto</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Pricing Grid (4 Tiers) -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap:1.25rem; max-width:1100px; margin:0 auto 2.5rem;">
+                
+                <!-- TIER 1: FREE -->
+                <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+                    <div>
+                        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.25rem;">Free / Prova</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Per testare le funzioni base della piattaforma</p>
+                        
+                        <div style="font-size:2rem; font-weight:800; margin-bottom:1.25rem;">
+                            €0 <span style="font-size:0.85rem; font-weight:400; color:var(--text-muted);">/ mese</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">
+                            <div>✓ 3 Rassegne PDF / mese</div>
+                            <div>✓ 5 Card Social / mese</div>
+                            <div>✓ 1 Cliente in memoria</div>
+                            <div>✓ Supporto via Email</div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline" style="width:100%;" disabled>Piano Base Gratuito</button>
+                </div>
+
+                <!-- TIER 2: STARTER -->
+                <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+                    <div>
+                        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.25rem;">Starter</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Per professionisti e freelance</p>
+                        
+                        <div style="font-size:2rem; font-weight:800; margin-bottom:1.25rem;">
+                            <span class="price-val" data-monthly="€29" data-yearly="€23">€29</span> <span style="font-size:0.85rem; font-weight:400; color:var(--text-muted);">/ mese</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">
+                            <div>✓ 25 Rassegne PDF / mese</div>
+                            <div>✓ Card LinkedIn HD Illimitate</div>
+                            <div>✓ Fino a 5 Clienti in memoria</div>
+                            <div>✓ Ritaglio immagini IA</div>
+                            <div>✓ Supporto prioritario</div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline" onclick="openCheckoutModal('Starter', 29)" style="width:100%;">Attiva Starter</button>
+                </div>
+
+                <!-- TIER 3: PROFESSIONAL (POPULAR) -->
+                <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; position:relative; border:2px solid var(--accent-primary); background:rgba(124,92,255,0.04);">
+                    <div style="position:absolute; top:-12px; right:16px; background:var(--accent-primary); color:white; font-size:0.7rem; font-weight:700; padding:2px 10px; border-radius:10px; text-transform:uppercase; letter-spacing:0.5px;">Consigliato</div>
+                    <div>
+                        <h3 style="font-size:1.25rem; font-weight:800; color:var(--accent-primary); margin-bottom:0.25rem;">Professional</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Per agenzie di comunicazione ed uffici stampa</p>
+                        
+                        <div style="font-size:2.2rem; font-weight:800; margin-bottom:1.25rem;">
+                            <span class="price-val" data-monthly="€59" data-yearly="€47">€59</span> <span style="font-size:0.85rem; font-weight:400; color:var(--text-muted);">/ mese</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-primary); font-weight:500; margin-bottom:1.5rem;">
+                            <div>⚡ <strong>Rassegne PDF ILLIMITATE</strong></div>
+                            <div>⚡ <strong>Card LinkedIn HD ILLIMITATE</strong></div>
+                            <div>✓ Clienti in memoria ILLIMITATI</div>
+                            <div>✓ Estrazione Notizie Automatica</div>
+                            <div>✓ Riconoscimento Loghi IA</div>
+                            <div>✓ Account Fino a 3 Collaboratori</div>
+                            <div>✓ Supporto VIP WhatsApp & Tel</div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnPlanPro" class="btn btn-gradient" onclick="openCheckoutModal('Professional', 59)" style="width:100%; font-weight:700;">Attiva Professional</button>
+                </div>
+
+                <!-- TIER 4: ENTERPRISE -->
+                <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+                    <div>
+                        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.25rem;">Enterprise</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Per grandi aziende ed organizzazioni</p>
+                        
+                        <div style="font-size:2rem; font-weight:800; margin-bottom:1.25rem;">
+                            <span class="price-val" data-monthly="€149" data-yearly="€119">€149</span> <span style="font-size:0.85rem; font-weight:400; color:var(--text-muted);">/ mese</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">
+                            <div>✓ Tutto del piano Professional</div>
+                            <div>✓ Layout PDF Custom con tuo Design</div>
+                            <div>✓ API dedicate per integrazione CRM</div>
+                            <div>✓ Account Manager dedicato</div>
+                            <div>✓ Fatturazione tramite Bonifico B2B</div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline" onclick="openCheckoutModal('Enterprise', 149)" style="width:100%;">Contatta per Enterprise</button>
+                </div>
+
             </div>
         </div>
 
@@ -567,16 +745,66 @@
             </div>
         </div>
 
-        <!-- PAGE: ARCHIVIO (placeholder) -->
+        <!-- PAGE: ARCHIVIO LOGHI -->
         <div id="page-archivio" class="page-view">
-            <div class="page-header">
-                <h1 class="page-title"><i data-feather="archive" style="width:28px;height:28px;vertical-align:middle;"></i> Il mio Archivio Loghi</h1>
-                <p class="page-subtitle">Gestisci i loghi delle testate giornalistiche salvati nel tuo database personale.</p>
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="archive" style="width:28px;height:28px;vertical-align:middle;"></i> Il Mio Archivio Loghi</h1>
+                    <p class="page-subtitle">Gestisci, organizza e carica i loghi delle testate giornalistiche e dei clienti per le tue rassegne</p>
+                </div>
+                <button type="button" class="btn btn-gradient" onclick="toggleNewLogoForm()"><i data-feather="plus-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Carica Nuovo Logo</button>
             </div>
-            <div class="coming-soon-box">
-                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
-                <h2>In arrivo</h2>
-                <p>Potrai caricare e organizzare i loghi delle testate giornalistiche e dei tuoi clienti, disponibili in ogni rassegna con un solo click.</p>
+
+            <!-- Upload New Logo Panel (hidden by default, toggleable) -->
+            <div id="newLogoFormPanel" class="glass-card hidden" style="padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--accent-primary);">
+                <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--accent-primary); display:flex; align-items:center; gap:6px;">
+                    <i data-feather="upload-cloud"></i> Aggiungi Nuovo Logo all'Archivio
+                </h3>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Nome Testata / Logo *</label>
+                        <input type="text" id="archiveLogoNameInput" placeholder="Es. Giornale di Lecco, Ansa, etc." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Categoria / Tipologia</label>
+                        <select id="archiveLogoCategoryInput" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="nazionale">Nazionale</option>
+                            <option value="locale">Locale / Regionale</option>
+                            <option value="economico">Economico / Finanziario</option>
+                            <option value="sportivo">Sportivo</option>
+                            <option value="cliente">Logo Cliente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Seleziona Immagine (PNG / SVG / JPG) *</label>
+                        <input type="file" id="archiveLogoFileInput" accept="image/*" style="width:100%; font-size:0.8rem;">
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleNewLogoForm()">Annulla</button>
+                    <button type="button" class="btn btn-gradient btn-sm" onclick="saveNewArchiveLogo()"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Salva Logo in Archivio</button>
+                </div>
+            </div>
+
+            <!-- Search & Category Filters -->
+            <div class="glass-card" style="padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+                <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:250px;">
+                    <i data-feather="search" style="color:var(--text-muted);"></i>
+                    <input type="text" id="archiveSearchInput" placeholder="Cerca logo per nome..." onkeyup="filterArchiveLogos()" style="width:100%; border:none; background:transparent; color:var(--text-primary); outline:none; font-size:0.9rem;">
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn active" onclick="filterArchiveCategory('all', this)">Tutti</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('nazionale', this)">Nazionali</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('locale', this)">Locali</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('cliente', this)">I Miei Loghi</button>
+                </div>
+            </div>
+
+            <!-- Logos Grid Display -->
+            <div id="archiveLogosGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:1.25rem;">
+                <!-- Logos items will be injected by JavaScript -->
             </div>
         </div>
 
@@ -701,14 +929,93 @@
             </div>
         </div>
 
-        <!-- PAGE: CONTATTI (placeholder) -->
+        <!-- PAGE: CONTATTI -->
         <div id="page-contatti" class="page-view">
             <div class="page-header">
-                <h1 class="page-title"><i data-feather="mail" style="width:28px;height:28px;vertical-align:middle;"></i> Contatti</h1>
-                <p class="page-subtitle">Hai bisogno di aiuto o vuoi suggerire una nuova funzione? Scrivici!</p>
+                <h1 class="page-title"><i data-feather="mail" style="width:28px;height:28px;vertical-align:middle;"></i> Supporto & Contatti</h1>
+                <p class="page-subtitle">Hai bisogno di aiuto, vuoi segnalare un problema o richiedere una funzione? Scrivici!</p>
             </div>
-            <h2>Supporto</h2>
-            <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; max-width:950px;">
+                
+                <!-- Contact Form -->
+                <div class="glass-card" style="padding:1.75rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="send" style="color:var(--accent-primary);"></i> Invia un Messaggio
+                    </h3>
+
+                    <form id="contactForm" onsubmit="handleContactSubmit(event)">
+                        <div class="field-group" style="margin-bottom:1rem;">
+                            <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Nome e Cognome *</label>
+                            <input type="text" id="contactName" required placeholder="Es. Mario Rossi" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                        </div>
+
+                        <div class="field-group" style="margin-bottom:1rem;">
+                            <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Email *</label>
+                            <input type="email" id="contactEmail" required placeholder="mario.rossi@azienda.it" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                        </div>
+
+                        <div class="field-group" style="margin-bottom:1rem;">
+                            <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Argomento *</label>
+                            <select id="contactSubject" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                                <option value="supporto">Assistenza Tecnica</option>
+                                <option value="commerciale">Informazioni Commerciali & Piani</option>
+                                <option value="funzione">Suggerisci Nuova Funzionalità</option>
+                                <option value="altro">Altro</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group" style="margin-bottom:1.25rem;">
+                            <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Messaggio *</label>
+                            <textarea id="contactMessage" rows="4" required placeholder="Descrivi la tua richiesta nel dettaglio..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-gradient btn-lg" style="width:100%;">
+                            <i data-feather="send" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Invia Messaggio
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Info Box & Direct Support -->
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                            <i data-feather="headphones" style="color:var(--accent-primary);"></i> Supporto Diretto
+                        </h3>
+                        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6; margin-bottom:1rem;">
+                            Il nostro team risponde solitamente entro 2 ore lavorative. Per clienti con piano <strong>Professional</strong> ed <strong>Enterprise</strong> è attivo il canale prioritario.
+                        </p>
+
+                        <div style="display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i data-feather="mail" style="width:16px;height:16px;color:var(--accent-primary);"></i>
+                                <span>supporto@rassegna-stampa.it</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i data-feather="message-circle" style="width:16px;height:16px;color:#00e676;"></i>
+                                <span>WhatsApp VIP: +39 340 000 0000</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i data-feather="clock" style="width:16px;height:16px;color:var(--text-muted);"></i>
+                                <span>Lun - Ven: 09:00 - 18:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="margin-top:0; margin-bottom:0.75rem; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                            <i data-feather="help-circle" style="color:var(--accent-primary);"></i> Domande Frequenti (FAQ)
+                        </h3>
+                        <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">
+                            <strong>Come funziona il ritaglio automatico dei PDF?</strong><br>
+                            L'IA identifica l'immagine ed il titolo principale dell'articolo rimuovendo pubblicità e menu.<br><br>
+                            <strong>Posso usare i loghi personalizzati dei miei clienti?</strong><br>
+                            Certamente! Puoi salvarli nel pannello <em>"Gestione Memoria Clienti"</em>.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </main>

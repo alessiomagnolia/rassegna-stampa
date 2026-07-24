@@ -1697,3 +1697,240 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- BILLING & CHECKOUT SYSTEM ---
+let selectedCheckoutPlan = { name: 'Professional', price: 59 };
+let isYearlyBilling = false;
+
+window.toggleBillingCycle = function(isYearly) {
+    isYearlyBilling = isYearly;
+    const priceEls = document.querySelectorAll('.price-val');
+    const slider = document.getElementById('billingSlider');
+    if (slider) slider.style.left = isYearly ? '27px' : '3px';
+
+    priceEls.forEach(el => {
+        const val = isYearly ? el.dataset.yearly : el.dataset.monthly;
+        if (val) el.textContent = val;
+    });
+};
+
+window.openCheckoutModal = function(planName, monthlyPrice) {
+    const finalPrice = isYearlyBilling ? Math.round(monthlyPrice * 0.8) : monthlyPrice;
+    selectedCheckoutPlan = { name: planName, price: finalPrice };
+
+    const nameEl = document.getElementById('checkoutPlanName');
+    const priceEl = document.getElementById('checkoutPlanPrice');
+    const cycleEl = document.getElementById('checkoutCycleLabel');
+    const modal = document.getElementById('checkoutModal');
+
+    if (nameEl) nameEl.textContent = `Piano ${planName}`;
+    if (priceEl) priceEl.textContent = `€${finalPrice}`;
+    if (cycleEl) cycleEl.textContent = isYearlyBilling ? 'Fatturazione annuale (risparmio 20%)' : 'Fatturazione con rinnovo mensile';
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeCheckoutModal = function() {
+    const modal = document.getElementById('checkoutModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.processPayment = function() {
+    const cardName = document.getElementById('payCardName')?.value.trim();
+    const cardNumber = document.getElementById('payCardNumber')?.value.trim();
+
+    if (!cardName || !cardNumber) {
+        showToast('Compila l\'intestatario ed il numero di carta', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnConfirmPayment');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Elaborazione pagamento...';
+        feather.replace();
+    }
+
+    setTimeout(() => {
+        closeCheckoutModal();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="check-circle" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Conferma e Paga Ora';
+        }
+
+        // Save active plan to localStorage
+        const activePlanStr = `Piano ${selectedCheckoutPlan.name}`;
+        localStorage.setItem('rs_active_plan', activePlanStr);
+
+        const profPlanName = document.getElementById('userProfilePlanName');
+        if (profPlanName) profPlanName.textContent = activePlanStr;
+
+        const sidebarPlan = document.querySelector('.sidebar-plan');
+        if (sidebarPlan) sidebarPlan.textContent = activePlanStr;
+
+        showToast(`Abbonamento a ${activePlanStr} attivato con successo!`, 'success');
+        feather.replace();
+    }, 1500);
+};
+
+window.handleContactSubmit = function(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Invio in corso...';
+        feather.replace();
+    }
+
+    setTimeout(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="send" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Invia Messaggio';
+        }
+        e.target.reset();
+        showToast('Messaggio inviato con successo! Ti risponderemo a breve.', 'success');
+        feather.replace();
+    }, 1200);
+};
+
+// --- LOGO ARCHIVE MANAGEMENT ---
+let archiveLogosList = [
+    { name: 'la Repubblica', category: 'nazionale', url: '/logos/repubblica.png' },
+    { name: 'Corriere della Sera', category: 'nazionale', url: '/logos/corriere.png' },
+    { name: 'Il Sole 24 Ore', category: 'economico', url: '/logos/sole24ore.png' },
+    { name: 'La Stampa', category: 'nazionale', url: '/logos/lastampa.png' },
+    { name: 'ANSA', category: 'nazionale', url: '/logos/ansa.png' },
+    { name: 'Il Giornale', category: 'nazionale', url: '/logos/ilgiornale.png' },
+    { name: 'Libero', category: 'nazionale', url: '/logos/libero.png' },
+    { name: 'La Gazzetta dello Sport', category: 'sportivo', url: '/logos/gazzetta.png' }
+];
+
+let activeArchiveCategory = 'all';
+
+function loadCustomArchiveLogos() {
+    const saved = localStorage.getItem('rs_custom_archive_logos');
+    if (saved) {
+        try {
+            const custom = JSON.parse(saved);
+            archiveLogosList = [...archiveLogosList, ...custom];
+        } catch(e){}
+    }
+}
+
+window.renderArchiveLogos = function() {
+    const grid = document.getElementById('archiveLogosGrid');
+    if (!grid) return;
+
+    const searchTerm = document.getElementById('archiveSearchInput')?.value.toLowerCase().trim() || '';
+
+    const filtered = archiveLogosList.filter(item => {
+        const matchesCategory = activeArchiveCategory === 'all' || item.category === activeArchiveCategory;
+        const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm);
+        return matchesCategory && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Nessun logo trovato per la ricerca effettuata.</div>';
+        return;
+    }
+
+    grid.innerHTML = '';
+    filtered.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.cssText = 'padding:1.25rem; text-align:center; display:flex; flex-direction:column; justify-content:space-between; align-items:center; min-height:160px;';
+        
+        card.innerHTML = `
+            <div style="height:70px; width:100%; display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem;">
+                <img src="${item.url || item.base64}" alt="${item.name}" style="max-height:60px; max-width:140px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));" onerror="this.src='/logos/repubblica.png'">
+            </div>
+            <div>
+                <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${item.name}</div>
+                <span style="font-size:0.7rem; background:rgba(124,92,255,0.1); color:var(--accent-primary); padding:2px 8px; border-radius:10px; text-transform:uppercase;">${item.category}</span>
+            </div>
+            ${item.isCustom ? `
+                <button class="btn btn-outline btn-sm" onclick="deleteCustomArchiveLogo('${item.name}')" style="margin-top:10px; font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;">
+                    <i data-feather="trash-2" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Rimuovi
+                </button>
+            ` : ''}
+        `;
+        grid.appendChild(card);
+    });
+    feather.replace();
+};
+
+window.toggleNewLogoForm = function() {
+    const panel = document.getElementById('newLogoFormPanel');
+    if (panel) {
+        panel.classList.toggle('hidden');
+    }
+};
+
+window.saveNewArchiveLogo = async function() {
+    const name = document.getElementById('archiveLogoNameInput')?.value.trim();
+    const category = document.getElementById('archiveLogoCategoryInput')?.value;
+    const fileInput = document.getElementById('archiveLogoFileInput');
+
+    if (!name || !fileInput?.files[0]) {
+        showToast('Inserisci il nome ed imposta l\'immagine del logo', 'error');
+        return;
+    }
+
+    try {
+        const base64 = await fileToBase64(fileInput.files[0]);
+        const newLogo = { name, category, base64, isCustom: true };
+
+        const saved = localStorage.getItem('rs_custom_archive_logos');
+        let customList = saved ? JSON.parse(saved) : [];
+        customList.push(newLogo);
+        localStorage.setItem('rs_custom_archive_logos', JSON.stringify(customList));
+
+        archiveLogosList.push(newLogo);
+        renderArchiveLogos();
+        toggleNewLogoForm();
+        showToast('Nuovo logo salvato in Archivio!', 'success');
+
+        document.getElementById('archiveLogoNameInput').value = '';
+        fileInput.value = '';
+    } catch(err) {
+        showToast('Errore nel caricamento dell\'immagine', 'error');
+    }
+};
+
+window.deleteCustomArchiveLogo = function(name) {
+    if (!confirm(`Vuoi rimuovere "${name}" dall'archivio?`)) return;
+    const saved = localStorage.getItem('rs_custom_archive_logos');
+    if (saved) {
+        let customList = JSON.parse(saved);
+        customList = customList.filter(l => l.name !== name);
+        localStorage.setItem('rs_custom_archive_logos', JSON.stringify(customList));
+    }
+    archiveLogosList = archiveLogosList.filter(l => l.name !== name);
+    renderArchiveLogos();
+    showToast('Logo rimosso', 'success');
+};
+
+window.filterArchiveLogos = function() {
+    renderArchiveLogos();
+};
+
+window.filterArchiveCategory = function(cat, btn) {
+    activeArchiveCategory = cat;
+    document.querySelectorAll('.archive-cat-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderArchiveLogos();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCustomArchiveLogos();
+    renderArchiveLogos();
+});
+
+
+
+
