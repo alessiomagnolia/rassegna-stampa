@@ -538,6 +538,17 @@
             const colorAccent = document.getElementById('colorAccent');
             const colorAccentHex = document.getElementById('colorAccentHex');
 
+            // Default initial state (matching user mockup)
+            sourceLogoSelect.value = 'repubblica';
+            cardSourceLogo.src = '/logos/repubblica.png';
+            cardSourceLogo.style.display = 'block';
+            cardAuthor.style.display = 'none';
+            inputAuthor.value = 'La Repubblica';
+
+            inputQuote.value = "Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco";
+            inputDate.value = "Notizia del 22/07/2026";
+            inputSubtitle.value = "";
+
             // Load active client logo from localStorage if available
             const savedActiveClient = localStorage.getItem('rs_active_client');
             if (savedActiveClient) {
