@@ -1562,3 +1562,16 @@ window.handleClientLogoChange = async function(e) {
         showToast('Errore nel caricamento del logo', 'error');
     }
 };
+
+window.toggleTemplateCard = function() {
+    const content = document.getElementById('templateSectionContent');
+    const header = document.getElementById('toggleTemplateSection');
+    if (!content) return;
+    const icon = header ? header.querySelector('.icon-toggle') : null;
+    const isHidden = content.style.display === 'none' || getComputedStyle(content).display === 'none';
+    content.style.display = isHidden ? 'block' : 'none';
+    if (icon) {
+        if (isHidden) icon.classList.add('open');
+        else icon.classList.remove('open');
+    }
+};
