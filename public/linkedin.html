@@ -350,17 +350,34 @@
                 </div>
             </div>
 
-            <!-- Colori e Stile -->
+            <!-- Colori e Stile Grafico -->
             <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Personalizzazione Colori</div>
+                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Palette Colori Grafica</div>
+                
+                <!-- Quick Palette Presets -->
+                <label style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:block;">Stili di Colore Pronti (1-Click):</label>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#1d70b8', '#c0262d')" style="background:#1d70b8; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Blu Classic</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#1d70b8')" style="background:#c0262d; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Rosso Bold</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#0f172a', '#e11d48')" style="background:#0f172a; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Antracite</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#1e293b')" style="background:#047857; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Emerald</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#6366f1', '#0f172a')" style="background:#6366f1; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Royal Violet</button>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <div class="field-group">
                         <label for="colorFrame">Colore Sfondo</label>
-                        <input type="color" id="colorFrame" value="#1d70b8" style="height:36px; padding:2px; cursor:pointer;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="color" id="colorFrame" value="#1d70b8" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                            <input type="text" id="colorFrameHex" value="#1d70b8" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                        </div>
                     </div>
                     <div class="field-group">
-                        <label for="colorText">Colore Testo/Quote</label>
-                        <input type="color" id="colorText" value="#c0262d" style="height:36px; padding:2px; cursor:pointer;">
+                        <label for="colorText">Colore Testo</label>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="color" id="colorText" value="#c0262d" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                            <input type="text" id="colorTextHex" value="#c0262d" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -485,31 +502,75 @@
                 });
             });
 
-            // Extract Link functionality
-            document.getElementById('btnExtractLink').addEventListener('click', async () => {
+            // Color Syncing (Color Picker & Hex Text)
+            const colorFrameHex = document.getElementById('colorFrameHex');
+            const colorTextHex = document.getElementById('colorTextHex');
+
+            colorFrame.addEventListener('input', () => {
+                colorFrameHex.value = colorFrame.value.toUpperCase();
+                updateCardView();
+            });
+            colorFrameHex.addEventListener('input', () => {
+                if (/^#[0-9A-F]{6}$/i.test(colorFrameHex.value)) {
+                    colorFrame.value = colorFrameHex.value;
+                    updateCardView();
+                }
+            });
+
+            colorText.addEventListener('input', () => {
+                colorTextHex.value = colorText.value.toUpperCase();
+                updateCardView();
+            });
+            colorTextHex.addEventListener('input', () => {
+                if (/^#[0-9A-F]{6}$/i.test(colorTextHex.value)) {
+                    colorText.value = colorTextHex.value;
+                    updateCardView();
+                }
+            });
+
+            window.applyColorPreset = function(frameColor, textColor) {
+                colorFrame.value = frameColor;
+                colorFrameHex.value = frameColor.toUpperCase();
+                colorText.value = textColor;
+                colorTextHex.value = textColor.toUpperCase();
+                updateCardView();
+            };
+
+            // Extract Link functionality with spinner loading feedback
+            const btnExtractLink = document.getElementById('btnExtractLink');
+            btnExtractLink.addEventListener('click', async () => {
                 const url = document.getElementById('importUrl').value.trim();
                 if (!url) return alert('Inserisci un URL valido');
 
+                const originalText = btnExtractLink.textContent;
+                btnExtractLink.disabled = true;
+                btnExtractLink.textContent = 'Estrazione...';
+
                 try {
                     const token = localStorage.getItem('rs_token');
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
                     const res = await fetch('/api/articles/extract', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
+                        headers,
                         body: JSON.stringify({ url })
                     });
                     const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Errore estrazione');
+                    if (!res.ok) throw new Error(data.error || 'Estrazione fallita');
 
                     if (data.title) inputQuote.value = data.title;
                     if (data.source_name) inputAuthor.value = data.source_name;
                     if (data.published_date) inputRole.value = `Notizia del ${data.published_date}`;
                     if (data.imageBase64) cardPhoto.src = data.imageBase64;
+                    
                     updateCardView();
+                    alert('Notizia estratta con successo!');
                 } catch(err) {
                     alert('Impossibile estrarre la notizia: ' + err.message);
+                } finally {
+                    btnExtractLink.disabled = false;
+                    btnExtractLink.textContent = originalText;
                 }
             });
 
