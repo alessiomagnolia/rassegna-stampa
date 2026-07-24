@@ -415,16 +415,105 @@
 
         <!-- PAGE: PROFILO -->
         <div id="page-profilo" class="page-view">
-            <div class="container" style="max-width: 800px; padding-top: 2rem;">
-                <h1 class="page-title"><i data-feather="user" style="width:28px;height:28px;vertical-align:middle;"></i> Profilo</h1>
-                <p class="page-subtitle">Gestisci i dettagli della tua azienda e le tue preferenze.</p>
+            <div class="page-header">
+                <h1 class="page-title"><i data-feather="user" style="width:28px;height:28px;vertical-align:middle;"></i> Il Mio Profilo & Account</h1>
+                <p class="page-subtitle">Gestisci le tue informazioni personali, la tua azienda ed il tuo abbonamento.</p>
+            </div>
 
-                <div class="coming-soon-box">
-                    <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
-                    <h3>Sezione in arrivo</h3>
-                    <p>Per modificare il nome azienda e caricare il logo, apri il pannello <strong>Profilo e Branding</strong> nella pagina principale.</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1000px;">
+                
+                <!-- Informazioni Personali -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="user-check" style="color:var(--accent-primary);"></i> Dati Personali
+                    </h3>
+                    
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Nome e Cognome</label>
+                        <input type="text" id="profFullName" placeholder="Es. Mario Rossi" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Indirizzo Email</label>
+                        <input type="email" id="profEmail" placeholder="mario.rossi@azienda.it" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Ruolo Aziendale</label>
+                        <input type="text" id="profRole" placeholder="Es. Responsabile Ufficio Stampa" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Telefono di Contatto</label>
+                        <input type="tel" id="profPhone" placeholder="Es. +39 02 1234567" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
                 </div>
-                <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="document.querySelector('[data-page=rassegna]').click()">← Vai alla pagina principale</button>
+
+                <!-- Brand & Logo Aziendale -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="briefcase" style="color:var(--accent-primary);"></i> Profilo Azienda & Branding
+                    </h3>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Nome Azienda / Agenzia *</label>
+                        <input type="text" id="profCompanyName" placeholder="Es. Rassegna Stampa Srl" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Sito Web Ufficiale</label>
+                        <input type="url" id="profWebsite" placeholder="https://www.azienda.it" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Logo Aziendale (Appare sulle Rassegne PDF)</label>
+                        <div id="profLogoPreviewContainer" style="margin-bottom:8px; display:none;">
+                            <img id="profLogoPreview" src="" alt="Logo Azienda" style="max-height:50px; border-radius:4px; object-fit:contain;">
+                        </div>
+                        <input type="file" id="profLogoInput" accept="image/*" style="display:none;" onchange="handleProfileLogoUpload(event)">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profLogoInput').click()"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carica Logo Aziendale</button>
+                    </div>
+                </div>
+
+                <!-- Sicurezza e Password -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="lock" style="color:var(--accent-primary);"></i> Sicurezza Account
+                    </h3>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Password Attuale</label>
+                        <input type="password" id="profCurrentPass" placeholder="••••••••" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Nuova Password</label>
+                        <input type="password" id="profNewPass" placeholder="Nuova password..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    </div>
+                </div>
+
+                <!-- Stato Abbonamento -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="award" style="color:var(--accent-primary);"></i> Piano e Abbonamento
+                    </h3>
+
+                    <div style="background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.3); border-radius:8px; padding:1rem; margin-bottom:1rem;">
+                        <div style="font-weight:700; font-size:1.1rem; color:var(--accent-primary);">Piano Professional</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Rinnovo automatico attivo · Scadenza 31/12/2026</div>
+                    </div>
+
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+                        ✓ Rassegne Stampa PDF illimitate<br>
+                        ✓ Editor Card LinkedIn HD<br>
+                        ✓ Ricerca Notizie automatizzata
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                <button type="button" id="btnSaveFullProfile" class="btn btn-gradient btn-lg"><i data-feather="check" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Salva Modifiche Profilo</button>
             </div>
         </div>
 
@@ -494,20 +583,121 @@
         <!-- PAGE: IMPOSTAZIONI -->
         <div id="page-impostazioni" class="page-view">
             <div class="page-header">
-                <h1 class="page-title"><i data-feather="settings" style="width:28px;height:28px;vertical-align:middle;"></i> Impostazioni</h1>
-                <p class="page-subtitle">Configura le preferenze generali della piattaforma.</p>
+                <h1 class="page-title"><i data-feather="settings" style="width:28px;height:28px;vertical-align:middle;"></i> Impostazioni Generali</h1>
+                <p class="page-subtitle">Personalizza il comportamento della piattaforma, i default PDF e le preferenze grafiche.</p>
             </div>
-            <div class="glass-card" style="padding: 1.5rem; max-width: 600px;">
-                <h3 style="margin-top:0; margin-bottom:1rem;">Preferenze Interfaccia</h3>
-                <div style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 0;">
-                    <div>
-                        <div style="font-weight:600;">Tema Grafico</div>
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Passa dalla modalità Chiara alla modalità Scura</div>
+
+            <div style="display:flex; flex-direction:column; gap:1.5rem; max-width:850px;">
+                
+                <!-- Preferenze Interfaccia e Tema -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="sliders" style="color:var(--accent-primary);"></i> Preferenze Interfaccia & Grafica
+                    </h3>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Tema Grafico della Piattaforma</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Scegli tra la modalità Chiara e Scura</div>
+                        </div>
+                        <button id="themeToggleSettings" class="btn btn-outline btn-sm">
+                            <i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia Tema
+                        </button>
                     </div>
-                    <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema">
-                        <i data-feather="moon" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Cambia Tema
-                    </button>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Animazioni Micro-Interattive</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Attiva o disattiva gli effetti visivi a passaggio del mouse</div>
+                        </div>
+                        <input type="checkbox" id="setAnimationsToggle" checked style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0;">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Lingua dell'Interfaccia</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Lingua di sistema per menu ed esportazioni</div>
+                        </div>
+                        <select id="setLanguageSelect" style="padding:6px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="it" selected>Italiano</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
                 </div>
+
+                <!-- Default Esportazione PDF -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="file-text" style="color:var(--accent-primary);"></i> Predefiniti Esportazione PDF
+                    </h3>
+
+                    <div class="field-group" style="margin-bottom:1rem;">
+                        <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Stile Grafico Predefinito Rassegna</label>
+                        <select id="setPdfTheme" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="modern_slate">Modern Slate (Scuro Elegante)</option>
+                            <option value="editorial_red">Rosso Editoriale (Stile Giornale)</option>
+                            <option value="corporate_blue">Corporate Blue (Aziendale)</option>
+                            <option value="minimal_dark">Minimal Dark (Nero Minimal)</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Includi Sempre Sommario / Indice Iniziale</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Genera automaticamente l'indice degli articoli in prima pagina</div>
+                        </div>
+                        <input type="checkbox" id="setPdfTocToggle" checked style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0;">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Numerazione di Pagina nel Pie' di Pagina</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Mostra il numero di pagina in basso su ogni foglio del PDF</div>
+                        </div>
+                        <input type="checkbox" id="setPdfPageNumbersToggle" checked style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+                </div>
+
+                <!-- Notifiche & Avvisi Email -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="bell" style="color:var(--accent-primary);"></i> Notifiche & Avvisi
+                    </h3>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Email di Conferma alla Generazione Rassegna</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Invia un avviso via email ogni volta che scarichi un PDF</div>
+                        </div>
+                        <input type="checkbox" id="setEmailNotifToggle" checked style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0;">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">Riepilogo Settimanale Notizie Monitorate</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Ricevi una mail sintetica ogni lunedì con le news principali dei tuoi clienti</div>
+                        </div>
+                        <input type="checkbox" id="setWeeklyDigestToggle" checked style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+                </div>
+
+                <!-- Gestione Dati e Cache -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="database" style="color:var(--accent-primary);"></i> Gestione Dati & Cache
+                    </h3>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button type="button" id="btnClearLocalCache" class="btn btn-outline btn-sm" onclick="clearPlatformCache()">
+                            <i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Pulisci Cache Locale
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                <button type="button" id="btnSaveSettings" class="btn btn-gradient btn-lg"><i data-feather="check" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Salva Impostazioni</button>
             </div>
         </div>
 

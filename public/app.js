@@ -1575,3 +1575,125 @@ window.toggleTemplateCard = function() {
         else icon.classList.remove('open');
     }
 };
+
+// --- FULL PROFILE & SETTINGS MANAGEMENT ---
+
+function loadFullProfileData() {
+    const savedProf = localStorage.getItem('rs_full_profile');
+    if (savedProf) {
+        try {
+            const data = JSON.parse(savedProf);
+            if (document.getElementById('profFullName')) document.getElementById('profFullName').value = data.fullName || '';
+            if (document.getElementById('profEmail')) document.getElementById('profEmail').value = data.email || '';
+            if (document.getElementById('profRole')) document.getElementById('profRole').value = data.role || '';
+            if (document.getElementById('profPhone')) document.getElementById('profPhone').value = data.phone || '';
+            if (document.getElementById('profCompanyName')) document.getElementById('profCompanyName').value = data.companyName || state.user?.companyName || '';
+            if (document.getElementById('profWebsite')) document.getElementById('profWebsite').value = data.website || '';
+            if (data.logoBase64 && document.getElementById('profLogoPreview')) {
+                document.getElementById('profLogoPreview').src = data.logoBase64;
+                const container = document.getElementById('profLogoPreviewContainer');
+                if (container) container.style.display = 'block';
+            }
+        } catch(e){}
+    } else {
+        if (document.getElementById('profCompanyName')) document.getElementById('profCompanyName').value = localStorage.getItem('rs_company_name') || '';
+    }
+}
+
+window.handleProfileLogoUpload = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const base64 = await fileToBase64(file);
+        const img = document.getElementById('profLogoPreview');
+        const container = document.getElementById('profLogoPreviewContainer');
+        if (img && container) {
+            img.src = base64;
+            container.style.display = 'block';
+        }
+        showToast('Logo aziendale caricato!', 'success');
+    } catch(err) {
+        showToast('Errore caricamento logo', 'error');
+    }
+};
+
+function saveFullProfileData() {
+    const fullName = document.getElementById('profFullName')?.value.trim() || '';
+    const email = document.getElementById('profEmail')?.value.trim() || '';
+    const role = document.getElementById('profRole')?.value.trim() || '';
+    const phone = document.getElementById('profPhone')?.value.trim() || '';
+    const companyName = document.getElementById('profCompanyName')?.value.trim() || '';
+    const website = document.getElementById('profWebsite')?.value.trim() || '';
+    const logoBase64 = document.getElementById('profLogoPreview')?.src || null;
+
+    const profileData = { fullName, email, role, phone, companyName, website, logoBase64 };
+    localStorage.setItem('rs_full_profile', JSON.stringify(profileData));
+
+    if (companyName) {
+        localStorage.setItem('rs_company_name', companyName);
+        const compEl = document.getElementById('navCompany');
+        if (compEl) compEl.textContent = companyName;
+    }
+
+    showToast('Profilo aggiornato con successo!', 'success');
+}
+
+function loadPlatformSettings() {
+    const savedSet = localStorage.getItem('rs_platform_settings');
+    if (savedSet) {
+        try {
+            const set = JSON.parse(savedSet);
+            if (document.getElementById('setAnimationsToggle')) document.getElementById('setAnimationsToggle').checked = set.animations !== false;
+            if (document.getElementById('setLanguageSelect')) document.getElementById('setLanguageSelect').value = set.language || 'it';
+            if (document.getElementById('setPdfTheme')) document.getElementById('setPdfTheme').value = set.pdfTheme || 'modern_slate';
+            if (document.getElementById('setPdfTocToggle')) document.getElementById('setPdfTocToggle').checked = set.pdfToc !== false;
+            if (document.getElementById('setPdfPageNumbersToggle')) document.getElementById('setPdfPageNumbersToggle').checked = set.pdfPageNumbers !== false;
+            if (document.getElementById('setEmailNotifToggle')) document.getElementById('setEmailNotifToggle').checked = set.emailNotif !== false;
+            if (document.getElementById('setWeeklyDigestToggle')) document.getElementById('setWeeklyDigestToggle').checked = set.weeklyDigest !== false;
+        } catch(e){}
+    }
+}
+
+function savePlatformSettings() {
+    const settings = {
+        animations: document.getElementById('setAnimationsToggle')?.checked ?? true,
+        language: document.getElementById('setLanguageSelect')?.value || 'it',
+        pdfTheme: document.getElementById('setPdfTheme')?.value || 'modern_slate',
+        pdfToc: document.getElementById('setPdfTocToggle')?.checked ?? true,
+        pdfPageNumbers: document.getElementById('setPdfPageNumbersToggle')?.checked ?? true,
+        emailNotif: document.getElementById('setEmailNotifToggle')?.checked ?? true,
+        weeklyDigest: document.getElementById('setWeeklyDigestToggle')?.checked ?? true
+    };
+    localStorage.setItem('rs_platform_settings', JSON.stringify(settings));
+    showToast('Impostazioni salvate con successo!', 'success');
+}
+
+window.clearPlatformCache = function() {
+    if (confirm('Vuoi davvero pulire la cache locale? I dati salvati verranno mantenuti.')) {
+        sessionStorage.clear();
+        showToast('Cache locale pulita!', 'success');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadFullProfileData();
+    loadPlatformSettings();
+
+    const btnSaveProf = document.getElementById('btnSaveFullProfile');
+    if (btnSaveProf) btnSaveProf.addEventListener('click', saveFullProfileData);
+
+    const btnSaveSet = document.getElementById('btnSaveSettings');
+    if (btnSaveSet) btnSaveSet.addEventListener('click', savePlatformSettings);
+
+    const themeToggleSettings = document.getElementById('themeToggleSettings');
+    if (themeToggleSettings) {
+        themeToggleSettings.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') || 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('rs_theme', nextTheme);
+            showToast(`Tema impostato: ${nextTheme === 'dark' ? 'Scuro' : 'Chiaro'}`, 'info');
+        });
+    }
+});
+
