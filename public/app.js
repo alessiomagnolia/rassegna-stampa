@@ -1301,11 +1301,11 @@ function renderClientSelectors() {
 
     selects.forEach(select => {
         if (!select) return;
-        select.innerHTML = '<option value="" style="color:black;">👤 Nessun Cliente (Generico)</option>';
+        select.innerHTML = '<option value="" style="color:black;">Nessun Cliente (Generico)</option>';
         userClients.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = `🏢 ${c.name}`;
+            opt.textContent = c.name;
             opt.style.color = 'black';
             if (c.id == activeClientId) opt.selected = true;
             select.appendChild(opt);
@@ -1348,17 +1348,51 @@ function applyActiveClient(clientId) {
             }
         }
 
-        // 2. Ricerca Notizie
-        const newsKeywordInput = document.getElementById('newsKeyword');
-        if (newsKeywordInput) {
-            newsKeywordInput.value = client.keywords || client.name;
-        }
+        // 2. Ricerca Notizie - Suggerimenti
+        renderNewsKeywordSuggestions();
 
         showToast(`Cliente attivo: ${client.name}`, 'info');
     } else {
+        renderNewsKeywordSuggestions();
         showToast('Nessun cliente attivo (modalità generica)', 'info');
     }
 }
+
+function renderNewsKeywordSuggestions() {
+    const container = document.getElementById('newsKeywordSuggestions');
+    if (!container) return;
+    
+    const client = userClients.find(c => c.id == activeClientId);
+    if (!client || (!client.keywords && !client.name)) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        return;
+    }
+
+    const rawKw = client.keywords || client.name;
+    const keywords = rawKw.split(/[,;\-]+/).map(k => k.trim()).filter(Boolean);
+
+    container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); margin-right:4px;">Suggerimenti cliente:</span>` + 
+        keywords.map(kw => `
+            <button type="button" class="btn btn-outline btn-sm" onclick="applyKeywordSuggestion('${kw.replace(/'/g, "\\'")}')" style="font-size:0.75rem; padding:2px 8px; border-radius:12px; background:var(--bg-secondary);">
+                <i data-feather="plus" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> ${kw}
+            </button>
+        `).join('');
+    container.classList.remove('hidden');
+    feather.replace();
+}
+
+window.applyKeywordSuggestion = function(kw) {
+    const input = document.getElementById('newsKeyword');
+    if (!input) return;
+    if (input.value.trim().length > 0) {
+        if (!input.value.includes(kw)) {
+            input.value += ' ' + kw;
+        }
+    } else {
+        input.value = kw;
+    }
+};
 
 function openClientModal() {
     const modal = document.getElementById('clientModal');
@@ -1387,9 +1421,10 @@ function resetClientForm() {
     const logoPrev = document.getElementById('clientLogoPreview');
     if (logoPrev) logoPrev.src = '';
     const title = document.getElementById('clientFormTitle');
-    if (title) title.textContent = '➕ Aggiungi Nuovo Cliente';
+    if (title) title.innerHTML = '<i data-feather="plus-circle" style="width:16px;height:16px;"></i> Aggiungi Nuovo Cliente';
     const cancelBtn = document.getElementById('btnCancelClientEdit');
     if (cancelBtn) cancelBtn.classList.add('hidden');
+    feather.replace();
 }
 
 function removeClientFormLogo() {
@@ -1457,9 +1492,10 @@ function editClient(id) {
     }
 
     const title = document.getElementById('clientFormTitle');
-    if (title) title.textContent = `✏️ Modifica Cliente: ${client.name}`;
+    if (title) title.innerHTML = `<i data-feather="edit-2" style="width:16px;height:16px;"></i> Modifica Cliente: ${client.name}`;
     const cancelBtn = document.getElementById('btnCancelClientEdit');
     if (cancelBtn) cancelBtn.classList.remove('hidden');
+    feather.replace();
 }
 
 async function deleteClient(id) {
@@ -1508,3 +1544,21 @@ function renderClientModalList() {
     });
     feather.replace();
 }
+
+window.handleClientLogoChange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        clientFormLogoBase64 = await fileToBase64(file);
+        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+        const logoPrev = document.getElementById('clientLogoPreview');
+        if (logoPrevContainer && logoPrev) {
+            logoPrev.src = clientFormLogoBase64;
+            logoPrevContainer.classList.remove('hidden');
+            logoPrevContainer.style.display = 'block';
+        }
+        showToast('Logo del cliente caricato!', 'success');
+    } catch (err) {
+        showToast('Errore nel caricamento del logo', 'error');
+    }
+};
