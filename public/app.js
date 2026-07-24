@@ -11,6 +11,7 @@ const state = {
 
 let logoArchive = [];
 let currentEditingArticleIndex = -1;
+let selectedTemplateId = 'classic';
 
 // Init fetch
 fetch('/assets/logos.json')
@@ -500,7 +501,7 @@ function openEditor() {
     const clientName = document.getElementById('clientName')?.value.trim() || '';
     const editorState = {
         articles: state.articles,
-        options: { title, clientName, clientLogo: state.clientLogoBase64 || null }
+        options: { title, clientName, clientLogo: state.clientLogoBase64 || null, templateId: selectedTemplateId }
     };
     localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
     window.location.href = 'editor.html';
@@ -523,7 +524,8 @@ async function generatePDF() {
             articles: state.articles,
             title,
             clientName,
-            clientLogo: state.clientLogoBase64
+            clientLogo: state.clientLogoBase64,
+            templateId: selectedTemplateId
         });
         
         showToast('PDF generato! Download in corso...', 'success');
@@ -652,6 +654,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('dashboard')) {
         loadProfile();
         loadClients();
+
+        // Template Selector Cards Listener
+        document.querySelectorAll('.template-card[data-template]').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.template-card').forEach(c => {
+                    c.classList.remove('active');
+                    c.style.border = '1px solid var(--border-color)';
+                    c.style.background = 'var(--bg-secondary)';
+                    c.querySelector('.template-check')?.classList.add('hidden');
+                });
+                card.classList.add('active');
+                card.style.border = '2px solid var(--accent-primary)';
+                card.style.background = 'rgba(124,92,255,0.05)';
+                card.querySelector('.template-check')?.classList.remove('hidden');
+                selectedTemplateId = card.dataset.template;
+            });
+        });
 
         // Client Selector Event Listeners
         const handleSelectChange = (e) => applyActiveClient(e.target.value);

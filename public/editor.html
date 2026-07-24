@@ -248,6 +248,11 @@
         <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
     </div>
     <div style="display:flex; gap:0.75rem; align-items:center;">
+        <select id="editorTemplateSelect" title="Seleziona Template PDF" style="background: rgba(255,255,255,0.1); color: #efece5; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 5px 8px; cursor: pointer; outline: none;">
+            <option value="classic" style="color: black;">🏛️ Template Classico</option>
+            <option value="modern" style="color: black;">⚡ Modern Executive</option>
+            <option value="minimal" style="color: black;">📰 Minimal Editorial</option>
+        </select>
         <button id="btnGeneratePDF" class="btn btn-gradient"><i data-feather="download" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica PDF</button>
         <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
             <div class="spinner" style="width:18px;height:18px;"></div> Generazione...
@@ -399,6 +404,15 @@ document.addEventListener('DOMContentLoaded', () => {
     hasCover = !!(options.title && options.title.trim());
     document.getElementById('editorTitle').value = options.title || '';
     document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
+    
+    // Set active template
+    const templateSelect = document.getElementById('editorTemplateSelect');
+    if (templateSelect) {
+        templateSelect.value = options.templateId || 'classic';
+        templateSelect.addEventListener('change', (e) => {
+            options.templateId = e.target.value;
+        });
+    }
 
     renderPagesList();
     selectPage(0);
@@ -699,7 +713,8 @@ async function generateAndDownload() {
                 articles,
                 title: title || options.title || '',
                 clientName: options.clientName || '',
-                clientLogo: options.clientLogo || ''
+                clientLogo: options.clientLogo || '',
+                templateId: options.templateId || 'classic'
             })
         });
         const data = await res.json();

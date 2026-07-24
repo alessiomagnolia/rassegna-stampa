@@ -14,15 +14,25 @@
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar">
-        <div class="nav-left">
+    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.5rem;">
+        <!-- LEFT: Sidebar toggle + User/Company Name -->
+        <div class="nav-left" style="display:flex; align-items:center; gap:1rem; flex:1;">
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <div class="nav-brand">Rassegna Stampa</div>
+            <div id="navCompany" class="nav-company" style="font-weight:600; font-size:0.95rem;">Caricamento...</div>
+            <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
         </div>
-        <div class="nav-user" style="display:flex; align-items:center; gap:8px;">
-            <!-- Client Selector Dropdown -->
+
+        <!-- CENTER: Site Title (Clickable -> Home) -->
+        <div class="nav-center" style="flex:1; text-align:center;">
+            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.25rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
+                Rassegna Stampa
+            </a>
+        </div>
+
+        <!-- RIGHT: Client Selector & Logout -->
+        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:12px; flex:1;">
             <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 8px; border-radius:8px; border:1px solid var(--border-color);">
                 <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
                 <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.85rem; cursor:pointer; max-width:160px;">
@@ -32,10 +42,6 @@
                     <i data-feather="settings" style="width:14px;height:14px;"></i>
                 </button>
             </div>
-
-            <div id="navCompany" class="nav-company">Caricamento...</div>
-            <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
-            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 4px;"><i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;"></i></button>
             <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
         </div>
     </nav>
@@ -219,6 +225,33 @@
                     </div>
                 </div>
 
+                <!-- TEMPLATE SELECTOR -->
+                <div class="input-group rassegna-title-group" style="margin-top: 20px;">
+                    <label style="font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <i data-feather="layout" style="width:16px;height:16px;color:var(--accent-primary);"></i> Layout PDF
+                    </label>
+                    <div class="template-selector-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 10px;">
+                        <div class="template-card active" data-template="classic" style="border: 2px solid var(--accent-primary); border-radius: 8px; padding: 12px; cursor: pointer; background: rgba(124,92,255,0.05); transition: all 0.2s;">
+                            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                🏛️ Classico <span class="template-check" style="font-size:0.8rem; color:var(--accent-primary);">✓ Selezionato</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">Layout istituzionale standard. Sfondo pulito, font serif e bordi sfumati.</div>
+                        </div>
+                        <div class="template-card" data-template="modern" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-secondary); transition: all 0.2s;">
+                            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                ⚡ Modern Executive <span class="template-check hidden" style="font-size:0.8rem; color:var(--accent-primary);">✓ Selezionato</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">Header scuro ad impatto, font Inter sans-serif e barre di accento verdi/viola.</div>
+                        </div>
+                        <div class="template-card" data-template="minimal" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-secondary); transition: all 0.2s;">
+                            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                📰 Minimal Editorial <span class="template-check hidden" style="font-size:0.8rem; color:var(--accent-primary);">✓ Selezionato</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">Stile rivista elegante. Sfondo tono carta, font Playfair Display e filetti classici.</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="add-article-bar">
                     <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
                     <button id="btnAddArticle" class="btn btn-primary"><i data-feather="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Aggiungi</button>
@@ -389,16 +422,23 @@
             </div>
         </div>
 
-        <!-- PAGE: IMPOSTAZIONI (placeholder) -->
+        <!-- PAGE: IMPOSTAZIONI -->
         <div id="page-impostazioni" class="page-view">
             <div class="page-header">
                 <h1 class="page-title"><i data-feather="settings" style="width:28px;height:28px;vertical-align:middle;"></i> Impostazioni</h1>
-                <p class="page-subtitle">Configura le preferenze generali, il database e l'esportazione.</p>
+                <p class="page-subtitle">Configura le preferenze generali della piattaforma.</p>
             </div>
-            <div class="coming-soon-box">
-                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
-                <h2>In arrivo</h2>
-                <p>Qui potrai personalizzare le impostazioni della piattaforma: notifiche, preferenze PDF, lingua e altro.</p>
+            <div class="glass-card" style="padding: 1.5rem; max-width: 600px;">
+                <h3 style="margin-top:0; margin-bottom:1rem;">Preferenze Interfaccia</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 0;">
+                    <div>
+                        <div style="font-weight:600;">Tema Grafico</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Passa dalla modalità Chiara alla modalità Scura</div>
+                    </div>
+                    <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema">
+                        <i data-feather="moon" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Cambia Tema
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -408,20 +448,11 @@
                 <h1 class="page-title"><i data-feather="mail" style="width:28px;height:28px;vertical-align:middle;"></i> Contatti</h1>
                 <p class="page-subtitle">Hai bisogno di aiuto o vuoi suggerire una nuova funzione? Scrivici!</p>
             </div>
-                <h2>Supporto</h2>
-                <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
-            </div>
+            <h2>Supporto</h2>
+            <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
         </div>
 
     </main>
-
-    <!-- Client Selection in Header Area (Place this near nav/header or top of main content) -->
-    <div style="position: fixed; top: 1rem; right: 2rem; z-index: 1000;">
-        <select id="activeClientSelector" style="background: var(--surface); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
-            <option value="">-- Seleziona Cliente --</option>
-        </select>
-        <button id="btnManageClients" class="btn btn-outline btn-sm" style="margin-left: 0.5rem;"><i data-feather="settings"></i></button>
-    </div>
 
     <!-- Client Management Modal -->
     <div id="clientModal" class="modal-overlay hidden">

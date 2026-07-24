@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
             SELECT * FROM clients 
             WHERE user_id = ? 
             ORDER BY name ASC
-        `).all(req.user.id);
+        `).all(req.userId);
         res.json({ clients });
     } catch (error) {
         console.error('Errore recupero clienti:', error);
@@ -30,7 +30,7 @@ router.get('/:id', (req, res) => {
         const client = db.prepare(`
             SELECT * FROM clients 
             WHERE id = ? AND user_id = ?
-        `).get(req.params.id, req.user.id);
+        `).get(req.params.id, req.userId);
         
         if (!client) {
             return res.status(404).json({ error: 'Cliente non trovato.' });
@@ -58,7 +58,7 @@ router.post('/', (req, res) => {
         `);
 
         const result = stmt.run(
-            req.user.id,
+            req.userId,
             name.trim(),
             logo_base64 || '',
             keywords ? keywords.trim() : '',
@@ -84,7 +84,7 @@ router.put('/:id', (req, res) => {
         }
 
         const db = getDb();
-        const existing = db.prepare('SELECT id FROM clients WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+        const existing = db.prepare('SELECT id FROM clients WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
         if (!existing) {
             return res.status(404).json({ error: 'Cliente non trovato.' });
         }
@@ -100,7 +100,7 @@ router.put('/:id', (req, res) => {
             tone_of_voice ? tone_of_voice.trim() : '',
             notes ? notes.trim() : '',
             req.params.id,
-            req.user.id
+            req.userId
         );
 
         const updatedClient = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);

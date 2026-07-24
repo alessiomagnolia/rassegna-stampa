@@ -33,7 +33,7 @@ function fetchImageAsBase64(url) {
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo } = req.body;
+        const { articles, title, clientName, clientLogo, templateId } = req.body;
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });
@@ -68,7 +68,8 @@ router.post('/generate', authMiddleware, async (req, res) => {
             userName: user?.company_name || 'Utente',
             clientName: clientName || null,
             clientLogo: clientLogo || null,
-            userLogo: userLogoBase64
+            userLogo: userLogoBase64,
+            templateId: templateId || 'classic'
         };
 
         console.log(`[PDF] Generazione in corso per ${resolvedArticles.length} articoli...`);
