@@ -201,7 +201,7 @@
 
         /* TOP PHOTO AREA WITH SPEECH BUBBLE CUT */
         .card-photo-container {
-            height: 50%;
+            height: 48%;
             position: relative;
             background: #e2e8f0;
             overflow: hidden;
@@ -214,23 +214,23 @@
             display: block;
         }
 
-        /* SPEECH BUBBLE OVERLAY (Bottom-Right Triangle Cutout) */
+        /* SPEECH BUBBLE OVERLAY */
         .speech-cutout {
             position: absolute;
             bottom: -1px;
             right: 12%;
             width: 0;
             height: 0;
-            border-left: 24px solid transparent;
-            border-right: 24px solid transparent;
-            border-bottom: 28px solid #ffffff;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-bottom: 26px solid #ffffff;
             z-index: 10;
         }
 
         /* BOTTOM CONTENT BOX */
         .card-content-box {
             flex: 1;
-            padding: 6% 8% 7%;
+            padding: 5% 7% 6%;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -241,38 +241,30 @@
 
         .card-main-quote {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: #1a1a2e;
-            line-height: 1.25;
-            margin-bottom: 12px;
+            line-height: 1.24;
+            margin-bottom: 8px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
+        .card-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.35;
+            font-style: italic;
+        }
+
         .card-divider {
-            width: 45px;
-            height: 3px;
+            width: 100%;
+            height: 2px;
             background: #1d70b8;
             margin-bottom: 10px;
-            border-radius: 2px;
-        }
-
-        .card-meta-author {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #1a1a2e;
-            line-height: 1.2;
-        }
-
-        .card-meta-role {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.78rem;
-            font-style: italic;
-            color: #64748b;
-            margin-top: 2px;
+            border-radius: 1px;
         }
     </style>
 </head>
@@ -325,13 +317,18 @@
                 <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo Notizia</div>
                 
                 <div class="field-group">
-                    <label for="inputQuote">Titolo / Notizia Principale</label>
+                    <label for="inputQuote">Titolo Notizia</label>
                     <textarea id="inputQuote" rows="3" placeholder="Inserisci il titolo della notizia..."></textarea>
                 </div>
 
                 <div class="field-group">
-                    <label for="inputRole">Sottotitolo / Data</label>
-                    <input type="text" id="inputRole" placeholder="Es. Notizia del 28/02/2026">
+                    <label for="inputSubtitle">Sottotitolo (Testo Notizia Sotto il Titolo)</label>
+                    <textarea id="inputSubtitle" rows="2" placeholder="Inserisci il sommario o estratto della notizia..."></textarea>
+                </div>
+
+                <div class="field-group">
+                    <label for="inputDate">Data Notizia</label>
+                    <input type="text" id="inputDate" placeholder="Es. Notizia del 28/02/2026">
                 </div>
             </div>
 
@@ -354,7 +351,7 @@
                     <input type="file" id="inputSourceLogoFile" accept="image/*">
                 </div>
                 <div class="field-group">
-                    <label for="inputAuthor">Nome Testata (Alternativo a Testo)</label>
+                    <label for="inputAuthor">Nome Testata (Se senza logo)</label>
                     <input type="text" id="inputAuthor" placeholder="Es. La Repubblica">
                 </div>
             </div>
@@ -438,22 +435,31 @@
                         <!-- CONTENT AREA -->
                         <div class="card-content-box">
                             <div>
-                                <!-- Optional Client Logo Container -->
-                                <div id="cardClientLogoContainer" style="margin-bottom: 8px; display: none;">
-                                    <img id="cardClientLogo" style="max-height: 38px; max-width: 140px; object-fit: contain;" src="" alt="Logo Cliente">
+                                <!-- TOP ROW: Client Logo (optional) + Newspaper Logo (Piccolo) & Data Notizia -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <!-- Optional Client Logo -->
+                                        <div id="cardClientLogoContainer" style="display: none;">
+                                            <img id="cardClientLogo" style="max-height: 24px; max-width: 100px; object-fit: contain;" src="" alt="Logo Cliente">
+                                        </div>
+                                        <!-- Source Newspaper Logo or Text (Smaller max-height 24px) -->
+                                        <div id="cardSourceLogoContainer">
+                                            <img id="cardSourceLogo" style="max-height: 24px; max-width: 120px; object-fit: contain; display: none;" src="" alt="Logo Testata">
+                                            <div id="cardAuthor" class="card-meta-author" style="font-size: 0.85rem; font-weight: 800; color: #1a1a2e;">La Repubblica</div>
+                                        </div>
+                                    </div>
+                                    <!-- News Date above divider -->
+                                    <div id="cardDate" class="card-meta-date" style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #64748b; font-weight: 500;">Notizia del 28/02/2026</div>
                                 </div>
-                                <div id="cardMainQuote" class="card-main-quote">Scintille tra Uil e Ugl sui rider. Bombardieri a Capone: "Hai firmato contratti pirata"</div>
-                            </div>
-                            <div>
+
+                                <!-- DIVIDER LINE -->
                                 <div id="cardDivider" class="card-divider"></div>
-                                
-                                <!-- Source Newspaper Logo or Text -->
-                                <div id="cardSourceLogoContainer" style="margin-bottom: 4px;">
-                                    <img id="cardSourceLogo" style="max-height: 36px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
-                                    <div id="cardAuthor" class="card-meta-author">La Repubblica</div>
-                                </div>
-                                
-                                <div id="cardRole" class="card-meta-role">Notizia del 28/02/2026</div>
+
+                                <!-- MAIN TITLE -->
+                                <div id="cardMainQuote" class="card-main-quote">Scintille tra Uil e Ugl sui rider. Bombardieri a Capone: "Hai firmato contratti pirata"</div>
+
+                                <!-- SUBTITLE (Under the title) -->
+                                <div id="cardSubtitle" class="card-subtitle">Acceso scontro tra i sindacati sulla rappresentanza e le condizioni contrattuali dei lavoratori della delivering economy.</div>
                             </div>
                         </div>
 
@@ -504,9 +510,10 @@
             const linkedinCard = document.getElementById('linkedinCard');
             const cardPhoto = document.getElementById('cardPhoto');
             const cardMainQuote = document.getElementById('cardMainQuote');
+            const cardSubtitle = document.getElementById('cardSubtitle');
             const cardDivider = document.getElementById('cardDivider');
             const cardAuthor = document.getElementById('cardAuthor');
-            const cardRole = document.getElementById('cardRole');
+            const cardDate = document.getElementById('cardDate');
 
             const cardClientLogoContainer = document.getElementById('cardClientLogoContainer');
             const cardClientLogo = document.getElementById('cardClientLogo');
@@ -514,8 +521,10 @@
             const cardSourceLogo = document.getElementById('cardSourceLogo');
 
             const inputQuote = document.getElementById('inputQuote');
+            const inputSubtitle = document.getElementById('inputSubtitle');
+            const inputDate = document.getElementById('inputDate');
             const inputAuthor = document.getElementById('inputAuthor');
-            const inputRole = document.getElementById('inputRole');
+            
             const sourceLogoSelect = document.getElementById('sourceLogoSelect');
             const inputSourceLogoFile = document.getElementById('inputSourceLogoFile');
             const inputClientLogoFile = document.getElementById('inputClientLogoFile');
@@ -546,7 +555,21 @@
             // Sync inputs to card view
             function updateCardView() {
                 if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
-                if (inputRole.value.trim()) cardRole.textContent = inputRole.value.trim();
+                
+                if (inputSubtitle.value.trim()) {
+                    cardSubtitle.textContent = inputSubtitle.value.trim();
+                    cardSubtitle.style.display = 'block';
+                } else {
+                    cardSubtitle.style.display = 'none';
+                }
+
+                if (inputDate.value.trim()) {
+                    cardDate.textContent = inputDate.value.trim();
+                    cardDate.style.display = 'block';
+                } else {
+                    cardDate.style.display = 'none';
+                }
+
                 if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
 
                 // Colors
@@ -557,7 +580,7 @@
                 cardPhoto.style.objectPosition = inputImagePosition.value;
             }
 
-            [inputQuote, inputAuthor, inputRole, inputImagePosition, colorText, colorAccent].forEach(el => {
+            [inputQuote, inputSubtitle, inputDate, inputAuthor, inputImagePosition, colorText, colorAccent].forEach(el => {
                 el.addEventListener('input', updateCardView);
             });
 
@@ -689,7 +712,8 @@
                     if (!res.ok) throw new Error(data.error || 'Estrazione fallita');
 
                     if (data.title) inputQuote.value = data.title;
-                    if (data.published_date) inputRole.value = `Notizia del ${data.published_date}`;
+                    if (data.excerpt || data.description) inputSubtitle.value = data.excerpt || data.description;
+                    if (data.published_date) inputDate.value = `Notizia del ${data.published_date}`;
                     if (data.imageBase64) cardPhoto.src = data.imageBase64;
                     if (data.source_name) inputAuthor.value = data.source_name;
 
@@ -766,10 +790,11 @@
 
             btnShareLinkedIn.addEventListener('click', async () => {
                 const title = inputQuote.value.trim() || cardMainQuote.textContent;
+                const subtitle = inputSubtitle.value.trim() || cardSubtitle.textContent;
                 const source = inputAuthor.value.trim() || 'Notizia';
-                const role = inputRole.value.trim() || '';
+                const date = inputDate.value.trim() || '';
 
-                sharePostText.value = `📰 ${title}\n\n📌 Fonte: ${source} (${role})\n\n#rassegnastampa #informazione #news`;
+                sharePostText.value = `📰 ${title}\n\n${subtitle}\n\n📌 Fonte: ${source} (${date})\n\n#rassegnastampa #informazione #news`;
                 shareModal.classList.remove('hidden');
                 shareModal.style.display = 'flex';
                 feather.replace();
