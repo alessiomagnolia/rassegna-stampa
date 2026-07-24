@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Post LinkedIn | Rassegna Stampa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Source+Serif+4:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .editor-header {
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* LEFT CONTROL PANEL */
+        .control-panel {
+            width: 420px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .panel-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .panel-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-primary);
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-group {
+            margin-bottom: 0.85rem;
+        }
+        .field-group:last-child { margin-bottom: 0; }
+
+        .field-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+            color: var(--text-primary);
+        }
+
+        .field-group input, .field-group textarea, .field-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        /* FORMAT SWITCHER BUTTONS */
+        .format-selector {
+            display: flex;
+            gap: 8px;
+        }
+        .format-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .format-btn.active {
+            border-color: var(--accent-primary);
+            background: rgba(124,92,255,0.15);
+            color: var(--accent-primary);
+        }
+
+        /* RIGHT CANVAS PREVIEW PANEL */
+        .preview-panel {
+            flex: 1;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow: auto;
+            position: relative;
+        }
+
+        /* CARD CANVAS CONTAINER */
+        .card-stage {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            transform-origin: center center;
+        }
+
+        /* 1:1 Square */
+        .card-stage[data-format="1080x1080"] {
+            width: 500px;
+            height: 500px;
+        }
+        /* 4:5 Social Portrait */
+        .card-stage[data-format="1080x1350"] {
+            width: 440px;
+            height: 550px;
+        }
+        /* 9:16 Story */
+        .card-stage[data-format="1080x1920"] {
+            width: 360px;
+            height: 640px;
+        }
+
+        /* INNER CARD DESIGN (Matching Sample Graphic) */
+        .linkedin-card {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            background-color: #1d70b8; /* Default Frame Color */
+            padding: 7%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-inner-white {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        /* TOP PHOTO AREA WITH SPEECH BUBBLE CUT */
+        .card-photo-container {
+            height: 52%;
+            position: relative;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+        .card-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+        }
+
+        /* SPEECH BUBBLE OVERLAY (Bottom-Right Triangle Cutout) */
+        .speech-cutout {
+            position: absolute;
+            bottom: -1px;
+            right: 12%;
+            width: 0;
+            height: 0;
+            border-left: 24px solid transparent;
+            border-right: 24px solid transparent;
+            border-bottom: 28px solid #ffffff;
+            z-index: 10;
+        }
+
+        /* BOTTOM CONTENT BOX */
+        .card-content-box {
+            flex: 1;
+            padding: 7% 8% 8%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 5;
+        }
+
+        .quote-mark {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            line-height: 0.8;
+            color: #c0262d;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .card-main-quote {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #c0262d;
+            line-height: 1.28;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-divider {
+            width: 45px;
+            height: 3px;
+            background: #1d70b8;
+            margin-bottom: 10px;
+            border-radius: 2px;
+        }
+
+        .card-meta-author {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #c0262d;
+            line-height: 1.2;
+        }
+
+        .card-meta-role {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-style: italic;
+            color: #b91c1c;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER NAVBAR -->
+    <header class="editor-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="dashboard.html" class="btn btn-outline btn-sm"><i data-feather="arrow-left" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Torna alla Dashboard</a>
+            <div style="font-weight:700; font-size:1.05rem;">Editor Graphics LinkedIn</div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button id="btnDownloadPNG" class="btn btn-primary btn-sm"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PNG (HD)</button>
+            <button id="btnDownloadJPG" class="btn btn-outline btn-sm"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica JPEG</button>
+        </div>
+    </header>
+
+    <!-- MAIN EDITOR LAYOUT -->
+    <div class="editor-layout">
+
+        <!-- LEFT CONTROLS PANEL -->
+        <aside class="control-panel">
+            
+            <!-- Estrazione o Inserimento Notizia -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="link" style="width:16px;height:16px;"></i> Importa Notizia</div>
+                <div class="field-group">
+                    <label for="importUrl">Incolla Link Notizia</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="url" id="importUrl" placeholder="https://www.corriere.it/...">
+                        <button id="btnExtractLink" class="btn btn-gradient btn-sm" style="white-space:nowrap;">Estrai</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formato Card Social -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="maximize-2" style="width:16px;height:16px;"></i> Formato Post</div>
+                <div class="format-selector">
+                    <button class="format-btn active" data-format="1080x1080">1080x1080<br><span style="font-weight:400;font-size:0.7rem;">Quadrato 1:1</span></button>
+                    <button class="format-btn" data-format="1080x1350">1080x1350<br><span style="font-weight:400;font-size:0.7rem;">Social 4:5</span></button>
+                    <button class="format-btn" data-format="1080x1920">1080x1920<br><span style="font-weight:400;font-size:0.7rem;">Storia 9:16</span></button>
+                </div>
+            </div>
+
+            <!-- Contenuti Testuali -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo e Citazione</div>
+                
+                <div class="field-group">
+                    <label for="inputQuote">Titolo Notizia / Citazione</label>
+                    <textarea id="inputQuote" rows="3" placeholder="Inserisci il testo della citazione o titolo principale..."></textarea>
+                </div>
+
+                <div class="field-group">
+                    <label for="inputAuthor">Testata Notizia / Autore</label>
+                    <input type="text" id="inputAuthor" placeholder="Es. Corriere della Sera oppure Nome Cognome">
+                </div>
+
+                <div class="field-group">
+                    <label for="inputRole">Sottotitolo / Ruolo / Data</label>
+                    <input type="text" id="inputRole" placeholder="Es. Giornale del 24 Luglio oppure Ruolo Ufficiale">
+                </div>
+            </div>
+
+            <!-- Immagine di Copertina -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="image" style="width:16px;height:16px;"></i> Foto Soggetto</div>
+                <div class="field-group">
+                    <label for="inputImageFile">Carica Nuova Foto</label>
+                    <input type="file" id="inputImageFile" accept="image/*">
+                </div>
+                <div class="field-group">
+                    <label for="inputImageUrl">Oppure URL Immagine</label>
+                    <input type="url" id="inputImageUrl" placeholder="https://...">
+                </div>
+                <div class="field-group">
+                    <label for="inputImagePosition">Posizionamento Foto</label>
+                    <select id="inputImagePosition">
+                        <option value="top center">In alto (Top)</option>
+                        <option value="center center" selected>Al centro (Center)</option>
+                        <option value="bottom center">In basso (Bottom)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Colori e Stile -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Personalizzazione Colori</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="field-group">
+                        <label for="colorFrame">Colore Sfondo</label>
+                        <input type="color" id="colorFrame" value="#1d70b8" style="height:36px; padding:2px; cursor:pointer;">
+                    </div>
+                    <div class="field-group">
+                        <label for="colorText">Colore Testo/Quote</label>
+                        <input type="color" id="colorText" value="#c0262d" style="height:36px; padding:2px; cursor:pointer;">
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- RIGHT PREVIEW CANVAS PANEL -->
+        <main class="preview-panel">
+            <div id="cardStage" class="card-stage" data-format="1080x1080">
+                <div id="linkedinCard" class="linkedin-card">
+                    <div class="card-inner-white">
+                        
+                        <!-- PHOTO AREA -->
+                        <div class="card-photo-container">
+                            <img id="cardPhoto" class="card-photo" src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop" alt="Foto Soggetto">
+                            <div class="speech-cutout"></div>
+                        </div>
+
+                        <!-- CONTENT AREA -->
+                        <div class="card-content-box">
+                            <div>
+                                <div id="cardQuoteMark" class="quote-mark">“</div>
+                                <div id="cardMainQuote" class="card-main-quote">The future is a blank page; make sure you're the one holding the pen.</div>
+                            </div>
+                            <div>
+                                <div id="cardDivider" class="card-divider"></div>
+                                <div id="cardAuthor" class="card-meta-author">Callum Price</div>
+                                <div id="cardRole" class="card-meta-role">Member of Parliament</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            feather.replace();
+
+            // Element references
+            const cardStage = document.getElementById('cardStage');
+            const linkedinCard = document.getElementById('linkedinCard');
+            const cardPhoto = document.getElementById('cardPhoto');
+            const cardQuoteMark = document.getElementById('cardQuoteMark');
+            const cardMainQuote = document.getElementById('cardMainQuote');
+            const cardDivider = document.getElementById('cardDivider');
+            const cardAuthor = document.getElementById('cardAuthor');
+            const cardRole = document.getElementById('cardRole');
+
+            const inputQuote = document.getElementById('inputQuote');
+            const inputAuthor = document.getElementById('inputAuthor');
+            const inputRole = document.getElementById('inputRole');
+            const inputImageFile = document.getElementById('inputImageFile');
+            const inputImageUrl = document.getElementById('inputImageUrl');
+            const inputImagePosition = document.getElementById('inputImagePosition');
+            const colorFrame = document.getElementById('colorFrame');
+            const colorText = document.getElementById('colorText');
+
+            // Restore from localStorage state if passed from dashboard
+            const savedState = localStorage.getItem('rs_linkedin_state');
+            if (savedState) {
+                try {
+                    const data = JSON.parse(savedState);
+                    if (data.quote) inputQuote.value = data.quote;
+                    if (data.author) inputAuthor.value = data.author;
+                    if (data.role) inputRole.value = data.role;
+                    if (data.imageUrl) cardPhoto.src = data.imageUrl;
+                } catch(e){}
+            }
+
+            // Sync inputs to card view
+            function updateCardView() {
+                if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
+                if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
+                if (inputRole.value.trim()) cardRole.textContent = inputRole.value.trim();
+
+                // Colors
+                linkedinCard.style.backgroundColor = colorFrame.value;
+                cardDivider.style.backgroundColor = colorFrame.value;
+                cardQuoteMark.style.color = colorText.value;
+                cardMainQuote.style.color = colorText.value;
+                cardAuthor.style.color = colorText.value;
+                cardRole.style.color = colorText.value;
+
+                // Photo position
+                cardPhoto.style.objectPosition = inputImagePosition.value;
+            }
+
+            [inputQuote, inputAuthor, inputRole, inputImagePosition, colorFrame, colorText].forEach(el => {
+                el.addEventListener('input', updateCardView);
+            });
+
+            // Image File Upload
+            inputImageFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    cardPhoto.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Image URL Input
+            inputImageUrl.addEventListener('change', (e) => {
+                if (e.target.value.trim()) {
+                    cardPhoto.src = e.target.value.trim();
+                }
+            });
+
+            // Format Switcher
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const fmt = btn.dataset.format;
+                    cardStage.dataset.format = fmt;
+                });
+            });
+
+            // Extract Link functionality
+            document.getElementById('btnExtractLink').addEventListener('click', async () => {
+                const url = document.getElementById('importUrl').value.trim();
+                if (!url) return alert('Inserisci un URL valido');
+
+                try {
+                    const token = localStorage.getItem('rs_token');
+                    const res = await fetch('/api/articles/extract', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ url })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Errore estrazione');
+
+                    if (data.title) inputQuote.value = data.title;
+                    if (data.source_name) inputAuthor.value = data.source_name;
+                    if (data.published_date) inputRole.value = `Notizia del ${data.published_date}`;
+                    if (data.imageBase64) cardPhoto.src = data.imageBase64;
+                    updateCardView();
+                } catch(err) {
+                    alert('Impossibile estrarre la notizia: ' + err.message);
+                }
+            });
+
+            // Download Image Function (High Res HTML2Canvas export)
+            async function downloadCardImage(formatType = 'png') {
+                const fmt = cardStage.dataset.format;
+                let targetWidth = 1080;
+                let targetHeight = 1080;
+
+                if (fmt === '1080x1350') {
+                    targetHeight = 1350;
+                } else if (fmt === '1080x1920') {
+                    targetHeight = 1920;
+                }
+
+                // Render at high resolution scale factor
+                const scale = targetWidth / cardStage.offsetWidth;
+
+                try {
+                    const canvas = await html2canvas(cardStage, {
+                        scale: scale,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null
+                    });
+
+                    const mime = formatType === 'jpg' ? 'image/jpeg' : 'image/png';
+                    const dataUrl = canvas.toDataURL(mime, 0.95);
+
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `Post_LinkedIn_${fmt}_${Date.now()}.${formatType}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } catch(err) {
+                    alert('Errore durante la generazione dell\'immagine: ' + err.message);
+                }
+            }
+
+            document.getElementById('btnDownloadPNG').addEventListener('click', () => downloadCardImage('png'));
+            document.getElementById('btnDownloadJPG').addEventListener('click', () => downloadCardImage('jpg'));
+
+            updateCardView();
+        });
+    </script>
+</body>
+</html>
