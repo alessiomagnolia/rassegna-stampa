@@ -69,6 +69,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
+            flex-shrink: 0;
         }
 
         /* COLLAPSIBLE PANEL SECTIONS */
@@ -164,17 +165,17 @@
             color: var(--accent-primary);
         }
 
-        /* RIGHT CANVAS PREVIEW PANEL */
+        /* RIGHT CANVAS PREVIEW PANEL - CENTERED FIXED POSITION */
         .preview-panel {
             flex: 1;
             background: var(--bg-primary);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem;
             overflow: auto;
             position: relative;
+            height: 100%;
         }
 
         /* CARD CANVAS CONTAINER */
@@ -185,6 +186,8 @@
             position: relative;
             transform-origin: center center;
             overflow: hidden;
+            margin: auto; /* Fixes vertical positioning when menu expands */
+            flex-shrink: 0;
         }
 
         /* 1:1 Square */
@@ -203,7 +206,7 @@
             height: 640px;
         }
 
-        /* FULL IMAGE / EDGE-TO-EDGE CARD DESIGN */
+        /* CARD BASE CONTAINER */
         .linkedin-card {
             width: 100%;
             height: 100%;
@@ -217,99 +220,19 @@
             position: relative;
         }
 
-        /* ============================================================ */
-        /* TEMPLATE 1: SPEECH BUBBLE (ORIGINAL) */
-        /* ============================================================ */
-        .tpl-speech .card-photo-container {
-            height: 48%;
-            position: relative;
-            background: #e2e8f0;
-            overflow: hidden;
-        }
-        .tpl-speech .card-photo {
+        .card-photo {
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        .tpl-speech .speech-cutout {
-            position: absolute;
-            bottom: -1px;
-            right: 12%;
-            width: 0;
-            height: 0;
-            border-left: 22px solid transparent;
-            border-right: 22px solid transparent;
-            border-bottom: 26px solid #ffffff;
-            z-index: 10;
             display: block;
         }
-        .tpl-speech .card-content-box {
-            flex: 1;
-            padding: 5% 7% 6%;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
 
-        /* ============================================================ */
-        /* TEMPLATE 2: PRESS BANNER (INSPIRED BY MEIO&MENSAGEM) */
-        /* ============================================================ */
-        .tpl-banner .speech-cutout { display: none !important; }
-        .tpl-banner .card-banner-header {
-            height: 54px;
-            background: #0045ff; /* Accent color */
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 7%;
-            color: #ffffff;
-        }
-        .tpl-banner .card-photo-container {
-            order: 3;
-            height: auto;
-            flex: 1;
-            margin: 4% 7%;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        .tpl-banner .card-content-box {
-            order: 2;
-            padding: 5% 7% 0;
-            flex: none;
-        }
-        .tpl-banner .banner-top-meta { display: none !important; }
-        .tpl-banner .card-divider { display: none !important; }
-
-        /* ============================================================ */
-        /* TEMPLATE 3: EDITORIAL NEWSPAPER UI (INSPIRED BY BREAKING NEWS) */
-        /* ============================================================ */
-        .tpl-editorial { background: #faf9f6 !important; }
-        .tpl-editorial .card-inner-white { background: #faf9f6 !important; }
-        .tpl-editorial .speech-cutout { display: none !important; }
-        .tpl-editorial .card-content-box {
-            background: #faf9f6 !important;
-            order: 2;
-            padding: 4% 7% 3%;
-            flex: none;
-        }
-        .tpl-editorial .card-photo-container {
-            order: 3;
-            flex: 1;
-            margin: 0 7% 4%;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .tpl-editorial .card-divider { display: none !important; }
-
-        /* UNIVERSAL CARD TYPOGRAPHY */
         .card-main-quote {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: #1a1a2e;
-            line-height: 1.24;
+            line-height: 1.25;
             margin-bottom: 6px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
@@ -331,6 +254,146 @@
             margin-bottom: 12px;
             border-radius: 2px;
         }
+
+        /* ============================================================ */
+        /* TEMPLATE 1: SPEECH BUBBLE (FUMETTO CLASSICO) */
+        /* ============================================================ */
+        .tpl-speech .card-inner-white {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #ffffff;
+        }
+        .tpl-speech #cardPhotoContainer {
+            height: 48%;
+            flex: none;
+            position: relative;
+            overflow: hidden;
+            order: 1;
+            margin: 0;
+            border-radius: 0;
+        }
+        .tpl-speech #cardContentBox {
+            flex: 1;
+            padding: 5% 7% 6%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            order: 2;
+            background: #ffffff;
+        }
+        .tpl-speech #speechCutout {
+            position: absolute;
+            bottom: -1px;
+            right: 12%;
+            width: 0;
+            height: 0;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-bottom: 26px solid #ffffff;
+            z-index: 10;
+            display: block;
+        }
+        .tpl-speech #bannerTopMeta { display: flex !important; }
+        .tpl-speech #cardDivider { display: block !important; }
+        .tpl-speech #cardBannerHeader { display: none !important; }
+        .tpl-speech #cardEditorialHeader { display: none !important; }
+        .tpl-speech #cardBottomFooter { display: none !important; }
+
+        /* ============================================================ */
+        /* TEMPLATE 2: PRESS BANNER (MEIO&MENSAGEM STYLE) */
+        /* ============================================================ */
+        .tpl-banner .card-inner-white {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #ffffff;
+        }
+        .tpl-banner #cardBannerHeader {
+            display: flex !important;
+            height: 48px;
+            flex: none;
+            padding: 0 6%;
+            align-items: center;
+            justify-content: space-between;
+            order: 1;
+        }
+        .tpl-banner #cardContentBox {
+            flex: none;
+            padding: 5% 6% 2%;
+            order: 2;
+            background: #ffffff;
+        }
+        .tpl-banner #cardPhotoContainer {
+            flex: 1;
+            margin: 2% 6% 3%;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            order: 3;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            background: #e2e8f0;
+        }
+        .tpl-banner #cardBottomFooter {
+            display: flex !important;
+            justify-content: center;
+            padding: 0 6% 4%;
+            flex: none;
+            order: 4;
+        }
+        .tpl-banner #speechCutout { display: none !important; }
+        .tpl-banner #bannerTopMeta { display: none !important; }
+        .tpl-banner #cardDivider { display: none !important; }
+        .tpl-banner #cardEditorialHeader { display: none !important; }
+
+        /* ============================================================ */
+        /* TEMPLATE 3: EDITORIAL NEWSPAPER UI (BREAKING NEWS STYLE) */
+        /* ============================================================ */
+        .tpl-editorial { background: #faf9f6 !important; }
+        .tpl-editorial .card-inner-white {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #faf9f6 !important;
+        }
+        .tpl-editorial #cardEditorialHeader {
+            display: flex !important;
+            height: 44px;
+            flex: none;
+            padding: 0 6%;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
+            order: 1;
+            background: #faf9f6;
+        }
+        .tpl-editorial #cardContentBox {
+            flex: none;
+            padding: 4% 6% 2%;
+            order: 2;
+            background: #faf9f6 !important;
+        }
+        .tpl-editorial #cardPhotoContainer {
+            flex: 1;
+            margin: 2% 6% 3%;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            order: 3;
+            background: #e2e8f0;
+        }
+        .tpl-editorial #cardBottomFooter {
+            display: flex !important;
+            justify-content: space-between;
+            padding: 0 6% 4%;
+            flex: none;
+            order: 4;
+        }
+        .tpl-editorial #cardFooterReadMore { display: block !important; }
+        .tpl-editorial #speechCutout { display: none !important; }
+        .tpl-editorial #bannerTopMeta { display: none !important; }
+        .tpl-editorial #cardDivider { display: none !important; }
+        .tpl-editorial #cardBannerHeader { display: none !important; }
     </style>
 </head>
 <body>
@@ -542,62 +605,66 @@
         <main class="preview-panel">
             <div id="cardStage" class="card-stage" data-format="1080x1080">
                 <div id="linkedinCard" class="linkedin-card tpl-speech">
-                    <div class="card-inner-white">
+                    <div class="card-inner-white" id="cardInnerWhite">
 
-                        <!-- TEMPLATE 2: TOP BANNER HEADER -->
+                        <!-- TEMPLATE 2 BANNER HEADER -->
                         <div class="card-banner-header" id="cardBannerHeader" style="display: none;">
                             <div id="cardBannerLogoContainer">
-                                <img id="cardBannerLogo" style="max-height: 28px; max-width: 160px; filter: brightness(0) invert(1);" src="/logos/repubblica.png" alt="Logo Banner">
+                                <img id="cardBannerLogo" style="max-height: 26px; max-width: 150px; object-fit: contain; filter: brightness(0) invert(1);" src="/logos/repubblica.png" alt="Logo Banner">
                                 <span id="cardBannerText" style="font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; color: white; display: none;">la Repubblica</span>
                             </div>
                             <div id="cardBannerClientContainer" style="display: none;">
-                                <img id="cardBannerClient" style="max-height: 24px; filter: brightness(0) invert(1);" src="" alt="Client">
+                                <img id="cardBannerClient" style="max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(0) invert(1);" src="" alt="Client">
                             </div>
                         </div>
 
-                        <!-- TEMPLATE 3: EDITORIAL NEWSPAPER APP BAR -->
-                        <div class="card-editorial-header" id="cardEditorialHeader" style="display: none; padding: 12px 7%; border-bottom: 1px solid #e5e5e5; justify-content: space-between; align-items: center; background: #faf9f6;">
-                            <i data-feather="menu" style="width:18px;height:18px;color:#1a1a2e;"></i>
-                            <div id="cardEditorialLogoContainer" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.95rem; text-transform: lowercase; letter-spacing: 0.5px; color: #1a1a2e;">
-                                breaking news
+                        <!-- TEMPLATE 3 EDITORIAL HEADER -->
+                        <div class="card-editorial-header" id="cardEditorialHeader" style="display: none;">
+                            <i data-feather="menu" style="width:16px;height:16px;color:#1a1a2e;"></i>
+                            <div id="cardEditorialLogoContainer" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.9rem; text-transform: lowercase; letter-spacing: 0.5px; color: #1a1a2e;">
+                                la repubblica
                             </div>
-                            <i data-feather="search" style="width:18px;height:18px;color:#1a1a2e;"></i>
+                            <i data-feather="search" style="width:16px;height:16px;color:#1a1a2e;"></i>
                         </div>
-                        
-                        <!-- PHOTO AREA -->
-                        <div class="card-photo-container">
+
+                        <!-- PHOTO AREA CONTAINER -->
+                        <div class="card-photo-container" id="cardPhotoContainer">
                             <img id="cardPhoto" class="card-photo" src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop" alt="Foto Notizia">
-                            <div class="speech-cutout"></div>
+                            <div class="speech-cutout" id="speechCutout"></div>
                         </div>
 
-                        <!-- CONTENT AREA -->
-                        <div class="card-content-box">
-                            <div>
-                                <!-- TOP HEADER ROW (Template 1 Speech) -->
-                                <div class="banner-top-meta" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                    <div>
-                                        <div id="cardSourceLogoContainer" style="margin-bottom: 2px;">
-                                            <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
-                                            <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
-                                        </div>
-                                        <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">22/07/2026</div>
+                        <!-- TEXT / CONTENT AREA -->
+                        <div class="card-content-box" id="cardContentBox">
+                            <!-- TOP HEADER META (Template 1 Speech) -->
+                            <div class="banner-top-meta" id="bannerTopMeta" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <div id="cardSourceLogoContainer" style="margin-bottom: 2px;">
+                                        <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
+                                        <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
                                     </div>
-
-                                    <!-- Client Logo at Top Right -->
-                                    <div id="cardClientLogoContainer" style="display: none; align-self: flex-start;">
-                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain;" src="" alt="Logo Cliente">
-                                    </div>
+                                    <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">22/07/2026</div>
                                 </div>
 
-                                <!-- DIVIDER LINE -->
-                                <div id="cardDivider" class="card-divider"></div>
-
-                                <!-- MAIN TITLE -->
-                                <div id="cardMainQuote" class="card-main-quote">Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco</div>
-
-                                <!-- OPTIONAL SUBTITLE -->
-                                <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
+                                <!-- Client Logo at Top Right -->
+                                <div id="cardClientLogoContainer" style="display: none; align-self: flex-start;">
+                                    <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain;" src="" alt="Logo Cliente">
+                                </div>
                             </div>
+
+                            <!-- DIVIDER LINE (Template 1 Speech) -->
+                            <div id="cardDivider" class="card-divider"></div>
+
+                            <!-- MAIN TITLE -->
+                            <div id="cardMainQuote" class="card-main-quote">Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco</div>
+
+                            <!-- OPTIONAL SUBTITLE -->
+                            <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
+                        </div>
+
+                        <!-- BOTTOM FOOTER / DATE (Template 2 & 3) -->
+                        <div class="card-bottom-footer" id="cardBottomFooter" style="display: none;">
+                            <div id="cardFooterDate" style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #64748b; font-style: italic;">22/07/2026</div>
+                            <div id="cardFooterReadMore" style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #64748b; display: none;">read more</div>
                         </div>
 
                     </div>
@@ -659,9 +726,13 @@
             const cardDivider = document.getElementById('cardDivider');
             const cardAuthor = document.getElementById('cardAuthor');
             const cardDate = document.getElementById('cardDate');
+            const cardFooterDate = document.getElementById('cardFooterDate');
 
             const cardClientLogoContainer = document.getElementById('cardClientLogoContainer');
             const cardClientLogo = document.getElementById('cardClientLogo');
+            const cardBannerClientContainer = document.getElementById('cardBannerClientContainer');
+            const cardBannerClient = document.getElementById('cardBannerClient');
+
             const cardSourceLogoContainer = document.getElementById('cardSourceLogoContainer');
             const cardSourceLogo = document.getElementById('cardSourceLogo');
 
@@ -710,17 +781,6 @@
                     currentTemplate = btn.dataset.tpl;
 
                     linkedinCard.className = `linkedin-card tpl-${currentTemplate}`;
-
-                    if (currentTemplate === 'banner') {
-                        cardBannerHeader.style.display = 'flex';
-                        cardEditorialHeader.style.display = 'none';
-                    } else if (currentTemplate === 'editorial') {
-                        cardBannerHeader.style.display = 'none';
-                        cardEditorialHeader.style.display = 'flex';
-                    } else {
-                        cardBannerHeader.style.display = 'none';
-                        cardEditorialHeader.style.display = 'none';
-                    }
                     updateCardView();
                 });
             });
@@ -733,6 +793,8 @@
                     if (client && client.logo_base64) {
                         cardClientLogo.src = client.logo_base64;
                         cardClientLogoContainer.style.display = 'block';
+                        cardBannerClient.src = client.logo_base64;
+                        cardBannerClientContainer.style.display = 'block';
                         btnRemoveClientLogo.classList.remove('hidden');
                     }
                 } catch(e){}
@@ -754,8 +816,10 @@
                 if (inputDate.value.trim()) {
                     cardDate.textContent = inputDate.value.trim();
                     cardDate.style.display = 'block';
+                    cardFooterDate.textContent = inputDate.value.trim();
                 } else {
                     cardDate.style.display = 'none';
+                    cardFooterDate.textContent = '';
                 }
 
                 if (inputAuthor.value.trim()) {
@@ -822,6 +886,8 @@
                 reader.onload = (evt) => {
                     cardClientLogo.src = evt.target.result;
                     cardClientLogoContainer.style.display = 'block';
+                    cardBannerClient.src = evt.target.result;
+                    cardBannerClientContainer.style.display = 'block';
                     btnRemoveClientLogo.classList.remove('hidden');
                 };
                 reader.readAsDataURL(file);
@@ -830,6 +896,8 @@
             btnRemoveClientLogo.addEventListener('click', () => {
                 cardClientLogo.src = '';
                 cardClientLogoContainer.style.display = 'none';
+                cardBannerClient.src = '';
+                cardBannerClientContainer.style.display = 'none';
                 btnRemoveClientLogo.classList.add('hidden');
             });
 
@@ -944,10 +1012,17 @@
                         cardSourceLogo.src = `/logos/${matchedKey}.png`;
                         cardSourceLogo.style.display = 'block';
                         cardAuthor.style.display = 'none';
+
+                        cardBannerLogo.src = `/logos/${matchedKey}.png`;
+                        cardBannerLogo.style.display = 'block';
+                        cardBannerText.style.display = 'none';
                     } else {
                         sourceLogoSelect.value = '';
                         cardSourceLogo.style.display = 'none';
                         cardAuthor.style.display = 'block';
+
+                        cardBannerLogo.style.display = 'none';
+                        cardBannerText.style.display = 'block';
                     }
 
                     updateCardView();
