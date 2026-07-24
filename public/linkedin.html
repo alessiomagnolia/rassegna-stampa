@@ -152,11 +152,12 @@
 
         /* CARD CANVAS CONTAINER */
         .card-stage {
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.45);
             border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             transform-origin: center center;
+            overflow: hidden;
         }
 
         /* 1:1 Square */
@@ -175,13 +176,13 @@
             height: 640px;
         }
 
-        /* INNER CARD DESIGN (Matching Sample Graphic) */
+        /* FULL IMAGE / EDGE-TO-EDGE CARD DESIGN */
         .linkedin-card {
             width: 100%;
             height: 100%;
             border-radius: 12px;
-            background-color: #1d70b8; /* Default Frame Color */
-            padding: 7%;
+            background: #ffffff;
+            padding: 0;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -192,17 +193,15 @@
         .card-inner-white {
             flex: 1;
             background: #ffffff;
-            border-radius: 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             position: relative;
         }
 
         /* TOP PHOTO AREA WITH SPEECH BUBBLE CUT */
         .card-photo-container {
-            height: 52%;
+            height: 50%;
             position: relative;
             background: #e2e8f0;
             overflow: hidden;
@@ -231,7 +230,7 @@
         /* BOTTOM CONTENT BOX */
         .card-content-box {
             flex: 1;
-            padding: 7% 8% 8%;
+            padding: 6% 8% 7%;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -240,21 +239,12 @@
             z-index: 5;
         }
 
-        .quote-mark {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.8rem;
-            line-height: 0.8;
-            color: #c0262d;
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-
         .card-main-quote {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #c0262d;
-            line-height: 1.28;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #1a1a2e;
+            line-height: 1.25;
             margin-bottom: 12px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
@@ -271,9 +261,9 @@
 
         .card-meta-author {
             font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 800;
-            color: #c0262d;
+            color: #1a1a2e;
             line-height: 1.2;
         }
 
@@ -281,7 +271,7 @@
             font-family: 'Inter', sans-serif;
             font-size: 0.78rem;
             font-style: italic;
-            color: #b91c1c;
+            color: #64748b;
             margin-top: 2px;
         }
     </style>
@@ -296,7 +286,8 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:10px;">
-            <button id="btnDownloadPNG" class="btn btn-primary btn-sm"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PNG (HD)</button>
+            <button id="btnShareLinkedIn" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #0a66c2, #004182) !important;"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi su LinkedIn</button>
+            <button id="btnDownloadPNG" class="btn btn-primary btn-sm"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PNG</button>
             <button id="btnDownloadJPG" class="btn btn-outline btn-sm"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica JPEG</button>
         </div>
     </header>
@@ -331,33 +322,62 @@
 
             <!-- Contenuti Testuali -->
             <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo e Citazione</div>
+                <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo Notizia</div>
                 
                 <div class="field-group">
-                    <label for="inputQuote">Titolo Notizia / Citazione</label>
-                    <textarea id="inputQuote" rows="3" placeholder="Inserisci il testo della citazione o titolo principale..."></textarea>
+                    <label for="inputQuote">Titolo / Notizia Principale</label>
+                    <textarea id="inputQuote" rows="3" placeholder="Inserisci il titolo della notizia..."></textarea>
                 </div>
 
                 <div class="field-group">
-                    <label for="inputAuthor">Testata Notizia / Autore</label>
-                    <input type="text" id="inputAuthor" placeholder="Es. Corriere della Sera oppure Nome Cognome">
+                    <label for="inputRole">Sottotitolo / Data</label>
+                    <input type="text" id="inputRole" placeholder="Es. Notizia del 28/02/2026">
                 </div>
+            </div>
 
+            <!-- Logo Testata Notizia -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="bold" style="width:16px;height:16px;"></i> Logo Testata Giornalistica</div>
                 <div class="field-group">
-                    <label for="inputRole">Sottotitolo / Ruolo / Data</label>
-                    <input type="text" id="inputRole" placeholder="Es. Giornale del 24 Luglio oppure Ruolo Ufficiale">
+                    <label for="sourceLogoSelect">Scegli Testata Salvata</label>
+                    <select id="sourceLogoSelect">
+                        <option value="">Nessun Logo (Usa Nome Testo)</option>
+                        <option value="corriere">Corriere della Sera</option>
+                        <option value="repubblica">La Repubblica</option>
+                        <option value="ilsole24ore">Il Sole 24 Ore</option>
+                        <option value="stampa">La Stampa</option>
+                        <option value="ildiariodellavoro">Il Diario del Lavoro</option>
+                    </select>
                 </div>
+                <div class="field-group">
+                    <label for="inputSourceLogoFile">Oppure Carica Logo Testata</label>
+                    <input type="file" id="inputSourceLogoFile" accept="image/*">
+                </div>
+                <div class="field-group">
+                    <label for="inputAuthor">Nome Testata (Alternativo a Testo)</label>
+                    <input type="text" id="inputAuthor" placeholder="Es. La Repubblica">
+                </div>
+            </div>
+
+            <!-- Logo Cliente Opzionale -->
+            <div class="panel-section">
+                <div class="panel-section-title"><i data-feather="briefcase" style="width:16px;height:16px;"></i> Logo Cliente (Opzionale)</div>
+                <div class="field-group">
+                    <label for="inputClientLogoFile">Carica Logo Cliente</label>
+                    <input type="file" id="inputClientLogoFile" accept="image/*">
+                </div>
+                <button type="button" id="btnRemoveClientLogo" class="btn btn-outline btn-sm hidden" style="color:#ff4d4d; border-color:rgba(255,77,77,0.3); width:100%;">Rimuovi Logo Cliente</button>
             </div>
 
             <!-- Immagine di Copertina -->
             <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="image" style="width:16px;height:16px;"></i> Foto Soggetto</div>
+                <div class="panel-section-title"><i data-feather="image" style="width:16px;height:16px;"></i> Foto Notizia</div>
                 <div class="field-group">
-                    <label for="inputImageFile">Carica Nuova Foto</label>
+                    <label for="inputImageFile">Carica Foto Notizia</label>
                     <input type="file" id="inputImageFile" accept="image/*">
                 </div>
                 <div class="field-group">
-                    <label for="inputImageUrl">Oppure URL Immagine</label>
+                    <label for="inputImageUrl">Oppure URL Foto</label>
                     <input type="url" id="inputImageUrl" placeholder="https://...">
                 </div>
                 <div class="field-group">
@@ -372,31 +392,30 @@
 
             <!-- Colori e Stile Grafico -->
             <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Palette Colori Grafica</div>
+                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Palette Colori</div>
                 
                 <!-- Quick Palette Presets -->
-                <label style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:block;">Stili di Colore Pronti (1-Click):</label>
+                <label style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:block;">Stili Pronti (1-Click):</label>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#1d70b8', '#c0262d')" style="background:#1d70b8; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Blu Classic</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#1d70b8')" style="background:#c0262d; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Rosso Bold</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#0f172a', '#e11d48')" style="background:#0f172a; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Antracite</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#1e293b')" style="background:#047857; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Emerald</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#6366f1', '#0f172a')" style="background:#6366f1; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Royal Violet</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#1a1a2e', '#1d70b8')" style="background:#1a1a2e; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Scuro Classic</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#c0262d')" style="background:#c0262d; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Rosso Editorial</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#0a66c2', '#0a66c2')" style="background:#0a66c2; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">LinkedIn Blue</button>
+                    <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#047857')" style="background:#047857; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Emerald</button>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <div class="field-group">
-                        <label for="colorFrame">Colore Sfondo</label>
+                        <label for="colorText">Colore Titolo</label>
                         <div style="display:flex; align-items:center; gap:6px;">
-                            <input type="color" id="colorFrame" value="#1d70b8" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
-                            <input type="text" id="colorFrameHex" value="#1d70b8" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                            <input type="color" id="colorText" value="#1a1a2e" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                            <input type="text" id="colorTextHex" value="#1A1A2E" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
                         </div>
                     </div>
                     <div class="field-group">
-                        <label for="colorText">Colore Testo</label>
+                        <label for="colorAccent">Colore Accento</label>
                         <div style="display:flex; align-items:center; gap:6px;">
-                            <input type="color" id="colorText" value="#c0262d" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
-                            <input type="text" id="colorTextHex" value="#c0262d" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                            <input type="color" id="colorAccent" value="#1d70b8" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                            <input type="text" id="colorAccentHex" value="#1D70B8" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
                         </div>
                     </div>
                 </div>
@@ -412,20 +431,29 @@
                         
                         <!-- PHOTO AREA -->
                         <div class="card-photo-container">
-                            <img id="cardPhoto" class="card-photo" src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop" alt="Foto Soggetto">
+                            <img id="cardPhoto" class="card-photo" src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop" alt="Foto Notizia">
                             <div class="speech-cutout"></div>
                         </div>
 
                         <!-- CONTENT AREA -->
                         <div class="card-content-box">
                             <div>
-                                <div id="cardQuoteMark" class="quote-mark">“</div>
-                                <div id="cardMainQuote" class="card-main-quote">The future is a blank page; make sure you're the one holding the pen.</div>
+                                <!-- Optional Client Logo Container -->
+                                <div id="cardClientLogoContainer" style="margin-bottom: 8px; display: none;">
+                                    <img id="cardClientLogo" style="max-height: 38px; max-width: 140px; object-fit: contain;" src="" alt="Logo Cliente">
+                                </div>
+                                <div id="cardMainQuote" class="card-main-quote">Scintille tra Uil e Ugl sui rider. Bombardieri a Capone: "Hai firmato contratti pirata"</div>
                             </div>
                             <div>
                                 <div id="cardDivider" class="card-divider"></div>
-                                <div id="cardAuthor" class="card-meta-author">Callum Price</div>
-                                <div id="cardRole" class="card-meta-role">Member of Parliament</div>
+                                
+                                <!-- Source Newspaper Logo or Text -->
+                                <div id="cardSourceLogoContainer" style="margin-bottom: 4px;">
+                                    <img id="cardSourceLogo" style="max-height: 36px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
+                                    <div id="cardAuthor" class="card-meta-author">La Repubblica</div>
+                                </div>
+                                
+                                <div id="cardRole" class="card-meta-role">Notizia del 28/02/2026</div>
                             </div>
                         </div>
 
@@ -434,6 +462,36 @@
             </div>
         </main>
 
+    </div>
+
+    <!-- LINKEDIN SHARE MODAL -->
+    <div id="shareLinkedInModal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:999;">
+        <div class="glass-card" style="max-width: 520px; width: 90%; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="linkedin" style="color:#0a66c2;"></i> Pubblica su LinkedIn
+                </h3>
+                <button type="button" id="btnCloseShareModal" class="btn-icon"><i data-feather="x"></i></button>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                L'immagine della card è stata generata in alta definizione. Copia il testo per il post ed avvia la pubblicazione diretta su LinkedIn:
+            </p>
+
+            <div class="field-group" style="margin-bottom:1rem;">
+                <label style="font-size:0.8rem; font-weight:600;">Testo Post LinkedIn:</label>
+                <textarea id="sharePostText" rows="4" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;"></textarea>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button type="button" id="btnCopyTextAndOpenLinkedIn" class="btn btn-primary" style="background: linear-gradient(135deg, #0a66c2, #004182) !important; width:100%; padding:10px;">
+                    <i data-feather="external-link" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Copia Testo e Apri LinkedIn
+                </button>
+                <button type="button" id="btnDownloadImageForShare" class="btn btn-outline" style="width:100%;">
+                    <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i> Scarica Immagine HD per Allegato
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- JS LOGIC -->
@@ -445,53 +503,107 @@
             const cardStage = document.getElementById('cardStage');
             const linkedinCard = document.getElementById('linkedinCard');
             const cardPhoto = document.getElementById('cardPhoto');
-            const cardQuoteMark = document.getElementById('cardQuoteMark');
             const cardMainQuote = document.getElementById('cardMainQuote');
             const cardDivider = document.getElementById('cardDivider');
             const cardAuthor = document.getElementById('cardAuthor');
             const cardRole = document.getElementById('cardRole');
 
+            const cardClientLogoContainer = document.getElementById('cardClientLogoContainer');
+            const cardClientLogo = document.getElementById('cardClientLogo');
+            const cardSourceLogoContainer = document.getElementById('cardSourceLogoContainer');
+            const cardSourceLogo = document.getElementById('cardSourceLogo');
+
             const inputQuote = document.getElementById('inputQuote');
             const inputAuthor = document.getElementById('inputAuthor');
             const inputRole = document.getElementById('inputRole');
+            const sourceLogoSelect = document.getElementById('sourceLogoSelect');
+            const inputSourceLogoFile = document.getElementById('inputSourceLogoFile');
+            const inputClientLogoFile = document.getElementById('inputClientLogoFile');
+            const btnRemoveClientLogo = document.getElementById('btnRemoveClientLogo');
+
             const inputImageFile = document.getElementById('inputImageFile');
             const inputImageUrl = document.getElementById('inputImageUrl');
             const inputImagePosition = document.getElementById('inputImagePosition');
-            const colorFrame = document.getElementById('colorFrame');
+            
             const colorText = document.getElementById('colorText');
+            const colorTextHex = document.getElementById('colorTextHex');
+            const colorAccent = document.getElementById('colorAccent');
+            const colorAccentHex = document.getElementById('colorAccentHex');
 
-            // Restore from localStorage state if passed from dashboard
-            const savedState = localStorage.getItem('rs_linkedin_state');
-            if (savedState) {
+            // Load active client logo from localStorage if available
+            const savedActiveClient = localStorage.getItem('rs_active_client');
+            if (savedActiveClient) {
                 try {
-                    const data = JSON.parse(savedState);
-                    if (data.quote) inputQuote.value = data.quote;
-                    if (data.author) inputAuthor.value = data.author;
-                    if (data.role) inputRole.value = data.role;
-                    if (data.imageUrl) cardPhoto.src = data.imageUrl;
+                    const client = JSON.parse(savedActiveClient);
+                    if (client && client.logo_base64) {
+                        cardClientLogo.src = client.logo_base64;
+                        cardClientLogoContainer.style.display = 'block';
+                        btnRemoveClientLogo.classList.remove('hidden');
+                    }
                 } catch(e){}
             }
 
             // Sync inputs to card view
             function updateCardView() {
                 if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
-                if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
                 if (inputRole.value.trim()) cardRole.textContent = inputRole.value.trim();
+                if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
 
                 // Colors
-                linkedinCard.style.backgroundColor = colorFrame.value;
-                cardDivider.style.backgroundColor = colorFrame.value;
-                cardQuoteMark.style.color = colorText.value;
                 cardMainQuote.style.color = colorText.value;
-                cardAuthor.style.color = colorText.value;
-                cardRole.style.color = colorText.value;
+                cardDivider.style.backgroundColor = colorAccent.value;
 
                 // Photo position
                 cardPhoto.style.objectPosition = inputImagePosition.value;
             }
 
-            [inputQuote, inputAuthor, inputRole, inputImagePosition, colorFrame, colorText].forEach(el => {
+            [inputQuote, inputAuthor, inputRole, inputImagePosition, colorText, colorAccent].forEach(el => {
                 el.addEventListener('input', updateCardView);
+            });
+
+            // Newspaper Logo Selection
+            sourceLogoSelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val) {
+                    cardSourceLogo.src = `/logos/${val}.png`;
+                    cardSourceLogo.style.display = 'block';
+                    cardAuthor.style.display = 'none';
+                } else {
+                    cardSourceLogo.style.display = 'none';
+                    cardAuthor.style.display = 'block';
+                }
+            });
+
+            // Custom Source Logo Upload
+            inputSourceLogoFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    cardSourceLogo.src = evt.target.result;
+                    cardSourceLogo.style.display = 'block';
+                    cardAuthor.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Custom Client Logo Upload
+            inputClientLogoFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    cardClientLogo.src = evt.target.result;
+                    cardClientLogoContainer.style.display = 'block';
+                    btnRemoveClientLogo.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            btnRemoveClientLogo.addEventListener('click', () => {
+                cardClientLogo.src = '';
+                cardClientLogoContainer.style.display = 'none';
+                btnRemoveClientLogo.classList.add('hidden');
             });
 
             // Image File Upload
@@ -523,20 +635,6 @@
             });
 
             // Color Syncing (Color Picker & Hex Text)
-            const colorFrameHex = document.getElementById('colorFrameHex');
-            const colorTextHex = document.getElementById('colorTextHex');
-
-            colorFrame.addEventListener('input', () => {
-                colorFrameHex.value = colorFrame.value.toUpperCase();
-                updateCardView();
-            });
-            colorFrameHex.addEventListener('input', () => {
-                if (/^#[0-9A-F]{6}$/i.test(colorFrameHex.value)) {
-                    colorFrame.value = colorFrameHex.value;
-                    updateCardView();
-                }
-            });
-
             colorText.addEventListener('input', () => {
                 colorTextHex.value = colorText.value.toUpperCase();
                 updateCardView();
@@ -548,15 +646,26 @@
                 }
             });
 
-            window.applyColorPreset = function(frameColor, textColor) {
-                colorFrame.value = frameColor;
-                colorFrameHex.value = frameColor.toUpperCase();
+            colorAccent.addEventListener('input', () => {
+                colorAccentHex.value = colorAccent.value.toUpperCase();
+                updateCardView();
+            });
+            colorAccentHex.addEventListener('input', () => {
+                if (/^#[0-9A-F]{6}$/i.test(colorAccentHex.value)) {
+                    colorAccent.value = colorAccentHex.value;
+                    updateCardView();
+                }
+            });
+
+            window.applyColorPreset = function(textColor, accentColor) {
                 colorText.value = textColor;
                 colorTextHex.value = textColor.toUpperCase();
+                colorAccent.value = accentColor;
+                colorAccentHex.value = accentColor.toUpperCase();
                 updateCardView();
             };
 
-            // Extract Link functionality with spinner loading feedback
+            // Extract Link functionality with domain auto-logo match
             const btnExtractLink = document.getElementById('btnExtractLink');
             btnExtractLink.addEventListener('click', async () => {
                 const url = document.getElementById('importUrl').value.trim();
@@ -580,10 +689,30 @@
                     if (!res.ok) throw new Error(data.error || 'Estrazione fallita');
 
                     if (data.title) inputQuote.value = data.title;
-                    if (data.source_name) inputAuthor.value = data.source_name;
                     if (data.published_date) inputRole.value = `Notizia del ${data.published_date}`;
                     if (data.imageBase64) cardPhoto.src = data.imageBase64;
-                    
+                    if (data.source_name) inputAuthor.value = data.source_name;
+
+                    // Auto match source logo
+                    const lowerSource = (data.source_name || '').toLowerCase();
+                    let matchedKey = '';
+                    if (lowerSource.includes('repubblica')) matchedKey = 'repubblica';
+                    else if (lowerSource.includes('corriere')) matchedKey = 'corriere';
+                    else if (lowerSource.includes('sole')) matchedKey = 'ilsole24ore';
+                    else if (lowerSource.includes('stampa')) matchedKey = 'stampa';
+                    else if (lowerSource.includes('diario')) matchedKey = 'ildiariodellavoro';
+
+                    if (matchedKey) {
+                        sourceLogoSelect.value = matchedKey;
+                        cardSourceLogo.src = `/logos/${matchedKey}.png`;
+                        cardSourceLogo.style.display = 'block';
+                        cardAuthor.style.display = 'none';
+                    } else {
+                        sourceLogoSelect.value = '';
+                        cardSourceLogo.style.display = 'none';
+                        cardAuthor.style.display = 'block';
+                    }
+
                     updateCardView();
                     alert('Notizia estratta con successo!');
                 } catch(err) {
@@ -598,15 +727,7 @@
             async function downloadCardImage(formatType = 'png') {
                 const fmt = cardStage.dataset.format;
                 let targetWidth = 1080;
-                let targetHeight = 1080;
 
-                if (fmt === '1080x1350') {
-                    targetHeight = 1350;
-                } else if (fmt === '1080x1920') {
-                    targetHeight = 1920;
-                }
-
-                // Render at high resolution scale factor
                 const scale = targetWidth / cardStage.offsetWidth;
 
                 try {
@@ -626,6 +747,7 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    return dataUrl;
                 } catch(err) {
                     alert('Errore durante la generazione dell\'immagine: ' + err.message);
                 }
@@ -633,6 +755,45 @@
 
             document.getElementById('btnDownloadPNG').addEventListener('click', () => downloadCardImage('png'));
             document.getElementById('btnDownloadJPG').addEventListener('click', () => downloadCardImage('jpg'));
+
+            // SHARE ON LINKEDIN MODAL & DIRECT SHARE
+            const shareModal = document.getElementById('shareLinkedInModal');
+            const btnShareLinkedIn = document.getElementById('btnShareLinkedIn');
+            const btnCloseShareModal = document.getElementById('btnCloseShareModal');
+            const sharePostText = document.getElementById('sharePostText');
+            const btnCopyTextAndOpenLinkedIn = document.getElementById('btnCopyTextAndOpenLinkedIn');
+            const btnDownloadImageForShare = document.getElementById('btnDownloadImageForShare');
+
+            btnShareLinkedIn.addEventListener('click', async () => {
+                const title = inputQuote.value.trim() || cardMainQuote.textContent;
+                const source = inputAuthor.value.trim() || 'Notizia';
+                const role = inputRole.value.trim() || '';
+
+                sharePostText.value = `📰 ${title}\n\n📌 Fonte: ${source} (${role})\n\n#rassegnastampa #informazione #news`;
+                shareModal.classList.remove('hidden');
+                shareModal.style.display = 'flex';
+                feather.replace();
+            });
+
+            btnCloseShareModal.addEventListener('click', () => {
+                shareModal.classList.add('hidden');
+                shareModal.style.display = 'none';
+            });
+
+            btnCopyTextAndOpenLinkedIn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(sharePostText.value);
+                    alert('Testo del post copiato negli appunti! Scarica l\'immagine e incollala su LinkedIn.');
+                } catch(e) {}
+                
+                // Trigger image download
+                await downloadCardImage('png');
+
+                // Open LinkedIn feed compose
+                window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
+            });
+
+            btnDownloadImageForShare.addEventListener('click', () => downloadCardImage('png'));
 
             updateCardView();
         });
