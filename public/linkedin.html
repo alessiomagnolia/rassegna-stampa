@@ -71,11 +71,21 @@
             gap: 1.25rem;
         }
 
+        /* COLLAPSIBLE PANEL SECTIONS */
         .panel-section {
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .panel-section-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
         }
 
         .panel-section-title {
@@ -84,10 +94,27 @@
             text-transform: uppercase;
             letter-spacing: 0.8px;
             color: var(--accent-primary);
-            margin-bottom: 0.85rem;
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 6px;
+        }
+
+        .panel-toggle-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        .panel-section.open .panel-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .panel-section-body {
+            margin-top: 0.85rem;
+            display: none;
+        }
+        .panel-section.open .panel-section-body {
+            display: block;
         }
 
         .field-group {
@@ -118,7 +145,7 @@
             display: flex;
             gap: 8px;
         }
-        .format-btn {
+        .format-btn, .tpl-post-btn {
             flex: 1;
             padding: 8px 4px;
             border: 1px solid var(--border-color);
@@ -131,7 +158,7 @@
             text-align: center;
             transition: all 0.2s;
         }
-        .format-btn.active {
+        .format-btn.active, .tpl-post-btn.active {
             border-color: var(--accent-primary);
             background: rgba(124,92,255,0.15);
             color: var(--accent-primary);
@@ -190,32 +217,21 @@
             position: relative;
         }
 
-        .card-inner-white {
-            flex: 1;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* TOP PHOTO AREA WITH SPEECH BUBBLE CUT */
-        .card-photo-container {
+        /* ============================================================ */
+        /* TEMPLATE 1: SPEECH BUBBLE (ORIGINAL) */
+        /* ============================================================ */
+        .tpl-speech .card-photo-container {
             height: 48%;
             position: relative;
             background: #e2e8f0;
             overflow: hidden;
         }
-        .card-photo {
+        .tpl-speech .card-photo {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: top center;
-            display: block;
         }
-
-        /* SPEECH BUBBLE OVERLAY */
-        .speech-cutout {
+        .tpl-speech .speech-cutout {
             position: absolute;
             bottom: -1px;
             right: 12%;
@@ -225,20 +241,69 @@
             border-right: 22px solid transparent;
             border-bottom: 26px solid #ffffff;
             z-index: 10;
+            display: block;
         }
-
-        /* BOTTOM CONTENT BOX */
-        .card-content-box {
+        .tpl-speech .card-content-box {
             flex: 1;
             padding: 5% 7% 6%;
             background: #ffffff;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            position: relative;
-            z-index: 5;
         }
 
+        /* ============================================================ */
+        /* TEMPLATE 2: PRESS BANNER (INSPIRED BY MEIO&MENSAGEM) */
+        /* ============================================================ */
+        .tpl-banner .speech-cutout { display: none !important; }
+        .tpl-banner .card-banner-header {
+            height: 54px;
+            background: #0045ff; /* Accent color */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 7%;
+            color: #ffffff;
+        }
+        .tpl-banner .card-photo-container {
+            order: 3;
+            height: auto;
+            flex: 1;
+            margin: 4% 7%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .tpl-banner .card-content-box {
+            order: 2;
+            padding: 5% 7% 0;
+            flex: none;
+        }
+        .tpl-banner .banner-top-meta { display: none !important; }
+        .tpl-banner .card-divider { display: none !important; }
+
+        /* ============================================================ */
+        /* TEMPLATE 3: EDITORIAL NEWSPAPER UI (INSPIRED BY BREAKING NEWS) */
+        /* ============================================================ */
+        .tpl-editorial { background: #faf9f6 !important; }
+        .tpl-editorial .card-inner-white { background: #faf9f6 !important; }
+        .tpl-editorial .speech-cutout { display: none !important; }
+        .tpl-editorial .card-content-box {
+            background: #faf9f6 !important;
+            order: 2;
+            padding: 4% 7% 3%;
+            flex: none;
+        }
+        .tpl-editorial .card-photo-container {
+            order: 3;
+            flex: 1;
+            margin: 0 7% 4%;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .tpl-editorial .card-divider { display: none !important; }
+
+        /* UNIVERSAL CARD TYPOGRAPHY */
         .card-main-quote {
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 1.35rem;
@@ -290,129 +355,182 @@
         <!-- LEFT CONTROLS PANEL -->
         <aside class="control-panel">
             
-            <!-- Estrazione o Inserimento Notizia -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="link" style="width:16px;height:16px;"></i> Importa Notizia</div>
-                <div class="field-group">
-                    <label for="importUrl">Incolla Link Notizia</label>
-                    <div style="display:flex; gap:6px;">
-                        <input type="url" id="importUrl" placeholder="https://www.corriere.it/...">
-                        <button id="btnExtractLink" class="btn btn-gradient btn-sm" style="white-space:nowrap;">Estrai</button>
-                    </div>
+            <!-- 1. Importa Notizia -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="link" style="width:16px;height:16px;"></i> Importa Notizia</div>
+                    <span class="panel-toggle-icon">▼</span>
                 </div>
-            </div>
-
-            <!-- Formato Card Social -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="maximize-2" style="width:16px;height:16px;"></i> Formato Post</div>
-                <div class="format-selector">
-                    <button class="format-btn active" data-format="1080x1080">1080x1080<br><span style="font-weight:400;font-size:0.7rem;">Quadrato 1:1</span></button>
-                    <button class="format-btn" data-format="1080x1350">1080x1350<br><span style="font-weight:400;font-size:0.7rem;">Social 4:5</span></button>
-                    <button class="format-btn" data-format="1080x1920">1080x1920<br><span style="font-weight:400;font-size:0.7rem;">Storia 9:16</span></button>
-                </div>
-            </div>
-
-            <!-- Contenuti Testuali -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo Notizia</div>
-                
-                <div class="field-group">
-                    <label for="inputQuote">Titolo Notizia / Citazione</label>
-                    <textarea id="inputQuote" rows="3" placeholder="Inserisci il titolo della notizia..."></textarea>
-                </div>
-
-                <div class="field-group">
-                    <label for="inputSubtitle">Sottotitolo (Opzionale)</label>
-                    <textarea id="inputSubtitle" rows="2" placeholder="Inserisci un testo o sommario opzionale..."></textarea>
-                </div>
-
-                <div class="field-group">
-                    <label for="inputDate">Data Notizia</label>
-                    <input type="text" id="inputDate" placeholder="Es. Notizia del 22/07/2026">
-                </div>
-            </div>
-
-            <!-- Logo Testata Notizia -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="bold" style="width:16px;height:16px;"></i> Logo Testata Giornalistica</div>
-                <div class="field-group">
-                    <label for="sourceLogoSelect">Scegli Testata Salvata</label>
-                    <select id="sourceLogoSelect">
-                        <option value="">Nessun Logo (Usa Nome Testo)</option>
-                        <option value="corriere">Corriere della Sera</option>
-                        <option value="repubblica">La Repubblica</option>
-                        <option value="ilsole24ore">Il Sole 24 Ore</option>
-                        <option value="stampa">La Stampa</option>
-                        <option value="ildiariodellavoro">Il Diario del Lavoro</option>
-                    </select>
-                </div>
-                <div class="field-group">
-                    <label for="inputSourceLogoFile">Oppure Carica Logo Testata</label>
-                    <input type="file" id="inputSourceLogoFile" accept="image/*">
-                </div>
-                <div class="field-group">
-                    <label for="inputAuthor">Nome Testata (Alternativo a Testo)</label>
-                    <input type="text" id="inputAuthor" placeholder="Es. La Repubblica">
-                </div>
-            </div>
-
-            <!-- Logo Cliente Opzionale -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="briefcase" style="width:16px;height:16px;"></i> Logo Cliente (Opzionale)</div>
-                <div class="field-group">
-                    <label for="inputClientLogoFile">Carica Logo Cliente</label>
-                    <input type="file" id="inputClientLogoFile" accept="image/*">
-                </div>
-                <button type="button" id="btnRemoveClientLogo" class="btn btn-outline btn-sm hidden" style="color:#ff4d4d; border-color:rgba(255,77,77,0.3); width:100%;">Rimuovi Logo Cliente</button>
-            </div>
-
-            <!-- Immagine di Copertina -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="image" style="width:16px;height:16px;"></i> Foto Notizia</div>
-                <div class="field-group">
-                    <label for="inputImageFile">Carica Foto Notizia</label>
-                    <input type="file" id="inputImageFile" accept="image/*">
-                </div>
-                <div class="field-group">
-                    <label for="inputImageUrl">Oppure URL Foto</label>
-                    <input type="url" id="inputImageUrl" placeholder="https://...">
-                </div>
-                <div class="field-group">
-                    <label for="inputImagePosition">Posizionamento Foto</label>
-                    <select id="inputImagePosition">
-                        <option value="top center">In alto (Top)</option>
-                        <option value="center center" selected>Al centro (Center)</option>
-                        <option value="bottom center">In basso (Bottom)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Colori e Stile Grafico -->
-            <div class="panel-section">
-                <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Palette Colori</div>
-                
-                <!-- Quick Palette Presets -->
-                <label style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:block;">Stili Pronti (1-Click):</label>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#1a1a2e', '#1d70b8')" style="background:#1a1a2e; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Scuro Classic</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#c0262d')" style="background:#c0262d; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Rosso Editorial</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#0a66c2', '#0a66c2')" style="background:#0a66c2; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">LinkedIn Blue</button>
-                    <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#047857')" style="background:#047857; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Emerald</button>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="panel-section-body">
                     <div class="field-group">
-                        <label for="colorText">Colore Titolo</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <input type="color" id="colorText" value="#1a1a2e" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
-                            <input type="text" id="colorTextHex" value="#1A1A2E" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                        <label for="importUrl">Incolla Link Notizia</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="url" id="importUrl" placeholder="https://www.corriere.it/...">
+                            <button id="btnExtractLink" class="btn btn-gradient btn-sm" style="white-space:nowrap;">Estrai</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 2. Stile Template Post -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="layout" style="width:16px;height:16px;"></i> Layout Template Post</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="template-post-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                        <button type="button" class="tpl-post-btn active" data-tpl="speech">
+                            Fumetto<br><span style="font-size:0.65rem; font-weight:400; color:var(--text-muted);">Classico</span>
+                        </button>
+                        <button type="button" class="tpl-post-btn" data-tpl="banner">
+                            Press Banner<br><span style="font-size:0.65rem; font-weight:400; color:var(--text-muted);">Top Banner</span>
+                        </button>
+                        <button type="button" class="tpl-post-btn" data-tpl="editorial">
+                            Editorial UI<br><span style="font-size:0.65rem; font-weight:400; color:var(--text-muted);">Giornale UI</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Formato Post -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="maximize-2" style="width:16px;height:16px;"></i> Formato Post</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="format-selector">
+                        <button class="format-btn active" data-format="1080x1080">1080x1080<br><span style="font-weight:400;font-size:0.7rem;">Quadrato 1:1</span></button>
+                        <button class="format-btn" data-format="1080x1350">1080x1350<br><span style="font-weight:400;font-size:0.7rem;">Social 4:5</span></button>
+                        <button class="format-btn" data-format="1080x1920">1080x1920<br><span style="font-weight:400;font-size:0.7rem;">Storia 9:16</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Testo Notizia -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="type" style="width:16px;height:16px;"></i> Testo Notizia</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
                     <div class="field-group">
-                        <label for="colorAccent">Colore Accento</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <input type="color" id="colorAccent" value="#1d70b8" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
-                            <input type="text" id="colorAccentHex" value="#1D70B8" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                        <label for="inputQuote">Titolo Notizia / Citazione</label>
+                        <textarea id="inputQuote" rows="3" placeholder="Inserisci il titolo della notizia..."></textarea>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inputSubtitle">Sottotitolo (Opzionale)</label>
+                        <textarea id="inputSubtitle" rows="2" placeholder="Inserisci un testo o sommario opzionale..."></textarea>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inputDate">Data Notizia</label>
+                        <input type="text" id="inputDate" placeholder="Es. 22/07/2026">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Logo Testata Giornalistica -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="bold" style="width:16px;height:16px;"></i> Logo Testata Giornalistica</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="field-group">
+                        <label for="sourceLogoSelect">Scegli Testata Salvata</label>
+                        <select id="sourceLogoSelect">
+                            <option value="">Nessun Logo (Usa Nome Testo)</option>
+                            <option value="corriere">Corriere della Sera</option>
+                            <option value="repubblica">La Repubblica</option>
+                            <option value="ilsole24ore">Il Sole 24 Ore</option>
+                            <option value="stampa">La Stampa</option>
+                            <option value="ildiariodellavoro">Il Diario del Lavoro</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="inputSourceLogoFile">Oppure Carica Logo Testata</label>
+                        <input type="file" id="inputSourceLogoFile" accept="image/*">
+                    </div>
+                    <div class="field-group">
+                        <label for="inputAuthor">Nome Testata (Alternativo a Testo)</label>
+                        <input type="text" id="inputAuthor" placeholder="Es. La Repubblica">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Logo Cliente Opzionale -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="briefcase" style="width:16px;height:16px;"></i> Logo Cliente (Opzionale)</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="field-group">
+                        <label for="inputClientLogoFile">Carica Logo Cliente</label>
+                        <input type="file" id="inputClientLogoFile" accept="image/*">
+                    </div>
+                    <button type="button" id="btnRemoveClientLogo" class="btn btn-outline btn-sm hidden" style="color:#ff4d4d; border-color:rgba(255,77,77,0.3); width:100%;">Rimuovi Logo Cliente</button>
+                </div>
+            </div>
+
+            <!-- 7. Foto Notizia -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="image" style="width:16px;height:16px;"></i> Foto Notizia</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="field-group">
+                        <label for="inputImageFile">Carica Foto Notizia</label>
+                        <input type="file" id="inputImageFile" accept="image/*">
+                    </div>
+                    <div class="field-group">
+                        <label for="inputImageUrl">Oppure URL Foto</label>
+                        <input type="url" id="inputImageUrl" placeholder="https://...">
+                    </div>
+                    <div class="field-group">
+                        <label for="inputImagePosition">Posizionamento Foto</label>
+                        <select id="inputImagePosition">
+                            <option value="top center">In alto (Top)</option>
+                            <option value="center center" selected>Al centro (Center)</option>
+                            <option value="bottom center">In basso (Bottom)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Palette Colori -->
+            <div class="panel-section open">
+                <div class="panel-section-header">
+                    <div class="panel-section-title"><i data-feather="droplet" style="width:16px;height:16px;"></i> Palette Colori</div>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <label style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:block;">Stili Pronti (1-Click):</label>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+                        <button type="button" class="btn-palette" onclick="applyColorPreset('#1a1a2e', '#1d70b8')" style="background:#1a1a2e; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Scuro Classic</button>
+                        <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#c0262d')" style="background:#c0262d; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Rosso Editorial</button>
+                        <button type="button" class="btn-palette" onclick="applyColorPreset('#0a66c2', '#0a66c2')" style="background:#0a66c2; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">LinkedIn Blue</button>
+                        <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#047857')" style="background:#047857; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; cursor:pointer;">Emerald</button>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="field-group">
+                            <label for="colorText">Colore Titolo</label>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="color" id="colorText" value="#1a1a2e" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                                <input type="text" id="colorTextHex" value="#1A1A2E" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label for="colorAccent">Colore Accento</label>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="color" id="colorAccent" value="#1d70b8" style="width:32px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; padding:0;">
+                                <input type="text" id="colorAccentHex" value="#1D70B8" style="flex:1; font-family:monospace; text-transform:uppercase; font-size:0.8rem; padding:4px 6px;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -423,8 +541,28 @@
         <!-- RIGHT PREVIEW CANVAS PANEL -->
         <main class="preview-panel">
             <div id="cardStage" class="card-stage" data-format="1080x1080">
-                <div id="linkedinCard" class="linkedin-card">
+                <div id="linkedinCard" class="linkedin-card tpl-speech">
                     <div class="card-inner-white">
+
+                        <!-- TEMPLATE 2: TOP BANNER HEADER -->
+                        <div class="card-banner-header" id="cardBannerHeader" style="display: none;">
+                            <div id="cardBannerLogoContainer">
+                                <img id="cardBannerLogo" style="max-height: 28px; max-width: 160px; filter: brightness(0) invert(1);" src="/logos/repubblica.png" alt="Logo Banner">
+                                <span id="cardBannerText" style="font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; color: white; display: none;">la Repubblica</span>
+                            </div>
+                            <div id="cardBannerClientContainer" style="display: none;">
+                                <img id="cardBannerClient" style="max-height: 24px; filter: brightness(0) invert(1);" src="" alt="Client">
+                            </div>
+                        </div>
+
+                        <!-- TEMPLATE 3: EDITORIAL NEWSPAPER APP BAR -->
+                        <div class="card-editorial-header" id="cardEditorialHeader" style="display: none; padding: 12px 7%; border-bottom: 1px solid #e5e5e5; justify-content: space-between; align-items: center; background: #faf9f6;">
+                            <i data-feather="menu" style="width:18px;height:18px;color:#1a1a2e;"></i>
+                            <div id="cardEditorialLogoContainer" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.95rem; text-transform: lowercase; letter-spacing: 0.5px; color: #1a1a2e;">
+                                breaking news
+                            </div>
+                            <i data-feather="search" style="width:18px;height:18px;color:#1a1a2e;"></i>
+                        </div>
                         
                         <!-- PHOTO AREA -->
                         <div class="card-photo-container">
@@ -432,17 +570,17 @@
                             <div class="speech-cutout"></div>
                         </div>
 
-                        <!-- CONTENT AREA (Matching User Mockup Image) -->
+                        <!-- CONTENT AREA -->
                         <div class="card-content-box">
                             <div>
-                                <!-- TOP HEADER ROW: Newspaper Logo & Date (Left), Client Logo (Right) -->
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <!-- TOP HEADER ROW (Template 1 Speech) -->
+                                <div class="banner-top-meta" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                     <div>
                                         <div id="cardSourceLogoContainer" style="margin-bottom: 2px;">
                                             <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
                                             <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
                                         </div>
-                                        <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">Notizia del 22/07/2026</div>
+                                        <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">22/07/2026</div>
                                     </div>
 
                                     <!-- Client Logo at Top Right -->
@@ -457,7 +595,7 @@
                                 <!-- MAIN TITLE -->
                                 <div id="cardMainQuote" class="card-main-quote">Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco</div>
 
-                                <!-- OPTIONAL SUBTITLE (Under Title) -->
+                                <!-- OPTIONAL SUBTITLE -->
                                 <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
                             </div>
                         </div>
@@ -504,6 +642,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             feather.replace();
 
+            // Toggle Collapsible Sections
+            document.querySelectorAll('.panel-section-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const section = header.closest('.panel-section');
+                    section.classList.toggle('open');
+                });
+            });
+
             // Element references
             const cardStage = document.getElementById('cardStage');
             const linkedinCard = document.getElementById('linkedinCard');
@@ -518,6 +664,12 @@
             const cardClientLogo = document.getElementById('cardClientLogo');
             const cardSourceLogoContainer = document.getElementById('cardSourceLogoContainer');
             const cardSourceLogo = document.getElementById('cardSourceLogo');
+
+            const cardBannerHeader = document.getElementById('cardBannerHeader');
+            const cardBannerLogo = document.getElementById('cardBannerLogo');
+            const cardBannerText = document.getElementById('cardBannerText');
+            const cardEditorialHeader = document.getElementById('cardEditorialHeader');
+            const cardEditorialLogoContainer = document.getElementById('cardEditorialLogoContainer');
 
             const inputQuote = document.getElementById('inputQuote');
             const inputSubtitle = document.getElementById('inputSubtitle');
@@ -546,8 +698,32 @@
             inputAuthor.value = 'La Repubblica';
 
             inputQuote.value = "Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco";
-            inputDate.value = "Notizia del 22/07/2026";
-            inputSubtitle.value = "";
+            inputSubtitle.value = ""; // Empty by default
+            inputDate.value = "22/07/2026"; // Pure date without "Notizia del"
+
+            // Template Switcher (Speech, Banner, Editorial)
+            let currentTemplate = 'speech';
+            document.querySelectorAll('.tpl-post-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tpl-post-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentTemplate = btn.dataset.tpl;
+
+                    linkedinCard.className = `linkedin-card tpl-${currentTemplate}`;
+
+                    if (currentTemplate === 'banner') {
+                        cardBannerHeader.style.display = 'flex';
+                        cardEditorialHeader.style.display = 'none';
+                    } else if (currentTemplate === 'editorial') {
+                        cardBannerHeader.style.display = 'none';
+                        cardEditorialHeader.style.display = 'flex';
+                    } else {
+                        cardBannerHeader.style.display = 'none';
+                        cardEditorialHeader.style.display = 'none';
+                    }
+                    updateCardView();
+                });
+            });
 
             // Load active client logo from localStorage if available
             const savedActiveClient = localStorage.getItem('rs_active_client');
@@ -566,6 +742,7 @@
             function updateCardView() {
                 if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
                 
+                // Subtitle
                 if (inputSubtitle.value.trim()) {
                     cardSubtitle.textContent = inputSubtitle.value.trim();
                     cardSubtitle.style.display = 'block';
@@ -573,6 +750,7 @@
                     cardSubtitle.style.display = 'none';
                 }
 
+                // Date
                 if (inputDate.value.trim()) {
                     cardDate.textContent = inputDate.value.trim();
                     cardDate.style.display = 'block';
@@ -580,11 +758,16 @@
                     cardDate.style.display = 'none';
                 }
 
-                if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
+                if (inputAuthor.value.trim()) {
+                    cardAuthor.textContent = inputAuthor.value.trim();
+                    cardBannerText.textContent = inputAuthor.value.trim();
+                    cardEditorialLogoContainer.textContent = inputAuthor.value.trim().toLowerCase();
+                }
 
                 // Colors
                 cardMainQuote.style.color = colorText.value;
                 cardDivider.style.backgroundColor = colorAccent.value;
+                cardBannerHeader.style.backgroundColor = colorAccent.value;
 
                 // Photo position
                 cardPhoto.style.objectPosition = inputImagePosition.value;
@@ -601,9 +784,16 @@
                     cardSourceLogo.src = `/logos/${val}.png`;
                     cardSourceLogo.style.display = 'block';
                     cardAuthor.style.display = 'none';
+
+                    cardBannerLogo.src = `/logos/${val}.png`;
+                    cardBannerLogo.style.display = 'block';
+                    cardBannerText.style.display = 'none';
                 } else {
                     cardSourceLogo.style.display = 'none';
                     cardAuthor.style.display = 'block';
+
+                    cardBannerLogo.style.display = 'none';
+                    cardBannerText.style.display = 'block';
                 }
             });
 
@@ -616,6 +806,10 @@
                     cardSourceLogo.src = evt.target.result;
                     cardSourceLogo.style.display = 'block';
                     cardAuthor.style.display = 'none';
+
+                    cardBannerLogo.src = evt.target.result;
+                    cardBannerLogo.style.display = 'block';
+                    cardBannerText.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             });
@@ -723,16 +917,12 @@
 
                     if (data.title) inputQuote.value = data.title;
                     
-                    // Reset or fill optional subtitle
-                    if (data.excerpt || data.description) {
-                        inputSubtitle.value = data.excerpt || data.description;
-                    } else {
-                        inputSubtitle.value = '';
-                    }
+                    // Reset optional subtitle
+                    inputSubtitle.value = '';
 
-                    // Populate date field specifically
+                    // Populate date field
                     if (data.published_date) {
-                        inputDate.value = `Notizia del ${data.published_date}`;
+                        inputDate.value = data.published_date;
                     } else {
                         inputDate.value = '';
                     }
