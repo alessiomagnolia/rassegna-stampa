@@ -20,9 +20,9 @@
 
         .editor-header {
             height: 60px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
+            background: #0f172a;
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -30,6 +30,26 @@
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        .editor-header * {
+            color: #ffffff !important;
+        }
+
+        .editor-header .btn-outline {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+        }
+        .editor-header .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .editor-header .btn-primary {
+            background: linear-gradient(135deg, #7c5cff, #5028f8) !important;
+            border: none !important;
+            color: #ffffff !important;
         }
 
         .editor-layout {
