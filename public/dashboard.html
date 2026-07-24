@@ -21,10 +21,21 @@
             </button>
             <div class="nav-brand">Rassegna Stampa</div>
         </div>
-        <div class="nav-user">
+        <div class="nav-user" style="display:flex; align-items:center; gap:8px;">
+            <!-- Client Selector Dropdown -->
+            <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 8px; border-radius:8px; border:1px solid var(--border-color);">
+                <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
+                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.85rem; cursor:pointer; max-width:160px;">
+                    <option value="" style="color:black;">👤 Nessun Cliente</option>
+                </select>
+                <button id="btnManageClient" class="btn btn-outline btn-sm" title="Gestisci / Nuovo Cliente" style="padding:2px 6px; border:none; background:transparent; cursor:pointer;">
+                    <i data-feather="settings" style="width:14px;height:14px;"></i>
+                </button>
+            </div>
+
             <div id="navCompany" class="nav-company">Caricamento...</div>
             <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
-            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 8px;"><i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;"></i></button>
+            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 4px;"><i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;"></i></button>
             <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
         </div>
     </nav>
@@ -228,11 +239,11 @@
                     </div>
                 </div>
 
-                <div class="generate-actions">
+                <div class="generate-actions" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 2rem;">
                     <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden">
                         <i data-feather="eye" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Anteprima ed Edita
                     </button>
-                    <button id="btnGeneratePDF" class="btn btn-gradient" disabled>
+                    <button id="btnGeneratePDF" class="btn btn-outline hidden" style="border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.5rem 1rem;">
                         <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica subito
                     </button>
                     <div id="generationLoading" class="generation-loading hidden">
@@ -397,8 +408,6 @@
                 <h1 class="page-title"><i data-feather="mail" style="width:28px;height:28px;vertical-align:middle;"></i> Contatti</h1>
                 <p class="page-subtitle">Hai bisogno di aiuto o vuoi suggerire una nuova funzione? Scrivici!</p>
             </div>
-            <div class="coming-soon-box">
-                <div class="coming-soon-icon"><i data-feather="tool" style="width:48px;height:48px;"></i></div>
                 <h2>Supporto</h2>
                 <p>Qui troverai le informazioni per contattare il team di supporto, segnalare problemi o richiedere nuove funzionalità.</p>
             </div>
@@ -406,7 +415,71 @@
 
     </main>
 
-    <div id="toastContainer" class="toast-container"></div>
+    <!-- Client Selection in Header Area (Place this near nav/header or top of main content) -->
+    <div style="position: fixed; top: 1rem; right: 2rem; z-index: 1000;">
+        <select id="activeClientSelector" style="background: var(--surface); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <option value="">-- Seleziona Cliente --</option>
+        </select>
+        <button id="btnManageClients" class="btn btn-outline btn-sm" style="margin-left: 0.5rem;"><i data-feather="settings"></i></button>
+    </div>
+
+    <!-- Client Management Modal -->
+    <div id="clientModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 680px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin:0;"><i data-feather="users" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"></i> Gestione Memoria Clienti</h3>
+                <button id="btnCloseClientModal" class="btn-icon"><i data-feather="x"></i></button>
+            </div>
+
+            <!-- Client Form -->
+            <div class="glass-card" style="padding: 1.25rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03);">
+                <h4 id="clientFormTitle" style="margin-top:0; margin-bottom:1rem; font-size:1rem; color:var(--accent-primary);">➕ Aggiungi Nuovo Cliente</h4>
+                <input type="hidden" id="clientId">
+                
+                <div class="edit-field" style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; font-weight:600;">Nome Cliente / Azienda *</label>
+                    <input type="text" id="clientNameInput" placeholder="Es. Paolo Capone oppure Acme Corp" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                </div>
+
+                <div class="edit-field" style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; font-weight:600;">Logo Predefinito Cliente</label>
+                    <div id="clientLogoPreviewContainer" class="hidden" style="margin-bottom:6px;">
+                        <img id="clientLogoPreview" src="" alt="Logo Cliente" style="max-height:50px; border-radius:4px; margin-bottom:4px;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="removeClientFormLogo()" style="display:block; font-size:0.75rem; color:#ff4d4d; border-color:#ff4d4d;">Rimuovi Logo</button>
+                    </div>
+                    <input type="file" id="clientLogoFileInput" accept="image/*" class="hidden">
+                    <label for="clientLogoFileInput" class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carica Logo</label>
+                </div>
+
+                <div class="edit-field" style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; font-weight:600;">Parole Chiave per Ricerca Notizie</label>
+                    <input type="text" id="clientKeywordsInput" placeholder="Es. Paolo Capone, UGL, lavoro, sindacato" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                    <small style="color:var(--text-muted);">Verranno utilizzate automaticamente nella sezione "Ricerca Notizie".</small>
+                </div>
+
+                <div class="edit-field" style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; font-weight:600;">Tone of Voice per Comunicati Stampa (IA)</label>
+                    <input type="text" id="clientToneInput" placeholder="Es. Istituzionale, incisivo, formale, orientato al lavoro" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);">
+                </div>
+
+                <div class="edit-field" style="margin-bottom:1.25rem;">
+                    <label style="font-size:0.85rem; font-weight:600;">Note / Contesto Aziendale (per IA)</label>
+                    <textarea id="clientNotesInput" rows="2" placeholder="Informazioni utili sul cliente, settore o ruoli ufficiali..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary);"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" id="btnCancelClientEdit" class="btn btn-outline btn-sm hidden">Annulla</button>
+                    <button type="button" id="btnSaveClient" class="btn btn-gradient btn-sm">Salva Cliente</button>
+                </div>
+            </div>
+
+            <!-- Client List -->
+            <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">I Tuoi Clienti Salvati</h4>
+            <div id="clientModalList" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;">
+                <div style="color:var(--text-muted); font-size:0.85rem;">Caricamento clienti...</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Manual Entry Modal -->
     <div id="manualEntryModal" class="modal-overlay hidden">

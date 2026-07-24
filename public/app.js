@@ -651,6 +651,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dashboard specific
     if (window.location.pathname.includes('dashboard')) {
         loadProfile();
+        loadClients();
+
+        // Client Selector Event Listeners
+        const handleSelectChange = (e) => applyActiveClient(e.target.value);
+        document.getElementById('globalClientSelect')?.addEventListener('change', handleSelectChange);
+        document.getElementById('activeClientSelector')?.addEventListener('change', handleSelectChange);
+
+        document.getElementById('btnManageClient')?.addEventListener('click', openClientModal);
+        document.getElementById('btnManageClients')?.addEventListener('click', openClientModal);
+        document.getElementById('btnCloseClientModal')?.addEventListener('click', closeClientModal);
+        document.getElementById('btnCancelClientEdit')?.addEventListener('click', resetClientForm);
+        document.getElementById('btnSaveClient')?.addEventListener('click', saveClientFromForm);
+
+        document.getElementById('clientLogoFileInput')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            clientFormLogoBase64 = await fileToBase64(file);
+            const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+            const logoPrev = document.getElementById('clientLogoPreview');
+            if (logoPrevContainer && logoPrev) {
+                logoPrev.src = clientFormLogoBase64;
+                logoPrevContainer.classList.remove('hidden');
+            }
+            e.target.value = '';
+        });
 
         // ── Restore editor state if coming back from editor ──
         const savedEditorState = localStorage.getItem('rs_editor_state');
@@ -1218,4 +1243,249 @@ function useSelectedNews() {
     openMultiLinkModal();
     document.getElementById('multiLinkTextarea').value = selectedLinks.join('\n');
     updateMultiLinkCount();
+}
+
+// ============================================================
+// CLIENT MEMORY MANAGEMENT & WORKSPACE CONTEXT
+// ============================================================
+let userClients = [];
+let activeClientId = localStorage.getItem('rs_active_client_id') || '';
+let clientFormLogoBase64 = null;
+
+async function loadClients() {
+    if (!state.token) return;
+    try {
+        const res = await apiCall('GET', '/api/clients');
+        userClients = res.clients || [];
+        renderClientSelectors();
+        
+        if (activeClientId) {
+            const exists = userClients.find(c => c.id == activeClientId);
+            if (exists) {
+                applyActiveClient(activeClientId);
+            } else {
+                activeClientId = '';
+                localStorage.removeItem('rs_active_client_id');
+                applyActiveClient('');
+            }
+        }
+    } catch (err) {
+        console.error('Errore caricamento clienti:', err);
+    }
+}
+
+function renderClientSelectors() {
+    const selects = [
+        document.getElementById('globalClientSelect'),
+        document.getElementById('activeClientSelector')
+    ];
+
+    selects.forEach(select => {
+        if (!select) return;
+        select.innerHTML = '<option value="" style="color:black;">👤 Nessun Cliente (Generico)</option>';
+        userClients.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `🏢 ${c.name}`;
+            opt.style.color = 'black';
+            if (c.id == activeClientId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    });
+
+    renderClientModalList();
+}
+
+function applyActiveClient(clientId) {
+    activeClientId = clientId;
+    if (clientId) {
+        localStorage.setItem('rs_active_client_id', clientId);
+    } else {
+        localStorage.removeItem('rs_active_client_id');
+        localStorage.removeItem('rs_active_client');
+    }
+
+    const selects = [
+        document.getElementById('globalClientSelect'),
+        document.getElementById('activeClientSelector')
+    ];
+    selects.forEach(s => { if (s) s.value = clientId; });
+
+    const client = userClients.find(c => c.id == clientId);
+    if (client) {
+        localStorage.setItem('rs_active_client', JSON.stringify(client));
+
+        // 1. Nuova Rassegna Stampa
+        const clientNameInput = document.getElementById('clientName');
+        if (clientNameInput) clientNameInput.value = client.name;
+        
+        if (client.logo_base64) {
+            state.clientLogoBase64 = client.logo_base64;
+            const logoPrev = document.getElementById('clientLogoPreview');
+            const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+            if (logoPrev && logoPrevCont) {
+                logoPrev.src = client.logo_base64;
+                logoPrevCont.style.display = 'block';
+            }
+        }
+
+        // 2. Ricerca Notizie
+        const newsKeywordInput = document.getElementById('newsKeyword');
+        if (newsKeywordInput) {
+            newsKeywordInput.value = client.keywords || client.name;
+        }
+
+        showToast(`Cliente attivo: ${client.name}`, 'info');
+    } else {
+        showToast('Nessun cliente attivo (modalità generica)', 'info');
+    }
+}
+
+function openClientModal() {
+    const modal = document.getElementById('clientModal');
+    if (!modal) return;
+    resetClientForm();
+    loadClients();
+    modal.classList.remove('hidden');
+}
+
+function closeClientModal() {
+    const modal = document.getElementById('clientModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    resetClientForm();
+}
+
+function resetClientForm() {
+    document.getElementById('clientId').value = '';
+    document.getElementById('clientNameInput').value = '';
+    document.getElementById('clientKeywordsInput').value = '';
+    document.getElementById('clientToneInput').value = '';
+    document.getElementById('clientNotesInput').value = '';
+    clientFormLogoBase64 = null;
+    const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+    if (logoPrevContainer) logoPrevContainer.classList.add('hidden');
+    const logoPrev = document.getElementById('clientLogoPreview');
+    if (logoPrev) logoPrev.src = '';
+    const title = document.getElementById('clientFormTitle');
+    if (title) title.textContent = '➕ Aggiungi Nuovo Cliente';
+    const cancelBtn = document.getElementById('btnCancelClientEdit');
+    if (cancelBtn) cancelBtn.classList.add('hidden');
+}
+
+function removeClientFormLogo() {
+    clientFormLogoBase64 = '';
+    const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+    if (logoPrevContainer) logoPrevContainer.classList.add('hidden');
+    const logoPrev = document.getElementById('clientLogoPreview');
+    if (logoPrev) logoPrev.src = '';
+}
+
+async function saveClientFromForm() {
+    const id = document.getElementById('clientId').value;
+    const name = document.getElementById('clientNameInput').value.trim();
+    const keywords = document.getElementById('clientKeywordsInput').value.trim();
+    const tone_of_voice = document.getElementById('clientToneInput').value.trim();
+    const notes = document.getElementById('clientNotesInput').value.trim();
+
+    if (!name) return showToast('Inserisci il nome del cliente', 'warning');
+
+    const payload = {
+        name,
+        keywords,
+        tone_of_voice,
+        notes,
+        logo_base64: clientFormLogoBase64
+    };
+
+    try {
+        let res;
+        if (id) {
+            res = await apiCall('PUT', `/api/clients/${id}`, payload);
+            showToast('Cliente aggiornato!', 'success');
+        } else {
+            res = await apiCall('POST', '/api/clients', payload);
+            showToast('Nuovo cliente creato!', 'success');
+            activeClientId = res.client.id;
+        }
+
+        resetClientForm();
+        await loadClients();
+        if (res.client) applyActiveClient(res.client.id);
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio cliente', 'error');
+    }
+}
+
+function editClient(id) {
+    const client = userClients.find(c => c.id == id);
+    if (!client) return;
+
+    document.getElementById('clientId').value = client.id;
+    document.getElementById('clientNameInput').value = client.name || '';
+    document.getElementById('clientKeywordsInput').value = client.keywords || '';
+    document.getElementById('clientToneInput').value = client.tone_of_voice || '';
+    document.getElementById('clientNotesInput').value = client.notes || '';
+    clientFormLogoBase64 = client.logo_base64 || null;
+
+    if (client.logo_base64) {
+        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+        const logoPrev = document.getElementById('clientLogoPreview');
+        if (logoPrevContainer && logoPrev) {
+            logoPrev.src = client.logo_base64;
+            logoPrevContainer.classList.remove('hidden');
+        }
+    }
+
+    const title = document.getElementById('clientFormTitle');
+    if (title) title.textContent = `✏️ Modifica Cliente: ${client.name}`;
+    const cancelBtn = document.getElementById('btnCancelClientEdit');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+}
+
+async function deleteClient(id) {
+    if (!confirm('Sei sicuro di voler eliminare questo cliente?')) return;
+    try {
+        await apiCall('DELETE', `/api/clients/${id}`);
+        showToast('Cliente eliminato', 'success');
+        if (activeClientId == id) {
+            applyActiveClient('');
+        }
+        await loadClients();
+    } catch (err) {
+        showToast('Errore eliminazione cliente', 'error');
+    }
+}
+
+function renderClientModalList() {
+    const list = document.getElementById('clientModalList');
+    if (!list) return;
+    if (userClients.length === 0) {
+        list.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">Nessun cliente salvato finora.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    userClients.forEach(c => {
+        const div = document.createElement('div');
+        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:8px 12px; border-radius:6px;';
+        div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+                ${c.logo_base64 ? `<img src="${c.logo_base64}" style="max-height:30px; border-radius:3px;">` : `<div style="width:30px; height:30px; border-radius:3px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700;">${c.name.charAt(0).toUpperCase()}</div>`}
+                <div>
+                    <div style="font-weight:600; font-size:0.9rem;">${c.name} ${c.id == activeClientId ? '<span style="font-size:0.7rem; background:var(--accent-primary); color:white; padding:2px 6px; border-radius:10px; margin-left:6px;">ATTIVO</span>' : ''}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">
+                        ${c.keywords ? `KW: ${c.keywords}` : ''} ${c.tone_of_voice ? `• Tone: ${c.tone_of_voice}` : ''}
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:4px;">
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="applyActiveClient(${c.id})">Seleziona</button>
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="editClient(${c.id})"><i data-feather="edit-2" style="width:12px;height:12px;"></i></button>
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3);" onclick="deleteClient(${c.id})"><i data-feather="trash-2" style="width:12px;height:12px;"></i></button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    feather.replace();
 }

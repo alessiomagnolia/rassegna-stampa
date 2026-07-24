@@ -86,6 +86,22 @@ function initDatabase() {
         )
     `).run();
 
+    // Create clients table for Client Workspace Context & Memory
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            logo_base64 TEXT DEFAULT '',
+            keywords TEXT DEFAULT '',
+            tone_of_voice TEXT DEFAULT '',
+            notes TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `).run();
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }
