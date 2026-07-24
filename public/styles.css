@@ -1317,3 +1317,68 @@ input::placeholder, textarea::placeholder {
     .h-card-arrow { display: none; }
     .bg-phrase { opacity: 0.1; }
 }
+
+/* ============================================================ */
+/* ELEGANT MICRO-ANIMATIONS & INTERACTIVE HOVER EFFECTS */
+/* ============================================================ */
+
+/* Icon Pulse & Micro-Bounce on Hover */
+@keyframes iconBounce {
+    0% { transform: scale(1) translateY(0); }
+    40% { transform: scale(1.22) translateY(-4px) rotate(-6deg); }
+    70% { transform: scale(1.1) translateY(-1px) rotate(3deg); }
+    100% { transform: scale(1.15) translateY(-2px) rotate(0deg); }
+}
+
+.horizontal-card:hover .h-card-icon i,
+.dashboard-card:hover i,
+.nav-item:hover i,
+.panel-section:hover .panel-section-title i,
+.btn:hover i {
+    animation: iconBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    color: var(--accent-primary);
+}
+
+/* Card Smooth Scale & Glow on Hover */
+.horizontal-card, .dashboard-card, .glass-card {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.horizontal-card:hover {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 15px 35px rgba(124, 92, 255, 0.12);
+    border-color: rgba(124, 92, 255, 0.4);
+}
+
+/* Loading Spinner & Pulse Animation */
+@keyframes spinPulse {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.15); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.loading-spinner, .btn.loading i {
+    animation: spinPulse 1s linear infinite;
+    display: inline-block;
+}
+
+/* Button Subtle Pop on Hover */
+.btn-primary, .btn-gradient, .btn-outline {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.btn-primary:hover, .btn-gradient:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 16px rgba(124, 92, 255, 0.25);
+}
+.btn-primary:active, .btn-gradient:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Color Swatches Pop Effect */
+.btn-palette {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn-palette:hover {
+    transform: translateY(-2px) scale(1.12);
+}
+
