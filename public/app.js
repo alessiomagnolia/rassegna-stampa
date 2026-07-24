@@ -1927,6 +1927,8 @@ window.filterArchiveCategory = function(cat, btn) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+    loadClients();
     loadCustomArchiveLogos();
     renderArchiveLogos();
 });
