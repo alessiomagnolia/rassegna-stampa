@@ -278,7 +278,8 @@
             padding: 5% 7% 6%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 0;
             order: 2;
             background: #ffffff;
         }
@@ -294,8 +295,15 @@
             z-index: 10;
             display: block;
         }
-        .tpl-speech #bannerTopMeta { display: flex !important; }
-        .tpl-speech #cardDivider { display: block !important; }
+        .tpl-speech #bannerTopMeta {
+            display: flex !important;
+            margin-bottom: 6px !important;
+        }
+        .tpl-speech #cardDivider {
+            display: block !important;
+            margin-top: 4px !important;
+            margin-bottom: 10px !important;
+        }
         .tpl-speech #cardBannerHeader { display: none !important; }
         .tpl-speech #cardEditorialHeader { display: none !important; }
         .tpl-speech #cardBottomFooter { display: none !important; }
