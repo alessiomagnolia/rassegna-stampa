@@ -629,8 +629,9 @@
                         <!-- TEMPLATE 3 EDITORIAL HEADER -->
                         <div class="card-editorial-header" id="cardEditorialHeader" style="display: none;">
                             <i data-feather="menu" style="width:16px;height:16px;color:#1a1a2e;"></i>
-                            <div id="cardEditorialLogoContainer" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.9rem; text-transform: lowercase; letter-spacing: 0.5px; color: #1a1a2e;">
-                                la repubblica
+                            <div id="cardEditorialLogoContainer" style="display: flex; align-items: center; justify-content: center;">
+                                <img id="cardEditorialLogo" style="max-height: 24px; max-width: 140px; object-fit: contain;" src="/logos/repubblica.png" alt="Logo Testata">
+                                <span id="cardEditorialText" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.9rem; text-transform: lowercase; color: #1a1a2e; display: none;">la repubblica</span>
                             </div>
                             <i data-feather="search" style="width:16px;height:16px;color:#1a1a2e;"></i>
                         </div>
@@ -748,7 +749,8 @@
             const cardBannerLogo = document.getElementById('cardBannerLogo');
             const cardBannerText = document.getElementById('cardBannerText');
             const cardEditorialHeader = document.getElementById('cardEditorialHeader');
-            const cardEditorialLogoContainer = document.getElementById('cardEditorialLogoContainer');
+            const cardEditorialLogo = document.getElementById('cardEditorialLogo');
+            const cardEditorialText = document.getElementById('cardEditorialText');
 
             const inputQuote = document.getElementById('inputQuote');
             const inputSubtitle = document.getElementById('inputSubtitle');
@@ -774,6 +776,15 @@
             cardSourceLogo.src = '/logos/repubblica.png';
             cardSourceLogo.style.display = 'block';
             cardAuthor.style.display = 'none';
+
+            cardBannerLogo.src = '/logos/repubblica.png';
+            cardBannerLogo.style.display = 'block';
+            cardBannerText.style.display = 'none';
+
+            cardEditorialLogo.src = '/logos/repubblica.png';
+            cardEditorialLogo.style.display = 'block';
+            cardEditorialText.style.display = 'none';
+
             inputAuthor.value = 'La Repubblica';
 
             inputQuote.value = "Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco";
@@ -833,7 +844,7 @@
                 if (inputAuthor.value.trim()) {
                     cardAuthor.textContent = inputAuthor.value.trim();
                     cardBannerText.textContent = inputAuthor.value.trim();
-                    cardEditorialLogoContainer.textContent = inputAuthor.value.trim().toLowerCase();
+                    cardEditorialText.textContent = inputAuthor.value.trim().toLowerCase();
                 }
 
                 // Colors
@@ -860,12 +871,19 @@
                     cardBannerLogo.src = `/logos/${val}.png`;
                     cardBannerLogo.style.display = 'block';
                     cardBannerText.style.display = 'none';
+
+                    cardEditorialLogo.src = `/logos/${val}.png`;
+                    cardEditorialLogo.style.display = 'block';
+                    cardEditorialText.style.display = 'none';
                 } else {
                     cardSourceLogo.style.display = 'none';
                     cardAuthor.style.display = 'block';
 
                     cardBannerLogo.style.display = 'none';
                     cardBannerText.style.display = 'block';
+
+                    cardEditorialLogo.style.display = 'none';
+                    cardEditorialText.style.display = 'block';
                 }
             });
 
@@ -882,6 +900,10 @@
                     cardBannerLogo.src = evt.target.result;
                     cardBannerLogo.style.display = 'block';
                     cardBannerText.style.display = 'none';
+
+                    cardEditorialLogo.src = evt.target.result;
+                    cardEditorialLogo.style.display = 'block';
+                    cardEditorialText.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             });
