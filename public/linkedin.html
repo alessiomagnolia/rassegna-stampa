@@ -201,7 +201,7 @@
 
         /* TOP PHOTO AREA WITH SPEECH BUBBLE CUT */
         .card-photo-container {
-            height: 50%;
+            height: 48%;
             position: relative;
             background: #e2e8f0;
             overflow: hidden;
@@ -214,23 +214,23 @@
             display: block;
         }
 
-        /* SPEECH BUBBLE OVERLAY (Bottom-Right Triangle Cutout) */
+        /* SPEECH BUBBLE OVERLAY */
         .speech-cutout {
             position: absolute;
             bottom: -1px;
             right: 12%;
             width: 0;
             height: 0;
-            border-left: 24px solid transparent;
-            border-right: 24px solid transparent;
-            border-bottom: 28px solid #ffffff;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-bottom: 26px solid #ffffff;
             z-index: 10;
         }
 
         /* BOTTOM CONTENT BOX */
         .card-content-box {
             flex: 1;
-            padding: 6% 8% 7%;
+            padding: 5% 7% 6%;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -241,10 +241,10 @@
 
         .card-main-quote {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: #1a1a2e;
-            line-height: 1.25;
+            line-height: 1.24;
             margin-bottom: 6px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
@@ -253,35 +253,18 @@
 
         .card-subtitle {
             font-family: 'Inter', sans-serif;
-            font-size: 0.82rem;
-            color: #475569;
+            font-size: 0.85rem;
+            color: #334155;
             line-height: 1.35;
-            font-style: italic;
-            margin-bottom: 8px;
+            margin-top: 4px;
         }
 
         .card-divider {
             width: 45px;
             height: 3px;
             background: #1d70b8;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border-radius: 2px;
-        }
-
-        .card-meta-author {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #1a1a2e;
-            line-height: 1.2;
-        }
-
-        .card-meta-role {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.78rem;
-            font-style: italic;
-            color: #64748b;
-            margin-top: 2px;
         }
     </style>
 </head>
@@ -339,12 +322,12 @@
                 </div>
 
                 <div class="field-group">
-                    <label for="inputSubtitle">Sottotitolo (Testo Opzionale)</label>
+                    <label for="inputSubtitle">Sottotitolo (Opzionale)</label>
                     <textarea id="inputSubtitle" rows="2" placeholder="Inserisci un testo o sommario opzionale..."></textarea>
                 </div>
 
                 <div class="field-group">
-                    <label for="inputDate">Data</label>
+                    <label for="inputDate">Data Notizia</label>
                     <input type="text" id="inputDate" placeholder="Es. Notizia del 22/07/2026">
                 </div>
             </div>
@@ -449,28 +432,33 @@
                             <div class="speech-cutout"></div>
                         </div>
 
-                        <!-- CONTENT AREA -->
+                        <!-- CONTENT AREA (Matching User Mockup Image) -->
                         <div class="card-content-box">
                             <div>
-                                <!-- Optional Client Logo Container -->
-                                <div id="cardClientLogoContainer" style="margin-bottom: 8px; display: none;">
-                                    <img id="cardClientLogo" style="max-height: 34px; max-width: 140px; object-fit: contain;" src="" alt="Logo Cliente">
+                                <!-- TOP HEADER ROW: Newspaper Logo & Date (Left), Client Logo (Right) -->
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <div id="cardSourceLogoContainer" style="margin-bottom: 2px;">
+                                            <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
+                                            <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
+                                        </div>
+                                        <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">Notizia del 22/07/2026</div>
+                                    </div>
+
+                                    <!-- Client Logo at Top Right -->
+                                    <div id="cardClientLogoContainer" style="display: none; align-self: flex-start;">
+                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain;" src="" alt="Logo Cliente">
+                                    </div>
                                 </div>
-                                <div id="cardMainQuote" class="card-main-quote">Scintille tra Uil e Ugl sui rider. Bombardieri a Capone: "Hai firmato contratti pirata"</div>
-                                <!-- Optional Subtitle Text Under Title -->
-                                <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
-                            </div>
-                            <div>
+
+                                <!-- DIVIDER LINE -->
                                 <div id="cardDivider" class="card-divider"></div>
-                                
-                                <!-- Source Newspaper Logo or Text -->
-                                <div id="cardSourceLogoContainer" style="margin-bottom: 4px;">
-                                    <img id="cardSourceLogo" style="max-height: 36px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
-                                    <div id="cardAuthor" class="card-meta-author">La Repubblica</div>
-                                </div>
-                                
-                                <!-- Date field at the bottom -->
-                                <div id="cardDate" class="card-meta-role">Notizia del 28/02/2026</div>
+
+                                <!-- MAIN TITLE -->
+                                <div id="cardMainQuote" class="card-main-quote">Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco</div>
+
+                                <!-- OPTIONAL SUBTITLE (Under Title) -->
+                                <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
                             </div>
                         </div>
 
