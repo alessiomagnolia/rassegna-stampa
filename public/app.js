@@ -1301,7 +1301,7 @@ function renderClientSelectors() {
 
     selects.forEach(select => {
         if (!select) return;
-        select.innerHTML = '<option value="" style="color:black;">Nessun Cliente (Generico)</option>';
+        select.innerHTML = '<option value="" style="color:black;">Nessun Cliente</option>';
         userClients.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
@@ -1354,7 +1354,7 @@ function applyActiveClient(clientId) {
         showToast(`Cliente attivo: ${client.name}`, 'info');
     } else {
         renderNewsKeywordSuggestions();
-        showToast('Nessun cliente attivo (modalità generica)', 'info');
+        showToast('Nessun cliente attivo', 'info');
     }
 }
 

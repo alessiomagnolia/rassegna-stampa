@@ -36,7 +36,7 @@
             <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 8px; border-radius:8px; border:1px solid var(--border-color);">
                 <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
                 <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.85rem; cursor:pointer; max-width:160px;">
-                    <option value="" style="color:black;">👤 Nessun Cliente</option>
+                    <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
                 <button id="btnManageClient" class="btn btn-outline btn-sm" title="Gestisci / Nuovo Cliente" style="padding:2px 6px; border:none; background:transparent; cursor:pointer;">
                     <i data-feather="settings" style="width:14px;height:14px;"></i>
@@ -201,37 +201,13 @@
                 </div>
             </section>
 
-            <!-- Main Feature Section (full width, as before) -->
-            <section class="section glass-card main-feature-section">
-                <h2><i data-feather="plus-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Nuova Rassegna Stampa</h2>
-
-                <div class="input-group rassegna-title-group">
-                    <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
-                    <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
-                </div>
-
-                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                    <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
-                    <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
-                </div>
-
-                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                    <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
-                    <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli Logo Cliente</label>
-                    <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
-                        <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
-                        <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
-                    </div>
-                </div>
-
-            <!-- Collapsible Template PDF Section -->
+            <!-- Collapsible 2: Layout PDF e Stile Grafico (SEPARATO E CHIUSO DI DEFAULT) -->
             <section class="section glass-card template-section" style="margin-bottom: 2rem;">
                 <div class="section-header" id="toggleTemplateSection" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                     <h2><i data-feather="layout" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Layout PDF e Stile Grafico</h2>
                     <span class="icon-toggle" id="toggleTemplateIcon">▼</span>
                 </div>
-                <div class="section-content" id="templateSectionContent" style="display: block; margin-top: 1rem;">
+                <div class="section-content" id="templateSectionContent" style="display: none; margin-top: 1rem;">
                     <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">Scegli il layout visivo con cui verrà impaginata la tua rassegna stampa:</p>
                     
                     <div class="template-selector-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
@@ -311,6 +287,30 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Main Feature Section (full width) -->
+            <section class="section glass-card main-feature-section">
+                <h2><i data-feather="plus-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Nuova Rassegna Stampa</h2>
+
+                <div class="input-group rassegna-title-group">
+                    <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
+                    <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+                </div>
+
+                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                    <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
+                    <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
+                </div>
+
+                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
+                    <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
+                    <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli Logo Cliente</label>
+                    <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
+                        <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
+                        <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+                    </div>
+                </div>
 
                 <div class="add-article-bar">
                     <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
@@ -541,8 +541,8 @@
                         <img id="clientLogoPreview" src="" alt="Logo Cliente" style="max-height:50px; border-radius:4px; margin-bottom:4px;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="removeClientFormLogo()" style="display:block; font-size:0.75rem; color:#ff4d4d; border-color:#ff4d4d;">Rimuovi Logo</button>
                     </div>
-                    <input type="file" id="clientLogoFileInput" accept="image/*" class="hidden" onchange="handleClientLogoChange(event)">
-                    <label for="clientLogoFileInput" class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carica Logo</label>
+                    <input type="file" id="clientLogoFileInput" accept="image/*" style="display:none;" onchange="handleClientLogoChange(event)">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('clientLogoFileInput').click()" style="cursor:pointer; display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carica Logo</button>
                 </div>
 
                 <div class="edit-field" style="margin-bottom:1rem;">
