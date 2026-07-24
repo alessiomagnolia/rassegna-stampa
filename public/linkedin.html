@@ -55,8 +55,8 @@
         .editor-layout {
             display: flex;
             flex: 1;
-            height: calc(100vh - 60px);
-            overflow: hidden;
+            min-height: calc(100vh - 60px);
+            align-items: flex-start;
         }
 
         /* LEFT CONTROL PANEL */
@@ -65,7 +65,6 @@
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
             padding: 1.5rem;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
@@ -165,29 +164,29 @@
             color: var(--accent-primary);
         }
 
-        /* RIGHT CANVAS PREVIEW PANEL - CENTERED FIXED POSITION */
+        /* RIGHT CANVAS PREVIEW PANEL - STICKY SCROLLING */
         .preview-panel {
             flex: 1;
             background: var(--bg-primary);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: flex-start;
             padding: 2rem;
-            overflow: auto;
             position: relative;
-            height: 100%;
+            min-height: 100%;
         }
 
-        /* CARD CANVAS CONTAINER */
+        /* CARD CANVAS CONTAINER (STICKY POSITIONING) */
         .card-stage {
             box-shadow: 0 25px 60px rgba(0,0,0,0.45);
             border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            transform-origin: center center;
-            overflow: hidden;
-            margin: auto; /* Fixes vertical positioning when menu expands */
+            position: sticky;
+            top: 80px; /* Floats smoothly as the user scrolls down long menus */
+            align-self: flex-start;
+            margin: 0 auto;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         /* 1:1 Square */
@@ -609,7 +608,7 @@
 
         </aside>
 
-        <!-- RIGHT PREVIEW CANVAS PANEL -->
+        <!-- RIGHT PREVIEW CANVAS PANEL (Sticky preview container) -->
         <main class="preview-panel">
             <div id="cardStage" class="card-stage" data-format="1080x1080">
                 <div id="linkedinCard" class="linkedin-card tpl-speech">
@@ -664,7 +663,7 @@
                             <div id="cardDivider" class="card-divider"></div>
 
                             <!-- MAIN TITLE -->
-                            <div id="cardMainQuote" class="card-main-quote">Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco</div>
+                            <div id="cardMainQuote" class="card-main-quote">Titolo della Notizia</div>
 
                             <!-- OPTIONAL SUBTITLE -->
                             <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
@@ -681,36 +680,6 @@
             </div>
         </main>
 
-    </div>
-
-    <!-- LINKEDIN SHARE MODAL -->
-    <div id="shareLinkedInModal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:999;">
-        <div class="glass-card" style="max-width: 520px; width: 90%; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
-                    <i data-feather="linkedin" style="color:#0a66c2;"></i> Pubblica su LinkedIn
-                </h3>
-                <button type="button" id="btnCloseShareModal" class="btn-icon"><i data-feather="x"></i></button>
-            </div>
-
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
-                L'immagine della card è stata generata in alta definizione. Copia il testo per il post ed avvia la pubblicazione diretta su LinkedIn:
-            </p>
-
-            <div class="field-group" style="margin-bottom:1rem;">
-                <label style="font-size:0.8rem; font-weight:600;">Testo Post LinkedIn:</label>
-                <textarea id="sharePostText" rows="4" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;"></textarea>
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button type="button" id="btnCopyTextAndOpenLinkedIn" class="btn btn-primary" style="background: linear-gradient(135deg, #0a66c2, #004182) !important; width:100%; padding:10px;">
-                    <i data-feather="external-link" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Copia Testo e Apri LinkedIn
-                </button>
-                <button type="button" id="btnDownloadImageForShare" class="btn btn-outline" style="width:100%;">
-                    <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i> Scarica Immagine HD per Allegato
-                </button>
-            </div>
-        </div>
     </div>
 
     <!-- JS LOGIC -->
@@ -771,7 +740,7 @@
             const colorAccent = document.getElementById('colorAccent');
             const colorAccentHex = document.getElementById('colorAccentHex');
 
-            // Default initial state (matching user mockup)
+            // Default initial state (Generic Placeholder)
             sourceLogoSelect.value = 'repubblica';
             cardSourceLogo.src = '/logos/repubblica.png';
             cardSourceLogo.style.display = 'block';
@@ -787,9 +756,10 @@
 
             inputAuthor.value = 'La Repubblica';
 
-            inputQuote.value = "Incidente mortale nella galleria Monte Piazzo, l'UGL: «Tragedia inaccettabile» - Giornale di Lecco";
-            inputSubtitle.value = ""; // Empty by default
-            inputDate.value = "22/07/2026"; // Pure date without "Notizia del"
+            // Clean generic default values
+            inputQuote.value = ""; // Clean empty title box
+            inputSubtitle.value = ""; // Clean empty subtitle box
+            inputDate.value = "22/07/2026"; // Pure date string
 
             // Template Switcher (Speech, Banner, Editorial)
             let currentTemplate = 'speech';
@@ -821,7 +791,12 @@
 
             // Sync inputs to card view
             function updateCardView() {
-                if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
+                // Title (Generic default fallback if empty)
+                if (inputQuote.value.trim()) {
+                    cardMainQuote.textContent = inputQuote.value.trim();
+                } else {
+                    cardMainQuote.textContent = "Titolo della Notizia";
+                }
                 
                 // Subtitle
                 if (inputSubtitle.value.trim()) {
@@ -1046,6 +1021,10 @@
                         cardBannerLogo.src = `/logos/${matchedKey}.png`;
                         cardBannerLogo.style.display = 'block';
                         cardBannerText.style.display = 'none';
+
+                        cardEditorialLogo.src = `/logos/${matchedKey}.png`;
+                        cardEditorialLogo.style.display = 'block';
+                        cardEditorialText.style.display = 'none';
                     } else {
                         sourceLogoSelect.value = '';
                         cardSourceLogo.style.display = 'none';
@@ -1053,6 +1032,9 @@
 
                         cardBannerLogo.style.display = 'none';
                         cardBannerText.style.display = 'block';
+
+                        cardEditorialLogo.style.display = 'none';
+                        cardEditorialText.style.display = 'block';
                     }
 
                     updateCardView();
@@ -1098,45 +1080,48 @@
             document.getElementById('btnDownloadPNG').addEventListener('click', () => downloadCardImage('png'));
             document.getElementById('btnDownloadJPG').addEventListener('click', () => downloadCardImage('jpg'));
 
-            // SHARE ON LINKEDIN MODAL & DIRECT SHARE
-            const shareModal = document.getElementById('shareLinkedInModal');
+            // DIRECT LINKEDIN SHARE (NO unwanted image downloads, pre-fills text, supports native Web Share)
             const btnShareLinkedIn = document.getElementById('btnShareLinkedIn');
-            const btnCloseShareModal = document.getElementById('btnCloseShareModal');
-            const sharePostText = document.getElementById('sharePostText');
-            const btnCopyTextAndOpenLinkedIn = document.getElementById('btnCopyTextAndOpenLinkedIn');
-            const btnDownloadImageForShare = document.getElementById('btnDownloadImageForShare');
 
             btnShareLinkedIn.addEventListener('click', async () => {
                 const title = inputQuote.value.trim() || cardMainQuote.textContent;
                 const subtitle = inputSubtitle.value.trim();
-                const source = inputAuthor.value.trim() || 'Notizia';
+                const source = inputAuthor.value.trim() || 'Rassegna Stampa';
                 const date = inputDate.value.trim() || '';
 
-                sharePostText.value = `📰 ${title}${subtitle ? '\n\n' + subtitle : ''}\n\n📌 Fonte: ${source} (${date})\n\n#rassegnastampa #informazione #news`;
-                shareModal.classList.remove('hidden');
-                shareModal.style.display = 'flex';
-                feather.replace();
-            });
+                const shareText = `📰 ${title}${subtitle ? '\n\n' + subtitle : ''}\n\n📌 Fonte: ${source} (${date})\n\n#rassegnastampa #informazione #news`;
 
-            btnCloseShareModal.addEventListener('click', () => {
-                shareModal.classList.add('hidden');
-                shareModal.style.display = 'none';
-            });
-
-            btnCopyTextAndOpenLinkedIn.addEventListener('click', async () => {
+                // 1. Silent clipboard copy so user has text instantly ready
                 try {
-                    await navigator.clipboard.writeText(sharePostText.value);
-                    alert('Testo del post copiato negli appunti! Scarica l\'immagine e incollala su LinkedIn.');
+                    await navigator.clipboard.writeText(shareText);
                 } catch(e) {}
-                
-                // Trigger image download
-                await downloadCardImage('png');
 
-                // Open LinkedIn feed compose
-                window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
+                // 2. Native Web Share API if supported (passes both image file & text directly into LinkedIn app/composer)
+                if (navigator.canShare && navigator.share) {
+                    try {
+                        const fmt = cardStage.dataset.format;
+                        const scale = 1080 / cardStage.offsetWidth;
+                        const canvas = await html2canvas(cardStage, { scale, useCORS: true, allowTaint: true });
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const file = new File([blob], `Post_LinkedIn_${fmt}_${Date.now()}.png`, { type: 'image/png' });
+
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                title: title,
+                                text: shareText,
+                                files: [file]
+                            });
+                            return;
+                        }
+                    } catch(e) {
+                        console.log('Web share fallback', e);
+                    }
+                }
+
+                // 3. Web direct share: Open LinkedIn post composer with pre-filled text (NO auto image downloads)
+                const linkedInShareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
+                window.open(linkedInShareUrl, '_blank');
             });
-
-            btnDownloadImageForShare.addEventListener('click', () => downloadCardImage('png'));
 
             updateCardView();
         });
