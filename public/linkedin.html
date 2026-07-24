@@ -245,10 +245,19 @@
             font-weight: 800;
             color: #1a1a2e;
             line-height: 1.25;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .card-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.35;
+            font-style: italic;
+            margin-bottom: 8px;
         }
 
         .card-divider {
@@ -330,8 +339,13 @@
                 </div>
 
                 <div class="field-group">
-                    <label for="inputRole">Sottotitolo</label>
-                    <input type="text" id="inputRole" placeholder="Es. Notizia del 28/02/2026">
+                    <label for="inputSubtitle">Sottotitolo (Testo Opzionale)</label>
+                    <textarea id="inputSubtitle" rows="2" placeholder="Inserisci un testo o sommario opzionale..."></textarea>
+                </div>
+
+                <div class="field-group">
+                    <label for="inputDate">Data</label>
+                    <input type="text" id="inputDate" placeholder="Es. Notizia del 22/07/2026">
                 </div>
             </div>
 
@@ -443,6 +457,8 @@
                                     <img id="cardClientLogo" style="max-height: 34px; max-width: 140px; object-fit: contain;" src="" alt="Logo Cliente">
                                 </div>
                                 <div id="cardMainQuote" class="card-main-quote">Scintille tra Uil e Ugl sui rider. Bombardieri a Capone: "Hai firmato contratti pirata"</div>
+                                <!-- Optional Subtitle Text Under Title -->
+                                <div id="cardSubtitle" class="card-subtitle" style="display: none;"></div>
                             </div>
                             <div>
                                 <div id="cardDivider" class="card-divider"></div>
@@ -453,7 +469,8 @@
                                     <div id="cardAuthor" class="card-meta-author">La Repubblica</div>
                                 </div>
                                 
-                                <div id="cardRole" class="card-meta-role">Notizia del 28/02/2026</div>
+                                <!-- Date field at the bottom -->
+                                <div id="cardDate" class="card-meta-role">Notizia del 28/02/2026</div>
                             </div>
                         </div>
 
@@ -504,9 +521,10 @@
             const linkedinCard = document.getElementById('linkedinCard');
             const cardPhoto = document.getElementById('cardPhoto');
             const cardMainQuote = document.getElementById('cardMainQuote');
+            const cardSubtitle = document.getElementById('cardSubtitle');
             const cardDivider = document.getElementById('cardDivider');
             const cardAuthor = document.getElementById('cardAuthor');
-            const cardRole = document.getElementById('cardRole');
+            const cardDate = document.getElementById('cardDate');
 
             const cardClientLogoContainer = document.getElementById('cardClientLogoContainer');
             const cardClientLogo = document.getElementById('cardClientLogo');
@@ -514,8 +532,10 @@
             const cardSourceLogo = document.getElementById('cardSourceLogo');
 
             const inputQuote = document.getElementById('inputQuote');
+            const inputSubtitle = document.getElementById('inputSubtitle');
+            const inputDate = document.getElementById('inputDate');
             const inputAuthor = document.getElementById('inputAuthor');
-            const inputRole = document.getElementById('inputRole');
+
             const sourceLogoSelect = document.getElementById('sourceLogoSelect');
             const inputSourceLogoFile = document.getElementById('inputSourceLogoFile');
             const inputClientLogoFile = document.getElementById('inputClientLogoFile');
@@ -547,11 +567,18 @@
             function updateCardView() {
                 if (inputQuote.value.trim()) cardMainQuote.textContent = inputQuote.value.trim();
                 
-                if (inputRole.value.trim()) {
-                    cardRole.textContent = inputRole.value.trim();
-                    cardRole.style.display = 'block';
+                if (inputSubtitle.value.trim()) {
+                    cardSubtitle.textContent = inputSubtitle.value.trim();
+                    cardSubtitle.style.display = 'block';
                 } else {
-                    cardRole.style.display = 'none';
+                    cardSubtitle.style.display = 'none';
+                }
+
+                if (inputDate.value.trim()) {
+                    cardDate.textContent = inputDate.value.trim();
+                    cardDate.style.display = 'block';
+                } else {
+                    cardDate.style.display = 'none';
                 }
 
                 if (inputAuthor.value.trim()) cardAuthor.textContent = inputAuthor.value.trim();
@@ -564,7 +591,7 @@
                 cardPhoto.style.objectPosition = inputImagePosition.value;
             }
 
-            [inputQuote, inputRole, inputAuthor, inputImagePosition, colorText, colorAccent].forEach(el => {
+            [inputQuote, inputSubtitle, inputDate, inputAuthor, inputImagePosition, colorText, colorAccent].forEach(el => {
                 el.addEventListener('input', updateCardView);
             });
 
@@ -696,7 +723,21 @@
                     if (!res.ok) throw new Error(data.error || 'Estrazione fallita');
 
                     if (data.title) inputQuote.value = data.title;
-                    if (data.published_date) inputRole.value = `Notizia del ${data.published_date}`;
+                    
+                    // Reset or fill optional subtitle
+                    if (data.excerpt || data.description) {
+                        inputSubtitle.value = data.excerpt || data.description;
+                    } else {
+                        inputSubtitle.value = '';
+                    }
+
+                    // Populate date field specifically
+                    if (data.published_date) {
+                        inputDate.value = `Notizia del ${data.published_date}`;
+                    } else {
+                        inputDate.value = '';
+                    }
+
                     if (data.imageBase64) cardPhoto.src = data.imageBase64;
                     if (data.source_name) inputAuthor.value = data.source_name;
 
@@ -773,10 +814,11 @@
 
             btnShareLinkedIn.addEventListener('click', async () => {
                 const title = inputQuote.value.trim() || cardMainQuote.textContent;
+                const subtitle = inputSubtitle.value.trim();
                 const source = inputAuthor.value.trim() || 'Notizia';
-                const date = inputRole.value.trim() || '';
+                const date = inputDate.value.trim() || '';
 
-                sharePostText.value = `📰 ${title}\n\n📌 Fonte: ${source} (${date})\n\n#rassegnastampa #informazione #news`;
+                sharePostText.value = `📰 ${title}${subtitle ? '\n\n' + subtitle : ''}\n\n📌 Fonte: ${source} (${date})\n\n#rassegnastampa #informazione #news`;
                 shareModal.classList.remove('hidden');
                 shareModal.style.display = 'flex';
                 feather.replace();
