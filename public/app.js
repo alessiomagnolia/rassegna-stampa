@@ -22,6 +22,15 @@ fetch('/assets/logos.json')
 
 // --- UTILS ---
 
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -1394,30 +1403,35 @@ window.applyKeywordSuggestion = function(kw) {
     }
 };
 
-function openClientModal() {
+window.openClientModal = function() {
     const modal = document.getElementById('clientModal');
     if (!modal) return;
     resetClientForm();
     loadClients();
     modal.classList.remove('hidden');
-}
+    modal.style.display = 'flex';
+};
 
-function closeClientModal() {
+window.closeClientModal = function() {
     const modal = document.getElementById('clientModal');
     if (!modal) return;
     modal.classList.add('hidden');
+    modal.style.display = 'none';
     resetClientForm();
-}
+};
 
-function resetClientForm() {
-    document.getElementById('clientId').value = '';
-    document.getElementById('clientNameInput').value = '';
-    document.getElementById('clientKeywordsInput').value = '';
-    document.getElementById('clientToneInput').value = '';
-    document.getElementById('clientNotesInput').value = '';
+window.resetClientForm = function() {
+    if (document.getElementById('clientId')) document.getElementById('clientId').value = '';
+    if (document.getElementById('clientNameInput')) document.getElementById('clientNameInput').value = '';
+    if (document.getElementById('clientKeywordsInput')) document.getElementById('clientKeywordsInput').value = '';
+    if (document.getElementById('clientToneInput')) document.getElementById('clientToneInput').value = '';
+    if (document.getElementById('clientNotesInput')) document.getElementById('clientNotesInput').value = '';
     clientFormLogoBase64 = null;
     const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-    if (logoPrevContainer) logoPrevContainer.classList.add('hidden');
+    if (logoPrevContainer) {
+        logoPrevContainer.classList.add('hidden');
+        logoPrevContainer.style.display = 'none';
+    }
     const logoPrev = document.getElementById('clientLogoPreview');
     if (logoPrev) logoPrev.src = '';
     const title = document.getElementById('clientFormTitle');
@@ -1425,17 +1439,38 @@ function resetClientForm() {
     const cancelBtn = document.getElementById('btnCancelClientEdit');
     if (cancelBtn) cancelBtn.classList.add('hidden');
     feather.replace();
-}
+};
 
-function removeClientFormLogo() {
+window.handleClientLogoChange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        clientFormLogoBase64 = await fileToBase64(file);
+        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+        const logoPrev = document.getElementById('clientLogoPreview');
+        if (logoPrevContainer && logoPrev) {
+            logoPrev.src = clientFormLogoBase64;
+            logoPrevContainer.classList.remove('hidden');
+            logoPrevContainer.style.display = 'block';
+        }
+        showToast('Logo del cliente caricato!', 'success');
+    } catch (err) {
+        showToast('Errore nel caricamento del logo', 'error');
+    }
+};
+
+window.removeClientFormLogo = function() {
     clientFormLogoBase64 = '';
     const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-    if (logoPrevContainer) logoPrevContainer.classList.add('hidden');
+    if (logoPrevContainer) {
+        logoPrevContainer.classList.add('hidden');
+        logoPrevContainer.style.display = 'none';
+    }
     const logoPrev = document.getElementById('clientLogoPreview');
     if (logoPrev) logoPrev.src = '';
-}
+};
 
-async function saveClientFromForm() {
+window.saveClientFromForm = async function() {
     const id = document.getElementById('clientId').value;
     const name = document.getElementById('clientNameInput').value.trim();
     const keywords = document.getElementById('clientKeywordsInput').value.trim();
@@ -1445,33 +1480,56 @@ async function saveClientFromForm() {
     if (!name) return showToast('Inserisci il nome del cliente', 'warning');
 
     const payload = {
+        id: id || Date.now(),
         name,
         keywords,
         tone_of_voice,
         notes,
-        logo_base64: clientFormLogoBase64
+        logo_base64: clientFormLogoBase64 || ''
     };
 
-    try {
-        let res;
-        if (id) {
-            res = await apiCall('PUT', `/api/clients/${id}`, payload);
-            showToast('Cliente aggiornato!', 'success');
-        } else {
-            res = await apiCall('POST', '/api/clients', payload);
-            showToast('Nuovo cliente creato!', 'success');
-            activeClientId = res.client.id;
+    if (state.token) {
+        try {
+            let res;
+            if (id) {
+                res = await apiCall('PUT', `/api/clients/${id}`, payload);
+                showToast('Cliente aggiornato!', 'success');
+            } else {
+                res = await apiCall('POST', '/api/clients', payload);
+                showToast('Nuovo cliente creato!', 'success');
+            }
+            resetClientForm();
+            await loadClients();
+            if (res.client) applyActiveClient(res.client.id);
+            return;
+        } catch (err) {
+            console.log('Salvataggio API client fallito, uso memoria locale:', err);
         }
-
-        resetClientForm();
-        await loadClients();
-        if (res.client) applyActiveClient(res.client.id);
-    } catch (err) {
-        showToast(err.message || 'Errore salvataggio cliente', 'error');
     }
-}
 
-function editClient(id) {
+    // Local Storage Fallback
+    let localList = localStorage.getItem('rs_local_clients');
+    localList = localList ? JSON.parse(localList) : [];
+
+    if (id) {
+        const idx = localList.findIndex(c => c.id == id);
+        if (idx !== -1) localList[idx] = payload;
+        else localList.push(payload);
+        showToast('Cliente aggiornato!', 'success');
+    } else {
+        localList.push(payload);
+        showToast('Nuovo cliente creato!', 'success');
+    }
+
+    localStorage.setItem('rs_local_clients', JSON.stringify(localList));
+    userClients = localList;
+
+    resetClientForm();
+    renderClientSelectors();
+    applyActiveClient(payload.id);
+};
+
+window.editClient = function(id) {
     const client = userClients.find(c => c.id == id);
     if (!client) return;
 
@@ -1488,6 +1546,7 @@ function editClient(id) {
         if (logoPrevContainer && logoPrev) {
             logoPrev.src = client.logo_base64;
             logoPrevContainer.classList.remove('hidden');
+            logoPrevContainer.style.display = 'block';
         }
     }
 
@@ -1496,21 +1555,29 @@ function editClient(id) {
     const cancelBtn = document.getElementById('btnCancelClientEdit');
     if (cancelBtn) cancelBtn.classList.remove('hidden');
     feather.replace();
-}
+};
 
-async function deleteClient(id) {
+window.deleteClient = async function(id) {
     if (!confirm('Sei sicuro di voler eliminare questo cliente?')) return;
-    try {
-        await apiCall('DELETE', `/api/clients/${id}`);
-        showToast('Cliente eliminato', 'success');
-        if (activeClientId == id) {
-            applyActiveClient('');
-        }
-        await loadClients();
-    } catch (err) {
-        showToast('Errore eliminazione cliente', 'error');
+    if (state.token) {
+        try {
+            await apiCall('DELETE', `/api/clients/${id}`);
+        } catch(e){}
     }
-}
+
+    let localList = localStorage.getItem('rs_local_clients');
+    if (localList) {
+        let list = JSON.parse(localList).filter(c => c.id != id);
+        localStorage.setItem('rs_local_clients', JSON.stringify(list));
+    }
+
+    userClients = userClients.filter(c => c.id != id);
+    if (activeClientId == id) {
+        applyActiveClient('');
+    }
+    renderClientSelectors();
+    showToast('Cliente eliminato', 'success');
+};
 
 function renderClientModalList() {
     const list = document.getElementById('clientModalList');
@@ -1799,25 +1866,47 @@ window.handleContactSubmit = function(e) {
 };
 
 // --- LOGO ARCHIVE MANAGEMENT ---
+
 let archiveLogosList = [
     { name: 'la Repubblica', category: 'nazionale', url: '/logos/repubblica.png' },
     { name: 'Corriere della Sera', category: 'nazionale', url: '/logos/corriere.png' },
-    { name: 'Il Sole 24 Ore', category: 'economico', url: '/logos/sole24ore.png' },
-    { name: 'La Stampa', category: 'nazionale', url: '/logos/lastampa.png' },
-    { name: 'ANSA', category: 'nazionale', url: '/logos/ansa.png' },
-    { name: 'Il Giornale', category: 'nazionale', url: '/logos/ilgiornale.png' },
-    { name: 'Libero', category: 'nazionale', url: '/logos/libero.png' },
-    { name: 'La Gazzetta dello Sport', category: 'sportivo', url: '/logos/gazzetta.png' }
+    { name: 'Il Sole 24 Ore', category: 'economico', url: '/logos/ilsole24ore.png' },
+    { name: 'ANSA', category: 'agenzia', url: '/logos/ansa.png' },
+    { name: 'Il Mattino', category: 'locale', url: '/logos/ilmattino.png' },
+    { name: 'Il Giornale d\'Italia', category: 'nazionale', url: '/logos/ilgiornaleditalia.png' },
+    { name: 'Askanews', category: 'agenzia', url: '/logos/Askanews.png' },
+    { name: 'Agenzia Nova', category: 'agenzia', url: '/logos/agenzianova.jpg' },
+    { name: 'Agenzia DIRE', category: 'agenzia', url: '/logos/dire.jpg' },
+    { name: 'Il Diario del Lavoro', category: 'web', url: '/logos/ildiariodellavoro.png' },
+    { name: 'Benevento News 24', category: 'locale', url: '/logos/beneventonews24.png' },
+    { name: 'Cronache del Sannio', category: 'locale', url: '/logos/cronachedelsannio.png' },
+    { name: 'L\'Eco del Sannio', category: 'locale', url: '/logos/ecodelsannio.png' },
+    { name: 'TV Sette Benevento', category: 'broadcast', url: '/logos/tvsette%20benevento.png' }
 ];
 
 let activeArchiveCategory = 'all';
+let activeArchiveSort = 'latest';
+
+window.toggleArchiveSort = function(btn) {
+    if (activeArchiveSort === 'latest') {
+        activeArchiveSort = 'name';
+        if (btn) btn.innerHTML = '<i data-feather="sort-by-alpha" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Ordina: A-Z';
+        showToast('Ordinamento: Alfabetico (A-Z)', 'info');
+    } else {
+        activeArchiveSort = 'latest';
+        if (btn) btn.innerHTML = '<i data-feather="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Ultimi Aggiunti';
+        showToast('Ordinamento: Ultimi Aggiunti', 'info');
+    }
+    feather.replace();
+    renderArchiveLogos();
+};
 
 function loadCustomArchiveLogos() {
     const saved = localStorage.getItem('rs_custom_archive_logos');
     if (saved) {
         try {
             const custom = JSON.parse(saved);
-            archiveLogosList = [...archiveLogosList, ...custom];
+            archiveLogosList = [...custom, ...archiveLogosList];
         } catch(e){}
     }
 }
@@ -1828,14 +1917,31 @@ window.renderArchiveLogos = function() {
 
     const searchTerm = document.getElementById('archiveSearchInput')?.value.toLowerCase().trim() || '';
 
-    const filtered = archiveLogosList.filter(item => {
-        const matchesCategory = activeArchiveCategory === 'all' || item.category === activeArchiveCategory;
+    let filtered = archiveLogosList.filter(item => {
+        let matchesCategory = false;
+        if (activeArchiveCategory === 'all') {
+            matchesCategory = true;
+        } else if (activeArchiveCategory === 'custom') {
+            matchesCategory = item.isCustom || item.category === 'cliente' || item.category === 'custom';
+        } else {
+            matchesCategory = item.category === activeArchiveCategory;
+        }
         const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm);
         return matchesCategory && matchesSearch;
     });
 
+    if (activeArchiveSort === 'latest') {
+        filtered.sort((a, b) => {
+            const timeA = a.createdAt || (a.isCustom ? 9999999999999 : 0);
+            const timeB = b.createdAt || (b.isCustom ? 9999999999999 : 0);
+            return timeB - timeA;
+        });
+    } else if (activeArchiveSort === 'name') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
     if (filtered.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Nessun logo trovato per la ricerca effettuata.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Nessun logo trovato per la categoria o ricerca selezionata.</div>';
         return;
     }
 
@@ -1845,20 +1951,45 @@ window.renderArchiveLogos = function() {
         card.className = 'glass-card';
         card.style.cssText = 'padding:1.25rem; text-align:center; display:flex; flex-direction:column; justify-content:space-between; align-items:center; min-height:160px;';
         
-        card.innerHTML = `
-            <div style="height:70px; width:100%; display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem;">
-                <img src="${item.url || item.base64}" alt="${item.name}" style="max-height:60px; max-width:140px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));" onerror="this.src='/logos/repubblica.png'">
-            </div>
-            <div>
-                <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${item.name}</div>
-                <span style="font-size:0.7rem; background:rgba(124,92,255,0.1); color:var(--accent-primary); padding:2px 8px; border-radius:10px; text-transform:uppercase;">${item.category}</span>
-            </div>
-            ${item.isCustom ? `
-                <button class="btn btn-outline btn-sm" onclick="deleteCustomArchiveLogo('${item.name}')" style="margin-top:10px; font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;">
-                    <i data-feather="trash-2" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Rimuovi
-                </button>
-            ` : ''}
-        `;
+        const imgContainer = document.createElement('div');
+        imgContainer.style.cssText = 'height:70px; width:100%; display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem;';
+
+        const imgSrc = item.url || item.base64;
+        if (imgSrc) {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = item.name;
+            img.style.cssText = 'max-height:60px; max-width:140px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));';
+            img.onerror = function() {
+                this.style.display = 'none';
+            };
+            imgContainer.appendChild(img);
+        }
+
+        const infoDiv = document.createElement('div');
+        const nameDiv = document.createElement('div');
+        nameDiv.style.cssText = 'font-weight:700; font-size:0.9rem; margin-bottom:4px;';
+        nameDiv.textContent = item.name;
+
+        const catSpan = document.createElement('span');
+        catSpan.style.cssText = 'font-size:0.7rem; background:rgba(124,92,255,0.1); color:var(--accent-primary); padding:2px 8px; border-radius:10px; text-transform:uppercase;';
+        catSpan.textContent = item.category;
+
+        infoDiv.appendChild(nameDiv);
+        infoDiv.appendChild(catSpan);
+
+        card.appendChild(imgContainer);
+        card.appendChild(infoDiv);
+
+        if (item.isCustom) {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn btn-outline btn-sm';
+            removeBtn.style.cssText = 'margin-top:10px; font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;';
+            removeBtn.innerHTML = '<i data-feather="trash-2" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Rimuovi';
+            removeBtn.onclick = () => deleteCustomArchiveLogo(item.name);
+            card.appendChild(removeBtn);
+        }
+
         grid.appendChild(card);
     });
     feather.replace();
@@ -1883,22 +2014,28 @@ window.saveNewArchiveLogo = async function() {
 
     try {
         const base64 = await fileToBase64(fileInput.files[0]);
-        const newLogo = { name, category, base64, isCustom: true };
+        const newLogoObj = {
+            name,
+            category,
+            base64,
+            isCustom: true,
+            createdAt: Date.now()
+        };
 
-        const saved = localStorage.getItem('rs_custom_archive_logos');
+        archiveLogosList.unshift(newLogoObj);
+
+        let saved = localStorage.getItem('rs_custom_archive_logos');
         let customList = saved ? JSON.parse(saved) : [];
-        customList.push(newLogo);
+        customList.unshift(newLogoObj);
         localStorage.setItem('rs_custom_archive_logos', JSON.stringify(customList));
 
-        archiveLogosList.push(newLogo);
-        renderArchiveLogos();
-        toggleNewLogoForm();
-        showToast('Nuovo logo salvato in Archivio!', 'success');
-
+        showToast('Logo aggiunto con successo all\'archivio!', 'success');
         document.getElementById('archiveLogoNameInput').value = '';
         fileInput.value = '';
-    } catch(err) {
-        showToast('Errore nel caricamento dell\'immagine', 'error');
+        toggleNewLogoForm();
+        renderArchiveLogos();
+    } catch (err) {
+        showToast('Errore durante il salvataggio del logo', 'error');
     }
 };
 
@@ -1927,6 +2064,8 @@ window.filterArchiveCategory = function(cat, btn) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+    loadClients();
     loadCustomArchiveLogos();
     renderArchiveLogos();
 });

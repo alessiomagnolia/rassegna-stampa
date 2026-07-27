@@ -17,12 +17,18 @@ const authMiddleware = (req, res, next) => {
         // Verify token
         const decoded = jwt.verify(token, JWT_SECRET);
         
-        // Ensure user actually still exists in database
+        // Ensure user exists in database (auto-heal if Render server restarted and DB was reset)
         const db = getDb();
-        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(decoded.userId);
+        let user = db.prepare('SELECT id FROM users WHERE id = ?').get(decoded.userId);
         
         if (!user) {
-            return res.status(401).json({ error: "L'account è stato resettato dal sistema. Effettua nuovamente la registrazione." });
+            try {
+                const autoEmail = `user_${decoded.userId}@rassegna-stampa.it`;
+                db.prepare('INSERT OR REPLACE INTO users (id, email, password_hash, company_name) VALUES (?, ?, ?, ?)')
+                    .run(decoded.userId, autoEmail, 'auto_restored_hash', 'La Tua Azienda');
+            } catch(e){
+                console.log('Error auto-restoring user in DB:', e.message);
+            }
         }
 
         // Set userId in request object

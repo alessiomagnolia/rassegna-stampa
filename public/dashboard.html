@@ -38,7 +38,7 @@
                 <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.85rem; cursor:pointer; max-width:160px;">
                     <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
-                <button id="btnManageClient" class="btn btn-outline btn-sm" title="Gestisci / Nuovo Cliente" style="padding:2px 6px; border:none; background:transparent; cursor:pointer;">
+                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Gestisci / Nuovo Cliente" style="padding:2px 6px; border:none; background:transparent; cursor:pointer;">
                     <i data-feather="settings" style="width:14px;height:14px;"></i>
                 </button>
             </div>
@@ -769,11 +769,14 @@
                     <div>
                         <label style="font-size:0.85rem; font-weight:600; margin-bottom:4px; display:block;">Categoria / Tipologia</label>
                         <select id="archiveLogoCategoryInput" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
-                            <option value="nazionale">Nazionale</option>
-                            <option value="locale">Locale / Regionale</option>
-                            <option value="economico">Economico / Finanziario</option>
-                            <option value="sportivo">Sportivo</option>
-                            <option value="cliente">Logo Cliente</option>
+                            <option value="nazionale">Stampa Nazionale</option>
+                            <option value="locale">Quotidiano Locale / Regionale</option>
+                            <option value="web">Testata Web / Digital</option>
+                            <option value="agenzia">Agenzia di Stampa</option>
+                            <option value="economico">Economia & Finanza</option>
+                            <option value="sportivo">Sport</option>
+                            <option value="broadcast">TV & Radio Broadcast</option>
+                            <option value="cliente">Logo Cliente / Brand</option>
                         </select>
                     </div>
                     <div>
@@ -790,15 +793,23 @@
 
             <!-- Search & Category Filters -->
             <div class="glass-card" style="padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-                <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:250px;">
+                <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:260px;">
                     <i data-feather="search" style="color:var(--text-muted);"></i>
                     <input type="text" id="archiveSearchInput" placeholder="Cerca logo per nome..." onkeyup="filterArchiveLogos()" style="width:100%; border:none; background:transparent; color:var(--text-primary); outline:none; font-size:0.9rem;">
+                    <button type="button" id="btnSortArchive" class="btn btn-outline btn-sm" onclick="toggleArchiveSort(this)" style="display:flex; align-items:center; gap:4px; font-weight:600; white-space:nowrap; border-color:var(--accent-primary); color:var(--accent-primary);">
+                        <i data-feather="clock" style="width:14px;height:14px;"></i> Ultimi Aggiunti
+                    </button>
                 </div>
-                <div style="display:flex; gap:6px;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button type="button" class="btn btn-outline btn-sm archive-cat-btn active" onclick="filterArchiveCategory('all', this)">Tutti</button>
                     <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('nazionale', this)">Nazionali</button>
                     <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('locale', this)">Locali</button>
-                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('cliente', this)">I Miei Loghi</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('web', this)">Web & Digital</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('agenzia', this)">Agenzie Stampa</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('economico', this)">Economia</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('sportivo', this)">Sport</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('broadcast', this)">TV & Radio</button>
+                    <button type="button" class="btn btn-outline btn-sm archive-cat-btn" onclick="filterArchiveCategory('custom', this)">I Miei Loghi</button>
                 </div>
             </div>
 
@@ -1025,7 +1036,7 @@
         <div class="modal-content glass-card" style="max-width: 680px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3 style="margin:0;"><i data-feather="users" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"></i> Gestione Memoria Clienti</h3>
-                <button id="btnCloseClientModal" class="btn-icon"><i data-feather="x"></i></button>
+                <button id="btnCloseClientModal" class="btn-icon" onclick="closeClientModal()"><i data-feather="x"></i></button>
             </div>
 
             <!-- Client Form -->
@@ -1067,8 +1078,8 @@
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button type="button" id="btnCancelClientEdit" class="btn btn-outline btn-sm hidden">Annulla</button>
-                    <button type="button" id="btnSaveClient" class="btn btn-gradient btn-sm">Salva Cliente</button>
+                    <button type="button" id="btnCancelClientEdit" class="btn btn-outline btn-sm hidden" onclick="resetClientForm()">Annulla</button>
+                    <button type="button" id="btnSaveClient" class="btn btn-gradient btn-sm" onclick="saveClientFromForm()">Salva Cliente</button>
                 </div>
             </div>
 
@@ -1272,6 +1283,7 @@
 
         feather.replace();
     </script>
+    <script src="app.js?v=9"></script>
     <script src="ui.js"></script>
 </body>
 </html>
