@@ -431,18 +431,36 @@
                 </div>
             </section>
 
-            <!-- FILTRI RAPIDI -->
-            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.25rem;">
-                <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); white-space:nowrap;">Filtri rapidi:</span>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='politica'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">🏛 Politica</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='economia'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">📈 Economia</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='tecnologia'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">💻 Tecnologia</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='sport'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">⚽ Sport</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='ambiente'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">🌿 Ambiente</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='salute'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">❤️ Salute</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='cultura'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">🎭 Cultura</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('newsKeyword').value='cronaca'; document.getElementById('btnSearchNews').click();" style="border-radius:20px; font-size:0.8rem; padding:4px 12px;">📰 Cronaca</button>
-            </div>
+                <!-- TOGGLE FILTRI RAPIDI -->
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="display:flex; align-items:center; gap:6px; font-weight:600;">
+                        <i data-feather="sliders" style="width:14px;height:14px;"></i>
+                        <span>Filtri Rapidi</span>
+                        <i data-feather="chevron-down" class="icon-toggle-filter" style="width:14px;height:14px; transition:transform 0.2s ease;"></i>
+                    </button>
+                </div>
+
+                <!-- COLLAPSIBLE QUICK FILTERS PANEL -->
+                <div id="quickFiltersPanel" class="hidden" style="margin-top:0.75rem; padding:1rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px;">
+                    <div style="display:flex; flex-direction:column; gap:1rem;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Periodo Rapido:</span>
+                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('today', this)">Oggi</button>
+                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('3days', this)">Ultimi 3 Giorni</button>
+                            <button type="button" class="btn btn-outline btn-sm news-date-preset active" onclick="setNewsDatePreset('7days', this)">Ultimi 7 Giorni</button>
+                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('30days', this)">Ultimi 30 Giorni</button>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Filtro Fonti:</span>
+                            <button type="button" class="btn btn-outline btn-sm news-source-filter active" onclick="filterNewsSource('all', this)">Tutte</button>
+                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('nazionale', this)">Stampa Naz.</button>
+                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('locale', this)">Locali</button>
+                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('web', this)">Web & Digital</button>
+                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('agenzia', this)">Agenzie</button>
+                        </div>
+                    </div>
+                </div>
 
             <!-- RESULTS TOOLBAR (hidden until search) -->
             <div id="newsResultsToolbar" class="hidden" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">

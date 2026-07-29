@@ -1047,6 +1047,75 @@ async function selectLogoFromArchive(url) {
 // ============================================================
 let currentNewsResults = [];
 let selectedNewsIndices = new Set();
+let activeNewsSourceFilter = 'all';
+
+window.toggleQuickFiltersPanel = function(btn) {
+    try {
+        const panel = document.getElementById('quickFiltersPanel');
+        if (!panel) return;
+        const isHidden = panel.classList.contains('hidden');
+        if (isHidden) {
+            panel.classList.remove('hidden');
+            panel.style.display = 'block';
+        } else {
+            panel.classList.add('hidden');
+            panel.style.display = 'none';
+        }
+        const chevron = btn ? btn.querySelector('.icon-toggle-filter') : document.querySelector('.icon-toggle-filter');
+        if (chevron) {
+            chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+    } catch(err) {
+        console.error('toggleQuickFiltersPanel error:', err);
+    }
+};
+
+window.setNewsDatePreset = function(preset, btn) {
+    try {
+        document.querySelectorAll('.news-date-preset').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const toDate = new Date();
+        let fromDate = new Date();
+
+        if (preset === 'today') {
+            fromDate = new Date();
+        } else if (preset === '3days') {
+            fromDate.setDate(toDate.getDate() - 3);
+        } else if (preset === '7days') {
+            fromDate.setDate(toDate.getDate() - 7);
+        } else if (preset === '30days') {
+            fromDate.setDate(toDate.getDate() - 30);
+        }
+
+        const formatDateStr = d => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        const fromInput = document.getElementById('newsDateFrom');
+        if (fromInput) fromInput.value = formatDateStr(fromDate);
+        const toInput = document.getElementById('newsDateTo');
+        if (toInput) toInput.value = formatDateStr(toDate);
+
+        showToast('Filtro data impostato', 'info');
+    } catch(err) {
+        console.error('setNewsDatePreset error:', err);
+    }
+};
+
+window.filterNewsSource = function(category, btn) {
+    try {
+        activeNewsSourceFilter = category;
+        document.querySelectorAll('.news-source-filter').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderNewsResults();
+    } catch(err) {
+        console.error('filterNewsSource error:', err);
+    }
+};
 
 async function searchNews() {
     const q = document.getElementById('newsKeyword').value.trim();
@@ -1107,10 +1176,27 @@ async function searchNews() {
 
 function renderNewsResults() {
     const grid = document.getElementById('newsResultsGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     grid.classList.remove('hidden');
 
-    currentNewsResults.forEach((news, idx) => {
+    const filtered = currentNewsResults.filter((news) => {
+        if (activeNewsSourceFilter === 'all') return true;
+        const src = (news.source || '').toLowerCase();
+        if (activeNewsSourceFilter === 'nazionale') return src.includes('repubblica') || src.includes('corriere') || src.includes('stampa') || src.includes('giornale') || src.includes('libero') || src.includes('sole') || src.includes('avvenire') || src.includes('fatto');
+        if (activeNewsSourceFilter === 'locale') return src.includes('lecco') || src.includes('sannio') || src.includes('benevento') || src.includes('mattino') || src.includes('messaggero') || src.includes('gazzetta') || src.includes('resto') || src.includes('secolo');
+        if (activeNewsSourceFilter === 'web') return src.includes('web') || src.includes('fanpage') || src.includes('open') || src.includes('diario') || src.includes('post') || src.includes('today') || src.includes('tpi');
+        if (activeNewsSourceFilter === 'agenzia') return src.includes('ansa') || src.includes('adnkronos') || src.includes('agi') || src.includes('askanews') || src.includes('dire') || src.includes('lapresse');
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Nessuna notizia corrispondente al filtro fonti selezionato.</div>';
+        return;
+    }
+
+    filtered.forEach((news) => {
+        const idx = currentNewsResults.indexOf(news);
         const isSelected = selectedNewsIndices.has(idx);
         const card = document.createElement('div');
         card.className = `news-card ${isSelected ? 'selected' : ''}`;
