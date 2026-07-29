@@ -84,23 +84,15 @@ router.post('/login', async (req, res) => {
         }
 
         const db = getDb();
-        let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
 
         if (!user) {
-            // Auto-provision user account on login if DB was reset by Render restart
-            const salt = await bcrypt.genSalt(10);
-            const password_hash = await bcrypt.hash(password, salt);
-            const company_name = email.split('@')[0] || 'La Tua Azienda';
+            return res.status(401).json({ error: 'Credenziali non valide.' });
+        }
 
-            const info = db.prepare('INSERT INTO users (email, password_hash, company_name) VALUES (?, ?, ?)')
-                .run(email, password_hash, company_name);
-
-            user = { id: info.lastInsertRowid, email, password_hash, company_name, logo_path: '' };
-        } else {
-            const isMatch = await bcrypt.compare(password, user.password_hash);
-            if (!isMatch) {
-                return res.status(401).json({ error: 'Password errata.' });
-            }
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Credenziali non valide.' });
         }
 
         const token = generateToken(user.id);
