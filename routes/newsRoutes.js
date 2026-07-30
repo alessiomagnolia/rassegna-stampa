@@ -333,9 +333,8 @@ router.get('/search', authMiddleware, async (req, res) => {
 
             return true;
         };
-        // --- MULTI-ENGINE & MULTI-CLUSTER PARALLEL SEARCH ARCHITECTURE ---
-        console.log(`[Multi-Engine Search] Launching parallel search for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
-        const exactQuery = '"' + queryClean + '"';
+        // --- MULTI-ENGINE & MULTI-TARGET PARALLEL SEARCH ENGINE ---
+        console.log(`[Multi-Engine Search] Executing 15+ parallel queries for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
 
         let dateFilters = '';
         if (from) {
@@ -347,46 +346,41 @@ router.get('/search', authMiddleware, async (req, res) => {
             if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
-        const socialExclusion = shouldExcludeSocial
-            ? ' -site:facebook.com -site:twitter.com -site:x.com -site:instagram.com -site:linkedin.com -site:youtube.com -site:tiktok.com'
-            : '';
+        // Clean query term without quotes for maximum Google RSS recall
+        const qTerm = queryClean.replace(/["']/g, '').trim();
 
-        // Build 4 targeted source cluster queries to bypass Google News single-feed limits
-        const agenzieSites   = 'site:ansa.it OR site:agenzianova.com OR site:agi.it OR site:askanews.it OR site:adnkronos.com OR site:italpress.com OR site:agipress.it';
-        const nazionaliSites = 'site:corriere.it OR site:repubblica.it OR site:lastampa.it OR site:ilsole24ore.com OR site:ilmessaggero.it OR site:iltempo.it OR site:liberoquotidiano.it OR site:ilgiornale.it OR site:ilgiornaleditalia.it OR site:ilmattino.it OR site:ilgazzettino.it OR site:leggo.it OR site:quotidiano.net';
-        const localiSites    = 'site:meridiananotizie.it OR site:lecronachelucane.it OR site:qds.it OR site:strettoweb.com OR site:cronachedellacalabria.it OR site:trmtv.it OR site:savonanews.it OR site:quotidianodelsud.it OR site:ilfattonisseno.it OR site:blogsicilia.it OR site:sanremonews.it OR site:gazzettadigenova.it OR site:potenzanews.net OR site:accadeora.it';
-        const webFinanzaSites= 'site:affaritaliani.it OR site:fanpage.it OR site:formiche.net OR site:key4biz.it OR site:ledicola.it OR site:teleborsa.it OR site:borsaitaliana.it OR site:ildenaro.it OR site:economymagazine.it OR site:startupbusiness.it OR site:lidentita.it OR site:ladiscussione.com';
+        // Top individual domain queries (Google RSS supports site:domain cleanly when queried individually)
+        const topDomains = [
+            'ilsole24ore.com', 'repubblica.it', 'corriere.it', 'ansa.it', 'agenzianova.com',
+            'iltempo.it', 'liberoquotidiano.it', 'ilgiornaleditalia.it', 'meridiananotizie.it',
+            'borsaitaliana.it', 'affaritaliani.it', 'lastampa.it', 'ilmattino.it', 'quotidiano.net', 'trmtv.it'
+        ];
 
-        const qGeneral   = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org' + socialExclusion + dateFilters;
-        const qAgenzie   = exactQuery + ' (' + agenzieSites + ')' + dateFilters;
-        const qNazionali = exactQuery + ' (' + nazionaliSites + ')' + dateFilters;
-        const qLocali    = exactQuery + ' (' + localiSites + ')' + dateFilters;
-        const qWeb       = exactQuery + ' (' + webFinanzaSites + ')' + dateFilters;
+        // Build list of clean, valid search URLs
+        const searchUrls = [
+            // 1. General Google News RSS feed
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            // 2. Italian context query variant
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            // 3. Bing News RSS feed
+            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
+            // 4. Individual site-specific queries for top 15 news domains
+            ...topDomains.map(d => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' site:' + d + dateFilters)}&hl=it&gl=IT&ceid=IT:it`)
+        ];
 
-        // Run 6 parallel queries across Google News Clusters + Bing News RSS
-        const [resGeneral, resAgenzie, resNazionali, resLocali, resWeb, resBing] = await Promise.allSettled([
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qGeneral)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qAgenzie)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qNazionali)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qLocali)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qWeb)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://www.bing.com/news/search?q=${encodeURIComponent(queryClean)}&format=rss&cc=IT`),
-        ]);
+        // Fetch all 18 queries in parallel
+        const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u)));
 
         try {
             const priorityDomainSet = new Set(PRIORITY_SOURCES.map(s => s.domain));
+            let allResults = [];
 
-            const listGeneral   = resGeneral.status   === 'fulfilled' ? parseRSS(resGeneral.value)   : [];
-            const listAgenzie   = resAgenzie.status   === 'fulfilled' ? parseRSS(resAgenzie.value, 'Agenzia')   : [];
-            const listNazionali = resNazionali.status === 'fulfilled' ? parseRSS(resNazionali.value, 'Stampa Naz.') : [];
-            const listLocali    = resLocali.status    === 'fulfilled' ? parseRSS(resLocali.value, 'Stampa Locale') : [];
-            const listWeb       = resWeb.status       === 'fulfilled' ? parseRSS(resWeb.value, 'Web')           : [];
-            const listBing      = resBing.status      === 'fulfilled' ? parseRSS(resBing.value, 'Bing News')    : [];
-
-            // Flag priority cluster results
-            [...listAgenzie, ...listNazionali, ...listLocali, ...listWeb].forEach(r => { r._isPriority = true; });
-
-            let allResults = [...listGeneral, ...listAgenzie, ...listNazionali, ...listLocali, ...listWeb, ...listBing];
+            responses.forEach(res => {
+                if (res.status === 'fulfilled' && res.value) {
+                    const parsed = parseRSS(res.value);
+                    allResults.push(...parsed);
+                }
+            });
 
             // Filter by date range if provided
             let fromTime = 0;
@@ -405,25 +399,38 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Deduplicate by title (priority source version wins if duplicate)
+            // Deduplicate by title & URL
             const seenTitles = new Set();
+            const seenUrls = new Set();
             let uniqueResults = [];
+
             for (const item of allResults) {
-                const normalizedTitle = item.title.toLowerCase().substring(0, 45);
-                if (!seenTitles.has(normalizedTitle)) {
+                const normalizedTitle = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
+                const normUrl = (item.url || '').toLowerCase();
+
+                if (!seenTitles.has(normalizedTitle) && !seenUrls.has(normUrl)) {
                     seenTitles.add(normalizedTitle);
+                    if (normUrl) seenUrls.add(normUrl);
                     uniqueResults.push(item);
                 }
             }
 
-            // Sort: priority-flagged results first, then by date
+            // Flag priority sources
+            uniqueResults.forEach(item => {
+                try {
+                    const d = new URL(item.url).hostname.replace(/^www\./, '');
+                    if (priorityDomainSet.has(d)) item._isPriority = true;
+                } catch(e){}
+            });
+
+            // Sort by priority then timestamp
             uniqueResults.sort((a, b) => {
                 if (a._isPriority && !b._isPriority) return -1;
                 if (!a._isPriority && b._isPriority) return 1;
                 return (b.timestamp || 0) - (a.timestamp || 0);
             });
 
-            // Set maximum capacity to 200 items for maximum recall
+            // Allow up to 200 results
             uniqueResults = uniqueResults.slice(0, 200);
 
             // Resolve Google News RSS links
@@ -443,7 +450,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 } catch(e){}
             }));
 
-            // Apply strict relevance filter
+            // Apply strict relevance & social exclusion filter
             uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
                 const isPriority = r._isPriority || false;
                 delete r.timestamp;
@@ -453,8 +460,8 @@ router.get('/search', authMiddleware, async (req, res) => {
             });
 
             if (uniqueResults.length > 0) {
-                console.log(`[Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti da 6 cluster paralleli.`);
-                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'multi-cluster-rss' });
+                console.log(`[Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti da 18 query parallele.`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'multi-engine-rss' });
             }
         } catch(rssErr) {
             console.log(`[Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
