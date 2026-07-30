@@ -1229,8 +1229,10 @@ function renderNewsResults() {
             <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${news.title}</h4>
             <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem; line-height:1.5;">${news.snippet}...</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; gap:0.5rem; flex-wrap:wrap;">
-                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-secondary); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
-                <button class="btn btn-sm btn-outline" onclick="includeSingleNewsInRassegna(${idx}, event)" style="font-size:0.75rem; padding:0.25rem 0.6rem; border-color:var(--accent-primary); color:var(--accent-primary);"><i data-feather="plus-circle" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> + Includi in rassegna</button>
+                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
+                <button type="button" onclick="includeSingleNewsInRassegna(${idx}, event)" style="font-size:0.8rem; font-weight:700; background:linear-gradient(135deg, #00d4aa 0%, #00b494 100%); color:#0f172a; border:none; padding:0.35rem 0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; box-shadow:0 2px 8px rgba(0,212,170,0.25);">
+                    <i data-feather="plus-circle" style="width:13px;height:13px;"></i> Includi in rassegna
+                </button>
                 <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>
             </div>
         `;
