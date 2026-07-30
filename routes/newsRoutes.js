@@ -346,8 +346,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             const parts = to.split('/');
             if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
+        // Clean query term without quotes for maximum Google & Bing RSS recall
+        const qTerm = queryClean.replace(/["']/g, '').trim();
 
         // Build domain to source name map from prioritySources database
+        const allPriorityDomains = getAllDomains();
         const domainToSourceMap = new Map();
         PRIORITY_SOURCES.forEach(s => {
             if (s.domain) {
@@ -355,6 +358,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 domainToSourceMap.set(cleanD, s.name);
             }
         });
+        const priorityDomainSet = new Set(allPriorityDomains);
 
         // 8 fast, parallel queries across Google News RSS & Bing News RSS
         const searchUrls = [
@@ -402,7 +406,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // --- STEP 1: MANDATORY RESOLUTION OF DIRECT PUBLISHER URLS ---
+            // --- STEP 1: RESOLVE GOOGLE NEWS URLS TO DIRECT PUBLISHER URLS ---
             await Promise.all(rawResults.map(async (item) => {
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
@@ -414,8 +418,8 @@ router.get('/search', authMiddleware, async (req, res) => {
                 }
             }));
 
-            // --- STEP 2: STRICT FILTERING & METADATA CLEANUP FOR PRIORITY SOURCES ---
-            let priorityDbResults = [];
+            // --- STEP 2: METADATA CLEANUP & PRIORITY DATABASE MATCHING ---
+            let processedResults = [];
 
             for (const item of rawResults) {
                 if (!item.url) continue;
@@ -430,7 +434,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                     continue;
                 }
 
-                // Match against priority database sources
+                // Match against priority database sources (191 sources)
                 let matchedSourceName = domainToSourceMap.get(realDomain);
                 if (!matchedSourceName) {
                     for (const source of PRIORITY_SOURCES) {
@@ -442,25 +446,21 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }
                 }
 
-                // STRICT DATABASE RULE: Only accept articles matching our priority sources database
-                if (!matchedSourceName) continue;
-
-                // Assign clean, verified metadata
                 item.domain = realDomain;
-                item.source = matchedSourceName; // e.g. "Il Tempo", "Il Sole 24 ORE", "ANSA"
-                item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`; // Real newspaper favicon!
-                item.isPrioritySource = true;
+                item.source = matchedSourceName || realDomain; // Priority name (e.g. "Il Tempo", "Il Sole 24 ORE") or domain name
+                item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`; // Real newspaper logo!
+                item._isPriority = !!matchedSourceName;
 
-                priorityDbResults.push(item);
+                processedResults.push(item);
             }
 
-            // --- STEP 3: DEDUPLICATE BY REAL DOMAIN + TITLE ---
-            // (Preserves identical press releases published across DIFFERENT outlets in our database)
+            // --- STEP 3: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
+            // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
             const seenUrls = new Set();
             const seenDomainTitle = new Set();
             let uniqueResults = [];
 
-            for (const item of priorityDbResults) {
+            for (const item of processedResults) {
                 const normUrl = (item.url || '').toLowerCase().trim();
                 const domain = (item.domain || '').toLowerCase().trim();
                 const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 45);
@@ -475,23 +475,32 @@ router.get('/search', authMiddleware, async (req, res) => {
                 uniqueResults.push(item);
             }
 
-            // Sort by date
-            uniqueResults.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            // --- STEP 4: SORT BY PRIORITY SOURCE FIRST, THEN BY DATE ---
+            uniqueResults.sort((a, b) => {
+                if (a._isPriority && !b._isPriority) return -1;
+                if (!a._isPriority && b._isPriority) return 1;
+                return (b.timestamp || 0) - (a.timestamp || 0);
+            });
 
-            // --- STEP 4: APPLY RELEVANCE & SOCIAL FILTERS ---
+            // Allow up to 300 results
+            uniqueResults = uniqueResults.slice(0, 300);
+
+            // --- STEP 5: APPLY RELEVANCE & SOCIAL FILTERS ---
             uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
+                const isPriority = r._isPriority || false;
                 delete r.timestamp;
                 delete r._isPriority;
-                r.isPrioritySource = true;
+                r.isPrioritySource = isPriority;
                 return r;
             });
 
             if (uniqueResults.length > 0) {
-                console.log(`[Priority DB Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati ESCLUSIVI dal Database Fonti.`);
-                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'priority-db-rss' });
+                const priorityCount = uniqueResults.filter(r => r.isPrioritySource).length;
+                console.log(`[Fast Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati (${priorityCount} da fonti prioritarie).`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'multi-engine-rss' });
             }
         } catch(rssErr) {
-            console.log(`[Priority DB Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
+            console.log(`[Fast Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
         }
 
         // --- SECONDARY FALLBACK: GNews API & NewsAPI.org ---
