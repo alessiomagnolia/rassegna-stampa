@@ -1117,6 +1117,20 @@ window.filterNewsSource = function(category, btn) {
     }
 };
 
+let excludeSocialNetworks = true;
+
+function toggleSocialFilter(btn) {
+    excludeSocialNetworks = !excludeSocialNetworks;
+    if (excludeSocialNetworks) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i data-feather="shield-off" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Social Network: Esclusi (Default)';
+    } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '<i data-feather="share-2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Social Network: Inclusi';
+    }
+    feather.replace();
+}
+
 async function searchNews() {
     const q = document.getElementById('newsKeyword').value.trim();
     const from = document.getElementById('newsDateFrom').value;
@@ -1136,6 +1150,9 @@ async function searchNews() {
 
     try {
         let url = `/api/news/search?q=${encodeURIComponent(q)}`;
+        if (!excludeSocialNetworks) {
+            url += `&includeSocial=true`;
+        }
         // Convert YYYY-MM-DD to DD/MM/YYYY for backend
         if (from) {
             const [y, m, d] = from.split('-');
@@ -1148,6 +1165,7 @@ async function searchNews() {
 
         const data = await apiCall('GET', url);
         currentNewsResults = data.results || [];
+
         selectedNewsIndices.clear();
         
         document.getElementById('newsLoadingState').classList.add('hidden');

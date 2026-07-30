@@ -262,8 +262,10 @@ function parseRSS(xmlText, sourceNameDefault = '') {
  */
 router.get('/search', authMiddleware, async (req, res) => {
     try {
-        const { q, from, to } = req.query;
+        const { q, from, to, includeSocial } = req.query;
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
+
+        const shouldExcludeSocial = includeSocial !== 'true';
 
         // Clean user input: strip any user-entered quotes automatically
         const queryClean = q.replace(/^"+|"+$/g, '').trim();
@@ -281,6 +283,19 @@ router.get('/search', authMiddleware, async (req, res) => {
             'amazon.', 'ebay.', 'aliexpress.', 'temu.', 'shein.', 'booking.', 'tripadvisor.', 'pinterest.'
         ];
 
+        const socialDomains = [
+            'facebook.com', 'fb.com', 'm.facebook.com',
+            'twitter.com', 'x.com', 'mobile.twitter.com',
+            'instagram.com', 'instagr.am',
+            'linkedin.com',
+            'tiktok.com',
+            'youtube.com', 'youtu.be',
+            'reddit.com',
+            'pinterest.com', 'pinterest.it',
+            'threads.net',
+            't.me', 'telegram.org'
+        ];
+
         // Strict filter function to ensure ironclad relevance & quality
         const isRelevantArticle = (art) => {
             if (!art || !art.title || !art.url) return false;
@@ -288,6 +303,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             const snippetLower = (art.snippet || '').toLowerCase();
             const fullText = titleLower + ' ' + snippetLower;
             const domainLower = (art.domain || '').toLowerCase();
+            const urlLower = (art.url || '').toLowerCase();
 
             // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
             if (hasForeignScript(fullText)) return false;
@@ -299,13 +315,18 @@ router.get('/search', authMiddleware, async (req, res) => {
                 if (!allWordsPresent) return false;
             }
 
-            // 3. Reject spam / ad domains
+            // 3. Exclude Social Networks by default
+            if (shouldExcludeSocial) {
+                if (socialDomains.some(sd => domainLower.includes(sd) || urlLower.includes(sd))) return false;
+            }
+
+            // 4. Reject spam / ad domains
             if (spamDomains.some(sd => domainLower.includes(sd))) return false;
 
-            // 4. Reject spam / ad keywords in title
+            // 5. Reject spam / ad keywords in title
             if (spamKeywords.some(sk => titleLower.includes(sk))) return false;
 
-            // 5. Reject non-Italian TLDs commonly associated with spam
+            // 6. Reject non-Italian TLDs commonly associated with spam
             if (domainLower.endsWith('.ru') || domainLower.endsWith('.cn') || domainLower.endsWith('.jp') || domainLower.endsWith('.su') || domainLower.endsWith('.xyz') || domainLower.endsWith('.top')) {
                 return false;
             }
@@ -314,9 +335,13 @@ router.get('/search', authMiddleware, async (req, res) => {
         };
 
         // --- PRIMARY SEARCH: Google News RSS (Official Italian Feed) ---
-        console.log(`[Google News RSS Search] Querying official feed for: "${queryClean}"...`);
+        console.log(`[Google News RSS Search] Querying official feed for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
         const exactQuery = '"' + queryClean + '"';
         let googleQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
+        if (shouldExcludeSocial) {
+            googleQuery += ' -site:facebook.com -site:twitter.com -site:x.com -site:instagram.com -site:linkedin.com -site:youtube.com -site:tiktok.com';
+        }
+
         let dateFilters = '';
         if (from) {
             const parts = from.split('/');
