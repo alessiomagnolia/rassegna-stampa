@@ -6,7 +6,7 @@ const { getDb } = require('../database/db');
 const { GoogleDecoder } = require('google-news-url-decoder');
 const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
-const { buildSiteQuery, PRIORITY_SOURCES } = require('../config/prioritySources');
+const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains } = require('../config/prioritySources');
 
 const router = express.Router();
 
@@ -349,12 +349,9 @@ router.get('/search', authMiddleware, async (req, res) => {
         // Clean query term without quotes for maximum Google RSS recall
         const qTerm = queryClean.replace(/["']/g, '').trim();
 
-        // Top individual domain queries (Google RSS supports site:domain cleanly when queried individually)
-        const topDomains = [
-            'ilsole24ore.com', 'repubblica.it', 'corriere.it', 'ansa.it', 'agenzianova.com',
-            'iltempo.it', 'liberoquotidiano.it', 'ilgiornaleditalia.it', 'meridiananotizie.it',
-            'borsaitaliana.it', 'affaritaliani.it', 'lastampa.it', 'ilmattino.it', 'quotidiano.net', 'trmtv.it'
-        ];
+        // Dynamically extract top domains from prioritySources database (191 sources extracted from press reviews)
+        const allPriorityDomains = getAllDomains();
+        const topDomains = allPriorityDomains.slice(0, 20);
 
         // Build list of clean, valid search URLs
         const searchUrls = [
@@ -364,16 +361,17 @@ router.get('/search', authMiddleware, async (req, res) => {
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
             // 3. Bing News RSS feed
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            // 4. Individual site-specific queries for top 15 news domains
+            // 4. Individual site-specific queries for top priority news domains from our database
             ...topDomains.map(d => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' site:' + d + dateFilters)}&hl=it&gl=IT&ceid=IT:it`)
         ];
 
-        // Fetch all 18 queries in parallel
+        // Fetch all parallel queries
         const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u)));
 
         try {
-            const priorityDomainSet = new Set(PRIORITY_SOURCES.map(s => s.domain));
+            const priorityDomainSet = new Set(allPriorityDomains);
             let allResults = [];
+
 
             responses.forEach(res => {
                 if (res.status === 'fulfilled' && res.value) {
