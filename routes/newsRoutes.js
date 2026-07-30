@@ -334,22 +334,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             return true;
         };
 
-        // --- FAST MULTI-ENGINE PARALLEL SEARCH ENGINE ---
-        console.log(`[Fast Multi-Engine Search] Executing 8 parallel queries for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
+        // --- DOMAIN-TARGETED DIRECT WEB SEARCH ENGINE ---
+        // Executes direct web searches (keyword + site:domain) for priority database sources
+        console.log(`[Domain-Targeted Search] Searching priority database sources for: "${queryClean}"...`);
 
-        let dateFilters = '';
-        if (from) {
-            const parts = from.split('/');
-            if (parts.length === 3) dateFilters += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-        if (to) {
-            const parts = to.split('/');
-            if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-        // Clean query term without quotes for maximum Google & Bing RSS recall
         const qTerm = queryClean.replace(/["']/g, '').trim();
-
-        // Build domain to source name map from prioritySources database
         const allPriorityDomains = getAllDomains();
         const domainToSourceMap = new Map();
         PRIORITY_SOURCES.forEach(s => {
@@ -358,18 +347,19 @@ router.get('/search', authMiddleware, async (req, res) => {
                 domainToSourceMap.set(cleanD, s.name);
             }
         });
-        const priorityDomainSet = new Set(allPriorityDomains);
 
-        // 8 fast, parallel queries across Google News RSS & Bing News RSS
+        // Top 25 priority sources from database to target individually
+        const keyDomains = allPriorityDomains.slice(0, 25);
+
+        // Build list of targeted web search URLs (parola chiave + sito di fiducia)
         const searchUrls = [
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' (site:ilsole24ore.com OR site:repubblica.it OR site:corriere.it OR site:ansa.it OR site:iltempo.it OR site:lastampa.it)')}&format=rss&cc=IT`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' (site:liberoquotidiano.it OR site:ilgiornaleditalia.it OR site:meridiananotizie.it OR site:affaritaliani.it OR site:borsaitaliana.it OR site:lecronachelucane.it)')}&format=rss&cc=IT`
+            // 1. General Google News RSS
+            `https://news.google.com/rss/search?q=${encodeURIComponent('"' + qTerm + '"' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            // 2. Italian Bing Web News search
+            `https://www.bing.com/news/search?q=${encodeURIComponent('"' + qTerm + '"')}&format=rss&cc=IT`,
+            // 3. Direct site-by-site web searches for top priority domains (sogesid site:repubblica.it, sogesid site:iltempo.it, etc.)
+            ...keyDomains.map(d => `https://www.bing.com/search?q=${encodeURIComponent('"' + qTerm + '" site:' + d)}&format=rss`),
+            ...keyDomains.slice(0, 10).map(d => `https://www.bing.com/news/search?q=${encodeURIComponent('"' + qTerm + '" site:' + d)}&format=rss&cc=IT`)
         ];
 
         const fetchWithTimeout = (url) => Promise.race([
@@ -406,7 +396,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // --- STEP 1: RESOLVE GOOGLE NEWS URLS TO DIRECT PUBLISHER URLS ---
+            // --- STEP 1: MANDATORY RESOLUTION OF DIRECT PUBLISHER URLS ---
             await Promise.all(rawResults.map(async (item) => {
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
@@ -447,12 +437,13 @@ router.get('/search', authMiddleware, async (req, res) => {
                 }
 
                 item.domain = realDomain;
-                item.source = matchedSourceName || realDomain; // Priority name (e.g. "Il Tempo", "Il Sole 24 ORE") or domain name
+                item.source = matchedSourceName || realDomain; // Priority name (e.g. "la Repubblica", "Il Tempo", "Il Sole 24 ORE") or domain name
                 item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`; // Real newspaper logo!
                 item._isPriority = !!matchedSourceName;
 
                 processedResults.push(item);
             }
+
 
             // --- STEP 3: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
             // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
