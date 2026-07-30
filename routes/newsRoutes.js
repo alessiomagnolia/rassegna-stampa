@@ -264,10 +264,40 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         if (apiKey) {
             console.log(`[News API Search] Checking API Key for query: "${q}"...`);
-            
-            // 1. Try GNews API first
+            const queryClean = q.trim();
+            const queryLower = queryClean.toLowerCase();
+
+            // Helper to check if text contains non-latin foreign scripts (Cyrillic, Chinese, Japanese, Korean, Arabic)
+            const hasForeignScript = (str) => /[\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\u0600-\u06FF\u1100-\u11FF]/.test(str);
+
+            // Filter function to ensure relevance & quality
+            const isRelevantItalianArticle = (art) => {
+                const titleLower = (art.title || '').toLowerCase();
+                const snippetLower = (art.snippet || '').toLowerCase();
+                const fullText = titleLower + ' ' + snippetLower;
+
+                // 1. Must NOT contain non-latin foreign scripts (Russian, Chinese, Japanese, Arabic)
+                if (hasForeignScript(fullText)) return false;
+
+                // 2. Must contain the search keyword (or main words if multi-word)
+                const keywords = queryLower.split(/\s+/).filter(w => w.length > 2);
+                if (keywords.length > 0) {
+                    const matchCount = keywords.filter(kw => fullText.includes(kw)).length;
+                    if (matchCount === 0) return false;
+                }
+
+                // 3. Reject non-Italian TLDs commonly associated with spam
+                const domain = (art.domain || '').toLowerCase();
+                if (domain.endsWith('.ru') || domain.endsWith('.cn') || domain.endsWith('.jp') || domain.endsWith('.su') || domain.endsWith('.xyz')) {
+                    return false;
+                }
+
+                return true;
+            };
+
+            // 1. Try GNews API first with exact phrase matching
             try {
-                let gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q.trim())}&lang=it&max=30&apikey=${apiKey}`;
+                let gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent('"' + queryClean + '"')}&lang=it&country=it&in=title,description&max=30&apikey=${apiKey}`;
                 if (from) {
                     const parts = from.split('/');
                     if (parts.length === 3) gnewsUrl += `&from=${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
@@ -279,8 +309,8 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(gnewsUrl);
                 if (data && data.articles && data.articles.length > 0) {
-                    console.log(`[GNews API] Found ${data.articles.length} articles for "${q}"`);
-                    const results = data.articles.map(art => {
+                    console.log(`[GNews API] Received ${data.articles.length} raw articles for "${q}"`);
+                    let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
                             ? `${String(pubDate.getDate()).padStart(2,'0')}/${String(pubDate.getMonth()+1).padStart(2,'0')}/${pubDate.getFullYear()}`
@@ -298,9 +328,12 @@ router.get('/search', authMiddleware, async (req, res) => {
                             image: art.image || null,
                             favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
                         };
-                    });
+                    }).filter(isRelevantItalianArticle);
 
-                    return res.json({ results, total: results.length, query: q, apiSource: 'gnews' });
+                    if (results.length > 0) {
+                        console.log(`[GNews API] Returned ${results.length} clean Italian articles for "${q}"`);
+                        return res.json({ results, total: results.length, query: q, apiSource: 'gnews' });
+                    }
                 }
             } catch (err) {
                 console.log(`[GNews API Notice]: ${err.message}. Trying NewsAPI fallback...`);
@@ -308,7 +341,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
             // 2. Try NewsAPI.org fallback
             try {
-                let newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q.trim())}&language=it&pageSize=30&apiKey=${apiKey}`;
+                let newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent('"' + queryClean + '"')}&language=it&sortBy=publishedAt&pageSize=30&apiKey=${apiKey}`;
                 if (from) {
                     const parts = from.split('/');
                     if (parts.length === 3) newsApiUrl += `&from=${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -320,8 +353,8 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(newsApiUrl);
                 if (data && data.status === 'ok' && data.articles && data.articles.length > 0) {
-                    console.log(`[NewsAPI] Found ${data.articles.length} articles for "${q}"`);
-                    const results = data.articles.map(art => {
+                    console.log(`[NewsAPI] Received ${data.articles.length} raw articles for "${q}"`);
+                    let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
                             ? `${String(pubDate.getDate()).padStart(2,'0')}/${String(pubDate.getMonth()+1).padStart(2,'0')}/${pubDate.getFullYear()}`
@@ -339,9 +372,12 @@ router.get('/search', authMiddleware, async (req, res) => {
                             image: art.urlToImage || null,
                             favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
                         };
-                    });
+                    }).filter(isRelevantItalianArticle);
 
-                    return res.json({ results, total: results.length, query: q, apiSource: 'newsapi' });
+                    if (results.length > 0) {
+                        console.log(`[NewsAPI] Returned ${results.length} clean Italian articles for "${q}"`);
+                        return res.json({ results, total: results.length, query: q, apiSource: 'newsapi' });
+                    }
                 }
             } catch (err) {
                 console.log(`[NewsAPI Notice]: ${err.message}. Falling back to RSS search...`);
