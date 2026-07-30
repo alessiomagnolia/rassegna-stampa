@@ -296,26 +296,26 @@ router.get('/search', authMiddleware, async (req, res) => {
             't.me', 'telegram.org'
         ];
 
-        // Strict filter function to ensure ironclad relevance & quality
+        // Flexible relevance & quality filter
         const isRelevantArticle = (art) => {
             if (!art || !art.title || !art.url) return false;
             const titleLower = (art.title || '').toLowerCase();
             const snippetLower = (art.snippet || '').toLowerCase();
-            const fullText = titleLower + ' ' + snippetLower;
-            const domainLower = (art.domain || '').toLowerCase();
             const urlLower = (art.url || '').toLowerCase();
+            const domainLower = (art.domain || '').toLowerCase();
+            const fullText = titleLower + ' ' + snippetLower + ' ' + urlLower;
 
             // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
             if (hasForeignScript(fullText)) return false;
 
-            // 2. FERROUS RELEVANCE RULE: ALL words in user query MUST be present in title or snippet!
+            // 2. Query word check: at least ONE main word from query must be in title, snippet, or URL
             const words = queryLower.split(/\s+/).filter(w => w.length > 1);
             if (words.length > 0) {
-                const allWordsPresent = words.every(w => fullText.includes(w));
-                if (!allWordsPresent) return false;
+                const matchesQuery = words.some(w => fullText.includes(w));
+                if (!matchesQuery) return false;
             }
 
-            // 3. Exclude Social Networks by default
+            // 3. Exclude Social Networks by default if active
             if (shouldExcludeSocial) {
                 if (socialDomains.some(sd => domainLower.includes(sd) || urlLower.includes(sd))) return false;
             }
@@ -333,8 +333,9 @@ router.get('/search', authMiddleware, async (req, res) => {
 
             return true;
         };
-        // --- MULTI-ENGINE & MULTI-TARGET PARALLEL SEARCH ENGINE ---
-        console.log(`[Multi-Engine Search] Executing 15+ parallel queries for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
+
+        // --- UNLIMITED MULTI-ENGINE & MULTI-TOPIC PARALLEL SEARCH ENGINE ---
+        console.log(`[Unlimited Multi-Engine Search] Launching 20+ parallel queries for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
 
         let dateFilters = '';
         if (from) {
@@ -346,22 +347,22 @@ router.get('/search', authMiddleware, async (req, res) => {
             if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
-        // Clean query term without quotes for maximum Google RSS recall
         const qTerm = queryClean.replace(/["']/g, '').trim();
-
-        // Dynamically extract top domains from prioritySources database (191 sources extracted from press reviews)
         const allPriorityDomains = getAllDomains();
         const topDomains = allPriorityDomains.slice(0, 20);
 
-        // Build list of clean, valid search URLs
+        // Topic expansion terms to retrieve extra press releases and articles
+        const topicExpansions = ['notizie', 'accordo', 'ambiente', 'piano', 'lavori', 'cantieri', 'comunicato'];
+
+        // Build list of clean, valid parallel search URLs
         const searchUrls = [
-            // 1. General Google News RSS feed
+            // General Google News RSS feed
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 2. Italian context query variant
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 3. Bing News RSS feed
+            // Topic expansion queries
+            ...topicExpansions.map(t => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' ' + t + dateFilters)}&hl=it&gl=IT&ceid=IT:it`),
+            // Bing News RSS feed
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            // 4. Individual site-specific queries for top priority news domains from our database
+            // Individual site-specific queries for top 20 news domains
             ...topDomains.map(d => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' site:' + d + dateFilters)}&hl=it&gl=IT&ceid=IT:it`)
         ];
 
@@ -370,13 +371,12 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         try {
             const priorityDomainSet = new Set(allPriorityDomains);
-            let allResults = [];
-
+            let rawResults = [];
 
             responses.forEach(res => {
                 if (res.status === 'fulfilled' && res.value) {
                     const parsed = parseRSS(res.value);
-                    allResults.push(...parsed);
+                    rawResults.push(...parsed);
                 }
             });
 
@@ -392,52 +392,13 @@ router.get('/search', authMiddleware, async (req, res) => {
                 if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
             }
 
-            allResults = allResults.filter(item => {
+            rawResults = rawResults.filter(item => {
                 if (!item.timestamp) return true;
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Deduplicate ONLY exact URLs or same article on the SAME domain (preserve press releases published across DIFFERENT outlets!)
-            const seenUrls = new Set();
-            const seenDomainTitle = new Set();
-            let uniqueResults = [];
-
-            for (const item of allResults) {
-                const normUrl = (item.url || '').toLowerCase().trim();
-                const domain = (item.domain || item.source || '').toLowerCase().trim();
-                const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
-                const domainTitleKey = `${domain}::${normTitle}`;
-
-                if (normUrl && seenUrls.has(normUrl)) continue;
-                if (domainTitleKey && seenDomainTitle.has(domainTitleKey)) continue;
-
-                if (normUrl) seenUrls.add(normUrl);
-                if (domainTitleKey) seenDomainTitle.add(domainTitleKey);
-
-                uniqueResults.push(item);
-            }
-
-
-            // Flag priority sources
-            uniqueResults.forEach(item => {
-                try {
-                    const d = new URL(item.url).hostname.replace(/^www\./, '');
-                    if (priorityDomainSet.has(d)) item._isPriority = true;
-                } catch(e){}
-            });
-
-            // Sort by priority then timestamp
-            uniqueResults.sort((a, b) => {
-                if (a._isPriority && !b._isPriority) return -1;
-                if (!a._isPriority && b._isPriority) return 1;
-                return (b.timestamp || 0) - (a.timestamp || 0);
-            });
-
-            // Allow up to 200 results
-            uniqueResults = uniqueResults.slice(0, 200);
-
-            // Resolve Google News RSS links
-            await Promise.all(uniqueResults.map(async (item) => {
+            // --- STEP 1: RESOLVE GOOGLE NEWS URLS FIRST BEFORE DEDUPLICATION & SORTING ---
+            await Promise.all(rawResults.map(async (item) => {
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     item.url = await resolveGoogleNewsUrl(item.url);
                 }
@@ -453,7 +414,38 @@ router.get('/search', authMiddleware, async (req, res) => {
                 } catch(e){}
             }));
 
-            // Apply strict relevance & social exclusion filter
+            // --- STEP 2: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
+            // (Allows identical press releases published across DIFFERENT news outlets to ALL be kept!)
+            const seenUrls = new Set();
+            const seenDomainTitle = new Set();
+            let uniqueResults = [];
+
+            for (const item of rawResults) {
+                const normUrl = (item.url || '').toLowerCase().trim();
+                const domain = (item.domain || item.source || '').toLowerCase().trim();
+                const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 45);
+                const domainTitleKey = `${domain}::${normTitle}`;
+
+                if (normUrl && seenUrls.has(normUrl)) continue;
+                if (domainTitleKey && seenDomainTitle.has(domainTitleKey)) continue;
+
+                if (normUrl) seenUrls.add(normUrl);
+                if (domainTitleKey) seenDomainTitle.add(domainTitleKey);
+
+                uniqueResults.push(item);
+            }
+
+            // --- STEP 3: SORT BY PRIORITY SOURCE THEN DATE ---
+            uniqueResults.sort((a, b) => {
+                if (a._isPriority && !b._isPriority) return -1;
+                if (!a._isPriority && b._isPriority) return 1;
+                return (b.timestamp || 0) - (a.timestamp || 0);
+            });
+
+            // Set maximum capacity to 500 items for total recall
+            uniqueResults = uniqueResults.slice(0, 500);
+
+            // --- STEP 4: APPLY RELEVANCE & SOCIAL FILTERS ---
             uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
                 const isPriority = r._isPriority || false;
                 delete r.timestamp;
@@ -463,11 +455,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             });
 
             if (uniqueResults.length > 0) {
-                console.log(`[Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti da 18 query parallele.`);
-                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'multi-engine-rss' });
+                console.log(`[Unlimited Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti da 25+ query parallele.`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'unlimited-multi-engine-rss' });
             }
         } catch(rssErr) {
-            console.log(`[Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
+            console.log(`[Unlimited Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
         }
 
         // --- SECONDARY FALLBACK: GNews API & NewsAPI.org ---
