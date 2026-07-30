@@ -18,8 +18,9 @@ function fetchText(url, maxRedirects = 5) {
         const lib = url.startsWith('https') ? https : http;
         const req = lib.get(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; Feedfetcher-Google; +http://www.google.com/feedfetcher.html)',
-                'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7'
             }
         }, (res) => {
             if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
@@ -208,12 +209,20 @@ function parseRSS(xmlText, sourceNameDefault = '') {
         const title = clean(tag(item, 'title'));
         const pubDate = tag(item, 'pubDate').trim();
         const description = clean(tag(item, 'description'));
-        const sourceName = clean(tag(item, 'source')) || sourceNameDefault;
+        let sourceName = clean(tag(item, 'source')) || sourceNameDefault;
         const sourceUrl = attr(item, 'source', 'url');
 
         if (!title || !url) continue;
 
-        // Try to derive domain from sourceUrl for favicon
+        // If sourceName is missing, extract publisher from title suffix (e.g. "Title - Fanpage")
+        if ((!sourceName || sourceName === 'Web') && title.includes(' - ')) {
+            const parts = title.split(' - ');
+            if (parts.length > 1) {
+                sourceName = parts[parts.length - 1].trim();
+            }
+        }
+
+        // Try to derive domain from sourceUrl or url for favicon
         let domain = '';
         try { domain = new URL(sourceUrl || url).hostname.replace(/^www\./, ''); } catch {}
 
@@ -231,7 +240,7 @@ function parseRSS(xmlText, sourceNameDefault = '') {
         results.push({
             title,
             url,
-            source: sourceName || domain || 'Fonte sconosciuta',
+            source: sourceName || domain || 'Fonte Web',
             domain,
             date: dateStr,
             timestamp,
