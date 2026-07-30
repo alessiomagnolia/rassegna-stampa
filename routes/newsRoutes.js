@@ -271,9 +271,9 @@ router.get('/search', authMiddleware, async (req, res) => {
             'amazon.', 'ebay.', 'aliexpress.', 'temu.', 'shein.', 'booking.', 'tripadvisor.', 'pinterest.'
         ];
 
-        // Strict filter function to ensure relevance & quality
+        // Strict filter function to ensure ironclad relevance & quality
         const isRelevantArticle = (art) => {
-            if (!art || !art.title) return false;
+            if (!art || !art.title || !art.url) return false;
             const titleLower = (art.title || '').toLowerCase();
             const snippetLower = (art.snippet || '').toLowerCase();
             const fullText = titleLower + ' ' + snippetLower;
@@ -282,11 +282,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
             if (hasForeignScript(fullText)) return false;
 
-            // 2. MUST contain search query words in title or snippet
+            // 2. FERROUS RELEVANCE RULE: ALL words in user query MUST be present in title or snippet!
             const words = queryLower.split(/\s+/).filter(w => w.length > 1);
             if (words.length > 0) {
-                const hasMatch = words.some(w => fullText.includes(w));
-                if (!hasMatch) return false;
+                const allWordsPresent = words.every(w => fullText.includes(w));
+                if (!allWordsPresent) return false;
             }
 
             // 3. Reject spam / ad domains
@@ -398,68 +398,30 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }
                 }
             } catch (err) {
-                console.log(`[NewsAPI Notice]: ${err.message}. Falling back to RSS search...`);
+                console.log(`[NewsAPI Notice]: ${err.message}. Falling back to Google News RSS search...`);
             }
         }
 
-        // Costruzione base query escludendo Wikipedia per migliorare la qualità
-        const exactQuery = '"' + q.trim() + '"';
+        // --- RSS FALLBACK (Google News RSS ONLY — no generic Bing web search) ---
+        console.log(`[Google News RSS Search] Querying Google News RSS for: "${queryClean}"...`);
+        const exactQuery = '"' + queryClean + '"';
         let baseQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
 
-        // Creazione variazioni query per combattere il clustering
-        const variations = [
-            baseQuery,
-            baseQuery + ' notizie',
-            baseQuery + ' news',
-            baseQuery + ' oggi'
-        ];
-
-        let fetchPromises = [];
-
-        for (const vq of variations) {
-            // Google News Queries
-            if (from || to) {
-                let googleQuery = vq;
-                if (from) {
-                    const parts = from.split('/');
-                    if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-                if (to) {
-                    const parts = to.split('/');
-                    if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-                
-                const encoded = encodeURIComponent(googleQuery);
-                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encoded}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-            } else {
-                const encodedStandard = encodeURIComponent(vq);
-                const encodedRecent = encodeURIComponent(vq + ' when:1d');
-                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedStandard}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-                fetchPromises.push(fetchText(`https://news.google.com/rss/search?q=${encodedRecent}&hl=it&gl=IT&ceid=IT:it`).then(xml => parseRSS(xml)));
-            }
-            
-            // Ripristino Bing Web Query (copre blog e siti web generici non registrati come news)
-            const bingEncoded = encodeURIComponent(vq);
-            const bingPages = [1, 11, 21, 31, 41, 51, 61, 71, 81, 91]; // 10 pages = ~100 results per variation
-            for (const first of bingPages) {
-                fetchPromises.push(
-                    fetchText(`https://www.bing.com/search?q=${bingEncoded}&format=rss&first=${first}`)
-                        .then(xml => parseRSS(xml, 'Web'))
-                        .catch(err => {
-                            console.error("Bing Web Error:", err.message);
-                            return []; // Don't crash if Bing fails
-                        })
-                );
-            }
+        let googleQuery = baseQuery;
+        if (from) {
+            const parts = from.split('/');
+            if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        if (to) {
+            const parts = to.split('/');
+            if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
-        const resultArrays = await Promise.all(fetchPromises);
-        let allResults = [];
-        for (const arr of resultArrays) {
-            allResults = allResults.concat(arr);
-        }
+        const encodedQuery = encodeURIComponent(googleQuery);
+        const rssXml = await fetchText(`https://news.google.com/rss/search?q=${encodedQuery}&hl=it&gl=IT&ceid=IT:it`);
+        let allResults = parseRSS(rssXml);
 
-        // Post-filtro per data (utile perché Bing Web Search RSS potrebbe ignorare il range se non specificato bene)
+        // Filter by date range if provided
         let fromTime = 0;
         let toTime = Infinity;
         if (from) {
@@ -470,92 +432,49 @@ router.get('/search', authMiddleware, async (req, res) => {
             const parts = to.split('/');
             if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
         }
-        
+
         allResults = allResults.filter(item => {
-            if (!item.timestamp) return true; // Keep if we can't parse date
+            if (!item.timestamp) return true;
             return item.timestamp >= fromTime && item.timestamp <= toTime;
         });
 
-        // Post-filtro stringente per escludere Social Network e Wikipedia
-        const excludedDomains = [
-            'wikipedia.org', 'facebook.com', 'instagram.com', 'youtube.com',
-            'tiktok.com', 'twitter.com', 'x.com', 'linkedin.com', 'pinterest.com',
-            'reddit.com', 'vk.com'
-        ];
-
-        // I domini esclusi verranno filtrati più avanti, dopo aver scompattato i link di Google News
-
-        // Deduplicate by title (since URLs might be Google News links before resolution)
+        // Resolve Google News RSS links
         const seenTitles = new Set();
         let uniqueResults = [];
         for (const item of allResults) {
-            const normalizedTitle = item.title.toLowerCase().substring(0, 50); // first 50 chars for fuzzy dedupe
+            const normalizedTitle = item.title.toLowerCase().substring(0, 50);
             if (!seenTitles.has(normalizedTitle)) {
                 seenTitles.add(normalizedTitle);
                 uniqueResults.push(item);
             }
         }
-        
-        // 1. Sort by timestamp descending (newest first)
+
         uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
+        uniqueResults = uniqueResults.slice(0, 50);
 
-        // 2. Prendi solo i primi 80 risultati per evitare payload enormi e tempi di decodifica eccessivi (Timeout)
-        uniqueResults = uniqueResults.slice(0, 80);
-
-        // 3. Resolve Google News and Bing URLs in parallel ONLY for the top 80 results
-        console.log(`[News Search] Resolving URLs for ${uniqueResults.length} articles...`);
         await Promise.all(uniqueResults.map(async (item) => {
-            // Bing Tracking Links
-            if (item.url.includes('bing.com/news/apiclick.aspx')) {
-                try {
-                    const u = new URL(item.url);
-                    if (u.searchParams.has('url')) {
-                        item.url = decodeURIComponent(u.searchParams.get('url'));
-                    }
-                } catch(e){}
-            }
-            
-            // Google News RSS Links
             if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                 item.url = await resolveGoogleNewsUrl(item.url);
             }
-
-            if (!item.url) return; // Salta aggiornamento se url nullo
-
-            // Update domain and favicon based on resolved URL
+            if (!item.url) return;
             try {
                 const domain = new URL(item.url).hostname.replace(/^www\./, '');
                 item.domain = domain;
                 item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                if (item.source === 'Web' || !item.source) {
+                if (!item.source || item.source === 'Web') {
                     item.source = domain;
                 }
             } catch(e){}
         }));
 
-        // 3b. Post-filtro stringente per escludere Social Network e Wikipedia DOPO la risoluzione degli URL
-        uniqueResults = uniqueResults.filter(item => {
-            if (!item.url) return false;
-            const urlLower = item.url.toLowerCase();
-            const sourceLower = (item.source || '').toLowerCase();
-            
-            // Check domain in URL
-            const urlBlocked = excludedDomains.some(domain => urlLower.includes(domain));
-            
-            // Check brand names in Source (to catch unresolved Google News social links)
-            const sourceBlocked = ['facebook', 'instagram', 'youtube', 'tiktok', 'twitter', ' x ', 'linkedin', 'pinterest', 'reddit', 'wikipedia'].some(brand => sourceLower.includes(brand) || sourceLower === 'x');
-            
-            return !urlBlocked && !sourceBlocked;
-        });
-
-        // 4. Remove the internal timestamp before sending to client
-        uniqueResults = uniqueResults.map(r => {
+        // Apply strict relevance filter to RSS results as well!
+        uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
             delete r.timestamp;
             return r;
         });
 
-        console.log(`[News Search] Query: "${q}" → Trovati ${uniqueResults.length} risultati unici pronti.`);
-        res.json({ results: uniqueResults, total: uniqueResults.length, query: q });
+        console.log(`[Google News RSS Search] Query: "${queryClean}" → Trovati ${uniqueResults.length} risultati puliti e pertinenti.`);
+        res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'rss' });
 
     } catch (err) {
         console.error('[News Search] Errore:', err.message);
