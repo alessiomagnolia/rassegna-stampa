@@ -335,31 +335,35 @@ router.get('/search', authMiddleware, async (req, res) => {
         };
 
         // --- SOLUTION 1: FAST, RELIABLE NEWS ENGINE WITH IN-MEMORY DATE FILTERING ---
-        console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
-
-        const qTerm = queryClean.replace(/["']/g, '').trim();
+        console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);        // Build maps from prioritySources database
         const allPriorityDomains = getAllDomains();
         const domainToSourceMap = new Map();
+        const nameToSourceMap = new Map();
+
         PRIORITY_SOURCES.forEach(s => {
             if (s.domain) {
                 const cleanD = s.domain.toLowerCase().replace(/^www\./, '');
                 domainToSourceMap.set(cleanD, s.name);
             }
+            if (s.name) {
+                const cleanN = s.name.toLowerCase().trim();
+                nameToSourceMap.set(cleanN, s);
+            }
         });
 
         // 6 fast, clean parallel queries across Google News RSS & Bing News RSS
         const searchUrls = [
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie')}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo')}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato')}&hl=it&gl=IT&ceid=IT:it`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`
+            `https://news.google.com/rss/search?q=${encodeURIComponent(queryClean)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(queryClean + ' notizie')}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(queryClean + ' accordo')}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(queryClean + ' comunicato')}&hl=it&gl=IT&ceid=IT:it`,
+            `https://www.bing.com/news/search?q=${encodeURIComponent(queryClean)}&format=rss&cc=IT`,
+            `https://www.bing.com/news/search?q=${encodeURIComponent(queryClean + ' notizie')}&format=rss&cc=IT`
         ];
 
         const fetchWithTimeout = (url) => Promise.race([
             fetchText(url),
-            new Promise((_, r) => setTimeout(() => r(new Error('Timeout 6s')), 6000))
+            new Promise((_, r) => setTimeout(() => r(new Error('Timeout 5s')), 5000))
         ]);
 
         const responses = await Promise.allSettled(searchUrls.map(u => fetchWithTimeout(u)));
@@ -391,19 +395,19 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // --- STEP 1: MANDATORY RESOLUTION OF DIRECT PUBLISHER URLS ---
+            // --- STEP 1: RESOLVE GOOGLE NEWS URLS WITH FAST TIMEOUT ---
             await Promise.all(rawResults.map(async (item) => {
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
                         item.url = await Promise.race([
                             resolveGoogleNewsUrl(item.url),
-                            new Promise(r => setTimeout(() => r(item.url), 4000))
+                            new Promise(r => setTimeout(() => r(item.url), 2500))
                         ]);
                     } catch(e){}
                 }
             }));
 
-            // --- STEP 2: METADATA CLEANUP & PRIORITY DATABASE MATCHING ---
+            // --- STEP 2: METADATA CLEANUP & GUARANTEED PRIORITY MATCHING ---
             let processedResults = [];
 
             for (const item of rawResults) {
@@ -411,34 +415,71 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 let realDomain = '';
                 try {
-                    realDomain = new URL(item.url).hostname.toLowerCase().replace(/^www\./, '');
+                    const parsedUrl = new URL(item.url);
+                    if (!parsedUrl.hostname.includes('google.') && !parsedUrl.hostname.includes('bing.')) {
+                        realDomain = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
+                    }
                 } catch(e) {}
 
-                // Reject URLs that remain on Google/Bing or non-news domains
-                if (!realDomain || realDomain.includes('google.') || realDomain.includes('bing.') || realDomain.includes('youtube.')) {
-                    continue;
+                // If realDomain wasn't obtained from URL (e.g. Google News link decoder fallback), extract from source/title
+                let matchedSource = null;
+
+                if (realDomain) {
+                    // Match domain
+                    let sName = domainToSourceMap.get(realDomain);
+                    if (!sName) {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sDomain = (source.domain || '').toLowerCase().replace(/^www\./, '');
+                            if (sDomain && (realDomain.endsWith(sDomain) || sDomain.endsWith(realDomain))) {
+                                matchedSource = source;
+                                break;
+                            }
+                        }
+                    } else {
+                        matchedSource = nameToSourceMap.get(sName.toLowerCase().trim());
+                    }
                 }
 
-                // Match against priority database sources (191 sources)
-                let matchedSourceName = domainToSourceMap.get(realDomain);
-                if (!matchedSourceName) {
+                // If still unmatched, try matching item.source or title suffix (e.g. "- Il Sole 24 ORE")
+                if (!matchedSource) {
+                    const srcLower = (item.source || '').toLowerCase().trim();
+                    const titleLower = (item.title || '').toLowerCase().trim();
+
                     for (const source of PRIORITY_SOURCES) {
-                        const sDomain = (source.domain || '').toLowerCase().replace(/^www\./, '');
-                        if (sDomain && (realDomain.endsWith(sDomain) || sDomain.endsWith(realDomain))) {
-                            matchedSourceName = source.name;
+                        const sourceNameLower = source.name.toLowerCase().trim();
+                        if (srcLower && (srcLower.includes(sourceNameLower) || sourceNameLower.includes(srcLower))) {
+                            matchedSource = source;
+                            break;
+                        }
+                        if (titleLower.endsWith(`- ${sourceNameLower}`) || titleLower.includes(`- ${sourceNameLower}`)) {
+                            matchedSource = source;
                             break;
                         }
                     }
                 }
 
-                item.domain = realDomain;
-                item.source = matchedSourceName || realDomain; // Priority name (e.g. "la Repubblica", "Il Tempo", "Il Sole 24 ORE") or domain name
-                item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`; // Real newspaper logo!
-                item._isPriority = !!matchedSourceName;
+                if (matchedSource) {
+                    realDomain = matchedSource.domain.toLowerCase().replace(/^www\./, '');
+                    item.domain = realDomain;
+                    item.source = matchedSource.name;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item._isPriority = true;
+                } else if (realDomain) {
+                    item.domain = realDomain;
+                    item.source = realDomain;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item._isPriority = false;
+                } else {
+                    // Generic fallback for unresolved link
+                    const fallbackSrc = item.source || 'Fonte Web';
+                    item.domain = 'web';
+                    item.source = fallbackSrc;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=google.com&sz=32`;
+                    item._isPriority = false;
+                }
 
                 processedResults.push(item);
             }
-
 
             // --- STEP 3: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
             // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
