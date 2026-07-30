@@ -1174,6 +1174,17 @@ input::placeholder, textarea::placeholder {
     background: rgba(0, 212, 170, 0.05);
 }
 
+.news-card.priority-source {
+    border-left: 3px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.04);
+}
+
+.news-card.priority-source:hover {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+
 .news-card-header {
     display: flex;
     justify-content: space-between;

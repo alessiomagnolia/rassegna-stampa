@@ -1199,13 +1199,14 @@ function renderNewsResults() {
         const idx = currentNewsResults.indexOf(news);
         const isSelected = selectedNewsIndices.has(idx);
         const card = document.createElement('div');
-        card.className = `news-card ${isSelected ? 'selected' : ''}`;
+        card.className = `news-card ${isSelected ? 'selected' : ''} ${news.isPrioritySource ? 'priority-source' : ''}`;
         card.onclick = () => toggleNewsSelection(idx);
         
         card.innerHTML = `
             <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
                 ${news.favicon ? `<img src="${news.favicon}" alt="" style="width:16px;height:16px;">` : '<i data-feather="globe" style="width:16px;height:16px;color:var(--text-muted);"></i>'}
                 <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${news.source}</span>
+                ${news.isPrioritySource ? '<span style="font-size:0.7rem; font-weight:700; color:#f59e0b; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:4px; padding:1px 6px; letter-spacing:0.5px;">✦ Fonte prioritaria</span>' : ''}
                 <span style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;">${news.date}</span>
             </div>
             <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${news.title}</h4>
@@ -1215,6 +1216,7 @@ function renderNewsResults() {
                 <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>
             </div>
         `;
+
         grid.appendChild(card);
     });
     feather.replace();

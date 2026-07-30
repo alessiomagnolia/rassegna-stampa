@@ -6,6 +6,7 @@ const { getDb } = require('../database/db');
 const { GoogleDecoder } = require('google-news-url-decoder');
 const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
+const { buildSiteQuery, PRIORITY_SOURCES } = require('../config/prioritySources');
 
 const router = express.Router();
 
@@ -316,19 +317,38 @@ router.get('/search', authMiddleware, async (req, res) => {
         console.log(`[Google News RSS Search] Querying official feed for: "${queryClean}"...`);
         const exactQuery = '"' + queryClean + '"';
         let googleQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
+        let dateFilters = '';
         if (from) {
             const parts = from.split('/');
-            if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+            if (parts.length === 3) dateFilters += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
         if (to) {
             const parts = to.split('/');
-            if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+            if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
+        googleQuery += dateFilters;
+
+        // PRIORITY SOURCES QUERY: search restricted to trusted Italian news sources
+        const siteFilter = buildSiteQuery(20);
+        const priorityQuery = exactQuery + ' (' + siteFilter + ')' + dateFilters;
+
+        // Run both queries in parallel: general + priority sources
+        const [generalRss, priorityRss] = await Promise.allSettled([
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(priorityQuery)}&hl=it&gl=IT&ceid=IT:it`),
+        ]);
 
         try {
-            const encodedQuery = encodeURIComponent(googleQuery);
-            const rssXml = await fetchText(`https://news.google.com/rss/search?q=${encodedQuery}&hl=it&gl=IT&ceid=IT:it`);
-            let allResults = parseRSS(rssXml);
+            // Collect priority domains set for fast lookup
+            const priorityDomainSet = new Set(PRIORITY_SOURCES.map(s => s.domain));
+
+            // Parse both feeds
+            const generalResults  = generalRss.status  === 'fulfilled' ? parseRSS(generalRss.value)  : [];
+            const priorityResults = priorityRss.status === 'fulfilled' ? parseRSS(priorityRss.value) : [];
+
+            // Merge: priority results first, then general (priority results get a flag)
+            priorityResults.forEach(r => { r._isPriority = true; });
+            let allResults = [...priorityResults, ...generalResults];
 
             // Filter by date range if provided
             let fromTime = 0;
@@ -347,7 +367,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Deduplicate by title
+            // Deduplicate by title (priority source version wins if duplicate)
             const seenTitles = new Set();
             let uniqueResults = [];
             for (const item of allResults) {
@@ -358,7 +378,12 @@ router.get('/search', authMiddleware, async (req, res) => {
                 }
             }
 
-            uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
+            // Sort: priority-flagged results first, then by date
+            uniqueResults.sort((a, b) => {
+                if (a._isPriority && !b._isPriority) return -1;
+                if (!a._isPriority && b._isPriority) return 1;
+                return b.timestamp - a.timestamp;
+            });
             uniqueResults = uniqueResults.slice(0, 50);
 
             // Resolve Google News RSS links
@@ -374,17 +399,23 @@ router.get('/search', authMiddleware, async (req, res) => {
                     if (!item.source || item.source === 'Web') {
                         item.source = domain;
                     }
+                    // Re-flag as priority if domain matches known trusted sources
+                    if (priorityDomainSet.has(domain)) item._isPriority = true;
                 } catch(e){}
             }));
 
-            // Apply strict relevance filter to RSS results
+            // Apply strict relevance filter
             uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
+                const isPriority = r._isPriority || false;
                 delete r.timestamp;
+                delete r._isPriority;
+                r.isPrioritySource = isPriority;
                 return r;
             });
 
             if (uniqueResults.length > 0) {
-                console.log(`[Google News RSS Search] Query: "${queryClean}" → Trovati ${uniqueResults.length} risultati puliti e pertinenti.`);
+                const priorityCount = uniqueResults.filter(r => r.isPrioritySource).length;
+                console.log(`[Google News RSS Search] Query: "${queryClean}" → ${uniqueResults.length} risultati (${priorityCount} da fonti prioritarie).`);
                 return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'google-rss' });
             }
         } catch(rssErr) {
