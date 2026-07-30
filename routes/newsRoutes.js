@@ -333,14 +333,9 @@ router.get('/search', authMiddleware, async (req, res) => {
 
             return true;
         };
-
-        // --- PRIMARY SEARCH: Google News RSS (Official Italian Feed) ---
-        console.log(`[Google News RSS Search] Querying official feed for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
+        // --- MULTI-ENGINE & MULTI-CLUSTER PARALLEL SEARCH ARCHITECTURE ---
+        console.log(`[Multi-Engine Search] Launching parallel search for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
         const exactQuery = '"' + queryClean + '"';
-        let googleQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
-        if (shouldExcludeSocial) {
-            googleQuery += ' -site:facebook.com -site:twitter.com -site:x.com -site:instagram.com -site:linkedin.com -site:youtube.com -site:tiktok.com';
-        }
 
         let dateFilters = '';
         if (from) {
@@ -351,29 +346,47 @@ router.get('/search', authMiddleware, async (req, res) => {
             const parts = to.split('/');
             if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
-        googleQuery += dateFilters;
 
-        // PRIORITY SOURCES QUERY: search restricted to trusted Italian news sources
-        const siteFilter = buildSiteQuery(20);
-        const priorityQuery = exactQuery + ' (' + siteFilter + ')' + dateFilters;
+        const socialExclusion = shouldExcludeSocial
+            ? ' -site:facebook.com -site:twitter.com -site:x.com -site:instagram.com -site:linkedin.com -site:youtube.com -site:tiktok.com'
+            : '';
 
-        // Run both queries in parallel: general + priority sources
-        const [generalRss, priorityRss] = await Promise.allSettled([
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}&hl=it&gl=IT&ceid=IT:it`),
-            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(priorityQuery)}&hl=it&gl=IT&ceid=IT:it`),
+        // Build 4 targeted source cluster queries to bypass Google News single-feed limits
+        const agenzieSites   = 'site:ansa.it OR site:agenzianova.com OR site:agi.it OR site:askanews.it OR site:adnkronos.com OR site:italpress.com OR site:agipress.it';
+        const nazionaliSites = 'site:corriere.it OR site:repubblica.it OR site:lastampa.it OR site:ilsole24ore.com OR site:ilmessaggero.it OR site:iltempo.it OR site:liberoquotidiano.it OR site:ilgiornale.it OR site:ilgiornaleditalia.it OR site:ilmattino.it OR site:ilgazzettino.it OR site:leggo.it OR site:quotidiano.net';
+        const localiSites    = 'site:meridiananotizie.it OR site:lecronachelucane.it OR site:qds.it OR site:strettoweb.com OR site:cronachedellacalabria.it OR site:trmtv.it OR site:savonanews.it OR site:quotidianodelsud.it OR site:ilfattonisseno.it OR site:blogsicilia.it OR site:sanremonews.it OR site:gazzettadigenova.it OR site:potenzanews.net OR site:accadeora.it';
+        const webFinanzaSites= 'site:affaritaliani.it OR site:fanpage.it OR site:formiche.net OR site:key4biz.it OR site:ledicola.it OR site:teleborsa.it OR site:borsaitaliana.it OR site:ildenaro.it OR site:economymagazine.it OR site:startupbusiness.it OR site:lidentita.it OR site:ladiscussione.com';
+
+        const qGeneral   = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org' + socialExclusion + dateFilters;
+        const qAgenzie   = exactQuery + ' (' + agenzieSites + ')' + dateFilters;
+        const qNazionali = exactQuery + ' (' + nazionaliSites + ')' + dateFilters;
+        const qLocali    = exactQuery + ' (' + localiSites + ')' + dateFilters;
+        const qWeb       = exactQuery + ' (' + webFinanzaSites + ')' + dateFilters;
+
+        // Run 6 parallel queries across Google News Clusters + Bing News RSS
+        const [resGeneral, resAgenzie, resNazionali, resLocali, resWeb, resBing] = await Promise.allSettled([
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qGeneral)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qAgenzie)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qNazionali)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qLocali)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://news.google.com/rss/search?q=${encodeURIComponent(qWeb)}&hl=it&gl=IT&ceid=IT:it`),
+            fetchText(`https://www.bing.com/news/search?q=${encodeURIComponent(queryClean)}&format=rss&cc=IT`),
         ]);
 
         try {
-            // Collect priority domains set for fast lookup
             const priorityDomainSet = new Set(PRIORITY_SOURCES.map(s => s.domain));
 
-            // Parse both feeds
-            const generalResults  = generalRss.status  === 'fulfilled' ? parseRSS(generalRss.value)  : [];
-            const priorityResults = priorityRss.status === 'fulfilled' ? parseRSS(priorityRss.value) : [];
+            const listGeneral   = resGeneral.status   === 'fulfilled' ? parseRSS(resGeneral.value)   : [];
+            const listAgenzie   = resAgenzie.status   === 'fulfilled' ? parseRSS(resAgenzie.value, 'Agenzia')   : [];
+            const listNazionali = resNazionali.status === 'fulfilled' ? parseRSS(resNazionali.value, 'Stampa Naz.') : [];
+            const listLocali    = resLocali.status    === 'fulfilled' ? parseRSS(resLocali.value, 'Stampa Locale') : [];
+            const listWeb       = resWeb.status       === 'fulfilled' ? parseRSS(resWeb.value, 'Web')           : [];
+            const listBing      = resBing.status      === 'fulfilled' ? parseRSS(resBing.value, 'Bing News')    : [];
 
-            // Merge: priority results first, then general (priority results get a flag)
-            priorityResults.forEach(r => { r._isPriority = true; });
-            let allResults = [...priorityResults, ...generalResults];
+            // Flag priority cluster results
+            [...listAgenzie, ...listNazionali, ...listLocali, ...listWeb].forEach(r => { r._isPriority = true; });
+
+            let allResults = [...listGeneral, ...listAgenzie, ...listNazionali, ...listLocali, ...listWeb, ...listBing];
 
             // Filter by date range if provided
             let fromTime = 0;
@@ -396,7 +409,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             const seenTitles = new Set();
             let uniqueResults = [];
             for (const item of allResults) {
-                const normalizedTitle = item.title.toLowerCase().substring(0, 50);
+                const normalizedTitle = item.title.toLowerCase().substring(0, 45);
                 if (!seenTitles.has(normalizedTitle)) {
                     seenTitles.add(normalizedTitle);
                     uniqueResults.push(item);
@@ -407,9 +420,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             uniqueResults.sort((a, b) => {
                 if (a._isPriority && !b._isPriority) return -1;
                 if (!a._isPriority && b._isPriority) return 1;
-                return b.timestamp - a.timestamp;
+                return (b.timestamp || 0) - (a.timestamp || 0);
             });
-            uniqueResults = uniqueResults.slice(0, 50);
+
+            // Set maximum capacity to 200 items for maximum recall
+            uniqueResults = uniqueResults.slice(0, 200);
 
             // Resolve Google News RSS links
             await Promise.all(uniqueResults.map(async (item) => {
@@ -421,10 +436,9 @@ router.get('/search', authMiddleware, async (req, res) => {
                     const domain = new URL(item.url).hostname.replace(/^www\./, '');
                     item.domain = domain;
                     item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                    if (!item.source || item.source === 'Web') {
+                    if (!item.source || item.source === 'Web' || item.source === 'Bing News') {
                         item.source = domain;
                     }
-                    // Re-flag as priority if domain matches known trusted sources
                     if (priorityDomainSet.has(domain)) item._isPriority = true;
                 } catch(e){}
             }));
@@ -439,12 +453,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             });
 
             if (uniqueResults.length > 0) {
-                const priorityCount = uniqueResults.filter(r => r.isPrioritySource).length;
-                console.log(`[Google News RSS Search] Query: "${queryClean}" → ${uniqueResults.length} risultati (${priorityCount} da fonti prioritarie).`);
-                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'google-rss' });
+                console.log(`[Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti da 6 cluster paralleli.`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'multi-cluster-rss' });
             }
         } catch(rssErr) {
-            console.log(`[Google News RSS Notice]: ${rssErr.message}. Trying API fallbacks...`);
+            console.log(`[Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
         }
 
         // --- SECONDARY FALLBACK: GNews API & NewsAPI.org ---
