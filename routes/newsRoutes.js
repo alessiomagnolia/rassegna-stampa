@@ -303,6 +303,86 @@ router.get('/search', authMiddleware, async (req, res) => {
             return true;
         };
 
+        // --- PRIMARY SEARCH: Google News RSS (Official Italian Feed) ---
+        console.log(`[Google News RSS Search] Querying official feed for: "${queryClean}"...`);
+        const exactQuery = '"' + queryClean + '"';
+        let googleQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
+        if (from) {
+            const parts = from.split('/');
+            if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        if (to) {
+            const parts = to.split('/');
+            if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        try {
+            const encodedQuery = encodeURIComponent(googleQuery);
+            const rssXml = await fetchText(`https://news.google.com/rss/search?q=${encodedQuery}&hl=it&gl=IT&ceid=IT:it`);
+            let allResults = parseRSS(rssXml);
+
+            // Filter by date range if provided
+            let fromTime = 0;
+            let toTime = Infinity;
+            if (from) {
+                const parts = from.split('/');
+                if (parts.length === 3) fromTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`).getTime();
+            }
+            if (to) {
+                const parts = to.split('/');
+                if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
+            }
+
+            allResults = allResults.filter(item => {
+                if (!item.timestamp) return true;
+                return item.timestamp >= fromTime && item.timestamp <= toTime;
+            });
+
+            // Deduplicate by title
+            const seenTitles = new Set();
+            let uniqueResults = [];
+            for (const item of allResults) {
+                const normalizedTitle = item.title.toLowerCase().substring(0, 50);
+                if (!seenTitles.has(normalizedTitle)) {
+                    seenTitles.add(normalizedTitle);
+                    uniqueResults.push(item);
+                }
+            }
+
+            uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
+            uniqueResults = uniqueResults.slice(0, 50);
+
+            // Resolve Google News RSS links
+            await Promise.all(uniqueResults.map(async (item) => {
+                if (item.url && item.url.includes('news.google.com/rss/articles/')) {
+                    item.url = await resolveGoogleNewsUrl(item.url);
+                }
+                if (!item.url) return;
+                try {
+                    const domain = new URL(item.url).hostname.replace(/^www\./, '');
+                    item.domain = domain;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                    if (!item.source || item.source === 'Web') {
+                        item.source = domain;
+                    }
+                } catch(e){}
+            }));
+
+            // Apply strict relevance filter to RSS results
+            uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
+                delete r.timestamp;
+                return r;
+            });
+
+            if (uniqueResults.length > 0) {
+                console.log(`[Google News RSS Search] Query: "${queryClean}" → Trovati ${uniqueResults.length} risultati puliti e pertinenti.`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'google-rss' });
+            }
+        } catch(rssErr) {
+            console.log(`[Google News RSS Notice]: ${rssErr.message}. Trying API fallbacks...`);
+        }
+
+        // --- SECONDARY FALLBACK: GNews API & NewsAPI.org ---
         const apiKey = process.env.GNEWS_API_KEY || 
                        process.env.NEWSAPI_KEY || 
                        process.env.NEWS_API_KEY || 
@@ -311,9 +391,9 @@ router.get('/search', authMiddleware, async (req, res) => {
                        process.env.API_KEY;
 
         if (apiKey) {
-            console.log(`[News API Search] Searching automatically with exact quote for: "${queryClean}"...`);
+            console.log(`[News API Fallback] Searching with API Key for: "${queryClean}"...`);
 
-            // 1. Try GNews API first with exact phrase matching
+            // 1. Try GNews API
             try {
                 let gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent('"' + queryClean + '"')}&lang=it&country=it&in=title,description&max=30&apikey=${apiKey}`;
                 if (from) {
@@ -327,7 +407,6 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(gnewsUrl);
                 if (data && data.articles && data.articles.length > 0) {
-                    console.log(`[GNews API] Received ${data.articles.length} raw articles for "${queryClean}"`);
                     let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
@@ -349,15 +428,14 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }).filter(isRelevantArticle);
 
                     if (results.length > 0) {
-                        console.log(`[GNews API] Returned ${results.length} clean Italian articles for "${queryClean}"`);
                         return res.json({ results, total: results.length, query: queryClean, apiSource: 'gnews' });
                     }
                 }
             } catch (err) {
-                console.log(`[GNews API Notice]: ${err.message}. Trying NewsAPI fallback...`);
+                console.log(`[GNews API Notice]: ${err.message}`);
             }
 
-            // 2. Try NewsAPI.org fallback
+            // 2. Try NewsAPI.org
             try {
                 let newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent('"' + queryClean + '"')}&language=it&sortBy=publishedAt&pageSize=30&apiKey=${apiKey}`;
                 if (from) {
@@ -371,7 +449,6 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(newsApiUrl);
                 if (data && data.status === 'ok' && data.articles && data.articles.length > 0) {
-                    console.log(`[NewsAPI] Received ${data.articles.length} raw articles for "${queryClean}"`);
                     let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
@@ -393,88 +470,15 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }).filter(isRelevantArticle);
 
                     if (results.length > 0) {
-                        console.log(`[NewsAPI] Returned ${results.length} clean Italian articles for "${queryClean}"`);
                         return res.json({ results, total: results.length, query: queryClean, apiSource: 'newsapi' });
                     }
                 }
             } catch (err) {
-                console.log(`[NewsAPI Notice]: ${err.message}. Falling back to Google News RSS search...`);
+                console.log(`[NewsAPI Notice]: ${err.message}`);
             }
         }
 
-        // --- RSS FALLBACK (Google News RSS ONLY — no generic Bing web search) ---
-        console.log(`[Google News RSS Search] Querying Google News RSS for: "${queryClean}"...`);
-        const exactQuery = '"' + queryClean + '"';
-        let baseQuery = exactQuery + ' -site:wikipedia.org -site:it.wikipedia.org';
-
-        let googleQuery = baseQuery;
-        if (from) {
-            const parts = from.split('/');
-            if (parts.length === 3) googleQuery += ` after:${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-        if (to) {
-            const parts = to.split('/');
-            if (parts.length === 3) googleQuery += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        const encodedQuery = encodeURIComponent(googleQuery);
-        const rssXml = await fetchText(`https://news.google.com/rss/search?q=${encodedQuery}&hl=it&gl=IT&ceid=IT:it`);
-        let allResults = parseRSS(rssXml);
-
-        // Filter by date range if provided
-        let fromTime = 0;
-        let toTime = Infinity;
-        if (from) {
-            const parts = from.split('/');
-            if (parts.length === 3) fromTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`).getTime();
-        }
-        if (to) {
-            const parts = to.split('/');
-            if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
-        }
-
-        allResults = allResults.filter(item => {
-            if (!item.timestamp) return true;
-            return item.timestamp >= fromTime && item.timestamp <= toTime;
-        });
-
-        // Resolve Google News RSS links
-        const seenTitles = new Set();
-        let uniqueResults = [];
-        for (const item of allResults) {
-            const normalizedTitle = item.title.toLowerCase().substring(0, 50);
-            if (!seenTitles.has(normalizedTitle)) {
-                seenTitles.add(normalizedTitle);
-                uniqueResults.push(item);
-            }
-        }
-
-        uniqueResults.sort((a, b) => b.timestamp - a.timestamp);
-        uniqueResults = uniqueResults.slice(0, 50);
-
-        await Promise.all(uniqueResults.map(async (item) => {
-            if (item.url && item.url.includes('news.google.com/rss/articles/')) {
-                item.url = await resolveGoogleNewsUrl(item.url);
-            }
-            if (!item.url) return;
-            try {
-                const domain = new URL(item.url).hostname.replace(/^www\./, '');
-                item.domain = domain;
-                item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                if (!item.source || item.source === 'Web') {
-                    item.source = domain;
-                }
-            } catch(e){}
-        }));
-
-        // Apply strict relevance filter to RSS results as well!
-        uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
-            delete r.timestamp;
-            return r;
-        });
-
-        console.log(`[Google News RSS Search] Query: "${queryClean}" → Trovati ${uniqueResults.length} risultati puliti e pertinenti.`);
-        res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'rss' });
+        res.json({ results: [], total: 0, query: queryClean });
 
     } catch (err) {
         console.error('[News Search] Errore:', err.message);
