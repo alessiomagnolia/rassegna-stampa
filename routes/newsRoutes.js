@@ -43,6 +43,34 @@ function fetchText(url, maxRedirects = 5) {
     });
 }
 
+function fetchJson(url) {
+    return new Promise((resolve, reject) => {
+        const lib = url.startsWith('https') ? https : http;
+        const req = lib.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, */*'
+            }
+        }, (res) => {
+            if (res.statusCode >= 400) {
+                return reject(new Error(`HTTP ${res.statusCode}`));
+            }
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(data));
+                } catch (e) {
+                    reject(new Error('Invalid JSON response'));
+                }
+            });
+            res.on('error', reject);
+        });
+        req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
+        req.on('error', reject);
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Simple RSS/XML parser (no deps needed — cheerio/xml2js could work too)
 // ---------------------------------------------------------------------------
@@ -226,6 +254,99 @@ router.get('/search', authMiddleware, async (req, res) => {
     try {
         const { q, from, to } = req.query;
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
+
+        const apiKey = process.env.GNEWS_API_KEY || 
+                       process.env.NEWSAPI_KEY || 
+                       process.env.NEWS_API_KEY || 
+                       process.env.NEWS_KEY || 
+                       process.env.API_KEY_NEWS || 
+                       process.env.API_KEY;
+
+        if (apiKey) {
+            console.log(`[News API Search] Checking API Key for query: "${q}"...`);
+            
+            // 1. Try GNews API first
+            try {
+                let gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q.trim())}&lang=it&max=30&apikey=${apiKey}`;
+                if (from) {
+                    const parts = from.split('/');
+                    if (parts.length === 3) gnewsUrl += `&from=${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
+                }
+                if (to) {
+                    const parts = to.split('/');
+                    if (parts.length === 3) gnewsUrl += `&to=${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`;
+                }
+
+                const data = await fetchJson(gnewsUrl);
+                if (data && data.articles && data.articles.length > 0) {
+                    console.log(`[GNews API] Found ${data.articles.length} articles for "${q}"`);
+                    const results = data.articles.map(art => {
+                        const pubDate = new Date(art.publishedAt);
+                        const dateStr = !isNaN(pubDate)
+                            ? `${String(pubDate.getDate()).padStart(2,'0')}/${String(pubDate.getMonth()+1).padStart(2,'0')}/${pubDate.getFullYear()}`
+                            : '';
+                        let domain = '';
+                        try { domain = new URL(art.url).hostname.replace(/^www\./i, ''); } catch(e){}
+
+                        return {
+                            title: art.title,
+                            url: art.url,
+                            source: art.source?.name || domain || 'Fonte Web',
+                            domain,
+                            date: dateStr,
+                            snippet: (art.description || art.content || '').slice(0, 220),
+                            image: art.image || null,
+                            favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
+                        };
+                    });
+
+                    return res.json({ results, total: results.length, query: q, apiSource: 'gnews' });
+                }
+            } catch (err) {
+                console.log(`[GNews API Notice]: ${err.message}. Trying NewsAPI fallback...`);
+            }
+
+            // 2. Try NewsAPI.org fallback
+            try {
+                let newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q.trim())}&language=it&pageSize=30&apiKey=${apiKey}`;
+                if (from) {
+                    const parts = from.split('/');
+                    if (parts.length === 3) newsApiUrl += `&from=${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                if (to) {
+                    const parts = to.split('/');
+                    if (parts.length === 3) newsApiUrl += `&to=${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+
+                const data = await fetchJson(newsApiUrl);
+                if (data && data.status === 'ok' && data.articles && data.articles.length > 0) {
+                    console.log(`[NewsAPI] Found ${data.articles.length} articles for "${q}"`);
+                    const results = data.articles.map(art => {
+                        const pubDate = new Date(art.publishedAt);
+                        const dateStr = !isNaN(pubDate)
+                            ? `${String(pubDate.getDate()).padStart(2,'0')}/${String(pubDate.getMonth()+1).padStart(2,'0')}/${pubDate.getFullYear()}`
+                            : '';
+                        let domain = '';
+                        try { domain = new URL(art.url).hostname.replace(/^www\./i, ''); } catch(e){}
+
+                        return {
+                            title: art.title,
+                            url: art.url,
+                            source: art.source?.name || domain || 'Fonte Web',
+                            domain,
+                            date: dateStr,
+                            snippet: (art.description || art.content || '').slice(0, 220),
+                            image: art.urlToImage || null,
+                            favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
+                        };
+                    });
+
+                    return res.json({ results, total: results.length, query: q, apiSource: 'newsapi' });
+                }
+            } catch (err) {
+                console.log(`[NewsAPI Notice]: ${err.message}. Falling back to RSS search...`);
+            }
+        }
 
         // Costruzione base query escludendo Wikipedia per migliorare la qualità
         const exactQuery = '"' + q.trim() + '"';
