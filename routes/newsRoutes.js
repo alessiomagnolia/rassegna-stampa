@@ -6,7 +6,7 @@ const { getDb } = require('../database/db');
 const { GoogleDecoder } = require('google-news-url-decoder');
 const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
-const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains } = require('../config/prioritySources');
+const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains, getAllRssFeeds } = require('../config/prioritySources');
 
 const router = express.Router();
 
@@ -349,34 +349,53 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         const qTerm = queryClean.replace(/["']/g, '').trim();
         const allPriorityDomains = getAllDomains();
-        const topDomains = allPriorityDomains.slice(0, 20);
+        const priorityRssFeeds = getAllRssFeeds();
+        const topDomains = allPriorityDomains.slice(0, 25);
 
         // Topic expansion terms to retrieve extra press releases and articles
         const topicExpansions = ['notizie', 'accordo', 'ambiente', 'piano', 'lavori', 'cantieri', 'comunicato'];
 
         // Build list of clean, valid parallel search URLs
         const searchUrls = [
-            // General Google News RSS feed
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // Topic expansion queries
-            ...topicExpansions.map(t => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' ' + t + dateFilters)}&hl=it&gl=IT&ceid=IT:it`),
-            // Bing News RSS feed
-            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            // Individual site-specific queries for top 20 news domains
-            ...topDomains.map(d => `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' site:' + d + dateFilters)}&hl=it&gl=IT&ceid=IT:it`)
+            // 1. Direct RSS feeds of priority news outlets from our database
+            ...priorityRssFeeds.map(f => ({ url: f.rss, name: f.name, domain: f.domain, isDirectFeed: true })),
+            // 2. General Google News RSS feed
+            { url: `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`, name: 'Google News' },
+            // 3. Topic expansion queries on Google News
+            ...topicExpansions.map(t => ({ url: `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' ' + t + dateFilters)}&hl=it&gl=IT&ceid=IT:it`, name: 'Google News' })),
+            // 4. Bing News RSS feed
+            { url: `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`, name: 'Bing News' },
+            // 5. Bing site-specific queries for top 25 priority news domains
+            ...topDomains.map(d => ({ url: `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' site:' + d)}&format=rss&cc=IT`, name: d }))
         ];
 
         // Fetch all parallel queries
-        const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u)));
+        const responses = await Promise.allSettled(searchUrls.map(s => fetchText(s.url)));
+
 
         try {
             const priorityDomainSet = new Set(allPriorityDomains);
             let rawResults = [];
 
-            responses.forEach(res => {
+            responses.forEach((res, idx) => {
                 if (res.status === 'fulfilled' && res.value) {
-                    const parsed = parseRSS(res.value);
-                    rawResults.push(...parsed);
+                    const meta = searchUrls[idx];
+                    const parsed = parseRSS(res.value, meta.name || '');
+                    if (meta.isDirectFeed) {
+                        // For direct RSS feeds from our database, keep items that contain the search term
+                        const qLower = qTerm.toLowerCase();
+                        parsed.forEach(item => {
+                            const full = ((item.title || '') + ' ' + (item.snippet || '') + ' ' + (item.url || '')).toLowerCase();
+                            if (full.includes(qLower)) {
+                                item._isPriority = true;
+                                if (meta.name) item.source = meta.name;
+                                if (meta.domain) item.domain = meta.domain;
+                                rawResults.push(item);
+                            }
+                        });
+                    } else {
+                        rawResults.push(...parsed);
+                    }
                 }
             });
 
