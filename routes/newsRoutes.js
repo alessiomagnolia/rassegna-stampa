@@ -255,6 +255,54 @@ router.get('/search', authMiddleware, async (req, res) => {
         const { q, from, to } = req.query;
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
 
+        // Clean user input: strip any user-entered quotes automatically
+        const queryClean = q.replace(/^"+|"+$/g, '').trim();
+        const queryLower = queryClean.toLowerCase();
+
+        // Non-latin foreign script detection (Russian, Chinese, Japanese, Korean, Arabic)
+        const hasForeignScript = (str) => /[\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\u0600-\u06FF\u1100-\u11FF]/.test(str);
+
+        const spamKeywords = [
+            'sponsoriz', 'pubblicit', 'promo', 'offerta', 'sconto', 'coupon',
+            'casino', 'poker', 'scommess', 'slot', 'affiliat', 'compra ', 'acquista '
+        ];
+
+        const spamDomains = [
+            'amazon.', 'ebay.', 'aliexpress.', 'temu.', 'shein.', 'booking.', 'tripadvisor.', 'pinterest.'
+        ];
+
+        // Strict filter function to ensure relevance & quality
+        const isRelevantArticle = (art) => {
+            if (!art || !art.title) return false;
+            const titleLower = (art.title || '').toLowerCase();
+            const snippetLower = (art.snippet || '').toLowerCase();
+            const fullText = titleLower + ' ' + snippetLower;
+            const domainLower = (art.domain || '').toLowerCase();
+
+            // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
+            if (hasForeignScript(fullText)) return false;
+
+            // 2. MUST contain search query words in title or snippet
+            const words = queryLower.split(/\s+/).filter(w => w.length > 1);
+            if (words.length > 0) {
+                const hasMatch = words.some(w => fullText.includes(w));
+                if (!hasMatch) return false;
+            }
+
+            // 3. Reject spam / ad domains
+            if (spamDomains.some(sd => domainLower.includes(sd))) return false;
+
+            // 4. Reject spam / ad keywords in title
+            if (spamKeywords.some(sk => titleLower.includes(sk))) return false;
+
+            // 5. Reject non-Italian TLDs commonly associated with spam
+            if (domainLower.endsWith('.ru') || domainLower.endsWith('.cn') || domainLower.endsWith('.jp') || domainLower.endsWith('.su') || domainLower.endsWith('.xyz') || domainLower.endsWith('.top')) {
+                return false;
+            }
+
+            return true;
+        };
+
         const apiKey = process.env.GNEWS_API_KEY || 
                        process.env.NEWSAPI_KEY || 
                        process.env.NEWS_API_KEY || 
@@ -263,37 +311,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                        process.env.API_KEY;
 
         if (apiKey) {
-            console.log(`[News API Search] Checking API Key for query: "${q}"...`);
-            const queryClean = q.trim();
-            const queryLower = queryClean.toLowerCase();
-
-            // Helper to check if text contains non-latin foreign scripts (Cyrillic, Chinese, Japanese, Korean, Arabic)
-            const hasForeignScript = (str) => /[\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\u0600-\u06FF\u1100-\u11FF]/.test(str);
-
-            // Filter function to ensure relevance & quality
-            const isRelevantItalianArticle = (art) => {
-                const titleLower = (art.title || '').toLowerCase();
-                const snippetLower = (art.snippet || '').toLowerCase();
-                const fullText = titleLower + ' ' + snippetLower;
-
-                // 1. Must NOT contain non-latin foreign scripts (Russian, Chinese, Japanese, Arabic)
-                if (hasForeignScript(fullText)) return false;
-
-                // 2. Must contain the search keyword (or main words if multi-word)
-                const keywords = queryLower.split(/\s+/).filter(w => w.length > 2);
-                if (keywords.length > 0) {
-                    const matchCount = keywords.filter(kw => fullText.includes(kw)).length;
-                    if (matchCount === 0) return false;
-                }
-
-                // 3. Reject non-Italian TLDs commonly associated with spam
-                const domain = (art.domain || '').toLowerCase();
-                if (domain.endsWith('.ru') || domain.endsWith('.cn') || domain.endsWith('.jp') || domain.endsWith('.su') || domain.endsWith('.xyz')) {
-                    return false;
-                }
-
-                return true;
-            };
+            console.log(`[News API Search] Searching automatically with exact quote for: "${queryClean}"...`);
 
             // 1. Try GNews API first with exact phrase matching
             try {
@@ -309,7 +327,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(gnewsUrl);
                 if (data && data.articles && data.articles.length > 0) {
-                    console.log(`[GNews API] Received ${data.articles.length} raw articles for "${q}"`);
+                    console.log(`[GNews API] Received ${data.articles.length} raw articles for "${queryClean}"`);
                     let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
@@ -328,11 +346,11 @@ router.get('/search', authMiddleware, async (req, res) => {
                             image: art.image || null,
                             favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
                         };
-                    }).filter(isRelevantItalianArticle);
+                    }).filter(isRelevantArticle);
 
                     if (results.length > 0) {
-                        console.log(`[GNews API] Returned ${results.length} clean Italian articles for "${q}"`);
-                        return res.json({ results, total: results.length, query: q, apiSource: 'gnews' });
+                        console.log(`[GNews API] Returned ${results.length} clean Italian articles for "${queryClean}"`);
+                        return res.json({ results, total: results.length, query: queryClean, apiSource: 'gnews' });
                     }
                 }
             } catch (err) {
@@ -353,7 +371,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
                 const data = await fetchJson(newsApiUrl);
                 if (data && data.status === 'ok' && data.articles && data.articles.length > 0) {
-                    console.log(`[NewsAPI] Received ${data.articles.length} raw articles for "${q}"`);
+                    console.log(`[NewsAPI] Received ${data.articles.length} raw articles for "${queryClean}"`);
                     let results = data.articles.map(art => {
                         const pubDate = new Date(art.publishedAt);
                         const dateStr = !isNaN(pubDate)
@@ -372,11 +390,11 @@ router.get('/search', authMiddleware, async (req, res) => {
                             image: art.urlToImage || null,
                             favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : ''
                         };
-                    }).filter(isRelevantItalianArticle);
+                    }).filter(isRelevantArticle);
 
                     if (results.length > 0) {
-                        console.log(`[NewsAPI] Returned ${results.length} clean Italian articles for "${q}"`);
-                        return res.json({ results, total: results.length, query: q, apiSource: 'newsapi' });
+                        console.log(`[NewsAPI] Returned ${results.length} clean Italian articles for "${queryClean}"`);
+                        return res.json({ results, total: results.length, query: queryClean, apiSource: 'newsapi' });
                     }
                 }
             } catch (err) {
