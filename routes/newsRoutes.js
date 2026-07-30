@@ -399,21 +399,26 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Deduplicate by title & URL
-            const seenTitles = new Set();
+            // Deduplicate ONLY exact URLs or same article on the SAME domain (preserve press releases published across DIFFERENT outlets!)
             const seenUrls = new Set();
+            const seenDomainTitle = new Set();
             let uniqueResults = [];
 
             for (const item of allResults) {
-                const normalizedTitle = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
-                const normUrl = (item.url || '').toLowerCase();
+                const normUrl = (item.url || '').toLowerCase().trim();
+                const domain = (item.domain || item.source || '').toLowerCase().trim();
+                const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
+                const domainTitleKey = `${domain}::${normTitle}`;
 
-                if (!seenTitles.has(normalizedTitle) && !seenUrls.has(normUrl)) {
-                    seenTitles.add(normalizedTitle);
-                    if (normUrl) seenUrls.add(normUrl);
-                    uniqueResults.push(item);
-                }
+                if (normUrl && seenUrls.has(normUrl)) continue;
+                if (domainTitleKey && seenDomainTitle.has(domainTitleKey)) continue;
+
+                if (normUrl) seenUrls.add(normUrl);
+                if (domainTitleKey) seenDomainTitle.add(domainTitleKey);
+
+                uniqueResults.push(item);
             }
+
 
             // Flag priority sources
             uniqueResults.forEach(item => {
