@@ -347,31 +347,27 @@ router.get('/search', authMiddleware, async (req, res) => {
             if (parts.length === 3) dateFilters += ` before:${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
-        const qTerm = queryClean.replace(/["']/g, '').trim();
-        const allPriorityDomains = getAllDomains();
-        const priorityDomainSet = new Set(allPriorityDomains);
+        // Build domain to source name map from prioritySources database
+        const domainToSourceMap = new Map();
+        PRIORITY_SOURCES.forEach(s => {
+            if (s.domain) {
+                const cleanD = s.domain.toLowerCase().replace(/^www\./, '');
+                domainToSourceMap.set(cleanD, s.name);
+            }
+        });
 
-        // 8 fast, reliable parallel queries (combining Google News RSS + Bing News RSS)
+        // 8 fast, parallel queries across Google News RSS & Bing News RSS
         const searchUrls = [
-            // 1. Google News RSS Primary Feed
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 2. Google News RSS Italian context variant
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 3. Google News RSS Agreement / Press Release variant
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 4. Google News RSS Comunicato variant
             `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 5. Bing News RSS Primary Feed
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-            // 6. Bing News RSS Italian query
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`,
-            // 7. Bing News RSS Top National Outlets
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' (site:ilsole24ore.com OR site:repubblica.it OR site:corriere.it OR site:ansa.it OR site:iltempo.it OR site:lastampa.it)')}&format=rss&cc=IT`,
-            // 8. Bing News RSS Top Digital & Local Outlets
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' (site:liberoquotidiano.it OR site:ilgiornaleditalia.it OR site:meridiananotizie.it OR site:affaritaliani.it OR site:borsaitaliana.it OR site:lecronachelucane.it)')}&format=rss&cc=IT`
         ];
 
-        // Fetch all 8 queries in parallel with a 6-second timeout wrapper
         const fetchWithTimeout = (url) => Promise.race([
             fetchText(url),
             new Promise((_, r) => setTimeout(() => r(new Error('Timeout 6s')), 6000))
@@ -406,37 +402,67 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // --- STEP 1: RESOLVE GOOGLE NEWS URLS WITH 3S TIMEOUT GUARD ---
+            // --- STEP 1: MANDATORY RESOLUTION OF DIRECT PUBLISHER URLS ---
             await Promise.all(rawResults.map(async (item) => {
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
                         item.url = await Promise.race([
                             resolveGoogleNewsUrl(item.url),
-                            new Promise(r => setTimeout(() => r(item.url), 3000))
+                            new Promise(r => setTimeout(() => r(item.url), 4000))
                         ]);
                     } catch(e){}
                 }
-                if (!item.url) return;
-                try {
-                    const domain = new URL(item.url).hostname.replace(/^www\./, '');
-                    item.domain = domain;
-                    item.favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                    if (!item.source || item.source === 'Web' || item.source === 'Bing News') {
-                        item.source = domain;
-                    }
-                    if (priorityDomainSet.has(domain)) item._isPriority = true;
-                } catch(e){}
             }));
 
-            // --- STEP 2: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
-            // (Allows identical press releases published across DIFFERENT news outlets to ALL be kept!)
+            // --- STEP 2: STRICT FILTERING & METADATA CLEANUP FOR PRIORITY SOURCES ---
+            let priorityDbResults = [];
+
+            for (const item of rawResults) {
+                if (!item.url) continue;
+
+                let realDomain = '';
+                try {
+                    realDomain = new URL(item.url).hostname.toLowerCase().replace(/^www\./, '');
+                } catch(e) {}
+
+                // Reject URLs that remain on Google/Bing or non-news domains
+                if (!realDomain || realDomain.includes('google.') || realDomain.includes('bing.') || realDomain.includes('youtube.')) {
+                    continue;
+                }
+
+                // Match against priority database sources
+                let matchedSourceName = domainToSourceMap.get(realDomain);
+                if (!matchedSourceName) {
+                    for (const source of PRIORITY_SOURCES) {
+                        const sDomain = (source.domain || '').toLowerCase().replace(/^www\./, '');
+                        if (sDomain && (realDomain.endsWith(sDomain) || sDomain.endsWith(realDomain))) {
+                            matchedSourceName = source.name;
+                            break;
+                        }
+                    }
+                }
+
+                // STRICT DATABASE RULE: Only accept articles matching our priority sources database
+                if (!matchedSourceName) continue;
+
+                // Assign clean, verified metadata
+                item.domain = realDomain;
+                item.source = matchedSourceName; // e.g. "Il Tempo", "Il Sole 24 ORE", "ANSA"
+                item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`; // Real newspaper favicon!
+                item.isPrioritySource = true;
+
+                priorityDbResults.push(item);
+            }
+
+            // --- STEP 3: DEDUPLICATE BY REAL DOMAIN + TITLE ---
+            // (Preserves identical press releases published across DIFFERENT outlets in our database)
             const seenUrls = new Set();
             const seenDomainTitle = new Set();
             let uniqueResults = [];
 
-            for (const item of rawResults) {
+            for (const item of priorityDbResults) {
                 const normUrl = (item.url || '').toLowerCase().trim();
-                const domain = (item.domain || item.source || '').toLowerCase().trim();
+                const domain = (item.domain || '').toLowerCase().trim();
                 const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 45);
                 const domainTitleKey = `${domain}::${normTitle}`;
 
@@ -449,31 +475,23 @@ router.get('/search', authMiddleware, async (req, res) => {
                 uniqueResults.push(item);
             }
 
-            // --- STEP 3: SORT BY PRIORITY SOURCE THEN DATE ---
-            uniqueResults.sort((a, b) => {
-                if (a._isPriority && !b._isPriority) return -1;
-                if (!a._isPriority && b._isPriority) return 1;
-                return (b.timestamp || 0) - (a.timestamp || 0);
-            });
-
-            // Set maximum capacity to 500 items for total recall
-            uniqueResults = uniqueResults.slice(0, 500);
+            // Sort by date
+            uniqueResults.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             // --- STEP 4: APPLY RELEVANCE & SOCIAL FILTERS ---
             uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
-                const isPriority = r._isPriority || false;
                 delete r.timestamp;
                 delete r._isPriority;
-                r.isPrioritySource = isPriority;
+                r.isPrioritySource = true;
                 return r;
             });
 
             if (uniqueResults.length > 0) {
-                console.log(`[Fast Multi-Engine Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati puliti.`);
-                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'fast-multi-engine-rss' });
+                console.log(`[Priority DB Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati ESCLUSIVI dal Database Fonti.`);
+                return res.json({ results: uniqueResults, total: uniqueResults.length, query: queryClean, apiSource: 'priority-db-rss' });
             }
         } catch(rssErr) {
-            console.log(`[Fast Multi-Engine Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
+            console.log(`[Priority DB Search Notice]: ${rssErr.message}. Trying API fallbacks...`);
         }
 
         // --- SECONDARY FALLBACK: GNews API & NewsAPI.org ---
