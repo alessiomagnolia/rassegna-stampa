@@ -334,7 +334,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             return true;
         };
 
-        // --- SOLUTION 1: FAST, RELIABLE NEWS ENGINE WITH PRIORITY SOURCE HIGHLIGHTING ---
+        // --- SOLUTION 1: FAST, RELIABLE NEWS ENGINE WITH IN-MEMORY DATE FILTERING ---
         console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
 
         const qTerm = queryClean.replace(/["']/g, '').trim();
@@ -347,12 +347,12 @@ router.get('/search', authMiddleware, async (req, res) => {
             }
         });
 
-        // 6 fast, reliable parallel queries (combining Google News RSS + Bing News RSS)
+        // 6 fast, clean parallel queries across Google News RSS & Bing News RSS
         const searchUrls = [
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie')}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo')}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato')}&hl=it&gl=IT&ceid=IT:it`,
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
             `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`
         ];

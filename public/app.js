@@ -849,6 +849,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // News Search Events
         document.getElementById('btnSearchNews')?.addEventListener('click', searchNews);
+        document.getElementById('newsKeyword')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchNews();
+            }
+        });
         document.getElementById('btnResetSearchNews')?.addEventListener('click', () => {
             document.getElementById('newsKeyword').value = '';
             document.getElementById('newsDateFrom').value = '';
