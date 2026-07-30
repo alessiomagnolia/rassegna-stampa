@@ -459,6 +459,14 @@
                             <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('web', this)">Web & Digital</button>
                             <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('agenzia', this)">Agenzie</button>
                         </div>
+
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Social Network:</span>
+                            <button type="button" id="btnToggleSocial" class="btn btn-outline btn-sm news-social-filter active" onclick="toggleSocialFilter(this)" style="display:flex; align-items:center; gap:6px;">
+                                <i data-feather="shield-off" style="width:14px;height:14px;color:#00e676;"></i>
+                                <span>Escludi Social Network (Disattivato / Esclusi di default)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

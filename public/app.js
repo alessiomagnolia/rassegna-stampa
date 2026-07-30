@@ -1117,6 +1117,30 @@ window.filterNewsSource = function(category, btn) {
     }
 };
 
+let includeSocialFilter = false;
+
+window.toggleSocialFilter = function(btn) {
+    try {
+        includeSocialFilter = !includeSocialFilter;
+        if (btn) {
+            if (includeSocialFilter) {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i data-feather="share-2" style="width:14px;height:14px;color:var(--accent-primary);"></i> <span>Mostra anche Social Network</span>';
+                showToast('Social Network inclusi nella ricerca', 'info');
+            } else {
+                btn.classList.add('active');
+                btn.innerHTML = '<i data-feather="shield-off" style="width:14px;height:14px;color:#00e676;"></i> <span>Escludi Social Network (Disattivato / Esclusi di default)</span>';
+                showToast('Social Network esclusi (Filtro attivo)', 'info');
+            }
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+        const q = document.getElementById('newsKeyword').value.trim();
+        if (q) searchNews();
+    } catch(err) {
+        console.error('toggleSocialFilter error:', err);
+    }
+};
+
 async function searchNews() {
     const q = document.getElementById('newsKeyword').value.trim();
     const from = document.getElementById('newsDateFrom').value;
@@ -1135,7 +1159,7 @@ async function searchNews() {
     document.getElementById('newsLoadingState').classList.remove('hidden');
 
     try {
-        let url = `/api/news/search?q=${encodeURIComponent(q)}`;
+        let url = `/api/news/search?q=${encodeURIComponent(q)}&includeSocial=${includeSocialFilter ? 'true' : 'false'}`;
         // Convert YYYY-MM-DD to DD/MM/YYYY for backend
         if (from) {
             const [y, m, d] = from.split('-');

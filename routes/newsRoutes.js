@@ -162,35 +162,31 @@ function getFinalUrl(url, maxRedirects = 5) {
 }
 
 async function resolveGoogleNewsUrl(url) {
-    if (!url.includes('news.google.com/rss/articles/')) return url;
+    if (!url || !url.includes('news.google.com/rss/articles/')) return url;
     
-    // First try the Base64 decode trick for speed
+    // Fast Base64 decode trick (0ms)
     try {
         const parts = url.split('/articles/');
-        let b64 = parts[1].split('?')[0];
-        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
-        while (b64.length % 4) b64 += '=';
-        const decoded = Buffer.from(b64, 'base64').toString('latin1');
-        const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
-        if (match && !match[1].includes('google.com')) {
-            return match[1];
+        if (parts.length > 1) {
+            let b64 = parts[1].split('?')[0];
+            b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const decoded = Buffer.from(b64, 'base64').toString('latin1');
+            const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
+            if (match && !match[1].includes('google.com') && match[1].includes('.')) {
+                return match[1];
+            }
         }
     } catch(e){}
 
-    // Use the official decoder
+    // Quick decoder with 1 second max timeout to prevent search hangs
     try {
-        const result = await decoder.decode(url);
-        if (result && result.status && result.decoded_url) {
-            return result.decoded_url;
-        }
+        const decodePromise = decoder.decode(url).then(res => (res && res.status && res.decoded_url) ? res.decoded_url : null);
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1000));
+        const resolved = await Promise.race([decodePromise, timeoutPromise]);
+        if (resolved) return resolved;
     } catch(e) {}
 
-    // Fallback to HTTP redirect follower
-    try {
-        const finalUrl = await getFinalUrl(url, 3);
-        if (finalUrl && finalUrl !== url) return finalUrl;
-    } catch(e) {}
-    
     return url;
 }
 
@@ -257,12 +253,14 @@ function parseRSS(xmlText, sourceNameDefault = '') {
 // ---------------------------------------------------------------------------
 
 /**
- * GET /api/news/search?q=...&from=DD%2FMM%2FYYYY&to=DD%2FMM%2FYYYY
+ * GET /api/news/search?q=...&from=DD%2FMM%2FYYYY&to=DD%2FMM%2FYYYY&includeSocial=false
  */
 router.get('/search', authMiddleware, async (req, res) => {
     try {
-        const { q, from, to } = req.query;
+        const { q, from, to, includeSocial } = req.query;
         if (!q || !q.trim()) return res.status(400).json({ error: 'Parola chiave obbligatoria.' });
+
+        const allowSocial = includeSocial === 'true';
 
         // Clean user input: strip any user-entered quotes automatically
         const queryClean = q.replace(/^"+|"+$/g, '').trim();
@@ -280,6 +278,11 @@ router.get('/search', authMiddleware, async (req, res) => {
             'amazon.', 'ebay.', 'aliexpress.', 'temu.', 'shein.', 'booking.', 'tripadvisor.', 'pinterest.'
         ];
 
+        const socialDomains = [
+            'facebook.com', 'instagram.com', 'youtube.com', 'tiktok.com',
+            'twitter.com', 'x.com', 'linkedin.com', 'reddit.com', 'vk.com'
+        ];
+
         // Strict filter function to ensure ironclad relevance & quality
         const isRelevantArticle = (art) => {
             if (!art || !art.title || !art.url) return false;
@@ -287,6 +290,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             const snippetLower = (art.snippet || '').toLowerCase();
             const fullText = titleLower + ' ' + snippetLower;
             const domainLower = (art.domain || '').toLowerCase();
+            const sourceLower = (art.source || '').toLowerCase();
 
             // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
             if (hasForeignScript(fullText)) return false;
@@ -298,13 +302,21 @@ router.get('/search', authMiddleware, async (req, res) => {
                 if (!allWordsPresent) return false;
             }
 
-            // 3. Reject spam / ad domains
+            // 3. Social Network filter (Excluded by default unless allowSocial === true)
+            if (!allowSocial) {
+                if (socialDomains.some(sd => domainLower.includes(sd))) return false;
+                if (['facebook', 'instagram', 'youtube', 'tiktok', 'twitter', 'linkedin', 'reddit'].some(brand => sourceLower.includes(brand))) {
+                    return false;
+                }
+            }
+
+            // 4. Reject spam / ad domains
             if (spamDomains.some(sd => domainLower.includes(sd))) return false;
 
-            // 4. Reject spam / ad keywords in title
+            // 5. Reject spam / ad keywords in title
             if (spamKeywords.some(sk => titleLower.includes(sk))) return false;
 
-            // 5. Reject non-Italian TLDs commonly associated with spam
+            // 6. Reject non-Italian TLDs commonly associated with spam
             if (domainLower.endsWith('.ru') || domainLower.endsWith('.cn') || domainLower.endsWith('.jp') || domainLower.endsWith('.su') || domainLower.endsWith('.xyz') || domainLower.endsWith('.top')) {
                 return false;
             }
