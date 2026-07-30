@@ -334,9 +334,8 @@ router.get('/search', authMiddleware, async (req, res) => {
             return true;
         };
 
-        // --- DOMAIN-TARGETED DIRECT WEB SEARCH ENGINE ---
-        // Executes direct web searches (keyword + site:domain) for priority database sources
-        console.log(`[Domain-Targeted Search] Searching priority database sources for: "${queryClean}"...`);
+        // --- SOLUTION 1: FAST, RELIABLE NEWS ENGINE WITH PRIORITY SOURCE HIGHLIGHTING ---
+        console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
 
         const qTerm = queryClean.replace(/["']/g, '').trim();
         const allPriorityDomains = getAllDomains();
@@ -348,18 +347,14 @@ router.get('/search', authMiddleware, async (req, res) => {
             }
         });
 
-        // Top 25 priority sources from database to target individually
-        const keyDomains = allPriorityDomains.slice(0, 25);
-
-        // Build list of targeted web search URLs (parola chiave + sito di fiducia)
+        // 6 fast, reliable parallel queries (combining Google News RSS + Bing News RSS)
         const searchUrls = [
-            // 1. General Google News RSS
-            `https://news.google.com/rss/search?q=${encodeURIComponent('"' + qTerm + '"' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
-            // 2. Italian Bing Web News search
-            `https://www.bing.com/news/search?q=${encodeURIComponent('"' + qTerm + '"')}&format=rss&cc=IT`,
-            // 3. Direct site-by-site web searches for top priority domains (sogesid site:repubblica.it, sogesid site:iltempo.it, etc.)
-            ...keyDomains.map(d => `https://www.bing.com/search?q=${encodeURIComponent('"' + qTerm + '" site:' + d)}&format=rss`),
-            ...keyDomains.slice(0, 10).map(d => `https://www.bing.com/news/search?q=${encodeURIComponent('"' + qTerm + '" site:' + d)}&format=rss&cc=IT`)
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato' + dateFilters)}&hl=it&gl=IT&ceid=IT:it`,
+            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
+            `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`
         ];
 
         const fetchWithTimeout = (url) => Promise.race([
