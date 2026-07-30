@@ -1892,8 +1892,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- BILLING & CHECKOUT SYSTEM ---
-let selectedCheckoutPlan = { name: 'Professional', price: 59 };
-let isYearlyBilling = false;
+var selectedCheckoutPlan = { name: 'Professional', price: 59 };
+var isYearlyBilling = false;
 
 window.toggleBillingCycle = function(isYearly) {
     isYearlyBilling = isYearly;
