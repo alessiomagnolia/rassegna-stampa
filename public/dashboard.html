@@ -422,28 +422,31 @@
             </div>
 
             <!-- SEARCH FORM -->
-            <section class="glass-card" style="padding:1.5rem; margin-bottom:1.5rem;">
-                <div style="display:grid; grid-template-columns:1fr auto auto auto auto; gap:0.75rem; align-items:end;">
-                    <div class="input-group" style="margin:0;">
+            <section class="glass-card news-search-card" style="padding:1.25rem; margin-bottom:1.5rem;">
+                <div class="news-search-grid">
+                    <div class="input-group news-keyword-group" style="margin:0;">
                         <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Parola chiave</label>
                         <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:44px;">
-                        <div id="newsKeywordSuggestions" class="hidden" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
+                        <div id="newsKeywordSuggestions" class="hidden news-suggestions-box" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
                     </div>
-                    <div class="input-group" style="margin:0; min-width:130px;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Dal</label>
-                        <input type="date" id="newsDateFrom" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                    <div class="news-search-dates">
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Dal</label>
+                            <input type="date" id="newsDateFrom" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
+                            <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                        </div>
                     </div>
-                    <div class="input-group" style="margin:0; min-width:130px;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
-                        <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
+                    <div class="news-search-actions">
+                        <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.25rem; white-space:nowrap;"><i data-feather="search" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Cerca</button>
+                        <button id="btnResetSearchNews" class="btn btn-outline" style="height:44px; padding:0 1.25rem; white-space:nowrap; border-color: rgba(255,255,255,0.2);"><i data-feather="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Nuova</button>
                     </div>
-                    <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.5rem; white-space:nowrap;"><i data-feather="search" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Cerca</button>
-                    <button id="btnResetSearchNews" class="btn btn-outline" style="height:44px; padding:0 1.5rem; white-space:nowrap; border-color: rgba(255,255,255,0.2);"><i data-feather="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Nuova</button>
                 </div>
-            </section>
 
                 <!-- TOGGLE FILTRI RAPIDI -->
-                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div class="quick-filters-toggle-row" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                     <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="display:flex; align-items:center; gap:6px; font-weight:600;">
                         <i data-feather="sliders" style="width:14px;height:14px;"></i>
                         <span>Filtri Rapidi</span>
@@ -452,33 +455,40 @@
                 </div>
 
                 <!-- COLLAPSIBLE QUICK FILTERS PANEL -->
-                <div id="quickFiltersPanel" class="hidden" style="margin-top:0.75rem; padding:1rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px;">
-                    <div style="display:flex; flex-direction:column; gap:1rem;">
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div id="quickFiltersPanel" class="hidden quick-filters-panel" style="margin-top:0.75rem; padding:1rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px;">
+                    <div style="display:flex; flex-direction:column; gap:0.85rem;">
+                        <div class="quick-filter-group" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Periodo Rapido:</span>
-                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('today', this)">Oggi</button>
-                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('3days', this)">Ultimi 3 Giorni</button>
-                            <button type="button" class="btn btn-outline btn-sm news-date-preset active" onclick="setNewsDatePreset('7days', this)">Ultimi 7 Giorni</button>
-                            <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('30days', this)">Ultimi 30 Giorni</button>
+                            <div class="quick-filter-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('today', this)">Oggi</button>
+                                <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('3days', this)">3 Giorni</button>
+                                <button type="button" class="btn btn-outline btn-sm news-date-preset active" onclick="setNewsDatePreset('7days', this)">7 Giorni</button>
+                                <button type="button" class="btn btn-outline btn-sm news-date-preset" onclick="setNewsDatePreset('30days', this)">30 Giorni</button>
+                            </div>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <div class="quick-filter-group" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Filtro Fonti:</span>
-                            <button type="button" class="btn btn-outline btn-sm news-source-filter active" onclick="filterNewsSource('all', this)">Tutte</button>
-                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('nazionale', this)">Stampa Naz.</button>
-                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('locale', this)">Locali</button>
-                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('web', this)">Web & Digital</button>
-                            <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('agenzia', this)">Agenzie</button>
+                            <div class="quick-filter-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-outline btn-sm news-source-filter active" onclick="filterNewsSource('all', this)">Tutte</button>
+                                <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('nazionale', this)">Stampa Naz.</button>
+                                <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('locale', this)">Locali</button>
+                                <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('web', this)">Web</button>
+                                <button type="button" class="btn btn-outline btn-sm news-source-filter" onclick="filterNewsSource('agenzia', this)">Agenzie</button>
+                            </div>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <div class="quick-filter-group" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; min-width:110px;">Social Network:</span>
-                            <button type="button" id="btnToggleSocialFilter" class="btn btn-outline btn-sm active" onclick="toggleSocialFilter(this)" style="font-size:0.8rem;">
-                                <i data-feather="shield-off" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Social Network: Esclusi (Default)
-                            </button>
+                            <div class="quick-filter-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" id="btnToggleSocialFilter" class="btn btn-outline btn-sm active" onclick="toggleSocialFilter(this)" style="font-size:0.8rem;">
+                                    <i data-feather="shield-off" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Social Network: Esclusi (Default)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </section>
 
             <!-- RESULTS TOOLBAR (hidden until search) -->
             <div id="newsResultsToolbar" class="hidden" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">

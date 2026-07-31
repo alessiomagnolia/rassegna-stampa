@@ -1457,9 +1457,29 @@ input::placeholder, textarea::placeholder {
     opacity: 0.85;
 }
 
-/* Desktop default utility classes */
+/* Desktop default utility classes & Ricerca Notizie grid */
 .show-mobile-inline, .show-mobile-block {
     display: none !important;
+}
+
+.news-search-grid {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    width: 100%;
+}
+.news-keyword-group {
+    flex: 1;
+}
+.news-search-dates {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+.news-search-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 @media (max-width: 900px) {
@@ -1699,23 +1719,56 @@ input::placeholder, textarea::placeholder {
     }
 
     /* 7. Ricerca Notizie Page (#page-ricerca-notizie) */
-    .news-search-box {
-        padding: 0.85rem !important;
-        border-radius: 10px !important;
+    .news-search-card {
+        padding: 1rem !important;
+        border-radius: 12px !important;
     }
 
     .news-search-grid {
-        grid-template-columns: 1fr !important;
-        gap: 8px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
     }
 
-    .news-search-grid input,
-    .news-search-grid select,
-    .news-search-grid button {
+    .news-keyword-group {
+        width: 100% !important;
+    }
+
+    .news-search-dates {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .news-search-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .news-search-actions .btn {
         width: 100% !important;
         min-height: 44px !important;
-        border-radius: 8px !important;
-        font-size: 0.85rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .quick-filter-group {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+    }
+
+    .quick-filter-buttons {
+        width: 100% !important;
+    }
+
+    .quick-filter-buttons .btn {
+        font-size: 0.78rem !important;
+        padding: 5px 8px !important;
     }
 
     .news-results-grid {
