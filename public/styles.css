@@ -208,6 +208,42 @@ h1, h2, h3, h4, h5, h6 {
     color: white !important;
 }
 
+
+/* Elegant Upgrade Button in Nav */
+.btn-upgrade-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 99px;
+    background: linear-gradient(135deg, rgba(124,92,255,0.18), rgba(251,191,36,0.15));
+    border: 1px solid rgba(251,191,36,0.4);
+    color: #efece5 !important;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    white-space: nowrap;
+    text-decoration: none !important;
+}
+
+.btn-upgrade-nav i, .btn-upgrade-nav svg {
+    color: #fbbf24 !important;
+    width: 14px;
+    height: 14px;
+    filter: drop-shadow(0 0 4px rgba(251,191,36,0.5));
+}
+
+.btn-upgrade-nav:hover {
+    background: linear-gradient(135deg, rgba(124,92,255,0.35), rgba(251,191,36,0.3));
+    border-color: #fbbf24;
+    box-shadow: 0 0 14px rgba(251,191,36,0.35);
+    transform: translateY(-1px);
+    color: #ffffff !important;
+}
+
 .btn-outline {
     background: transparent;
     border: 1px solid var(--border-color);
