@@ -1457,3 +1457,293 @@ input::placeholder, textarea::placeholder {
     opacity: 0.85;
 }
 
+/* ============================================================ */
+/* MOBILE RESPONSIVE ADAPTATIONS (@media max-width: 900px)     */
+/* Desktop view remains 100% untouched (> 900px)               */
+/* ============================================================ */
+
+@media (max-width: 900px) {
+    /* Prevent iOS & Mobile Horizontal Scroll */
+    html, body {
+        overflow-x: hidden !important;
+        position: relative;
+        width: 100%;
+    }
+
+    /* Input font-size to prevent iOS Safari auto-zoom */
+    input, select, textarea, button {
+        font-size: 16px !important;
+    }
+
+    /* 1. App Layout & Off-Canvas Mobile Sidebar Drawer */
+    .app-layout {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 1050 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(10, 10, 26, 0.98) !important;
+    }
+
+    .sidebar.open, .sidebar.active {
+        transform: translateX(0) !important;
+    }
+
+    .sidebar-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.65) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        z-index: 1040 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.3s ease !important;
+    }
+
+    .sidebar-overlay.active, .sidebar-overlay.open, .sidebar-overlay.visible {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* 2. Top Navigation Bar */
+    .top-bar, .top-bar-nav {
+        padding: 0.5rem 0.85rem !important;
+        height: auto !important;
+        min-height: 56px !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+
+    .top-bar h1 {
+        font-size: 1rem !important;
+    }
+
+    .top-actions {
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .btn-upgrade-nav {
+        font-size: 0.72rem !important;
+        padding: 6px 10px !important;
+    }
+
+    /* 3. Main Dashboard Content & Spacing */
+    .main-content {
+        padding: 0.75rem !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    .container, .dashboard-container {
+        padding: 0.75rem 0.5rem !important;
+    }
+
+    .page-header {
+        margin-bottom: 1.25rem !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.35rem !important;
+    }
+
+    .page-header p {
+        font-size: 0.85rem !important;
+    }
+
+    /* 4. Add Article Bar (Nuova Rassegna Stampa) */
+    .add-article-bar {
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .add-article-bar input[type="text"] {
+        width: 100% !important;
+        padding: 12px 14px !important;
+        border-radius: 10px !important;
+    }
+
+    .add-article-bar .btn,
+    .add-article-actions .btn {
+        width: 100% !important;
+        min-height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 10px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .add-article-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    /* 5. Article Cards (#articlesList) */
+    .article-card {
+        flex-direction: column !important;
+        padding: 1rem !important;
+        gap: 0.85rem !important;
+        border-radius: 12px !important;
+    }
+
+    .article-thumb {
+        width: 100% !important;
+        height: 180px !important;
+        object-fit: cover !important;
+        border-radius: 8px !important;
+    }
+
+    .article-content {
+        width: 100% !important;
+    }
+
+    .article-title {
+        font-size: 0.98rem !important;
+        line-height: 1.35 !important;
+    }
+
+    .article-excerpt {
+        font-size: 0.83rem !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    /* 6. Action Buttons Section (.generate-actions) */
+    .generate-actions {
+        width: 100% !important;
+        padding: 0 !important;
+        gap: 10px !important;
+    }
+
+    .generate-actions button {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 48px !important;
+        font-size: 0.9rem !important;
+        border-radius: 10px !important;
+    }
+
+    .generate-actions > div {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+
+    /* 7. Ricerca Notizie Page (#page-ricerca-notizie) */
+    .news-search-box {
+        padding: 1rem !important;
+        border-radius: 12px !important;
+    }
+
+    .news-search-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .news-search-grid input,
+    .news-search-grid select,
+    .news-search-grid button {
+        width: 100% !important;
+        min-height: 48px !important;
+        border-radius: 10px !important;
+    }
+
+    .news-results-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .news-card {
+        padding: 1rem !important;
+        border-radius: 12px !important;
+    }
+
+    .news-card-image {
+        height: 160px !important;
+    }
+
+    .news-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .news-toolbar-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .news-toolbar-actions .btn {
+        width: 100% !important;
+        min-height: 44px !important;
+    }
+
+    /* 8. Profilo, Impostazioni, Storico, Statistiche Grids */
+    .profile-grid, .settings-grid, .history-grid, .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .glass-card {
+        padding: 1.25rem 1rem !important;
+        border-radius: 12px !important;
+    }
+
+    /* 9. Modals / Popups */
+    .modal-overlay {
+        padding: 0.5rem !important;
+    }
+
+    .modal-content {
+        width: 96% !important;
+        max-width: 96vw !important;
+        max-height: 92vh !important;
+        max-height: 92dvh !important;
+        padding: 1.25rem 1rem !important;
+        border-radius: 14px !important;
+        overflow-y: auto !important;
+    }
+
+    /* 10. Comunicati Stampa (press.html) & PDF Editor (editor.html) */
+    .workspace {
+        flex-direction: column !important;
+        height: auto !important;
+        overflow-y: auto !important;
+    }
+
+    .generator-form {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        padding: 1rem !important;
+    }
+
+    .editor-container {
+        width: 100% !important;
+        padding: 1rem !important;
+    }
+}
+

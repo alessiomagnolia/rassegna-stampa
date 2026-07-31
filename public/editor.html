@@ -235,6 +235,15 @@
         }
         .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); border-color: var(--accent-primary); }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: white; }
+
+        @media (max-width: 900px) {
+            body { overflow-y: auto !important; }
+            .editor-header { padding: 0.75rem 1rem !important; flex-wrap: wrap !important; gap: 8px !important; }
+            .editor-layout { flex-direction: column !important; height: auto !important; overflow-y: auto !important; }
+            .pages-panel { width: 100% !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; max-height: 220px !important; }
+            .canvas-area { padding: 1rem 0.5rem !important; width: 100% !important; min-height: 400px !important; }
+            .edit-panel { width: 100% !important; position: static !important; border-left: none !important; border-top: 1px solid rgba(255,255,255,0.1) !important; }
+        }
     </style>
 </head>
 <body>
