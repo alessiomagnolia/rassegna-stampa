@@ -158,6 +158,11 @@ function getFinalUrl(url, maxRedirects = 5) {
             req.destroy();
             resolve(url);
         });
+        req.setTimeout(5000, () => { req.destroy(); resolve(url); });
+        req.on('error', () => resolve(url));
+    });
+}
+
 function getFaviconForDomain(domain) {
     if (!domain) return '';
     const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
