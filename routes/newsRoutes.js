@@ -727,17 +727,42 @@ router.get('/collections/:id', authMiddleware, (req, res) => {
 });
 
 /**
- * DELETE /api/news/collections/:id
+/**
+ * POST /api/news/resolve-urls
+ * Resolves selected Google News / Bing RSS links to clean direct publisher URLs post-selection.
+ * Body: { urls: ["https://news.google.com/rss/articles/...", ...] }
  */
-router.delete('/collections/:id', authMiddleware, (req, res) => {
+router.post('/resolve-urls', authMiddleware, async (req, res) => {
     try {
-        const db = getDb();
-        db.prepare(`DELETE FROM link_collections WHERE id = ? AND user_id = ?`)
-          .run(req.params.id, req.userId);
-        res.json({ success: true });
+        const { urls } = req.body;
+        if (!urls || !Array.isArray(urls) || urls.length === 0) {
+            return res.status(400).json({ error: 'Fornisci un array di URL.' });
+        }
+
+        const resolved = await Promise.all(urls.map(async (rawUrl) => {
+            if (!rawUrl || typeof rawUrl !== 'string') return '';
+            let target = cleanAndUnwrapArticleUrl(rawUrl);
+
+            if (target.includes('news.google.com/rss/articles/')) {
+                try {
+                    target = await Promise.race([
+                        resolveGoogleNewsUrl(target),
+                        new Promise(r => setTimeout(() => r(target), 3000))
+                    ]);
+                    target = cleanAndUnwrapArticleUrl(target);
+                } catch(e) {}
+            }
+
+            return target;
+        }));
+
+        res.json({ resolvedUrls: resolved });
     } catch (err) {
-        res.status(500).json({ error: "Errore nell'eliminazione." });
+        console.error('[Resolve URLs] error:', err);
+        res.status(500).json({ error: 'Errore durante la risoluzione degli URL.' });
     }
 });
 
 module.exports = router;
+module.exports.cleanAndUnwrapArticleUrl = cleanAndUnwrapArticleUrl;
+module.exports.resolveGoogleNewsUrl = resolveGoogleNewsUrl;

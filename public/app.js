@@ -1248,22 +1248,39 @@ function renderNewsResults() {
     feather.replace();
 }
 
+async function resolveAndInsertUrlsIntoRassegna(urls) {
+    if (!urls || urls.length === 0) return;
+    
+    const navBtn = document.querySelector('[data-page=rassegna]');
+    if (navBtn) navBtn.click();
+    
+    openMultiLinkModal();
+    const textarea = document.getElementById('multiLinkTextarea');
+    if (textarea) {
+        textarea.value = 'Risoluzione e pulizia link in corso...';
+        updateMultiLinkCount();
+    }
+
+    try {
+        const res = await apiCall('POST', '/api/news/resolve-urls', { urls });
+        const resolved = res.resolvedUrls || urls;
+        if (textarea) {
+            textarea.value = resolved.join('\n');
+            updateMultiLinkCount();
+        }
+    } catch(err) {
+        if (textarea) {
+            textarea.value = urls.join('\n');
+            updateMultiLinkCount();
+        }
+    }
+}
+
 function includeSingleNewsInRassegna(idx, event) {
     if (event) event.stopPropagation();
     const news = currentNewsResults[idx];
     if (!news || !news.url) return;
-
-    // Switch to rassegna page
-    const navBtn = document.querySelector('[data-page=rassegna]');
-    if (navBtn) navBtn.click();
-
-    // Open multi link modal with this single URL pre-populated
-    openMultiLinkModal();
-    const textarea = document.getElementById('multiLinkTextarea');
-    if (textarea) {
-        textarea.value = news.url;
-        updateMultiLinkCount();
-    }
+    resolveAndInsertUrlsIntoRassegna([news.url]);
 }
 
 
@@ -1367,15 +1384,8 @@ async function useCollection(id) {
         const coll = await apiCall('GET', `/api/news/collections/${id}`);
         if (!coll.links || coll.links.length === 0) return showToast('La raccolta è vuota', 'warning');
         
-        // Use these links
-        document.querySelector('[data-page=rassegna]').click();
-        const urls = coll.links.map(l => l.url).join('\n');
-        
-        // Open multi-link modal and set text
-        openMultiLinkModal();
-        document.getElementById('multiLinkTextarea').value = urls;
-        updateMultiLinkCount();
-        
+        const urls = coll.links.map(l => l.url);
+        resolveAndInsertUrlsIntoRassegna(urls);
         showToast(`Raccolta "${coll.name}" caricata pronta per l'estrazione`, 'success');
     } catch (err) {
         showToast('Errore caricamento raccolta', 'error');
@@ -1396,14 +1406,7 @@ async function deleteCollection(id) {
 function useSelectedNews() {
     if (selectedNewsIndices.size === 0) return;
     const selectedLinks = Array.from(selectedNewsIndices).map(idx => currentNewsResults[idx].url);
-    
-    // Switch to rassegna page
-    document.querySelector('[data-page=rassegna]').click();
-    
-    // Open multi link modal
-    openMultiLinkModal();
-    document.getElementById('multiLinkTextarea').value = selectedLinks.join('\n');
-    updateMultiLinkCount();
+    resolveAndInsertUrlsIntoRassegna(selectedLinks);
 }
 
 // ============================================================

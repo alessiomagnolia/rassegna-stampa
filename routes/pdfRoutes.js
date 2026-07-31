@@ -54,13 +54,30 @@ router.post('/generate', authMiddleware, async (req, res) => {
             }
         }
 
-        // Resolve all article logos: if a logo is a remote URL, fetch it as base64 server-side
+const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes');
+
+        // Resolve all article URLs & logos: unwrap Google/Bing links and fetch remote logos as base64 server-side
         const resolvedArticles = await Promise.all(articles.map(async (article) => {
-            if (article.logoBase64 && !article.logoBase64.startsWith('data:')) {
-                const resolved = await fetchImageAsBase64(article.logoBase64);
-                return { ...article, logoBase64: resolved };
+            let updated = { ...article };
+
+            if (updated.url) {
+                try {
+                    updated.url = cleanAndUnwrapArticleUrl(updated.url);
+                    if (updated.url.includes('news.google.com/rss/articles/')) {
+                        updated.url = await Promise.race([
+                            resolveGoogleNewsUrl(updated.url),
+                            new Promise(r => setTimeout(() => r(updated.url), 3500))
+                        ]);
+                        updated.url = cleanAndUnwrapArticleUrl(updated.url);
+                    }
+                } catch(e) {}
             }
-            return article;
+
+            if (updated.logoBase64 && !updated.logoBase64.startsWith('data:')) {
+                const resolvedLogo = await fetchImageAsBase64(updated.logoBase64);
+                updated.logoBase64 = resolvedLogo;
+            }
+            return updated;
         }));
 
         const options = {
