@@ -903,6 +903,22 @@ function closeMultiLinkModal() {
     renderArticles();
 }
 
+window.goToRassegnaFromModal = function() {
+    closeMultiLinkModal();
+    const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
+    if (rassegnaNav) {
+        rassegnaNav.click();
+    } else {
+        const pageRassegna = document.getElementById('page-rassegna');
+        if (pageRassegna) {
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            pageRassegna.classList.add('active');
+        }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Nuova rassegna pronta con gli articoli estratti!', 'success');
+};
+
 function updateMultiLinkCount() {
     const urls = parseMultiLinkUrls();
     const count = urls.length;
