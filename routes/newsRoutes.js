@@ -435,12 +435,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                 searchUrls.push(`https://www.bing.com/news/search?q=${enc}&format=rss&cc=IT`);
             });
 
-            const fetchWithTimeout = (url) => Promise.race([
-                fetchText(url),
-                new Promise((_, r) => setTimeout(() => r(new Error('Timeout 5s')), 5000))
-            ]);
-
-            const responses = await Promise.allSettled(searchUrls.map(u => fetchWithTimeout(u)));
+            const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u, 25000)));
 
             let rawResults = [];
             responses.forEach(r => {
@@ -454,17 +449,14 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Unwrap Bing & Google redirect links
+            // Unwrap Bing & Google redirect links without cutting off
             await Promise.all(rawResults.map(async (item) => {
                 if (item.url) {
                     item.url = cleanAndUnwrapArticleUrl(item.url);
                 }
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
-                        item.url = await Promise.race([
-                            resolveGoogleNewsUrl(item.url),
-                            new Promise(r => setTimeout(() => r(item.url), 2500))
-                        ]);
+                        item.url = await resolveGoogleNewsUrl(item.url);
                         item.url = cleanAndUnwrapArticleUrl(item.url);
                     } catch (e) {}
                 }
@@ -651,8 +643,8 @@ router.get('/search', authMiddleware, async (req, res) => {
             return (b.timestamp || 0) - (a.timestamp || 0);
         });
 
-        // Allow up to 300 results
-        uniqueResults = uniqueResults.slice(0, 300);
+        // Allow up to 1000 results
+        uniqueResults = uniqueResults.slice(0, 1000);
 
         // --- APPLY RELEVANCE & SOCIAL FILTERS ---
         uniqueResults = uniqueResults.filter(isRelevantArticle).map(r => {
