@@ -131,14 +131,27 @@ router.post('/generate', authMiddleware, async (req, res) => {
         }
 
         // Mappatura Lunghezza
-        let lengthInstruction = "di media lunghezza (circa 30-40 righe testuali, escludendo l'intestazione)";
-        if (length === 'corto') lengthInstruction = "breve e conciso (circa 15-20 righe testuali)";
-        if (length === 'lungo') lengthInstruction = "lungo e dettagliato (circa 50-60 righe testuali)";
-        if (length === 'moltolungo') lengthInstruction = "molto lungo e di grande approfondimento (oltre 80 righe testuali)";
+        let lengthInstruction = "di circa 10-15 righe testuali in totale";
+        let maxTokens = 800;
+
+        if (length === '5-10 righe' || length === 'corto') {
+            lengthInstruction = "ESTREMAMENTE SINTETICO E BREVE: massimo 5-10 righe testuali complessive (titolo incluso). Non superare MAI le 10 righe!";
+            maxTokens = 400;
+        } else if (length === '10-15 righe' || length === 'medio') {
+            lengthInstruction = "di media lunghezza: circa 10-15 righe testuali complessive. Non superare le 15 righe!";
+            maxTokens = 800;
+        } else if (length === '15-30 righe' || length === 'lungo') {
+            lengthInstruction = "lungo e dettagliato: tra 15 e 30 righe testuali complessive.";
+            maxTokens = 1500;
+        } else if (length === 'oltre 30 righe' || length === 'moltolungo') {
+            lengthInstruction = "molto lungo ed approfondito: oltre 30 righe testuali complessive.";
+            maxTokens = 3000;
+        }
 
         // Prompt di Ingegneria per Claude
         const systemPrompt = `Sei un Senior PR Manager ed esperto di Comunicazione Istituzionale. Il tuo compito è scrivere un Comunicato Stampa professionale e impeccabile.
 Se ti vengono forniti degli 'ESEMPI PRECEDENTI DEL CLIENTE', devi analizzarli attentamente e replicare ESATTAMENTE il loro Tone of Voice (formale/informale, caldo/istituzionale), le formule di apertura/chiusura e il lessico specifico utilizzato.
+REGOLA FERREA SULLA LUNGHEZZA: Devi rispettare TASSATIVAMENTE il vincolo di lunghezza indicato (${lengthInstruction}). Non dilungarti oltre il numero di righe specificato!
 IMPORTANTE: Quando generi il titolo del comunicato, inserisci SEMPRE prima il soggetto (ovvero il Cliente/Azienda) seguito da due punti o da un trattino, e poi l'argomento.
 Non aggiungere commenti tuoi o preamboli ("Ecco il comunicato"). Restituisci SOLO ed ESCLUSIVAMENTE il testo del comunicato stampa in formato markdown. Inizia direttamente col testo del titolo.`;
 
@@ -147,14 +160,14 @@ ${contextText}
 Richiesta per il nuovo Comunicato Stampa:
 Titolo / Argomento: ${title}
 Cliente / Azienda: ${client_name || 'Generico'}
-Lunghezza richiesta: ${lengthInstruction}
+Vincolo Lunghezza Tassativo: ${lengthInstruction}
 ${extra_instructions ? `Istruzioni aggiuntive: ${extra_instructions}` : ''}
 
-Scrivi ora il comunicato stampa.`;
+Scrivi ora il comunicato stampa rispettando tassativamente il vincolo di lunghezza.`;
 
         const response = await anthropic.messages.create({
             model: "claude-sonnet-5",
-            max_tokens: 2000,
+            max_tokens: maxTokens,
             system: systemPrompt,
             messages: [
                 { role: "user", content: userPrompt }
