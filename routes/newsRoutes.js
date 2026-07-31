@@ -160,9 +160,42 @@ function getFinalUrl(url, maxRedirects = 5) {
         req.setTimeout(5000, () => { req.destroy(); resolve(url); });
         req.on('error', () => resolve(url));
     });
+function cleanAndUnwrapArticleUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    let target = rawUrl.trim();
+
+    // 1. Unwrap Bing News apiclick redirect URLs (extract embedded url= parameter)
+    if (target.includes('bing.com/news/apiclick') || target.includes('bing.com/search')) {
+        try {
+            const parsed = new URL(target);
+            const embeddedUrl = parsed.searchParams.get('url');
+            if (embeddedUrl && embeddedUrl.startsWith('http')) {
+                target = decodeURIComponent(embeddedUrl);
+            }
+        } catch(e) {
+            const m = /[?&]url=(https?%3A%2F%2F[^&]+|https?:\/\/[^&]+)/i.exec(target);
+            if (m) {
+                try { target = decodeURIComponent(m[1]); } catch(e2){}
+            }
+        }
+    }
+
+    // 2. Unwrap Google redirect URLs (google.com/url?q=...)
+    if (target.includes('google.com/url?') || target.includes('google.it/url?')) {
+        try {
+            const parsed = new URL(target);
+            const embeddedUrl = parsed.searchParams.get('q') || parsed.searchParams.get('url');
+            if (embeddedUrl && embeddedUrl.startsWith('http')) {
+                target = decodeURIComponent(embeddedUrl);
+            }
+        } catch(e){}
+    }
+
+    return target;
 }
 
 async function resolveGoogleNewsUrl(url) {
+    url = cleanAndUnwrapArticleUrl(url);
     if (!url.includes('news.google.com/rss/articles/')) return url;
     
     // First try the Base64 decode trick for speed
@@ -422,37 +455,43 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // --- STEP 1: RESOLVE GOOGLE NEWS URLS WITH FAST TIMEOUT ---
+            // --- STEP 1: UNWRAP BING & GOOGLE REDIRECT URLS ---
             await Promise.all(rawResults.map(async (item) => {
+                if (item.url) {
+                    item.url = cleanAndUnwrapArticleUrl(item.url);
+                }
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
                         item.url = await Promise.race([
                             resolveGoogleNewsUrl(item.url),
                             new Promise(r => setTimeout(() => r(item.url), 2500))
                         ]);
+                        item.url = cleanAndUnwrapArticleUrl(item.url);
                     } catch(e){}
                 }
             }));
 
-            // --- STEP 2: METADATA CLEANUP & GUARANTEED PRIORITY MATCHING ---
+            // --- STEP 2: METADATA CLEANUP, PRIORITY MATCHING & ZERO BING/GOOGLE RULE ---
             let processedResults = [];
 
             for (const item of rawResults) {
                 if (!item.url) continue;
 
+                item.url = cleanAndUnwrapArticleUrl(item.url);
+
                 let realDomain = '';
                 try {
                     const parsedUrl = new URL(item.url);
-                    if (!parsedUrl.hostname.includes('google.') && !parsedUrl.hostname.includes('bing.')) {
-                        realDomain = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
+                    const h = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
+                    if (!h.includes('google.') && !h.includes('bing.') && !h.includes('youtube.')) {
+                        realDomain = h;
                     }
                 } catch(e) {}
 
-                // If realDomain wasn't obtained from URL (e.g. Google News link decoder fallback), extract from source/title
+                // Match against priority database sources (191 sources)
                 let matchedSource = null;
 
                 if (realDomain) {
-                    // Match domain
                     let sName = domainToSourceMap.get(realDomain);
                     if (!sName) {
                         for (const source of PRIORITY_SOURCES) {
@@ -472,15 +511,23 @@ router.get('/search', authMiddleware, async (req, res) => {
                     const srcLower = (item.source || '').toLowerCase().trim();
                     const titleLower = (item.title || '').toLowerCase().trim();
 
-                    for (const source of PRIORITY_SOURCES) {
-                        const sourceNameLower = source.name.toLowerCase().trim();
-                        if (srcLower && (srcLower.includes(sourceNameLower) || sourceNameLower.includes(srcLower))) {
-                            matchedSource = source;
-                            break;
+                    if (srcLower && srcLower !== 'bing.com' && srcLower !== 'google.com' && srcLower !== 'web') {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sourceNameLower = source.name.toLowerCase().trim();
+                            if (srcLower.includes(sourceNameLower) || sourceNameLower.includes(srcLower)) {
+                                matchedSource = source;
+                                break;
+                            }
                         }
-                        if (titleLower.endsWith(`- ${sourceNameLower}`) || titleLower.includes(`- ${sourceNameLower}`)) {
-                            matchedSource = source;
-                            break;
+                    }
+
+                    if (!matchedSource) {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sourceNameLower = source.name.toLowerCase().trim();
+                            if (titleLower.endsWith(`- ${sourceNameLower}`) || titleLower.includes(`- ${sourceNameLower}`)) {
+                                matchedSource = source;
+                                break;
+                            }
                         }
                     }
                 }
@@ -491,21 +538,18 @@ router.get('/search', authMiddleware, async (req, res) => {
                     item.source = matchedSource.name;
                     item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
                     item._isPriority = true;
+                    processedResults.push(item);
                 } else if (realDomain) {
                     item.domain = realDomain;
                     item.source = realDomain;
                     item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
                     item._isPriority = false;
+                    processedResults.push(item);
                 } else {
-                    // Generic fallback for unresolved link
-                    const fallbackSrc = item.source || 'Fonte Web';
-                    item.domain = 'web';
-                    item.source = fallbackSrc;
-                    item.favicon = `https://www.google.com/s2/favicons?domain=google.com&sz=32`;
-                    item._isPriority = false;
+                    // DISCARD ANY UNWRAPPED ITEM THAT STAYS ON BING.COM OR GOOGLE.COM!
+                    // (Zero tolerance for Bing.com or Google.com cards!)
+                    continue;
                 }
-
-                processedResults.push(item);
             }
 
             // --- STEP 3: COMBINE LOCAL INDEXED DB & LIVE RESULTS + DEDUPLICATE ---
