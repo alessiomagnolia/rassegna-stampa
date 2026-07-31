@@ -158,10 +158,22 @@ function getFinalUrl(url, maxRedirects = 5) {
             req.destroy();
             resolve(url);
         });
-        req.setTimeout(5000, () => { req.destroy(); resolve(url); });
-        req.on('error', () => resolve(url));
-    });
+function getFaviconForDomain(domain) {
+    if (!domain) return '';
+    const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
+    
+    if (cleanDomain.includes('iltempo.it')) return '/logos/iltempo.png';
+    if (cleanDomain.includes('ansa.it')) return '/logos/ansa.png';
+    if (cleanDomain.includes('corriere.it')) return '/logos/corriere.png';
+    if (cleanDomain.includes('repubblica.it')) return '/logos/repubblica.png';
+    if (cleanDomain.includes('ilsole24ore.com')) return '/logos/ilsole24ore.png';
+    if (cleanDomain.includes('ilmattino.it')) return '/logos/ilmattino.png';
+    if (cleanDomain.includes('ilgiornaleditalia.it')) return '/logos/ilgiornaleditalia.png';
+    if (cleanDomain.includes('agenzianova.com')) return '/logos/agenzianova.jpg';
+
+    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
 }
+
 function cleanAndUnwrapArticleUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== 'string') return '';
     let target = rawUrl.trim();
@@ -517,21 +529,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }
                 }
 
-function getFaviconForDomain(domain) {
-    if (!domain) return '';
-    const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
-    
-    if (cleanDomain.includes('iltempo.it')) return '/logos/iltempo.png';
-    if (cleanDomain.includes('ansa.it')) return '/logos/ansa.png';
-    if (cleanDomain.includes('corriere.it')) return '/logos/corriere.png';
-    if (cleanDomain.includes('repubblica.it')) return '/logos/repubblica.png';
-    if (cleanDomain.includes('ilsole24ore.com')) return '/logos/ilsole24ore.png';
-    if (cleanDomain.includes('ilmattino.it')) return '/logos/ilmattino.png';
-    if (cleanDomain.includes('ilgiornaleditalia.it')) return '/logos/ilgiornaleditalia.png';
-    if (cleanDomain.includes('agenzianova.com')) return '/logos/agenzianova.jpg';
 
-    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
-}
 
                 if (matchedSource) {
                     realDomain = matchedSource.domain.toLowerCase().replace(/^www\./, '');
