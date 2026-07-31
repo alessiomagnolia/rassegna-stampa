@@ -383,6 +383,7 @@ function renderArticles() {
     const btnGenerate = document.getElementById('btnGeneratePDF');
     const btnEditor = document.getElementById('btnOpenEditor');
     const btnArchive = document.getElementById('btnArchiveReview');
+    const btnCopyLinks = document.getElementById('btnCopyAllLinks');
     
     if (!list) return;
 
@@ -393,16 +394,18 @@ function renderArticles() {
 
     if (state.articles.length === 0) {
         empty.classList.remove('hidden');
-        if (btnGenerate) btnGenerate.classList.add('hidden');
-        if (btnEditor)   btnEditor.classList.add('hidden');
-        if (btnArchive)  btnArchive.classList.add('hidden');
+        if (btnGenerate)  btnGenerate.classList.add('hidden');
+        if (btnEditor)    btnEditor.classList.add('hidden');
+        if (btnArchive)   btnArchive.classList.add('hidden');
+        if (btnCopyLinks) btnCopyLinks.classList.add('hidden');
         return;
     }
 
     empty.classList.add('hidden');
-    if (btnGenerate) btnGenerate.classList.remove('hidden');
-    if (btnEditor)   btnEditor.classList.remove('hidden');
-    if (btnArchive)  btnArchive.classList.remove('hidden');
+    if (btnGenerate)  btnGenerate.classList.remove('hidden');
+    if (btnEditor)    btnEditor.classList.remove('hidden');
+    if (btnArchive)   btnArchive.classList.remove('hidden');
+    if (btnCopyLinks) btnCopyLinks.classList.remove('hidden');
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
@@ -432,13 +435,16 @@ function renderArticles() {
                 </div>
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
-                <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-                <div style="display:flex; justify-content:space-between; margin-top:0.75rem;">
-                    <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer;">
-                        <i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo testata
-                    </label>
-                    <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="handleLogoUpload(event, ${idx})">
-                </div>
+                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer; font-size:0.75rem; padding:4px 8px;">
+                            <i data-feather="image" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Cambia logo
+                        </label>
+                        <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="handleLogoUpload(event, ${idx})">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="copyArticleLink(${idx})" style="font-size:0.75rem; padding:4px 8px; border-color:rgba(255,255,255,0.2);" title="Copia link originale">
+                            <i data-feather="copy" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Copia link
+                        </button>
+                    </div>
                     ${article.logoBase64 ? `<div style="background: white; padding: 2px 8px; border-radius: 4px; display: flex; align-items: center;"><img src="${article.logoBase64}" style="max-height: 20px; object-fit: contain;"></div>` : ''}
                 </div>
             </div>
@@ -451,6 +457,62 @@ function renderArticles() {
     feather.replace();
     initArticlesSortable();
 }
+
+window.copyArticleLink = function(idx) {
+    const article = state.articles[idx];
+    if (!article || !article.url) {
+        showToast('Link non disponibile per questo articolo', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(article.url).then(() => {
+        showToast('Link dell\'articolo copiato negli appunti!', 'success');
+    }).catch(() => {
+        showToast('Errore durante la copia del link', 'error');
+    });
+};
+
+window.copyAllArticleLinks = function() {
+    if (!state.articles || state.articles.length === 0) {
+        showToast('Nessun articolo presente in rassegna', 'warning');
+        return;
+    }
+
+    const formattedList = state.articles.map((art, i) => {
+        const title = art.title || 'Senza titolo';
+        const source = art.source_name || art.source_type || 'Web';
+        const url = art.url || '';
+        return `${i + 1}. ${title} (${source})\n   ${url}`;
+    }).join('\n\n');
+
+    navigator.clipboard.writeText(formattedList).then(() => {
+        showToast('Elenco completo dei link copiato negli appunti!', 'success');
+    }).catch(() => {});
+
+    const modal = document.getElementById('allLinksModal');
+    const textarea = document.getElementById('allLinksTextarea');
+    if (textarea) textarea.value = formattedList;
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeAllLinksModal = function() {
+    const modal = document.getElementById('allLinksModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.copyAllLinksTextarea = function() {
+    const textarea = document.getElementById('allLinksTextarea');
+    if (textarea) {
+        textarea.select();
+        navigator.clipboard.writeText(textarea.value);
+        showToast('Tutti i link copiati negli appunti!', 'success');
+    }
+};
 
 function initArticlesSortable() {
     if (typeof Sortable === 'undefined') return;

@@ -389,15 +389,18 @@
                 </div>
 
                 <div class="generate-actions" style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-top: 2rem;">
-                    <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 450px;">
+                    <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 500px;">
                         <i data-feather="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Anteprima ed Edita
                     </button>
-                    <div style="display: flex; gap: 10px; width: 100%; max-width: 450px; justify-content: center; flex-wrap: wrap;">
-                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 200px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
-                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica subito
+                    <div style="display: flex; gap: 10px; width: 100%; max-width: 500px; justify-content: center; flex-wrap: wrap;">
+                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
+                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica
                         </button>
-                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 200px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
                             <i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Archivia in Storico
+                        </button>
+                        <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
+                            <i data-feather="link-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Elenco Link
                         </button>
                     </div>
                     <div id="generationLoading" class="generation-loading hidden">
@@ -1238,6 +1241,22 @@
                         <i data-feather="arrow-right-circle" style="width:20px;height:20px;"></i> Vai alla Rassegna Stampa
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Links Modal -->
+    <div id="allLinksModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 620px; width: 90%; max-height: 85vh; padding: 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h3 style="margin:0; font-size: 1.2rem;"><i data-feather="link-2" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"></i> Elenco Link Rassegna</h3>
+                <button class="btn-icon" onclick="closeAllLinksModal()"><i data-feather="x"></i></button>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">Ecco l'elenco di tutti i link contenuti nella rassegna corrente:</p>
+            <textarea id="allLinksTextarea" rows="12" readonly style="width:100%; padding:0.85rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:8px; color:var(--text-primary); font-family:monospace; font-size:0.85rem; resize:vertical; line-height:1.6; outline:none;"></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:1rem;">
+                <button class="btn btn-outline btn-sm" onclick="closeAllLinksModal()">Chiudi</button>
+                <button class="btn btn-gradient btn-sm" onclick="copyAllLinksTextarea()"><i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Tutti gli Appunti</button>
             </div>
         </div>
     </div>
