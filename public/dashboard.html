@@ -32,17 +32,17 @@
         </div>
 
         <!-- RIGHT: Client Selector & Logout -->
-        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:12px; flex:1;">
-            <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 8px; border-radius:8px; border:1px solid var(--border-color);">
-                <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
-                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.85rem; cursor:pointer; max-width:160px;">
+        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:8px; flex:1;">
+            <div class="client-selector-box" style="display:flex; align-items:center; gap:4px; background:var(--bg-secondary); padding:3px 6px; border-radius:8px; border:1px solid var(--border-color);">
+                <i data-feather="user-check" style="width:14px;height:14px;color:var(--accent-primary);"></i>
+                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.8rem; cursor:pointer; max-width:110px;">
                     <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
-                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:2px 6px; border:none; background:transparent; cursor:pointer;">
-                    <i data-feather="plus" style="width:16px;height:16px;"></i>
+                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:2px 4px; border:none; background:transparent; cursor:pointer;">
+                    <i data-feather="plus" style="width:14px;height:14px;"></i>
                 </button>
             </div>
-            <button id="btnUpgradePlan" class="btn-upgrade-nav" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento"><i data-feather="zap"></i> Upgrade Abbonamento</button>
+            <button id="btnUpgradePlan" class="btn-upgrade-nav" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento"><i data-feather="zap"></i> <span class="hide-mobile">Upgrade Abbonamento</span><span class="show-mobile-inline">Upgrade</span></button>
         </div>
     </nav>
 
@@ -373,9 +373,9 @@
 
                 <div class="add-article-bar">
                     <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
-                    <button id="btnAddArticle" class="btn btn-primary"><i data-feather="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Aggiungi</button>
-                    <button id="btnOpenManual" class="btn btn-secondary"><i data-feather="edit" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Inserimento Manuale</button>
-                    <button id="btnOpenMultiLink" class="btn btn-multilink"><i data-feather="layers" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Multi Link</button>
+                    <button id="btnAddArticle" class="btn btn-primary"><i data-feather="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Aggiungi</span><span class="show-mobile-inline">Aggiungi</span></button>
+                    <button id="btnOpenManual" class="btn btn-secondary"><i data-feather="edit" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Inserimento Manuale</span><span class="show-mobile-inline">Manuale</span></button>
+                    <button id="btnOpenMultiLink" class="btn btn-multilink"><i data-feather="layers" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Rassegna Multi Link</span><span class="show-mobile-inline">Multi Link</span></button>
                 </div>
 
                 <!-- Loading State -->
@@ -393,17 +393,17 @@
 
                 <div class="generate-actions" style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-top: 2rem;">
                     <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 500px;">
-                        <i data-feather="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Anteprima ed Edita
+                        <i data-feather="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> <span class="hide-mobile">Anteprima ed Edita</span><span class="show-mobile-inline">Edita Rassegna</span>
                     </button>
                     <div style="display: flex; gap: 10px; width: 100%; max-width: 500px; justify-content: center; flex-wrap: wrap;">
-                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
-                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica
+                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
+                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Genera e Scarica</span><span class="show-mobile-inline">Genera PDF</span>
                         </button>
-                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
-                            <i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Archivia in Storico
+                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
+                            <i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Archivia in Storico</span><span class="show-mobile-inline">Archivia</span>
                         </button>
-                        <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 150px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
-                            <i data-feather="link-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Elenco Link
+                        <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
+                            <i data-feather="link-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Copia Elenco Link</span><span class="show-mobile-inline">Copia Link</span>
                         </button>
                     </div>
                     <div id="generationLoading" class="generation-loading hidden">
