@@ -56,6 +56,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Sidebar toggle logic
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const toggleBtn = document.getElementById('btnToggleSidebar');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+            if (overlay) overlay.classList.toggle('visible', sidebar.classList.contains('open'));
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            if (sidebar) sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+        });
+    }
+
     // --- API Calls ---
 
     async function fetchAPI(url, options = {}) {

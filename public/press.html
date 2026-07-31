@@ -130,18 +130,27 @@
 <body>
     <div class="bg-animation"></div>
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar" style="position: relative; z-index: 1000; height: 60px; background: rgba(10,10,26,0.95); color: #efece5; border-bottom: 1px solid rgba(255,255,255,0.1);">
-        <div class="nav-left">
-            <a href="dashboard.html" class="nav-brand" style="text-decoration:none; color:inherit;">Rassegna Stampa</a>
+    <nav class="navbar" style="position: relative; z-index: 1000; height: 60px; background: rgba(10,10,26,0.95); color: #efece5; border-bottom: 1px solid rgba(255,255,255,0.1); display:flex; justify-space-between; align-items:center; padding: 0 1.5rem;">
+        <div class="nav-left" style="display:flex; align-items:center; gap:1rem; flex:1;">
+            <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu" style="border-color: rgba(255,255,255,0.2);">
+                <span style="background:#efece5;"></span>
+                <span style="background:#efece5;"></span>
+                <span style="background:#efece5;"></span>
+            </button>
+            <a href="dashboard.html" class="nav-brand" style="text-decoration:none; color:#efece5; font-size:1.1rem; font-weight:700;">Rassegna Stampa</a>
         </div>
-        <div class="nav-user">
-            <div id="navCompany" class="nav-company">Caricamento...</div>
+        <div class="nav-center" style="flex:1; text-align:center;">
+            <span style="font-weight:700; font-size:1.1rem; color:#efece5;">Comunicati Stampa AI</span>
+        </div>
+        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:1;">
+            <div id="navCompany" class="nav-company" onclick="window.location.href='dashboard.html#profilo'" title="Vai al Profilo" style="font-weight:600; font-size:0.85rem; cursor:pointer; color:#efece5;">Caricamento...</div>
             <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
-            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 8px;"><i data-feather="moon" style="width:16px;height:16px;"></i></button>
-            <a href="dashboard.html" class="btn btn-outline btn-sm" style="margin-right: 10px;">Home</a>
-            <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
+            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" style="margin-right: 4px; color:#efece5; border-color:rgba(255,255,255,0.3);"><i data-feather="moon" style="width:14px;height:14px;"></i></button>
+            <a href="dashboard.html" class="btn btn-outline btn-sm" style="margin-right: 4px; color:#efece5; border-color:rgba(255,255,255,0.3);">Home</a>
+            <button id="btnLogout" class="btn btn-outline btn-sm" style="color:#efece5; border-color:rgba(255,255,255,0.3);">Esci</button>
         </div>
     </nav>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
     <div class="app-layout">
         <!-- Sidebar -->
