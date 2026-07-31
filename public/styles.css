@@ -1410,3 +1410,14 @@ input::placeholder, textarea::placeholder {
     transform: translateY(0) scale(0.97);
 }
 
+/* Clickable Company Name Hover Effect */
+.nav-company, .sidebar-username {
+    cursor: pointer;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-company:hover, .sidebar-username:hover {
+    color: var(--accent-primary) !important;
+    opacity: 0.85;
+}
+

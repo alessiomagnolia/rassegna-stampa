@@ -20,7 +20,7 @@
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <div id="navCompany" class="nav-company" style="font-weight:600; font-size:0.95rem;">Caricamento...</div>
+            <div id="navCompany" class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="font-weight:600; font-size:0.95rem; cursor:pointer;">Caricamento...</div>
             <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
         </div>
 
@@ -112,10 +112,6 @@
                     <span class="sidebar-icon"><i data-feather="file-plus"></i></span>
                     <span class="sidebar-label">Nuova Rassegna</span>
                 </a>
-                <a href="#" class="sidebar-item" data-page="profilo">
-                    <span class="sidebar-icon"><i data-feather="user"></i></span>
-                    <span class="sidebar-label">Profilo</span>
-                </a>
                 <a href="#" class="sidebar-item" data-page="storico">
                     <span class="sidebar-icon"><i data-feather="book"></i></span>
                     <span class="sidebar-label">Storico Rassegne</span>
@@ -140,6 +136,10 @@
                 <div class="sidebar-divider"></div>
                 <div class="sidebar-section-label">Gestione</div>
 
+                <a href="#" class="sidebar-item" data-page="profilo">
+                    <span class="sidebar-icon"><i data-feather="user"></i></span>
+                    <span class="sidebar-label">Profilo</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="archivio">
                     <span class="sidebar-icon"><i data-feather="archive"></i></span>
                     <span class="sidebar-label">Il mio Archivio</span>
@@ -160,7 +160,7 @@
 
             <div class="sidebar-footer">
                 <div class="sidebar-user-info">
-                    <div id="sidebarCompany" class="sidebar-username">—</div>
+                    <div id="sidebarCompany" class="sidebar-username" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="cursor:pointer;">—</div>
                     <div class="sidebar-plan">Piano Base</div>
                 </div>
             </div>
@@ -1277,6 +1277,12 @@
                 overlay.classList.toggle('visible', sidebar.classList.contains('open'));
             }
         }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+            mainContent.classList.remove('shifted');
+        }
         
         // Initialize desktop state
         if (window.innerWidth > 900) {
@@ -1286,8 +1292,7 @@
 
         toggleBtn.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('visible');
+            closeSidebar();
         });
 
         // ---- PAGE NAVIGATION ----
@@ -1305,8 +1310,8 @@
                 const target = document.getElementById('page-' + page);
                 if (target) target.classList.add('active');
 
-                // On mobile, close sidebar after navigation
-                if (window.innerWidth < 900) closeSidebar();
+                // Auto-close sidebar after selecting a page
+                closeSidebar();
             });
         });
 
