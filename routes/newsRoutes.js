@@ -279,7 +279,7 @@ function parseRSS(xmlText, sourceNameDefault = '') {
             date: dateStr,
             timestamp,
             snippet: description.slice(0, 220),
-            favicon: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : '',
+            favicon: getFaviconForDomain(domain),
         });
     }
 
@@ -517,17 +517,33 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }
                 }
 
+function getFaviconForDomain(domain) {
+    if (!domain) return '';
+    const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
+    
+    if (cleanDomain.includes('iltempo.it')) return '/logos/iltempo.png';
+    if (cleanDomain.includes('ansa.it')) return '/logos/ansa.png';
+    if (cleanDomain.includes('corriere.it')) return '/logos/corriere.png';
+    if (cleanDomain.includes('repubblica.it')) return '/logos/repubblica.png';
+    if (cleanDomain.includes('ilsole24ore.com')) return '/logos/ilsole24ore.png';
+    if (cleanDomain.includes('ilmattino.it')) return '/logos/ilmattino.png';
+    if (cleanDomain.includes('ilgiornaleditalia.it')) return '/logos/ilgiornaleditalia.png';
+    if (cleanDomain.includes('agenzianova.com')) return '/logos/agenzianova.jpg';
+
+    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
+}
+
                 if (matchedSource) {
                     realDomain = matchedSource.domain.toLowerCase().replace(/^www\./, '');
                     item.domain = realDomain;
                     item.source = matchedSource.name;
-                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item.favicon = getFaviconForDomain(realDomain);
                     item._isPriority = true;
                     processed.push(item);
                 } else if (realDomain) {
                     item.domain = realDomain;
                     item.source = realDomain;
-                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item.favicon = getFaviconForDomain(realDomain);
                     item._isPriority = false;
                     processed.push(item);
                 } else {

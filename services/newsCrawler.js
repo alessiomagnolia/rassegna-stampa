@@ -85,6 +85,13 @@ function parseRSSFeed(xmlText, sourceMeta) {
 
         const domain = (sourceMeta.domain || '').toLowerCase().replace(/^www\./, '');
 
+        let favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+        if (domain.includes('iltempo.it')) favicon = '/logos/iltempo.png';
+        if (domain.includes('ansa.it')) favicon = '/logos/ansa.png';
+        if (domain.includes('corriere.it')) favicon = '/logos/corriere.png';
+        if (domain.includes('repubblica.it')) favicon = '/logos/repubblica.png';
+        if (domain.includes('ilsole24ore.com')) favicon = '/logos/ilsole24ore.png';
+
         results.push({
             url,
             title,
@@ -94,7 +101,7 @@ function parseRSSFeed(xmlText, sourceMeta) {
             category: sourceMeta.category || 'web_digital',
             published_at: dateStr,
             timestamp,
-            favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+            favicon
         });
     }
 

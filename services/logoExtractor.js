@@ -24,21 +24,27 @@ async function downloadImageAsBase64(imageUrl) {
 async function extractLogo(url, sourceName = '') {
     try {
         const originUrl = new URL(url).origin;
-        
-        // 1. Check if a local logo exists for this sourceName
-        if (sourceName) {
-            const normalizedSource = sourceName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const logosDir = path.join(__dirname, '..', 'public', 'logos');
-            if (fs.existsSync(logosDir)) {
-                const files = fs.readdirSync(logosDir);
+        const domainHost = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+
+        // 1. Check if a local logo exists for sourceName or domain (e.g. iltempo.png)
+        const candidateNames = [
+            sourceName ? sourceName.toLowerCase().replace(/[^a-z0-9]/g, '') : '',
+            domainHost.replace(/[^a-z0-9]/g, ''),
+            domainHost.split('.')[0]
+        ].filter(Boolean);
+
+        const logosDir = path.join(__dirname, '..', 'public', 'logos');
+        if (fs.existsSync(logosDir)) {
+            const files = fs.readdirSync(logosDir);
+            for (const targetName of candidateNames) {
                 const matchingFile = files.find(file => {
                     const ext = path.extname(file);
                     const nameWithoutExt = path.basename(file, ext).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return nameWithoutExt === normalizedSource;
+                    return nameWithoutExt === targetName;
                 });
 
                 if (matchingFile) {
-                    console.log(`[Logo] Trovato logo locale per: ${sourceName} (${matchingFile})`);
+                    console.log(`[Logo] Trovato logo locale per: ${sourceName || domainHost} (${matchingFile})`);
                     const filePath = path.join(logosDir, matchingFile);
                     const buffer = fs.readFileSync(filePath);
                     const ext = path.extname(matchingFile).toLowerCase();
