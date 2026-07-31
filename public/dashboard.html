@@ -42,7 +42,7 @@
                     <i data-feather="plus" style="width:16px;height:16px;"></i>
                 </button>
             </div>
-            <button id="btnLogout" class="btn btn-outline btn-sm">Esci</button>
+            <button id="btnUpgradePlan" class="btn btn-gradient btn-sm" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="display:inline-flex; align-items:center; gap:4px; font-weight:700; white-space:nowrap; border-radius:8px;"><i data-feather="zap" style="width:14px;height:14px;"></i> Upgrade Abbonamento</button>
         </div>
     </nav>
 
@@ -612,8 +612,9 @@
 
             </div>
 
-            <div style="margin-top:1.5rem; display:flex; gap:12px;">
+            <div style="margin-top:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                 <button type="button" id="btnSaveFullProfile" class="btn btn-gradient btn-lg"><i data-feather="check" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Salva Modifiche Profilo</button>
+                <button type="button" id="btnLogout" class="btn btn-outline btn-danger" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:10px 18px; border-radius:8px;"><i data-feather="log-out" style="width:16px;height:16px;"></i> Esci dall'Account</button>
             </div>
         </div>
 
