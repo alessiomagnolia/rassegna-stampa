@@ -7,6 +7,7 @@ const { GoogleDecoder } = require('google-news-url-decoder');
 const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
 const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains, getAllRssFeeds } = require('../config/prioritySources');
+const { expandQueryWithAI } = require('../services/aiQueryService');
 
 const router = express.Router();
 
@@ -379,20 +380,28 @@ router.get('/search', authMiddleware, async (req, res) => {
             if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
         }
 
-        const qTerm = queryClean.replace(/["']/g, '').trim();
+        // --- OPTION 2: AI SMART QUERY EXPANSION (AI Query Multiplier) ---
+        const expandedQueries = await expandQueryWithAI(queryClean);
+        console.log(`[AI Search Engine] Query: "${queryClean}" → Espansa in ${expandedQueries.length} vettori di ricerca:`, expandedQueries);
 
-        // --- PHASE 1: INSTANT LOCAL INDEXED DATABASE SEARCH (5ms) ---
+        // --- PHASE 1: INSTANT LOCAL INDEXED DATABASE VECTOR SEARCH (5ms) ---
         let dbResults = [];
         try {
             const db = getDb();
-            const qLike = `%${queryLower}%`;
+            const sqlConditions = expandedQueries.map(() => `(LOWER(title) LIKE ? OR LOWER(snippet) LIKE ?)`).join(' OR ');
+            const params = [];
+            expandedQueries.forEach(q => {
+                const qLike = `%${q.toLowerCase()}%`;
+                params.push(qLike, qLike);
+            });
+
             const dbRows = db.prepare(`
                 SELECT url, title, snippet, source_name as source, domain, category, published_at as date, timestamp, favicon
                 FROM indexed_articles
-                WHERE (LOWER(title) LIKE ? OR LOWER(snippet) LIKE ?)
+                WHERE ${sqlConditions}
                 ORDER BY timestamp DESC
-                LIMIT 200
-            `).all(qLike, qLike);
+                LIMIT 300
+            `).all(...params);
 
             dbResults = dbRows.map(r => ({
                 ...r,
@@ -401,22 +410,20 @@ router.get('/search', authMiddleware, async (req, res) => {
             }));
 
             if (dbResults.length > 0) {
-                console.log(`[Instant Local DB Search] Query: "${queryClean}" → Trovati ${dbResults.length} articoli indicizzati nel DB locale in 5ms!`);
+                console.log(`[Instant Local DB Vector Search] Trovati ${dbResults.length} articoli indicizzati nel DB per i vettori AI.`);
             }
         } catch (dbErr) {
             console.log('[Instant Local DB Search Notice]:', dbErr.message);
         }
 
-        // --- PHASE 2: Multi-engine RSS (Google News + Bing News) ---
+        // --- PHASE 2: Multi-engine Vector RSS Search (Google News + Bing News) ---
         const fetchRssResults = async () => {
-            const searchUrls = [
-                `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm)}&hl=it&gl=IT&ceid=IT:it`,
-                `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' notizie')}&hl=it&gl=IT&ceid=IT:it`,
-                `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' accordo')}&hl=it&gl=IT&ceid=IT:it`,
-                `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm + ' comunicato')}&hl=it&gl=IT&ceid=IT:it`,
-                `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm)}&format=rss&cc=IT`,
-                `https://www.bing.com/news/search?q=${encodeURIComponent(qTerm + ' notizie')}&format=rss&cc=IT`
-            ];
+            const searchUrls = [];
+            expandedQueries.forEach(term => {
+                const enc = encodeURIComponent(term.replace(/["']/g, '').trim());
+                searchUrls.push(`https://news.google.com/rss/search?q=${enc}&hl=it&gl=IT&ceid=IT:it`);
+                searchUrls.push(`https://www.bing.com/news/search?q=${enc}&format=rss&cc=IT`);
+            });
 
             const fetchWithTimeout = (url) => Promise.race([
                 fetchText(url),
