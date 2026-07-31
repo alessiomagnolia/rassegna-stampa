@@ -60,8 +60,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const { startCrawlerScheduler } = require('./services/newsCrawler');
+
 // Initialize database and start server
 initDatabase();
+startCrawlerScheduler(10); // Run background crawler every 10 minutes
 
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server avviato sulla porta ${PORT}`);

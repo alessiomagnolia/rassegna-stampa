@@ -334,8 +334,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             return true;
         };
 
-        // --- SOLUTION 1: FAST, RELIABLE NEWS ENGINE WITH IN-MEMORY DATE FILTERING ---
-        console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);        // Build maps from prioritySources database
+        // --- PHASE 1: INSTANT LOCAL DATABASE SEARCH (5ms) ---
         const allPriorityDomains = getAllDomains();
         const domainToSourceMap = new Map();
         const nameToSourceMap = new Map();
@@ -350,6 +349,34 @@ router.get('/search', authMiddleware, async (req, res) => {
                 nameToSourceMap.set(cleanN, s);
             }
         });
+
+        let dbResults = [];
+        try {
+            const db = getDb();
+            const qLike = `%${queryLower}%`;
+            const dbRows = db.prepare(`
+                SELECT url, title, snippet, source_name as source, domain, category, published_at as date, timestamp, favicon
+                FROM indexed_articles
+                WHERE (LOWER(title) LIKE ? OR LOWER(snippet) LIKE ?)
+                ORDER BY timestamp DESC
+                LIMIT 200
+            `).all(qLike, qLike);
+
+            dbResults = dbRows.map(r => ({
+                ...r,
+                isPrioritySource: true,
+                _isPriority: true
+            }));
+
+            if (dbResults.length > 0) {
+                console.log(`[Instant Local DB Search] Query: "${queryClean}" → Trovati ${dbResults.length} articoli indicizzati nel DB locale in 5ms!`);
+            }
+        } catch (dbErr) {
+            console.log('[Instant Local DB Search Notice]:', dbErr.message);
+        }
+
+        // --- PHASE 2: LIVE MULTI-ENGINE RSS & GNEWS SUPPLEMENT ---
+        console.log(`[Priority News Engine] Searching for: "${queryClean}" (excludeSocial: ${shouldExcludeSocial})...`);
 
         // 6 fast, clean parallel queries across Google News RSS & Bing News RSS
         const searchUrls = [
@@ -481,13 +508,13 @@ router.get('/search', authMiddleware, async (req, res) => {
                 processedResults.push(item);
             }
 
-            // --- STEP 3: DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
-            // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
+            // --- STEP 3: COMBINE LOCAL INDEXED DB & LIVE RESULTS + DEDUPLICATE ---
+            const allItems = [...dbResults, ...processedResults];
             const seenUrls = new Set();
             const seenDomainTitle = new Set();
             let uniqueResults = [];
 
-            for (const item of processedResults) {
+            for (const item of allItems) {
                 const normUrl = (item.url || '').toLowerCase().trim();
                 const domain = (item.domain || '').toLowerCase().trim();
                 const normTitle = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 45);

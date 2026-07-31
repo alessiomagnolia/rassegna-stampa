@@ -102,6 +102,26 @@ function initDatabase() {
         )
     `).run();
 
+    // Create indexed_articles table for continuous background crawling & instant 5ms search
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS indexed_articles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            snippet TEXT DEFAULT '',
+            source_name TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            category TEXT DEFAULT 'web_digital',
+            published_at TEXT DEFAULT '',
+            timestamp INTEGER DEFAULT 0,
+            favicon TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `).run();
+
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_indexed_articles_timestamp ON indexed_articles(timestamp)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_indexed_articles_domain ON indexed_articles(domain)`).run();
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }
