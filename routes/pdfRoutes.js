@@ -122,6 +122,35 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
     }
 });
 
+// Save / archive review to history for future editing
+router.post('/archive', authMiddleware, async (req, res) => {
+    try {
+        const { articles, title, clientName, clientLogo } = req.body;
+        if (!articles || !Array.isArray(articles) || articles.length === 0) {
+            return res.status(400).json({ error: 'Fornisci almeno un articolo per archiviare la rassegna.' });
+        }
+
+        const reviewTitle = title || 'Rassegna Stampa Archiviata';
+        const db = getDb();
+        const articlesJsonStr = JSON.stringify(articles);
+        const placeholderFilename = `draft_${Date.now()}.pdf`;
+
+        const info = db.prepare(`
+            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '');
+
+        res.json({
+            id: info.lastInsertRowid,
+            success: true,
+            message: 'Rassegna archiviata con successo nel tuo storico.'
+        });
+    } catch (error) {
+        console.error('Archive review route error:', error);
+        res.status(500).json({ error: 'Errore durante l\'archiviazione della rassegna.' });
+    }
+});
+
 router.get('/download/:filename', authMiddleware, (req, res) => {
     try {
         const { filename } = req.params;

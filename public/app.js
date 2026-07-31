@@ -382,6 +382,7 @@ function renderArticles() {
     const empty = document.getElementById('emptyArticles');
     const btnGenerate = document.getElementById('btnGeneratePDF');
     const btnEditor = document.getElementById('btnOpenEditor');
+    const btnArchive = document.getElementById('btnArchiveReview');
     
     if (!list) return;
 
@@ -394,12 +395,14 @@ function renderArticles() {
         empty.classList.remove('hidden');
         if (btnGenerate) btnGenerate.classList.add('hidden');
         if (btnEditor)   btnEditor.classList.add('hidden');
+        if (btnArchive)  btnArchive.classList.add('hidden');
         return;
     }
 
     empty.classList.add('hidden');
     if (btnGenerate) btnGenerate.classList.remove('hidden');
     if (btnEditor)   btnEditor.classList.remove('hidden');
+    if (btnArchive)  btnArchive.classList.remove('hidden');
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
@@ -482,7 +485,40 @@ function changeArticleLogo(event, idx) {
     }
 }
 
-// --- PDF GENERATION ---
+// --- PDF GENERATION & ARCHIVING ---
+
+async function archiveReview() {
+    if (state.articles.length === 0) return;
+    const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+    const clientName = document.getElementById('clientName')?.value.trim() || '';
+    const btn = document.getElementById('btnArchiveReview');
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:14px;height:14px;margin-right:6px;"></i> Archiviazione...';
+            feather.replace();
+        }
+
+        await apiCall('POST', '/api/pdf/archive', {
+            articles: state.articles,
+            title,
+            clientName,
+            clientLogo: state.clientLogoBase64
+        });
+
+        showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
+        loadHistory();
+    } catch (err) {
+        showToast('Errore durante l\'archiviazione: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="bookmark" style="width:14px;height:14px;margin-right:4px;"></i> Archivia in Storico';
+            feather.replace();
+        }
+    }
+}
 
 // Client Logo Logic
 document.getElementById('clientLogoInput')?.addEventListener('change', function(e) {
@@ -540,18 +576,8 @@ async function generatePDF() {
         showToast('PDF generato! Download in corso...', 'success');
         triggerDownload(response.downloadUrl, response.filename);
         
-        // Reset state & reload history
-        state.articles = [];
-        state.clientLogoBase64 = null;
-        document.getElementById('rassegnaTitle').value = '';
-        const clientInput = document.getElementById('clientName');
-        if (clientInput) clientInput.value = '';
-        if(document.getElementById('clientLogoInput')) document.getElementById('clientLogoInput').value = '';
-        if(document.getElementById('clientLogoPreviewContainer')) document.getElementById('clientLogoPreviewContainer').style.display = 'none';
-        localStorage.removeItem('rs_editor_state'); // clear saved state after successful generation
-        renderArticles();
+        // Reload history list automatically
         loadHistory();
-
         
     } catch (error) {
         showToast(error.message, 'error');
@@ -564,7 +590,12 @@ async function generatePDF() {
 
 async function triggerDownload(url, filename) {
     try {
-        const blob = await apiCall('GET', url);
+        const token = state.token;
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Errore download');
+        const blob = await res.blob();
         const objectUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
@@ -600,13 +631,15 @@ async function loadHistory() {
             div.className = 'history-item';
             div.innerHTML = `
                 <div class="history-info">
-                    <strong>${item.title}</strong>
-                    <span class="history-meta">${date} &bull; ${item.article_count} articoli</span>
+                    <strong style="font-size:1.05rem;">${item.title}</strong>
+                    <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.85rem;">
+                        ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${item.client_name}` : ''}
+                    </span>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-top:1rem;">
-                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica</button>
+                <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
                     ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Riapri ed Edita</button>` : ''}
-                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
             list.appendChild(div);
@@ -618,11 +651,11 @@ async function loadHistory() {
 }
 
 async function deleteHistory(id) {
-    if (!confirm('Sei sicuro di voler eliminare questa rassegna? Il PDF non sarà più recuperabile.')) return;
+    if (!confirm('Sei sicuro di voler eliminare questa rassegna?')) return;
     
     try {
         await apiCall('DELETE', `/api/pdf/${id}`);
-        showToast('Rassegna eliminata', 'success');
+        showToast('Rassegna eliminata dallo storico', 'success');
         loadHistory();
     } catch (error) {
         showToast(error.message, 'error');
@@ -631,20 +664,38 @@ async function deleteHistory(id) {
 
 async function reopenFromHistory(reviewId) {
     try {
-        showToast('Caricamento rassegna in corso...', 'info');
+        showToast('Caricamento rassegna per modifica...', 'info');
         const data = await apiCall('GET', `/api/pdf/review/${reviewId}`);
-        const editorState = {
-            articles: data.articles,
-            options: {
-                title: data.title || '',
-                clientName: data.clientName || '',
-                clientLogo: data.clientLogo || null
+        if (data.articles && data.articles.length > 0) {
+            state.articles = data.articles;
+            if (data.title) {
+                const titleEl = document.getElementById('rassegnaTitle');
+                if (titleEl) titleEl.value = data.title;
             }
-        };
-        localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
-        window.location.href = 'editor.html';
+            if (data.clientName) {
+                const clientEl = document.getElementById('clientName');
+                if (clientEl) clientEl.value = data.clientName;
+            }
+            if (data.clientLogo) {
+                state.clientLogoBase64 = data.clientLogo;
+                const logoPrev = document.getElementById('clientLogoPreview');
+                const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+                if (logoPrev && logoPrevCont) {
+                    logoPrev.src = data.clientLogo;
+                    logoPrevCont.style.display = 'flex';
+                }
+            }
+
+            renderArticles();
+            const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
+            if (rassegnaNav) rassegnaNav.click();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('Rassegna riaperta per la modifica!', 'success');
+        } else {
+            showToast('Nessun articolo trovato in questa rassegna.', 'warning');
+        }
     } catch (err) {
-        showToast('Errore nel caricamento della rassegna.', 'error');
+        showToast('Errore nel caricamento della rassegna: ' + err.message, 'error');
     }
 }
 
@@ -813,9 +864,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.getElementById('btnSaveManual')?.addEventListener('click', saveManualArticle);
         
-        // Generate PDF / Open Editor
+        // Generate PDF / Open Editor / Archive Review
         document.getElementById('btnGeneratePDF')?.addEventListener('click', generatePDF);
         document.getElementById('btnOpenEditor')?.addEventListener('click', openEditor);
+        document.getElementById('btnArchiveReview')?.addEventListener('click', archiveReview);
         
         // Logo Archive Logic
         document.getElementById('logoSearchInput')?.addEventListener('input', (e) => {
