@@ -122,6 +122,18 @@ function initDatabase() {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_indexed_articles_timestamp ON indexed_articles(timestamp)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_indexed_articles_domain ON indexed_articles(domain)`).run();
 
+    // Create url_cache table for 0ms unrolling of Google/Bing News links
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS url_cache (
+            short_url TEXT PRIMARY KEY,
+            final_url TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            source_name TEXT NOT NULL,
+            favicon TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `).run();
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }

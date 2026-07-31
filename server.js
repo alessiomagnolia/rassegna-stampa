@@ -61,10 +61,12 @@ app.get('/', (req, res) => {
 });
 
 const { startCrawlerScheduler } = require('./services/newsCrawler');
+const { initNewsIndexer } = require('./services/newsIndexer');
 
 // Initialize database and start server
 initDatabase();
 startCrawlerScheduler(10); // Run background crawler every 10 minutes
+initNewsIndexer(); // Initialize background RSS pre-indexer (PRESSToday style)
 
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server avviato sulla porta ${PORT}`);

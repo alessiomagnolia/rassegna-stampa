@@ -673,6 +673,22 @@ router.get('/search', authMiddleware, async (req, res) => {
         const priorityCount = uniqueResults.filter(r => r.isPrioritySource).length;
         console.log(`[News Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati (${priorityCount} da fonti prioritarie). Fonti usate: ${contributingSources.join(', ') || 'nessuna'}.`);
 
+        // Auto-persist freshly fetched articles to local SQLite index for future sub-50ms queries
+        try {
+            const { saveArticlesToIndex } = require('../services/newsIndexer');
+            saveArticlesToIndex(uniqueResults.map(r => ({
+                title: r.title,
+                url: r.url,
+                snippet: r.snippet || '',
+                source_name: r.source || r.domain || 'Fonte Web',
+                domain: r.domain || '',
+                category: r.isPrioritySource ? 'quotidiano_nazionale' : 'web_digital',
+                published_at: r.date || new Date().toLocaleDateString('it-IT'),
+                timestamp: Date.now(),
+                favicon: r.favicon || getFaviconForDomain(r.domain, r.source)
+            })));
+        } catch(e) {}
+
         res.json({
             results: uniqueResults,
             total: uniqueResults.length,
