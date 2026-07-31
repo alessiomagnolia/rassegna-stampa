@@ -2,12 +2,23 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-// Simple in-memory cache
+// In-memory logo cache
 const logoCache = new Map();
 
 async function downloadImageAsBase64(imageUrl) {
+    if (!imageUrl) return null;
     try {
-        const response = await fetch(imageUrl);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const response = await fetch(imageUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            }
+        });
+        clearTimeout(timeoutId);
+
         if (!response.ok) return null;
         
         const buffer = await response.arrayBuffer();
@@ -16,17 +27,17 @@ async function downloadImageAsBase64(imageUrl) {
         
         return `data:${contentType};base64,${base64}`;
     } catch (error) {
-        console.error(`Failed to download image ${imageUrl}:`, error.message);
         return null;
     }
 }
 
 async function extractLogo(url, sourceName = '') {
     try {
+        if (!url || !url.startsWith('http')) return null;
         const originUrl = new URL(url).origin;
         const domainHost = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
 
-        // 1. Check if a local logo exists for sourceName or domain (e.g. iltempo.png)
+        // 1. Check if a local file logo exists in /public/logos (e.g. libero.png, repubblica.png)
         const candidateNames = [
             sourceName ? sourceName.toLowerCase().replace(/[^a-z0-9]/g, '') : '',
             domainHost.replace(/[^a-z0-9]/g, ''),
@@ -44,7 +55,7 @@ async function extractLogo(url, sourceName = '') {
                 });
 
                 if (matchingFile) {
-                    console.log(`[Logo] Trovato logo locale per: ${sourceName || domainHost} (${matchingFile})`);
+                    console.log(`[Logo Extractor] Trovato logo locale per: ${sourceName || domainHost} (${matchingFile})`);
                     const filePath = path.join(logosDir, matchingFile);
                     const buffer = fs.readFileSync(filePath);
                     const ext = path.extname(matchingFile).toLowerCase();
@@ -59,105 +70,125 @@ async function extractLogo(url, sourceName = '') {
             return logoCache.get(originUrl);
         }
 
-        console.log(`[Logo] Cerco logo per: ${originUrl}`);
+        console.log(`[Logo Extractor] Estrazione automatica da pagina web: ${originUrl}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+
         const response = await fetch(originUrl, {
+            signal: controller.signal,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
             }
         });
+        clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            return null;
-        }
+        if (!response.ok) return null;
 
         const html = await response.text();
         const $ = cheerio.load(html);
-        
-        let logoUrl = null;
+        let extractedLogoUrl = null;
 
-        // 1. Try to find the real logo image using heuristics
-        let bestScore = -1;
-        let bestImgSrc = null;
-
-        $('img').each((i, el) => {
-            const $el = $(el);
-            const src = $el.attr('src') || $el.attr('data-src');
-            if (!src) return;
-
-            const alt = ($el.attr('alt') || '').toLowerCase();
-            const className = ($el.attr('class') || '').toLowerCase();
-            const id = ($el.attr('id') || '').toLowerCase();
-            const srcLower = src.toLowerCase();
-            
-            let score = 0;
-
-            if (className.includes('logo')) score += 10;
-            if (id.includes('logo')) score += 10;
-            if (srcLower.includes('logo')) score += 10;
-            if (alt.includes('logo')) score += 5;
-
-            const parentA = $el.closest('a');
-            if (parentA.length > 0) {
-                const href = parentA.attr('href');
-                if (href === '/' || href === originUrl || href === originUrl + '/') {
-                    score += 8;
+        // HEURISTIC A: Check JSON-LD Schema.org (<script type="application/ld+json">)
+        $('script[type="application/ld+json"]').each((i, el) => {
+            if (extractedLogoUrl) return;
+            try {
+                const json = JSON.parse($(el).html());
+                const objects = Array.isArray(json) ? json : [json];
+                for (const obj of objects) {
+                    if (obj.publisher && obj.publisher.logo) {
+                        extractedLogoUrl = typeof obj.publisher.logo === 'string' ? obj.publisher.logo : (obj.publisher.logo.url || obj.publisher.logo.contentUrl);
+                        if (extractedLogoUrl) break;
+                    }
+                    if (obj.logo) {
+                        extractedLogoUrl = typeof obj.logo === 'string' ? obj.logo : (obj.logo.url || obj.logo.contentUrl);
+                        if (extractedLogoUrl) break;
+                    }
                 }
-            }
-
-            const inHeader = $el.closest('header, nav, .header, .nav, #header, #nav').length > 0;
-            if (inHeader) score += 5;
-
-            if (srcLower.includes('icon') || srcLower.includes('avatar') || srcLower.includes('spinner')) score -= 20;
-            if (className.includes('icon') || id.includes('icon')) score -= 20;
-            if (srcLower.endsWith('.gif')) score -= 10;
-
-            if (score > bestScore && score > 0) {
-                bestScore = score;
-                bestImgSrc = src;
-            }
+            } catch(e){}
         });
 
-        if (bestScore > 0 && bestImgSrc) {
-            logoUrl = bestImgSrc;
-        } else {
-            // 2. Fallback to priority order for metadata/favicons
-            const selectors = [
-                'meta[property="og:image"]',
+        // HEURISTIC B: Check <picture> and <img> tags with class/id/alt/src matching 'logo' or header container
+        if (!extractedLogoUrl) {
+            let bestScore = -1;
+            let bestSrc = null;
+
+            $('img, picture source').each((i, el) => {
+                const $el = $(el);
+                const src = $el.attr('src') || $el.attr('srcset') || $el.attr('data-src');
+                if (!src) return;
+
+                const cleanSrc = src.split(',')[0].split(' ')[0]; // Handle srcset
+                const alt = ($el.attr('alt') || '').toLowerCase();
+                const className = ($el.attr('class') || '').toLowerCase();
+                const id = ($el.attr('id') || '').toLowerCase();
+                const srcLower = cleanSrc.toLowerCase();
+                
+                let score = 0;
+                if (className.includes('logo') || id.includes('logo') || srcLower.includes('logo') || alt.includes('logo')) {
+                    score += 15;
+                }
+                if ($el.closest('header, nav, .header, .nav, #header, #nav, .site-header, .brand').length > 0) {
+                    score += 8;
+                }
+                if ($el.closest('a[href="/"], a[href="' + originUrl + '"]').length > 0) {
+                    score += 10;
+                }
+
+                if (srcLower.includes('icon') || srcLower.includes('avatar') || srcLower.includes('banner')) score -= 15;
+                if (srcLower.endsWith('.gif')) score -= 10;
+
+                if (score > bestScore && score > 5) {
+                    bestScore = score;
+                    bestSrc = cleanSrc;
+                }
+            });
+
+            if (bestSrc) extractedLogoUrl = bestSrc;
+        }
+
+        // HEURISTIC C: OpenGraph & Apple Touch Icons
+        if (!extractedLogoUrl) {
+            const metaSelectors = [
+                'link[rel="apple-touch-icon-precomposed"]',
                 'link[rel="apple-touch-icon"]',
-                'link[rel="icon"][type="image/png"]',
-                'link[rel="shortcut icon"]',
-                'link[rel="icon"]'
+                'meta[property="og:logo"]',
+                'link[rel="icon"][sizes="192x192"]',
+                'link[rel="icon"][sizes="128x128"]',
+                'link[rel="icon"][type="image/png"]'
             ];
 
-            for (const selector of selectors) {
-                const element = $(selector).first();
-                if (element.length > 0) {
-                    const val = element.attr('href') || element.attr('content');
-                    if (val && !val.includes('avatar') && !val.includes('icon-')) {
-                        logoUrl = val;
+            for (const selector of metaSelectors) {
+                const el = $(selector).first();
+                if (el.length > 0) {
+                    const val = el.attr('href') || el.attr('content');
+                    if (val && !val.includes('avatar')) {
+                        extractedLogoUrl = val;
                         break;
                     }
                 }
             }
         }
 
-        // Resolve absolute URL
-        if (logoUrl) {
-            logoUrl = new URL(logoUrl, originUrl).href;
-        } else {
-            // Fallback to favicon.ico
-            logoUrl = `${originUrl}/favicon.ico`;
+        // Resolve absolute URL & Fallback to High-Res Favicon API
+        let finalLogoBase64 = null;
+        if (extractedLogoUrl) {
+            const resolvedUrl = new URL(extractedLogoUrl, originUrl).href;
+            finalLogoBase64 = await downloadImageAsBase64(resolvedUrl);
         }
 
-        const base64Logo = await downloadImageAsBase64(logoUrl);
-        
-        if (base64Logo) {
-            logoCache.set(originUrl, base64Logo);
+        if (!finalLogoBase64) {
+            const highResFaviconUrl = `https://www.google.com/s2/favicons?domain=${domainHost}&sz=128`;
+            finalLogoBase64 = await downloadImageAsBase64(highResFaviconUrl);
+        }
+
+        if (finalLogoBase64) {
+            logoCache.set(originUrl, finalLogoBase64);
         }
         
-        return base64Logo;
+        return finalLogoBase64;
     } catch (error) {
-        console.error(`[Logo] Errore estrazione logo da ${url}:`, error.message);
+        console.error(`[Logo Extractor] Errore estrazione da ${url}:`, error.message);
         return null;
     }
 }
