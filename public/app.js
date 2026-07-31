@@ -990,6 +990,11 @@ async function startMultiLinkExtraction() {
         failed > 0 ? `${failed} link non estratto${failed === 1 ? '' : 'i'} (sito non supportato o bloccato)` : 'Tutti i link sono stati elaborati correttamente!';
     document.getElementById('mlResults').classList.remove('hidden');
 
+    // Switch to rassegna page only after extraction is triggered and finished
+    if (succeeded > 0) {
+        document.querySelector('[data-page=rassegna]')?.click();
+    }
+
     // Re-enable button for potential re-use
     startBtn.disabled = false;
     startBtn.innerHTML = '<i data-feather="zap" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Estrai tutti';
@@ -1236,7 +1241,7 @@ function renderNewsResults() {
             <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem; line-height:1.5;">${news.snippet}...</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; gap:0.5rem; flex-wrap:wrap;">
                 <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
-                <button type="button" onclick="includeSingleNewsInRassegna(${idx}, event)" style="font-size:0.8rem; font-weight:700; background:linear-gradient(135deg, #00d4aa 0%, #00b494 100%); color:#0f172a; border:none; padding:0.35rem 0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; box-shadow:0 2px 8px rgba(0,212,170,0.25);">
+                <button type="button" class="btn-include-rassegna" onclick="includeSingleNewsInRassegna(${idx}, event)">
                     <i data-feather="plus-circle" style="width:13px;height:13px;"></i> Includi in rassegna
                 </button>
                 <div class="news-card-checkbox ${isSelected ? 'checked' : ''}"></div>
@@ -1251,9 +1256,7 @@ function renderNewsResults() {
 async function resolveAndInsertUrlsIntoRassegna(urls) {
     if (!urls || urls.length === 0) return;
     
-    const navBtn = document.querySelector('[data-page=rassegna]');
-    if (navBtn) navBtn.click();
-    
+    // Open multi-link modal on current page (do not redirect until user clicks Estrai tutti)
     openMultiLinkModal();
     const textarea = document.getElementById('multiLinkTextarea');
     if (textarea) {
