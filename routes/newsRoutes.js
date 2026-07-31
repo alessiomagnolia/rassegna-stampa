@@ -161,8 +161,42 @@ function getFinalUrl(url, maxRedirects = 5) {
         req.on('error', () => resolve(url));
     });
 }
+function cleanAndUnwrapArticleUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    let target = rawUrl.trim();
+
+    // 1. Unwrap Bing News apiclick redirect URLs (extract embedded url= parameter)
+    if (target.includes('bing.com/news/apiclick') || target.includes('bing.com/search')) {
+        try {
+            const parsed = new URL(target);
+            const embeddedUrl = parsed.searchParams.get('url');
+            if (embeddedUrl && embeddedUrl.startsWith('http')) {
+                target = decodeURIComponent(embeddedUrl);
+            }
+        } catch(e) {
+            const m = /[?&]url=(https?%3A%2F%2F[^&]+|https?:\/\/[^&]+)/i.exec(target);
+            if (m) {
+                try { target = decodeURIComponent(m[1]); } catch(e2){}
+            }
+        }
+    }
+
+    // 2. Unwrap Google redirect URLs (google.com/url?q=...)
+    if (target.includes('google.com/url?') || target.includes('google.it/url?')) {
+        try {
+            const parsed = new URL(target);
+            const embeddedUrl = parsed.searchParams.get('q') || parsed.searchParams.get('url');
+            if (embeddedUrl && embeddedUrl.startsWith('http')) {
+                target = decodeURIComponent(embeddedUrl);
+            }
+        } catch(e){}
+    }
+
+    return target;
+}
 
 async function resolveGoogleNewsUrl(url) {
+    url = cleanAndUnwrapArticleUrl(url);
     if (!url.includes('news.google.com/rss/articles/')) return url;
     
     // First try the Base64 decode trick for speed
@@ -203,9 +237,10 @@ function parseRSS(xmlText, sourceNameDefault = '') {
     while ((match = itemRegex.exec(xmlText)) !== null) {
         const item = match[1];
 
-        // Google News link is inside <link> but may also be in <guid>
+        // Google/Bing link is inside <link> but may also be in <guid>
         let url = clean(tag(item, 'link')) || clean(tag(item, 'guid'));
         url = url.replace(/\s+/g, '');
+        url = cleanAndUnwrapArticleUrl(url);
 
         const title = clean(tag(item, 'title'));
         const pubDate = tag(item, 'pubDate').trim();
@@ -215,7 +250,6 @@ function parseRSS(xmlText, sourceNameDefault = '') {
 
         if (!title || !url) continue;
 
-        // If sourceName is missing, extract publisher from title suffix (e.g. "Title - Fanpage")
         if ((!sourceName || sourceName === 'Web') && title.includes(' - ')) {
             const parts = title.split(' - ');
             if (parts.length > 1) {
@@ -223,11 +257,9 @@ function parseRSS(xmlText, sourceNameDefault = '') {
             }
         }
 
-        // Try to derive domain from sourceUrl or url for favicon
         let domain = '';
         try { domain = new URL(sourceUrl || url).hostname.replace(/^www\./, ''); } catch {}
 
-        // Parse date to DD/MM/YYYY
         let dateStr = '';
         let timestamp = 0;
         try {
@@ -254,12 +286,8 @@ function parseRSS(xmlText, sourceNameDefault = '') {
 }
 
 // ---------------------------------------------------------------------------
-// ROUTES
+// Main Search Route
 // ---------------------------------------------------------------------------
-
-/**
- * GET /api/news/search?q=...&from=DD%2FMM%2FYYYY&to=DD%2FMM%2FYYYY
- */
 router.get('/search', authMiddleware, async (req, res) => {
     try {
         const { q, from, to, includeSocial } = req.query;
@@ -267,11 +295,9 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         const shouldExcludeSocial = includeSocial !== 'true';
 
-        // Clean user input: strip any user-entered quotes automatically
         const queryClean = q.replace(/^"+|"+$/g, '').trim();
         const queryLower = queryClean.toLowerCase();
 
-        // Non-latin foreign script detection (Russian, Chinese, Japanese, Korean, Arabic)
         const hasForeignScript = (str) => /[\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\u0600-\u06FF\u1100-\u11FF]/.test(str);
 
         const spamKeywords = [
@@ -296,15 +322,7 @@ router.get('/search', authMiddleware, async (req, res) => {
             't.me', 'telegram.org'
         ];
 
-        // Query words used for the relevance check (ignore very short connector words)
-        const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
-
-        // --- FIX 1: STRICTER RELEVANCE FILTER ---
-        // Previously matched if even ONE query word appeared anywhere (too loose: a search
-        // for "Mario Rossi Confindustria" would match any article containing just "Mario").
-        // Now requires ALL significant words for short queries, and at least 75% for long
-        // ones, which cuts out the "wrong" unrelated results without being so strict that
-        // legitimate results with slightly different wording get discarded.
+        // Flexible relevance & quality filter
         const isRelevantArticle = (art) => {
             if (!art || !art.title || !art.url) return false;
             const titleLower = (art.title || '').toLowerCase();
@@ -313,28 +331,21 @@ router.get('/search', authMiddleware, async (req, res) => {
             const domainLower = (art.domain || '').toLowerCase();
             const fullText = titleLower + ' ' + snippetLower + ' ' + urlLower;
 
-            // 1. Reject non-latin foreign scripts (Cyrillic, CJK, etc.)
             if (hasForeignScript(fullText)) return false;
 
-            // 2. Query word check: require ALL significant words (≥75% for long queries)
-            if (queryWords.length > 0) {
-                const matchCount = queryWords.filter(w => fullText.includes(w)).length;
-                const required = queryWords.length <= 4 ? queryWords.length : Math.ceil(queryWords.length * 0.75);
-                if (matchCount < required) return false;
+            const words = queryLower.split(/\s+/).filter(w => w.length > 1);
+            if (words.length > 0) {
+                const matchesQuery = words.some(w => fullText.includes(w));
+                if (!matchesQuery) return false;
             }
 
-            // 3. Exclude Social Networks by default if active
             if (shouldExcludeSocial) {
                 if (socialDomains.some(sd => domainLower.includes(sd) || urlLower.includes(sd))) return false;
             }
 
-            // 4. Reject spam / ad domains
             if (spamDomains.some(sd => domainLower.includes(sd))) return false;
-
-            // 5. Reject spam / ad keywords in title
             if (spamKeywords.some(sk => titleLower.includes(sk))) return false;
 
-            // 6. Reject non-Italian TLDs commonly associated with spam
             if (domainLower.endsWith('.ru') || domainLower.endsWith('.cn') || domainLower.endsWith('.jp') || domainLower.endsWith('.su') || domainLower.endsWith('.xyz') || domainLower.endsWith('.top')) {
                 return false;
             }
@@ -343,27 +354,18 @@ router.get('/search', authMiddleware, async (req, res) => {
         };
 
         const domainToSourceMap = new Map();
+        const nameToSourceMap = new Map();
+
         PRIORITY_SOURCES.forEach(s => {
             if (s.domain) {
                 const cleanD = s.domain.toLowerCase().replace(/^www\./, '');
                 domainToSourceMap.set(cleanD, s.name);
             }
-        });
-
-        // Shared helper: match a real publisher domain against the 191-source priority DB
-        const matchPrioritySource = (domain) => {
-            let name = domainToSourceMap.get(domain);
-            if (!name) {
-                for (const source of PRIORITY_SOURCES) {
-                    const sDomain = (source.domain || '').toLowerCase().replace(/^www\./, '');
-                    if (sDomain && (domain.endsWith(sDomain) || sDomain.endsWith(domain))) {
-                        name = source.name;
-                        break;
-                    }
-                }
+            if (s.name) {
+                const cleanN = s.name.toLowerCase().trim();
+                nameToSourceMap.set(cleanN, s);
             }
-            return name || null;
-        };
+        });
 
         // Date range (ms), applied consistently to every source
         let fromTime = 0;
@@ -379,7 +381,33 @@ router.get('/search', authMiddleware, async (req, res) => {
 
         const qTerm = queryClean.replace(/["']/g, '').trim();
 
-        // --- SOURCE 1: Multi-engine RSS (Google News + Bing News), 6 parallel queries ---
+        // --- PHASE 1: INSTANT LOCAL INDEXED DATABASE SEARCH (5ms) ---
+        let dbResults = [];
+        try {
+            const db = getDb();
+            const qLike = `%${queryLower}%`;
+            const dbRows = db.prepare(`
+                SELECT url, title, snippet, source_name as source, domain, category, published_at as date, timestamp, favicon
+                FROM indexed_articles
+                WHERE (LOWER(title) LIKE ? OR LOWER(snippet) LIKE ?)
+                ORDER BY timestamp DESC
+                LIMIT 200
+            `).all(qLike, qLike);
+
+            dbResults = dbRows.map(r => ({
+                ...r,
+                isPrioritySource: true,
+                _isPriority: true
+            }));
+
+            if (dbResults.length > 0) {
+                console.log(`[Instant Local DB Search] Query: "${queryClean}" → Trovati ${dbResults.length} articoli indicizzati nel DB locale in 5ms!`);
+            }
+        } catch (dbErr) {
+            console.log('[Instant Local DB Search Notice]:', dbErr.message);
+        }
+
+        // --- PHASE 2: Multi-engine RSS (Google News + Bing News) ---
         const fetchRssResults = async () => {
             const searchUrls = [
                 `https://news.google.com/rss/search?q=${encodeURIComponent(qTerm)}&hl=it&gl=IT&ceid=IT:it`,
@@ -392,7 +420,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
             const fetchWithTimeout = (url) => Promise.race([
                 fetchText(url),
-                new Promise((_, r) => setTimeout(() => r(new Error('Timeout 6s')), 6000))
+                new Promise((_, r) => setTimeout(() => r(new Error('Timeout 5s')), 5000))
             ]);
 
             const responses = await Promise.allSettled(searchUrls.map(u => fetchWithTimeout(u)));
@@ -409,14 +437,18 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Resolve Google News redirect links to the real publisher URL
+            // Unwrap Bing & Google redirect links
             await Promise.all(rawResults.map(async (item) => {
+                if (item.url) {
+                    item.url = cleanAndUnwrapArticleUrl(item.url);
+                }
                 if (item.url && item.url.includes('news.google.com/rss/articles/')) {
                     try {
                         item.url = await Promise.race([
                             resolveGoogleNewsUrl(item.url),
-                            new Promise(r => setTimeout(() => r(item.url), 4000))
+                            new Promise(r => setTimeout(() => r(item.url), 2500))
                         ]);
+                        item.url = cleanAndUnwrapArticleUrl(item.url);
                     } catch (e) {}
                 }
             }));
@@ -424,24 +456,80 @@ router.get('/search', authMiddleware, async (req, res) => {
             const processed = [];
             for (const item of rawResults) {
                 if (!item.url) continue;
-                let realDomain = '';
-                try { realDomain = new URL(item.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) {}
-                if (!realDomain || realDomain.includes('google.') || realDomain.includes('bing.') || realDomain.includes('youtube.')) continue;
 
-                const matchedSourceName = matchPrioritySource(realDomain);
-                item.domain = realDomain;
-                item.source = matchedSourceName || realDomain;
-                item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
-                item._isPriority = !!matchedSourceName;
-                processed.push(item);
+                item.url = cleanAndUnwrapArticleUrl(item.url);
+
+                let realDomain = '';
+                try {
+                    const parsedUrl = new URL(item.url);
+                    const h = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
+                    if (!h.includes('google.') && !h.includes('bing.') && !h.includes('youtube.')) {
+                        realDomain = h;
+                    }
+                } catch (e) {}
+
+                let matchedSource = null;
+
+                if (realDomain) {
+                    let sName = domainToSourceMap.get(realDomain);
+                    if (!sName) {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sDomain = (source.domain || '').toLowerCase().replace(/^www\./, '');
+                            if (sDomain && (realDomain.endsWith(sDomain) || sDomain.endsWith(realDomain))) {
+                                matchedSource = source;
+                                break;
+                            }
+                        }
+                    } else {
+                        matchedSource = nameToSourceMap.get(sName.toLowerCase().trim());
+                    }
+                }
+
+                if (!matchedSource) {
+                    const srcLower = (item.source || '').toLowerCase().trim();
+                    const titleLower = (item.title || '').toLowerCase().trim();
+
+                    if (srcLower && srcLower !== 'bing.com' && srcLower !== 'google.com' && srcLower !== 'web') {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sourceNameLower = source.name.toLowerCase().trim();
+                            if (srcLower.includes(sourceNameLower) || sourceNameLower.includes(srcLower)) {
+                                matchedSource = source;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!matchedSource) {
+                        for (const source of PRIORITY_SOURCES) {
+                            const sourceNameLower = source.name.toLowerCase().trim();
+                            if (titleLower.endsWith(`- ${sourceNameLower}`) || titleLower.includes(`- ${sourceNameLower}`)) {
+                                matchedSource = source;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (matchedSource) {
+                    realDomain = matchedSource.domain.toLowerCase().replace(/^www\./, '');
+                    item.domain = realDomain;
+                    item.source = matchedSource.name;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item._isPriority = true;
+                    processed.push(item);
+                } else if (realDomain) {
+                    item.domain = realDomain;
+                    item.source = realDomain;
+                    item.favicon = `https://www.google.com/s2/favicons?domain=${realDomain}&sz=32`;
+                    item._isPriority = false;
+                    processed.push(item);
+                } else {
+                    continue;
+                }
             }
             return processed;
         };
 
-        // --- FIX 2: SOURCE 2 & 3, GNews API / NewsAPI.org RUN ALONGSIDE THE RSS ENGINE ---
-        // Previously these only ran if the RSS engine found ZERO results, so a configured
-        // API key was effectively dead code (RSS almost always finds at least something).
-        // Now they run in parallel every time a key is present, and their results are
         // merged with the RSS ones below, which is what actually improves coverage.
         const apiKey = process.env.GNEWS_API_KEY ||
                        process.env.NEWSAPI_KEY ||
