@@ -397,37 +397,30 @@ router.get('/search', authMiddleware, async (req, res) => {
             if (parts.length === 3) toTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T23:59:59Z`).getTime();
         }
 
-        // --- OPTION 2: AI SMART QUERY EXPANSION (AI Query Multiplier) ---
-        const expandedQueries = await expandQueryWithAI(queryClean);
+        // Smart query expansion: extract main entities/keywords if query is long (e.g. titles or press release headlines)
+        let searchKeywords = [queryClean];
+        if (queryClean.length > 35 || queryClean.includes(':')) {
+            const shortQuery = queryClean.split(':')[0].replace(/[^a-zA-Z0-9àèéìòùÀÈÉÌÒÙ&\s]/g, '').trim();
+            if (shortQuery.length >= 3) searchKeywords.push(shortQuery);
+            const mainWords = queryClean.replace(/[^a-zA-Z0-9àèéìòùÀÈÉÌÒÙ&\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
+            if (mainWords.length >= 2) searchKeywords.push(mainWords.slice(0, 3).join(' '));
+        }
+
+        const expandedQueries = Array.from(new Set([...await expandQueryWithAI(queryClean), ...searchKeywords]));
         console.log(`[AI Search Engine] Query: "${queryClean}" → Espansa in ${expandedQueries.length} vettori di ricerca:`, expandedQueries);
 
-        // --- PHASE 1: INSTANT LOCAL INDEXED DATABASE VECTOR SEARCH (5ms) ---
+        // --- PHASE 1: INSTANT LOCAL INDEXED DATABASE SEARCH (<10ms) ---
         let dbResults = [];
         try {
-            const db = getDb();
-            const sqlConditions = expandedQueries.map(() => `(LOWER(title) LIKE ? OR LOWER(snippet) LIKE ?)`).join(' OR ');
-            const params = [];
-            expandedQueries.forEach(q => {
-                const qLike = `%${q.toLowerCase()}%`;
-                params.push(qLike, qLike);
-            });
-
-            const dbRows = db.prepare(`
-                SELECT url, title, snippet, source_name as source, domain, category, published_at as date, timestamp, favicon
-                FROM indexed_articles
-                WHERE ${sqlConditions}
-                ORDER BY timestamp DESC
-                LIMIT 300
-            `).all(...params);
-
-            dbResults = dbRows.map(r => ({
-                ...r,
-                isPrioritySource: true,
-                _isPriority: true
-            }));
-
+            const { searchIndexedArticles } = require('../services/newsIndexer');
+            dbResults = searchIndexedArticles(queryClean, 'all', 300);
+            if (dbResults.length < 10 && searchKeywords[1]) {
+                const extraDb = searchIndexedArticles(searchKeywords[1], 'all', 200);
+                dbResults = [...dbResults, ...extraDb];
+            }
+            dbResults = dbResults.map(r => ({ ...r, isPrioritySource: true, _isPriority: true }));
             if (dbResults.length > 0) {
-                console.log(`[Instant Local DB Vector Search] Trovati ${dbResults.length} articoli indicizzati nel DB per i vettori AI.`);
+                console.log(`[Instant Local DB Search] Trovati ${dbResults.length} articoli indicizzati nel DB.`);
             }
         } catch (dbErr) {
             console.log('[Instant Local DB Search Notice]:', dbErr.message);
@@ -556,7 +549,6 @@ router.get('/search', authMiddleware, async (req, res) => {
             return processed;
         };
 
-        // merged with the RSS ones below, which is what actually improves coverage.
         const apiKey = process.env.GNEWS_API_KEY ||
                        process.env.NEWSAPI_KEY ||
                        process.env.NEWS_API_KEY ||
@@ -623,12 +615,13 @@ router.get('/search', authMiddleware, async (req, res) => {
         ]);
 
         const contributingSources = [];
+        if (dbResults.length) contributingSources.push('local_db');
         if (rssResults.length) contributingSources.push('rss');
         if (gnewsResults.length) contributingSources.push('gnews');
         if (newsApiResults.length) contributingSources.push('newsapi');
 
-        // --- FIX 2 (continued): MERGE ALL SOURCES BEFORE DEDUPLICATING/FILTERING ---
-        let allResults = [...rssResults, ...gnewsResults, ...newsApiResults];
+        // --- MERGE ALL SOURCES INCLUDING DB RESULTS ---
+        let allResults = [...dbResults, ...rssResults, ...gnewsResults, ...newsApiResults];
 
         // --- DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
         // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
