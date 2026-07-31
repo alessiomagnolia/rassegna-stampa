@@ -146,11 +146,16 @@ router.post('/generate', authMiddleware, async (req, res) => {
         // Prompt di Ingegneria per Claude
         const systemPrompt = `Sei un Senior PR Manager ed esperto di Comunicazione Istituzionale. Il tuo compito è scrivere un Comunicato Stampa professionale e completo.
 
+DIVIETO ABSOLUTO DI CHAT / INTRODUZIONI / SPALLETTE / DISCLAIMER:
+- NON scrivere MAI frasi di dialogo, preamboli, scuse, suggerimenti o proposte di revisione (es. "Mi dispiace ma...", "Posso proporti una versione...", "Ecco il comunicato:", "Se vuoi posso adattare...").
+- NON inserire divisori "---" prima o dopo il testo.
+- La tua risposta DEVE INIZIARE DIRETTAMENTE ed ESCLUSIVAMENTE con il titolo in grassetto o intestazione del comunicato stampa (es. "**Nome Cliente: Titolo...**").
+- La tua risposta DEVE FINIRE DIRETTAMENTE con l'ultima riga del comunicato. Nessuna frase finale da assistente AI!
+
 REGOLE ESSENZIALI:
 1. LUNGHEZZA OBBLIGATORIA: Rispetta accuratamente il vincolo di lunghezza richiesto: ${lengthInstruction}. Scrivi un testo autoconclusivo e completo che rientri esattamente nella lunghezza richiesta senza essere troncato.
 2. TONE OF VOICE: Se sono presenti degli 'ESEMPI PRECEDENTI DEL CLIENTE', analizzali e replica fedelmente il loro stile e lessico.
-3. FORMATO TITOLO: Inserisci SEMPRE prima il soggetto (Cliente/Azienda) seguito da due punti o da un trattino, e poi l'argomento.
-4. NESSUN PREAMBOLO: Non aggiungere introduzioni ("Ecco il comunicato"). Restituisci SOLO il testo del comunicato in formato markdown a partire dal titolo.`;
+3. FORMATO TITOLO: Inserisci SEMPRE prima il soggetto (Cliente/Azienda) seguito da due punti o da un trattino, e poi l'argomento.`;
 
         const userPrompt = `${contextText}
 Crea un Comunicato Stampa completo con le seguenti specifiche:
@@ -160,7 +165,7 @@ Crea un Comunicato Stampa completo con le seguenti specifiche:
 - VINCOLO LUNGHEZZA: ${lengthInstruction}
 ${extra_instructions ? `- ISTRUZIONI AGGIUNTIVE: ${extra_instructions}\n` : ''}
 
-Scrivi ora il comunicato stampa in modo completo, concludendolo regolarmente e calibrandone lo sviluppo affinché rispetti esattamente il vincolo di lunghezza indicato: ${lengthInstruction}.`;
+IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire dal titolo. Nessun saluto, nessun commento prima o dopo.`;
 
         const response = await anthropic.messages.create({
             model: "claude-sonnet-5",
@@ -199,6 +204,26 @@ Scrivi ora il comunicato stampa in modo completo, concludendolo regolarmente e c
                     if (textObj) generatedText = textObj.text;
                 }
             } catch(e){}
+        }
+
+        // Smart Post-Processing: Strip any leftover conversational preambles/disclaimers or postscripts
+        if (typeof generatedText === 'string' && generatedText.trim().length > 0) {
+            let cleaned = generatedText.trim();
+
+            // 1. Remove leading disclaimers / chat preamble if title appears later
+            const titleMatch = cleaned.match(/(?:#|\*\*|Headline:)?\s*([A-Z0-9À-Ü].*?:.*?)(?:\n|\r)/i) ||
+                               cleaned.match(/(\*\*[^*]+\*\*|#[^#\n]+)/);
+            if (titleMatch && titleMatch.index > 0) {
+                cleaned = cleaned.substring(titleMatch.index).trim();
+            }
+
+            // 2. Strip horizontal divider lines (---) at top or bottom
+            cleaned = cleaned.replace(/^[\s\-*_]{3,}\n+/g, '').replace(/\n+[\s\-*_]{3,}$/g, '');
+
+            // 3. Strip trailing chat offers ("Se vuoi, posso...", "Fammi sapere se...")
+            cleaned = cleaned.replace(/\n\n(?:Se vuoi|Posso|Fammi sapere|Dimmi se|Nota:).*$/is, '');
+
+            generatedText = cleaned.trim();
         }
 
         res.json({ content: generatedText });
