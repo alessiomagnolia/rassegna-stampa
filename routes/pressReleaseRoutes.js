@@ -162,8 +162,14 @@ Scrivi ora il comunicato stampa.`;
         });
 
         let generatedText = '';
-        if (response.content && Array.isArray(response.content) && response.content.length > 0 && response.content[0].text) {
-            generatedText = response.content[0].text;
+        if (response.content && Array.isArray(response.content)) {
+            const textBlocks = response.content.filter(b => b.type === 'text' && b.text);
+            if (textBlocks.length > 0) {
+                generatedText = textBlocks.map(b => b.text).join('\n\n');
+            } else {
+                const textBlock = response.content.find(b => b.text);
+                if (textBlock) generatedText = textBlock.text;
+            }
         } else if (response.content && typeof response.content === 'string') {
             generatedText = response.content;
         } else if (response.text) {
@@ -172,6 +178,17 @@ Scrivi ora il comunicato stampa.`;
             generatedText = response.completion;
         } else {
             generatedText = JSON.stringify(response, null, 2);
+        }
+
+        // Additional safeguard for raw JSON string
+        if (typeof generatedText === 'string' && generatedText.trim().startsWith('{') && generatedText.includes('"content"')) {
+            try {
+                const parsed = JSON.parse(generatedText);
+                if (parsed && parsed.content && Array.isArray(parsed.content)) {
+                    const textObj = parsed.content.find(c => c.type === 'text' && c.text);
+                    if (textObj) generatedText = textObj.text;
+                }
+            } catch(e){}
         }
 
         res.json({ content: generatedText });

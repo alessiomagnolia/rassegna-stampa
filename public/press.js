@@ -185,7 +185,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
 
-            prContentTextarea.value = res.content;
+            let textContent = res.content || '';
+            if (typeof textContent === 'string' && textContent.trim().startsWith('{') && textContent.includes('"content"')) {
+                try {
+                    const parsed = JSON.parse(textContent);
+                    if (parsed && parsed.content && Array.isArray(parsed.content)) {
+                        const textObj = parsed.content.find(c => c.type === 'text' && c.text);
+                        if (textObj) textContent = textObj.text;
+                    }
+                } catch(e) {}
+            }
+            prContentTextarea.value = textContent;
             
             // Mostra tasto salva
             btnSave.style.display = 'block';
