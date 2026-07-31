@@ -155,7 +155,7 @@ DIVIETO ABSOLUTO DI CHAT / INTRODUZIONI / SPALLETTE / DISCLAIMER:
 REGOLE ESSENZIALI:
 1. LUNGHEZZA OBBLIGATORIA: Rispetta accuratamente il vincolo di lunghezza richiesto: ${lengthInstruction}. Scrivi un testo autoconclusivo e completo che rientri esattamente nella lunghezza richiesta senza essere troncato.
 2. TONE OF VOICE: Se sono presenti degli 'ESEMPI PRECEDENTI DEL CLIENTE', analizzali e replica fedelmente il loro stile e lessico.
-3. FORMATO TITOLO: Inserisci SEMPRE prima il soggetto (Cliente/Azienda) seguito da due punti o da un trattino, e poi l'argomento.`;
+3. FORMATO TITOLO: Formatta il titolo con UN SINGOLO asterisco all'inizio e alla fine (es. *Cliente: Titolo del Comunicato*). Inserisci prima il soggetto (Cliente/Azienda) seguito da due punti o trattino e poi l'argomento. NON usare doppi asterischi **.`;
 
         const userPrompt = `${contextText}
 Crea un Comunicato Stampa completo con le seguenti specifiche:
@@ -222,6 +222,12 @@ IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire
 
             // 3. Strip trailing chat offers ("Se vuoi, posso...", "Fammi sapere se...")
             cleaned = cleaned.replace(/\n\n(?:Se vuoi|Posso|Fammi sapere|Dimmi se|Nota:).*$/is, '');
+
+            // 4. Enforce single asterisk (*Title*) for the main title at start
+            cleaned = cleaned.replace(/^(\*\*|#+\s*)([^\*\n]+)(\*\*|\n)?/i, (match, p1, p2) => {
+                const cleanTitle = p2.trim().replace(/^[\*\s]+|[\*\s]+$/g, '');
+                return `*${cleanTitle}*\n`;
+            });
 
             generatedText = cleaned.trim();
         }

@@ -136,6 +136,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function updateTitleBanner() {
+        let text = prContentTextarea.value || '';
+        const banner = document.getElementById('prTitleBanner');
+        const bannerText = document.getElementById('prTitleBannerText');
+        if (!banner || !bannerText) return;
+
+        if (!text.trim()) {
+            banner.classList.add('hidden');
+            return;
+        }
+
+        const lines = text.trim().split('\n');
+        const firstLine = lines[0].trim();
+        const cleanTitle = firstLine.replace(/^[\*\s#]+|[\*\s#]+$/g, '');
+
+        if (cleanTitle && cleanTitle.length > 3) {
+            bannerText.textContent = cleanTitle;
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+
+    function cleanDoubleAsterisks(text) {
+        if (!text) return '';
+        return text.replace(/^(\*\*|#+\s*)([^\*\n]+)(\*\*|\n)?/i, (m, p1, p2) => {
+            const clean = p2.trim().replace(/^[\*\s]+|[\*\s]+$/g, '');
+            return `*${clean}*\n`;
+        });
+    }
+
+    prContentTextarea.addEventListener('input', updateTitleBanner);
+
     async function loadPressRelease(id) {
         try {
             const pr = await fetchAPI(`/api/press/${id}`);
@@ -143,7 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPrId = pr.id;
             clientNameInput.value = pr.client_name || '';
             prTitleInput.value = pr.title || '';
-            prContentTextarea.value = pr.content || '';
+            prContentTextarea.value = cleanDoubleAsterisks(pr.content || '');
+            updateTitleBanner();
             
             // UI Updates
             btnSave.style.display = 'block';
@@ -195,7 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } catch(e) {}
             }
-            prContentTextarea.value = textContent;
+            prContentTextarea.value = cleanDoubleAsterisks(textContent);
+            updateTitleBanner();
             
             // Mostra tasto salva
             btnSave.style.display = 'block';

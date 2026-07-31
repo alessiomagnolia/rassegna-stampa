@@ -214,9 +214,11 @@
 
                 <!-- Editor Area -->
                 <div class="editor-container">
-                    <div class="editor-paper">
-                        <div class="editor-toolbar">
+                        <div class="editor-toolbar" style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:0.85rem; color:var(--text-muted); padding:5px;">Editor Testuale</span>
+                        </div>
+                        <div id="prTitleBanner" class="title-banner-box hidden" style="background: rgba(124, 92, 255, 0.08); border-left: 4px solid var(--accent-primary); border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem; font-size: 1.35rem; font-weight: 700; color: var(--text-primary); font-family: var(--font-serif); line-height: 1.35; letter-spacing: -0.01em;">
+                            <span id="prTitleBannerText"></span>
                         </div>
                         <textarea id="prContent" class="editor-textarea" placeholder="Il comunicato generato apparirà qui. Puoi modificarlo liberamente prima di salvarlo o copiarlo."></textarea>
                     </div>
