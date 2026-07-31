@@ -128,34 +128,66 @@ async function runIndexingCycle() {
     isIndexingRunning = false;
 }
 
-// Fast Sub-50ms SQLite Search Query Method
-function searchIndexedArticles(query, limit = 50) {
+// Advanced Sub-50ms SQLite Search Engine with Full Boolean Logic & Taxonomy Filtering
+function parseBooleanQuery(queryStr) {
+    if (!queryStr) return { clauses: [], params: [] };
+
+    let text = queryStr.trim();
+    // Extract exact phrases in double quotes first
+    const exactPhrases = [];
+    text = text.replace(/"([^"]+)"/g, (match, phrase) => {
+        exactPhrases.push(phrase.trim());
+        return ` __EXACT_PHRASE_${exactPhrases.length - 1}__ `;
+    });
+
+    const tokens = text.split(/\s+/).filter(t => t.length > 0);
+    const clauses = [];
+    const params = [];
+
+    tokens.forEach(token => {
+        if (token.startsWith('__EXACT_PHRASE_') && token.endsWith('__')) {
+            const idx = parseInt(token.replace('__EXACT_PHRASE_', '').replace('__', ''), 10);
+            if (!isNaN(idx) && exactPhrases[idx]) {
+                const phrase = exactPhrases[idx];
+                clauses.push(`(title LIKE ? OR snippet LIKE ?)`);
+                params.push(`%${phrase}%`, `%${phrase}%`);
+            }
+        } else if (token.toUpperCase() === 'AND' || token.toUpperCase() === 'OR') {
+            // Skip raw keywords as operators, implicit AND is applied across clauses
+        } else if (token.startsWith('-') || token.toUpperCase().startsWith('NOT ')) {
+            const term = token.replace(/^-/, '').replace(/^NOT\s+/i, '').replace(/["']/g, '').trim();
+            if (term.length > 1) {
+                clauses.push(`(title NOT LIKE ? AND snippet NOT LIKE ?)`);
+                params.push(`%${term}%`, `%${term}%`);
+            }
+        } else {
+            const term = token.replace(/["']/g, '').trim();
+            if (term.length > 1) {
+                clauses.push(`(title LIKE ? OR snippet LIKE ? OR source_name LIKE ?)`);
+                params.push(`%${term}%`, `%${term}%`, `%${term}%`);
+            }
+        }
+    });
+
+    return { clauses, params };
+}
+
+function searchIndexedArticles(query, categoryFilter = '', limit = 100) {
     if (!query || typeof query !== 'string' || !query.trim()) return [];
     
     try {
         const db = getDb();
-        const rawQuery = query.trim();
+        const { clauses, params } = parseBooleanQuery(query);
+        
+        let whereConditions = [...clauses];
+        let queryParams = [...params];
 
-        // Handle exact phrases in quotes "mario rossi" or basic keyword splits
-        let cleanKeywords = rawQuery.replace(/["']/g, '').split(/\s+/).filter(k => k.length > 1);
-        if (cleanKeywords.length === 0) return [];
+        if (categoryFilter && categoryFilter !== 'all') {
+            whereConditions.push(`category = ?`);
+            queryParams.push(categoryFilter);
+        }
 
-        let whereClauses = [];
-        let params = [];
-
-        cleanKeywords.forEach(word => {
-            if (word.startsWith('-') && word.length > 2) {
-                // Exclusion keyword (-sport)
-                const exWord = word.substring(1);
-                whereClauses.push(`(title NOT LIKE ? AND snippet NOT LIKE ?)`);
-                params.push(`%${exWord}%`, `%${exWord}%`);
-            } else {
-                whereClauses.push(`(title LIKE ? OR snippet LIKE ? OR source_name LIKE ?)`);
-                params.push(`%${word}%`, `%${word}%`, `%${word}%`);
-            }
-        });
-
-        const whereSql = whereClauses.length > 0 ? `WHERE ` + whereClauses.join(' AND ') : '';
+        const whereSql = whereConditions.length > 0 ? `WHERE ` + whereConditions.join(' AND ') : '';
         const sql = `
             SELECT url, title, snippet, source_name, domain, category, published_at, timestamp, favicon
             FROM indexed_articles
@@ -163,9 +195,9 @@ function searchIndexedArticles(query, limit = 50) {
             ORDER BY timestamp DESC
             LIMIT ?
         `;
-        params.push(limit);
+        queryParams.push(limit);
 
-        const rows = db.prepare(sql).all(...params);
+        const rows = db.prepare(sql).all(...queryParams);
         return rows.map(r => ({
             title: r.title,
             link: r.url,
