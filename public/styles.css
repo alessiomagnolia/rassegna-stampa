@@ -1953,7 +1953,7 @@ input::placeholder, textarea::placeholder {
     /* Editor Layout: Canvas Centered in Screen */
     .editor-layout {
         flex-direction: column !important;
-        padding-bottom: 70px !important; /* Space for Canva Bottom Dock */
+        padding-bottom: 75px !important; /* Space for Canva Bottom Dock */
         background: #020617 !important;
     }
 
