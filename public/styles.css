@@ -1853,9 +1853,11 @@ input::placeholder, textarea::placeholder {
 
     /* 11. Universal Overflow & Button Overlap Protection */
     .btn, button {
-        white-space: normal !important;
-        word-break: break-word !important;
+        white-space: nowrap !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
         max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .modal-content, .glass-card, .article-card, .news-card {

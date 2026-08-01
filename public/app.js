@@ -1211,6 +1211,22 @@ window.toggleQuickFiltersPanel = function(btn) {
     }
 };
 
+window.onNewsDateRangeSelectChange = function(val) {
+    const customBox = document.getElementById('customDateRangeBox');
+    if (val === 'custom') {
+        if (customBox) {
+            customBox.classList.remove('hidden');
+            customBox.style.display = 'grid';
+        }
+    } else {
+        if (customBox) {
+            customBox.classList.add('hidden');
+            customBox.style.display = 'none';
+        }
+        setNewsDatePreset(val);
+    }
+};
+
 window.setNewsDatePreset = function(preset, btn) {
     try {
         document.querySelectorAll('.news-date-preset').forEach(b => b.classList.remove('active'));

@@ -20,7 +20,7 @@
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
+            <a href="#" class="nav-brand hide-mobile" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
                 Rassegna Stampa
             </a>
         </div>
@@ -428,36 +428,55 @@
             </div>
 
             <!-- SEARCH FORM -->
-            <section class="glass-card news-search-card" style="padding:1.25rem; margin-bottom:1.5rem;">
-                <div class="news-search-grid">
-                    <div class="input-group news-keyword-group" style="margin:0;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Parola chiave</label>
-                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:44px;">
+            <section class="glass-card news-search-card" style="padding:1rem; margin-bottom:1.5rem;">
+                <div class="news-search-form-layout" style="display:flex; flex-direction:column; gap:0.85rem;">
+                    <!-- 1. KEYWORD INPUT -->
+                    <div class="input-group" style="margin:0;">
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.35rem; display:block;">Parola chiave</label>
+                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:42px; font-size:0.9rem;">
                         <div id="newsKeywordSuggestions" class="hidden news-suggestions-box" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
                     </div>
-                    <div class="news-search-dates">
-                        <div class="input-group" style="margin:0;">
-                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Dal</label>
-                            <input type="date" id="newsDateFrom" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
-                        </div>
-                        <div class="input-group" style="margin:0;">
-                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.4rem; display:block;">Al</label>
-                            <input type="date" id="newsDateTo" style="height:44px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:10px; padding:0 0.75rem;">
-                        </div>
-                    </div>
-                    <div class="news-search-actions">
-                        <button id="btnSearchNews" class="btn btn-gradient" style="height:44px; padding:0 1.25rem; white-space:nowrap;"><i data-feather="search" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Cerca</button>
-                        <button id="btnResetSearchNews" class="btn btn-outline" style="height:44px; padding:0 1.25rem; white-space:nowrap; border-color: rgba(255,255,255,0.2);"><i data-feather="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Nuova</button>
-                    </div>
-                </div>
 
-                <!-- TOGGLE FILTRI RAPIDI -->
-                <div class="quick-filters-toggle-row" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="display:flex; align-items:center; gap:6px; font-weight:600;">
-                        <i data-feather="sliders" style="width:14px;height:14px;"></i>
-                        <span>Filtri Rapidi</span>
-                        <i data-feather="chevron-down" class="icon-toggle-filter" style="width:14px;height:14px; transition:transform 0.2s ease;"></i>
-                    </button>
+                    <!-- 2. SINGLE DATE RANGE SELECTOR -->
+                    <div class="input-group" style="margin:0;">
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.35rem; display:block;">Periodo Notizie</label>
+                        <select id="newsDateRangeSelect" onchange="onNewsDateRangeSelectChange(this.value)" style="height:42px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.75rem; width:100%; font-size:0.85rem; cursor:pointer;">
+                            <option value="7days" selected>Ultimi 7 Giorni (Default)</option>
+                            <option value="today">Oggi</option>
+                            <option value="3days">Ultimi 3 Giorni</option>
+                            <option value="30days">Ultimi 30 Giorni</option>
+                            <option value="custom">📅 Date Personalizzate (Dal / Al)...</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. OPTIONAL CUSTOM DATE PICKERS (Hidden unless 'custom' selected) -->
+                    <div id="customDateRangeBox" class="hidden" style="display:none; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.25rem; display:block;">Dal</label>
+                            <input type="date" id="newsDateFrom" style="height:38px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.5rem; font-size:0.8rem; width:100%;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.25rem; display:block;">Al</label>
+                            <input type="date" id="newsDateTo" style="height:38px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.5rem; font-size:0.8rem; width:100%;">
+                        </div>
+                    </div>
+
+                    <!-- 4. ACTION BUTTONS (Clean, no text wrapping) -->
+                    <div class="news-search-actions-row" style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:0.25rem;">
+                        <button id="btnSearchNews" class="btn btn-gradient btn-search-submit" style="height:42px; width:100%; font-size:0.85rem; font-weight:700; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i data-feather="search" style="width:15px;height:15px;"></i> Cerca Notizie
+                        </button>
+                        <div style="display:flex; gap:8px; width:100%;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="flex:1; height:38px; font-size:0.8rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:4px;">
+                                <i data-feather="sliders" style="width:13px;height:13px;"></i>
+                                <span>Filtri Rapidi</span>
+                                <i data-feather="chevron-down" class="icon-toggle-filter" style="width:13px;height:13px; transition:transform 0.2s ease;"></i>
+                            </button>
+                            <button id="btnResetSearchNews" class="btn btn-outline btn-sm" style="flex:1; height:38px; font-size:0.8rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; border-color: rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; gap:4px;">
+                                <i data-feather="refresh-cw" style="width:13px;height:13px;"></i> Nuova
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- COLLAPSIBLE QUICK FILTERS PANEL -->
