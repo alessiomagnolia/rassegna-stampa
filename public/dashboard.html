@@ -100,16 +100,17 @@
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-inner">
             <nav class="sidebar-nav">
-                <!-- TOP USER & UPGRADE CARD AT VERY TOP OF SIDEBAR -->
-                <div class="sidebar-top-card" style="padding: 0.85rem; margin-bottom: 1rem; background: rgba(124,92,255,0.06); border: 1px solid rgba(124,92,255,0.25); border-radius: 12px;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 0.65rem;">
-                        <div id="navCompany" class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="font-weight:700; font-size:0.92rem; color:var(--text-primary); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 170px;">Caricamento...</div>
-                        <img id="navLogo" src="" alt="Logo" class="nav-logo hidden" style="max-height:22px;">
-                    </div>
-                    <button id="btnUpgradePlan" class="btn btn-gradient" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="width:100%; padding:0.6rem 0.85rem; font-size:0.85rem; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(124,92,255,0.3);">
-                        <i data-feather="zap" style="width:15px;height:15px;"></i> Upgrade Abbonamento
-                    </button>
+                <!-- 1. SEPARATE USER / COMPANY NAME HEADER -->
+                <div class="sidebar-company-box" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="padding: 0.65rem 0.85rem; margin-bottom: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i data-feather="user" style="width:15px;height:15px;color:var(--accent-primary);flex-shrink:0;"></i>
+                    <div id="navCompany" class="nav-company" style="font-weight:700; font-size:0.88rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Caricamento...</div>
+                    <img id="navLogo" src="" alt="Logo" class="nav-logo hidden" style="max-height:20px; margin-left:auto;">
                 </div>
+
+                <!-- 2. SEPARATE COMPACT UPGRADE BUTTON -->
+                <button id="btnUpgradePlan" class="btn btn-gradient btn-sm" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="width:100%; padding:0.45rem 0.75rem; font-size:0.78rem; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:1rem; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase; letter-spacing:0.5px;">
+                    <i data-feather="zap" style="width:13px;height:13px;"></i> Upgrade
+                </button>
 
                 <div class="sidebar-section-label" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.5rem; padding:0 0.25rem;">Menu Principale</div>
                 <a href="#" class="sidebar-item active" data-page="home">
