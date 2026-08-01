@@ -1846,5 +1846,23 @@ input::placeholder, textarea::placeholder {
         width: 100% !important;
         padding: 0.85rem !important;
     }
+
+    /* 11. Universal Overflow & Button Overlap Protection */
+    .btn, button {
+        white-space: normal !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
+    }
+
+    .modal-content, .glass-card, .article-card, .news-card {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        word-break: break-word !important;
+    }
+
+    .billing-cycle-switcher {
+        gap: 8px !important;
+        text-align: center !important;
+    }
 }
 
