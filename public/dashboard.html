@@ -14,35 +14,28 @@
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.5rem;">
-        <!-- LEFT: Sidebar toggle + User/Company Name -->
-        <div class="nav-left" style="display:flex; align-items:center; gap:1rem; flex:1;">
+    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.25rem; height: 56px;">
+        <!-- LEFT: Sidebar toggle + Brand Title -->
+        <div class="nav-left" style="display:flex; align-items:center; gap:0.75rem;">
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <div id="navCompany" class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="font-weight:600; font-size:0.95rem; cursor:pointer;">Caricamento...</div>
-            <img id="navLogo" src="" alt="Logo" class="nav-logo hidden">
-        </div>
-
-        <!-- CENTER: Site Title (Clickable -> Home) -->
-        <div class="nav-center" style="flex:1; text-align:center;">
-            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.25rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
+            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
                 Rassegna Stampa
             </a>
         </div>
 
-        <!-- RIGHT: Client Selector & Logout -->
-        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:8px; flex:1;">
+        <!-- RIGHT: Client Selector -->
+        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
             <div class="client-selector-box" style="display:flex; align-items:center; gap:4px; background:var(--bg-secondary); padding:3px 6px; border-radius:8px; border:1px solid var(--border-color);">
                 <i data-feather="user-check" style="width:14px;height:14px;color:var(--accent-primary);"></i>
-                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.8rem; cursor:pointer; max-width:110px;">
+                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.8rem; cursor:pointer; max-width:140px;">
                     <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
                 <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:2px 4px; border:none; background:transparent; cursor:pointer;">
                     <i data-feather="plus" style="width:14px;height:14px;"></i>
                 </button>
             </div>
-            <button id="btnUpgradePlan" class="btn-upgrade-nav" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento"><i data-feather="zap"></i> <span class="hide-mobile">Upgrade Abbonamento</span><span class="show-mobile-inline">Upgrade</span></button>
         </div>
     </nav>
 
@@ -107,6 +100,18 @@
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-inner">
             <nav class="sidebar-nav">
+                <!-- TOP USER & UPGRADE CARD AT VERY TOP OF SIDEBAR -->
+                <div class="sidebar-top-card" style="padding: 0.85rem; margin-bottom: 1rem; background: rgba(124,92,255,0.06); border: 1px solid rgba(124,92,255,0.25); border-radius: 12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 0.65rem;">
+                        <div id="navCompany" class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="font-weight:700; font-size:0.92rem; color:var(--text-primary); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 170px;">Caricamento...</div>
+                        <img id="navLogo" src="" alt="Logo" class="nav-logo hidden" style="max-height:22px;">
+                    </div>
+                    <button id="btnUpgradePlan" class="btn btn-gradient" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="width:100%; padding:0.6rem 0.85rem; font-size:0.85rem; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(124,92,255,0.3);">
+                        <i data-feather="zap" style="width:15px;height:15px;"></i> Upgrade Abbonamento
+                    </button>
+                </div>
+
+                <div class="sidebar-section-label" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:0.5rem; padding:0 0.25rem;">Menu Principale</div>
                 <a href="#" class="sidebar-item active" data-page="home">
                     <span class="sidebar-icon"><i data-feather="home"></i></span>
                     <span class="sidebar-label">Home</span>
