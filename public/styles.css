@@ -1994,6 +1994,9 @@ input::placeholder, textarea::placeholder {
     }
 
     .canva-dock-btn {
+        flex: 1 !important;
+        max-width: 20% !important;
+        min-width: 0 !important;
         background: transparent !important;
         border: none !important;
         color: rgba(255,255,255,0.7) !important;
@@ -2004,13 +2007,16 @@ input::placeholder, textarea::placeholder {
         gap: 3px !important;
         font-size: 0.68rem !important;
         font-weight: 600 !important;
-        padding: 6px 8px !important;
+        padding: 4px 2px !important;
         cursor: pointer !important;
         transition: color 0.2s ease, transform 0.15s ease !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
     }
     .canva-dock-btn i, .canva-dock-btn svg {
         width: 20px !important;
         height: 20px !important;
+        flex-shrink: 0 !important;
     }
     .canva-dock-btn.active, .canva-dock-btn:active {
         color: #7c5cff !important;
