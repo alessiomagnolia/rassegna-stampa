@@ -1576,6 +1576,10 @@ input::placeholder, textarea::placeholder {
         gap: 0.4rem !important;
     }
 
+    .nav-left .nav-brand {
+        display: none !important; /* Hidden on mobile view per user request */
+    }
+
     .nav-center {
         display: none !important; /* Hidden on mobile to prevent header overflow */
     }
