@@ -1462,24 +1462,21 @@ input::placeholder, textarea::placeholder {
     display: none !important;
 }
 
-.news-search-grid {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.75rem;
-    width: 100%;
-}
-.news-keyword-group {
-    flex: 1;
-}
-.news-search-dates {
-    display: flex;
-    gap: 0.75rem;
-    flex-shrink: 0;
-}
-.news-search-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
+@media (min-width: 901px) {
+    .news-search-form-layout {
+        display: grid !important;
+        grid-template-columns: 1fr 160px 160px 160px !important;
+        gap: 0.75rem !important;
+        align-items: flex-end !important;
+    }
+    .news-date-inputs-row {
+        display: contents !important;
+    }
+    .news-search-actions-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
 }
 
 @media (max-width: 900px) {

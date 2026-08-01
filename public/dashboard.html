@@ -429,39 +429,27 @@
 
             <!-- SEARCH FORM -->
             <section class="glass-card news-search-card" style="padding:1rem; margin-bottom:1.5rem;">
-                <div class="news-search-form-layout" style="display:flex; flex-direction:column; gap:0.85rem;">
+                <div class="news-search-form-layout" style="display:flex; flex-direction:column; gap:0.75rem;">
                     <!-- 1. KEYWORD INPUT -->
                     <div class="input-group" style="margin:0;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.35rem; display:block;">Parola chiave</label>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Parola chiave</label>
                         <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:42px; font-size:0.9rem;">
                         <div id="newsKeywordSuggestions" class="hidden news-suggestions-box" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
                     </div>
 
-                    <!-- 2. SINGLE DATE RANGE SELECTOR -->
-                    <div class="input-group" style="margin:0;">
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.35rem; display:block;">Periodo Notizie</label>
-                        <select id="newsDateRangeSelect" onchange="onNewsDateRangeSelectChange(this.value)" style="height:42px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.75rem; width:100%; font-size:0.85rem; cursor:pointer;">
-                            <option value="7days" selected>Ultimi 7 Giorni (Default)</option>
-                            <option value="today">Oggi</option>
-                            <option value="3days">Ultimi 3 Giorni</option>
-                            <option value="30days">Ultimi 30 Giorni</option>
-                            <option value="custom">📅 Date Personalizzate (Dal / Al)...</option>
-                        </select>
-                    </div>
-
-                    <!-- 3. OPTIONAL CUSTOM DATE PICKERS (Hidden unless 'custom' selected) -->
-                    <div id="customDateRangeBox" class="hidden" style="display:none; grid-template-columns:1fr 1fr; gap:8px;">
-                        <div class="input-group" style="margin:0;">
-                            <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.25rem; display:block;">Dal</label>
-                            <input type="date" id="newsDateFrom" style="height:38px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.5rem; font-size:0.8rem; width:100%;">
+                    <!-- 2. ALWAYS-VISIBLE DATE PICKERS (Dal & Al) -->
+                    <div class="news-date-inputs-row" style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <div class="input-group" style="margin:0; width:100%;">
+                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Dal</label>
+                            <input type="date" id="newsDateFrom" style="height:42px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.75rem; font-size:0.85rem; width:100%; box-sizing:border-box;">
                         </div>
-                        <div class="input-group" style="margin:0;">
-                            <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.25rem; display:block;">Al</label>
-                            <input type="date" id="newsDateTo" style="height:38px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.5rem; font-size:0.8rem; width:100%;">
+                        <div class="input-group" style="margin:0; width:100%;">
+                            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Al</label>
+                            <input type="date" id="newsDateTo" style="height:42px; background:var(--surface); color:var(--text-primary); border:1px solid var(--border-color); border-radius:8px; padding:0 0.75rem; font-size:0.85rem; width:100%; box-sizing:border-box;">
                         </div>
                     </div>
 
-                    <!-- 4. ACTION BUTTONS (Clean, no text wrapping) -->
+                    <!-- 3. ACTION BUTTONS -->
                     <div class="news-search-actions-row" style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:0.25rem;">
                         <button id="btnSearchNews" class="btn btn-gradient btn-search-submit" style="height:42px; width:100%; font-size:0.85rem; font-weight:700; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:6px;">
                             <i data-feather="search" style="width:15px;height:15px;"></i> Cerca Notizie
