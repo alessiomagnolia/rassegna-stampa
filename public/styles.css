@@ -2086,3 +2086,76 @@ input::placeholder, textarea::placeholder {
     }
 }
 
+/* Interactive Touch Element Resize Overlay */
+.card-element-selectable {
+    cursor: pointer;
+    position: relative;
+    transition: outline 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-element-selectable:hover {
+    outline: 1.5px dashed rgba(124, 92, 255, 0.5) !important;
+    outline-offset: 2px;
+}
+
+.card-element-selected {
+    outline: 2px dashed #7c5cff !important;
+    outline-offset: 3px;
+    box-shadow: 0 0 14px rgba(124, 92, 255, 0.4) !important;
+}
+
+.card-resize-handle {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    background: #7c5cff;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    cursor: se-resize;
+    z-index: 100;
+    touch-action: none;
+}
+
+/* Floating Quick Size Controller Bar */
+.card-element-size-bar {
+    position: absolute;
+    bottom: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.card-element-size-bar button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.card-element-size-bar button:active {
+    background: #7c5cff;
+}
+
