@@ -1831,7 +1831,13 @@ input::placeholder, textarea::placeholder {
         overflow-y: auto !important;
     }
 
-    /* 10. Comunicati Stampa (press.html) & PDF Editor (editor.html) */
+    /* 10. Comunicati Stampa (press.html), PDF Editor (editor.html) & Admin (admin.html) */
+    .app-layout {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+    }
+
     .workspace {
         flex-direction: column !important;
         height: auto !important;
@@ -1843,14 +1849,71 @@ input::placeholder, textarea::placeholder {
         border-right: none !important;
         border-bottom: 1px solid var(--border-color) !important;
         padding: 0.85rem !important;
+        box-sizing: border-box !important;
     }
 
     .editor-container {
         width: 100% !important;
         padding: 0.85rem !important;
+        box-sizing: border-box !important;
     }
 
-    /* 11. Universal Overflow & Button Overlap Protection */
+    .editor-navbar {
+        height: auto !important;
+        min-height: 54px !important;
+        padding: 0.5rem 0.75rem !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .editor-nav-left {
+        width: 100% !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+    }
+
+    .editor-title-input {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 0.85rem !important;
+    }
+
+    .pages-panel {
+        width: 100% !important;
+        max-height: 180px !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .canvas-area {
+        padding: 0.85rem 0.35rem !important;
+        width: 100% !important;
+    }
+
+    .edit-panel {
+        width: 100% !important;
+        border-left: none !important;
+        border-top: 1px solid var(--border-color) !important;
+    }
+
+    /* 11. Universal Table, Grid & Typography Consistency on Mobile */
+    .plans-grid, .pricing-grid, .saved-reviews-grid, .admin-grid, .stats-grid, .sources-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .table-container, .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    table {
+        min-width: 500px !important;
+    }
+
+    /* Universal Overflow & Button Overlap Protection */
     .btn, button {
         white-space: nowrap !important;
         text-transform: none !important;
@@ -1859,7 +1922,12 @@ input::placeholder, textarea::placeholder {
         box-sizing: border-box !important;
     }
 
-    .modal-content, .glass-card, .article-card, .news-card {
+    .btn-sm, button.btn-sm {
+        font-size: 0.78rem !important;
+        padding: 6px 10px !important;
+    }
+
+    .modal-content, .glass-card, .article-card, .news-card, .stat-card {
         max-width: 100% !important;
         box-sizing: border-box !important;
         word-break: break-word !important;
