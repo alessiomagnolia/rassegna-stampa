@@ -173,11 +173,15 @@ function updateProfileUI() {
     if (!user) return;
 
     // Navbar
-    document.getElementById('navCompany').innerText = user.company_name || user.email;
+    const compName = user.company_name || user.email;
+    const navCompanyEl = document.getElementById('navCompany');
+    const navCompanyHeaderEl = document.getElementById('navCompanyHeader');
+    if (navCompanyEl) navCompanyEl.innerText = compName;
+    if (navCompanyHeaderEl) navCompanyHeaderEl.innerText = compName;
     
     // Sidebar footer
     const sidebarCompany = document.getElementById('sidebarCompany');
-    if (sidebarCompany) sidebarCompany.textContent = user.company_name || user.email;
+    if (sidebarCompany) sidebarCompany.textContent = compName;
 
     if (user.logo_path) {
         const navLogo = document.getElementById('navLogo');
@@ -1984,7 +1988,9 @@ function saveFullProfileData() {
     if (companyName) {
         localStorage.setItem('rs_company_name', companyName);
         const compEl = document.getElementById('navCompany');
+        const compHeaderEl = document.getElementById('navCompanyHeader');
         if (compEl) compEl.textContent = companyName;
+        if (compHeaderEl) compHeaderEl.textContent = companyName;
     }
 
     showToast('Profilo aggiornato con successo!', 'success');
