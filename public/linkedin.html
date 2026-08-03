@@ -852,6 +852,8 @@
                 // Photo position
                 cardPhoto.style.objectPosition = inputImagePosition.value;
 
+                if (window.autoFitCardText) window.autoFitCardText();
+
                 setTimeout(initCardElementResizing, 100);
             }
 
@@ -1394,7 +1396,107 @@
                     dClientLogo.dispatchEvent(new Event('change'));
                 });
             }
+
+            // Sync Mobile Custom Color Pickers
+            const mColText = document.getElementById('mobileColorText');
+            if (mColText) {
+                mColText.addEventListener('input', (e) => {
+                    colorText.value = e.target.value;
+                    colorTextHex.value = e.target.value.toUpperCase();
+                    updateCardView();
+                });
+            }
+            const mColAccent = document.getElementById('mobileColorAccent');
+            if (mColAccent) {
+                mColAccent.addEventListener('input', (e) => {
+                    colorAccent.value = e.target.value;
+                    colorAccentHex.value = e.target.value.toUpperCase();
+                    updateCardView();
+                });
+            }
+
+            initBottomSheetSwipeToDismiss();
+            autoFitCardText();
         });
+
+        // Helper: Apply Palette Preset
+        function applyColorPreset(textCol, accentCol) {
+            const colorText = document.getElementById('colorText');
+            const colorTextHex = document.getElementById('colorTextHex');
+            const colorAccent = document.getElementById('colorAccent');
+            const colorAccentHex = document.getElementById('colorAccentHex');
+
+            if (colorText) colorText.value = textCol;
+            if (colorTextHex) colorTextHex.value = textCol.toUpperCase();
+            if (colorAccent) colorAccent.value = accentCol;
+            if (colorAccentHex) colorAccentHex.value = accentCol.toUpperCase();
+
+            updateCardView();
+        }
+        window.applyColorPreset = applyColorPreset;
+
+        // Helper: Auto-Fit Title Font Size
+        function autoFitCardText() {
+            const quote = document.getElementById('cardMainQuote');
+            if (!quote) return;
+
+            if (quote.dataset.userResized === 'true') return;
+
+            const textLength = quote.textContent.trim().length;
+            let baseSize = 1.35;
+            if (textLength > 160) {
+                baseSize = 0.95;
+            } else if (textLength > 120) {
+                baseSize = 1.05;
+            } else if (textLength > 80) {
+                baseSize = 1.15;
+            } else if (textLength > 50) {
+                baseSize = 1.25;
+            }
+
+            quote.style.fontSize = `${baseSize}rem`;
+            quote.style.lineHeight = textLength > 120 ? '1.25' : '1.35';
+        }
+        window.autoFitCardText = autoFitCardText;
+
+        // Helper: Swipe / Drag Down to Dismiss Bottom Sheets
+        function initBottomSheetSwipeToDismiss() {
+            document.querySelectorAll('.canva-bottom-sheet').forEach(sheet => {
+                let startY = 0;
+                let currentY = 0;
+                let isDragging = false;
+
+                const handle = sheet.querySelector('.canva-sheet-handle') || sheet.querySelector('.canva-sheet-header');
+                if (!handle) return;
+
+                handle.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    isDragging = true;
+                    sheet.style.transition = 'none';
+                }, { passive: true });
+
+                handle.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    if (deltaY > 0) {
+                        sheet.style.transform = `translateY(${deltaY}px)`;
+                    }
+                }, { passive: true });
+
+                handle.addEventListener('touchend', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    sheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    const deltaY = currentY - startY;
+                    if (deltaY > 60) {
+                        closeCanvaSheets();
+                    } else {
+                        sheet.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+        }
     </script>
 
     <!-- SINGLE DOWNLOAD OPTIONS MODAL -->
@@ -1541,15 +1643,46 @@
         </div>
     </div>
 
-    <!-- SHEET 5: STILI -->
+    <!-- SHEET 6: STILI -->
     <div id="sheet-styles" class="canva-bottom-sheet">
         <div class="canva-sheet-handle"></div>
         <div class="canva-sheet-header">
             <span class="canva-sheet-title">Stile & Colori</span>
             <button type="button" class="btn btn-outline btn-sm" onclick="closeCanvaSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
         </div>
-        <div style="color:white; font-size:0.85rem; margin-bottom:0.75rem;">Scegli Palette Colore Card:</div>
-        <div id="mobileColorPalettes" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <div style="color:white; font-size:0.82rem; font-weight:600; margin-bottom:0.75rem;">Palette Pronte (1-Click):</div>
+        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:1.25rem;">
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#1a1a2e', '#1d70b8'); closeCanvaSheets();" style="background:#1a1a2e; color:#ffffff; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:#1d70b8; display:inline-block;"></span> Scuro Classic
+            </button>
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#c0262d', '#c0262d'); closeCanvaSheets();" style="background:#c0262d; color:#ffffff; border:none; padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:white; display:inline-block;"></span> Rosso Editorial
+            </button>
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#0a66c2', '#0a66c2'); closeCanvaSheets();" style="background:#0a66c2; color:#ffffff; border:none; padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:white; display:inline-block;"></span> LinkedIn Blue
+            </button>
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#047857', '#047857'); closeCanvaSheets();" style="background:#047857; color:#ffffff; border:none; padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:white; display:inline-block;"></span> Emerald Green
+            </button>
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#7c5cff', '#7c5cff'); closeCanvaSheets();" style="background:#7c5cff; color:#ffffff; border:none; padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:white; display:inline-block;"></span> Purple Gradient
+            </button>
+            <button type="button" class="btn-palette" onclick="applyColorPreset('#111827', '#f59e0b'); closeCanvaSheets();" style="background:#111827; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border-radius:50%; background:#f59e0b; display:inline-block;"></span> Midnight Gold
+            </button>
+        </div>
+
+        <div style="color:white; font-size:0.82rem; font-weight:600; margin-bottom:0.75rem;">Personalizza Colori Custom:</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="field-group">
+                <label style="color:white; font-size:0.78rem;">Colore Titolo</label>
+                <input type="color" id="mobileColorText" value="#1a1a2e" style="width:100%; height:40px; border:none; border-radius:8px; cursor:pointer; background:none;">
+            </div>
+            <div class="field-group">
+                <label style="color:white; font-size:0.78rem;">Colore Accento / Banner</label>
+                <input type="color" id="mobileColorAccent" value="#1d70b8" style="width:100%; height:40px; border:none; border-radius:8px; cursor:pointer; background:none;">
+            </div>
+        </div>
     </div>
 </body>
 </html>
