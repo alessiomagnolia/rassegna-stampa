@@ -252,22 +252,39 @@
 <!-- TOP NAVBAR -->
 <nav class="editor-navbar">
     <div class="editor-nav-left">
-        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()"><i data-feather="arrow-left" style="width:14px;height:14px;"></i> Dashboard</button>
-        <input type="text" id="editorTitle" class="editor-title-input" placeholder="Titolo rassegna...">
-        <span id="editorArticleCount" class="editor-article-count">0 articoli</span>
+        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()" title="Torna alla Rassegna">
+            <i data-feather="arrow-left" style="width:16px;height:16px;"></i> <span class="hide-mobile">Dashboard</span>
+        </button>
+        <input type="text" id="editorTitle" class="editor-title-input hide-mobile" placeholder="Titolo rassegna...">
+        <span id="editorArticleCount" class="editor-article-count hide-mobile">0 articoli</span>
     </div>
-    <div style="display:flex; gap:0.75rem; align-items:center;">
-        <select id="editorTemplateSelect" title="Seleziona Template PDF" style="background: rgba(255,255,255,0.1); color: #efece5; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 5px 8px; cursor: pointer; outline: none;">
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="saveRassegnaToArchive()" title="Salva in Archivio" style="padding:4px 8px; font-size:0.75rem; border-color:rgba(255,255,255,0.25); color:white;">
+            <i data-feather="archive" style="width:14px;height:14px;"></i> <span class="hide-mobile">Archivia</span>
+        </button>
+        <select id="editorTemplateSelect" class="hide-mobile" title="Seleziona Template PDF" style="background: rgba(255,255,255,0.1); color: #efece5; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 5px 8px; cursor: pointer; outline: none;">
             <option value="classic" style="color: black;">🏛️ Template Classico</option>
             <option value="modern" style="color: black;">⚡ Modern Executive</option>
             <option value="minimal" style="color: black;">📰 Minimal Editorial</option>
         </select>
-        <button id="btnGeneratePDF" class="btn btn-gradient"><i data-feather="download" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Genera e Scarica PDF</button>
+        <button id="btnGeneratePDF" class="btn btn-gradient btn-sm" style="padding:4px 10px; font-size:0.78rem; font-weight:700;">
+            <i data-feather="download" style="width:14px;height:14px;"></i> <span class="hide-mobile">Genera PDF</span>
+        </button>
         <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
-            <div class="spinner" style="width:18px;height:18px;"></div> Generazione...
+            <div class="spinner" style="width:18px;height:18px;"></div>
         </div>
     </div>
 </nav>
+
+<!-- SUB-HEADER TITLE BAR (Mobile Only, Centered at Top Under Navbar) -->
+<div class="editor-sub-header show-mobile-flex">
+    <input type="text" id="editorTitleMobile" class="editor-title-input-mobile" placeholder="Titolo della Rassegna..." oninput="syncMobileTitle(this.value)">
+</div>
+
+<!-- FLOATING UNDO (CTRL+Z) BUTTON FOR MOBILE -->
+<button type="button" id="btnUndoState" class="btn-undo-floating show-mobile-flex" onclick="undoLastEdit()" title="Annulla Modifica (Ctrl+Z)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+</button>
 
 <!-- EDITOR BODY -->
 <div class="editor-body">
@@ -543,6 +560,14 @@
     <button type="button" class="btn btn-primary" onclick="saveMobilePdfOptions(); closePdfSheets();" style="width:100%; height:44px; font-weight:700;">Salva Impostazioni</button>
 </div>
 
+<!-- FLOATING SIZE PILL FOR TOUCH RESIZING -->
+<div id="cardElementSizeBar" class="card-element-size-bar hidden" style="position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%); z-index: 99998; background: #0b1120; border: 1px solid rgba(124,92,255,0.6); padding: 4px 12px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; color: white;">
+    <button type="button" class="btn btn-sm btn-outline" onclick="changePdfElementSize(-1)" style="padding: 2px 8px; border-radius: 50%; color: white; background: rgba(255,255,255,0.1);">−</button>
+    <span id="cardElementSizeLabel" style="font-size: 0.78rem; font-weight: 600;">Dimensione</span>
+    <button type="button" class="btn btn-sm btn-outline" onclick="changePdfElementSize(1)" style="padding: 2px 8px; border-radius: 50%; color: white; background: rgba(255,255,255,0.1);">+</button>
+    <button type="button" class="btn btn-sm btn-outline" onclick="deselectPdfElement()" style="padding: 2px 6px; border: none; color: #ff4757; font-weight: bold; margin-left: 4px;">✕</button>
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
@@ -575,8 +600,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     hasCover = !!(options.title && options.title.trim());
-    document.getElementById('editorTitle').value = options.title || '';
-    document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
+    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title || '';
+    if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title || '';
+    if (document.getElementById('editorArticleCount')) document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
     
     // Set active template
     const templateSelect = document.getElementById('editorTemplateSelect');
@@ -584,6 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
         templateSelect.value = options.templateId || 'classic';
         templateSelect.addEventListener('change', (e) => {
             options.templateId = e.target.value;
+            pushUndoState();
         });
     }
 
@@ -591,6 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectPage(0);
     initSortable();
     initEvents();
+    pushUndoState();
 });
 
 // ============================================================
@@ -676,6 +704,8 @@ function selectPage(idx) {
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
         editBtn.style.display = 'block';
     }
+
+    attachPdfTouchResizing();
 
     // Populate mobile edit container if open
     if (idx >= 0 && window.innerWidth <= 900) {
@@ -1154,6 +1184,7 @@ function saveMobilePdfText() {
     if (e !== undefined) art.excerpt = e;
     if (d !== undefined) art.published_date = d;
 
+    pushUndoState();
     renderPagesList();
     selectPage(selectedIdx);
     showToast('Testo aggiornato!', 'success');
@@ -1168,6 +1199,7 @@ function saveMobilePdfSource() {
     if (s !== undefined) art.source_name = s;
     if (st !== undefined) art.source_type = st;
 
+    pushUndoState();
     renderPagesList();
     selectPage(selectedIdx);
     showToast('Fonte aggiornata!', 'success');
@@ -1189,9 +1221,115 @@ function saveMobilePdfOptions() {
 
     hasCover = !!(options.title && options.title.trim());
     if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title;
+    if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title;
+    pushUndoState();
     renderPagesList();
     selectPage(selectedIdx);
     showToast('Impostazioni salvate!', 'success');
+}
+
+// ============================================================
+// UNDO HISTORY & STATE SYNC
+// ============================================================
+let undoStack = [];
+
+function pushUndoState() {
+    if (undoStack.length >= 25) undoStack.shift();
+    undoStack.push(JSON.stringify({ articles, options }));
+}
+
+function undoLastEdit() {
+    if (undoStack.length <= 1) {
+        showToast('Nessuna modifica da annullare', 'info');
+        return;
+    }
+    undoStack.pop(); // Remove current
+    const previous = JSON.parse(undoStack[undoStack.length - 1]);
+    articles = previous.articles || [];
+    options = previous.options || {};
+    hasCover = !!(options.title && options.title.trim());
+
+    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title || '';
+    if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title || '';
+
+    renderPagesList();
+    selectPage(selectedIdx >= articles.length ? 0 : selectedIdx);
+    showToast('Modifica annullata! (Ctrl+Z)', 'success');
+}
+
+function syncMobileTitle(val) {
+    options.title = val.trim();
+    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title;
+    const newHasCover = !!options.title;
+    if (newHasCover !== hasCover) {
+        hasCover = newHasCover;
+        renderPagesList();
+        if (selectedIdx === -1 && !hasCover) selectPage(0);
+    }
+}
+
+function saveRassegnaToArchive() {
+    const currentTitle = options.title || document.getElementById('editorTitle')?.value.trim() || '';
+    options.title = currentTitle;
+    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    showToast('Rassegna salvata in Archivio!', 'success');
+}
+
+// ============================================================
+// TOUCH ELEMENT RESIZING FOR PDF PAGES
+// ============================================================
+let selectedPdfElement = null;
+
+function attachPdfTouchResizing() {
+    const preview = document.getElementById('pagePreviewContent');
+    if (!preview) return;
+
+    preview.querySelectorAll('.pdf-article-title, .pdf-content-text, .pdf-main-visual, .pdf-source-logo').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectPdfElement(el);
+        });
+    });
+}
+
+function selectPdfElement(el) {
+    deselectPdfElement();
+    selectedPdfElement = el;
+    el.classList.add('card-element-selected');
+
+    const sizeBar = document.getElementById('cardElementSizeBar');
+    if (sizeBar) {
+        sizeBar.classList.remove('hidden');
+        sizeBar.style.display = 'flex';
+    }
+}
+
+function deselectPdfElement() {
+    if (selectedPdfElement) {
+        selectedPdfElement.classList.remove('card-element-selected');
+        selectedPdfElement = null;
+    }
+    const sizeBar = document.getElementById('cardElementSizeBar');
+    if (sizeBar) {
+        sizeBar.classList.add('hidden');
+        sizeBar.style.display = 'none';
+    }
+}
+
+function changePdfElementSize(delta) {
+    if (!selectedPdfElement) return;
+
+    if (selectedPdfElement.tagName.toLowerCase() === 'img') {
+        const curH = parseInt(window.getComputedStyle(selectedPdfElement).maxHeight) || 200;
+        const newH = Math.max(24, Math.min(600, curH + delta * 12));
+        selectedPdfElement.style.maxHeight = `${newH}px`;
+    } else {
+        const curSize = parseFloat(window.getComputedStyle(selectedPdfElement).fontSize) || 16;
+        const newSize = Math.max(10, Math.min(64, curSize + delta * 2));
+        selectedPdfElement.style.fontSize = `${newSize}px`;
+    }
+    pushUndoState();
 }
 
 function initPdfSheetSwipeToDismiss() {

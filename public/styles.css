@@ -2035,9 +2035,9 @@ input::placeholder, textarea::placeholder {
 
     /* PDF Press Review Mobile Canva Editor */
     .editor-body {
-        padding-top: 54px !important;
-        height: calc(100vh - 54px) !important;
-        height: calc(100dvh - 54px) !important;
+        padding-top: 96px !important; /* 54px navbar + 42px sub-header */
+        height: calc(100vh - 96px) !important;
+        height: calc(100dvh - 96px) !important;
         flex-direction: column !important;
         position: relative !important;
         overflow: hidden !important;
@@ -2058,14 +2058,68 @@ input::placeholder, textarea::placeholder {
         min-width: 0 !important;
     }
 
-    .editor-title-input {
-        min-width: 0 !important;
+    /* Sub-Header Title Bar for Mobile */
+    .editor-sub-header {
+        position: fixed !important;
+        top: 54px !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 42px !important;
+        background: #0f172a !important;
+        border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+        z-index: 190 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 1rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .editor-title-input-mobile {
         width: 100% !important;
-        font-size: 0.82rem !important;
-        padding: 3px 6px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
+        max-width: 320px !important;
+        text-align: center !important;
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
+        border-radius: 20px !important;
+        color: white !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        padding: 4px 12px !important;
+    }
+
+    /* Floating Undo Button (Ctrl+Z) */
+    .btn-undo-floating {
+        position: fixed !important;
+        bottom: 74px !important;
+        left: 14px !important;
+        width: 42px !important;
+        height: 42px !important;
+        border-radius: 50% !important;
+        background: #0b1120 !important;
+        border: 1px solid rgba(124, 92, 255, 0.6) !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 12px rgba(124,92,255,0.3) !important;
+        color: white !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99998 !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease, background 0.2s ease !important;
+    }
+    .btn-undo-floating:active {
+        transform: scale(0.9) !important;
+        background: #7c5cff !important;
+    }
+
+    /* Source Logo Ratio & Scaling Fix */
+    .pdf-source-logo {
+        max-height: 38px !important;
+        max-width: 160px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
     }
 
     .pages-panel {
