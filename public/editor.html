@@ -1416,6 +1416,10 @@ function closePdfSheets() {
 
 function initPdfSheetSwipeToDismiss() {
     document.querySelectorAll('.canva-bottom-sheet').forEach(sheet => {
+        // EXCLUDE 'sheet-pdf-articles' (Pagine e Articoli) from swipe-to-dismiss
+        // so page reordering drag gestures are never interrupted!
+        if (sheet.id === 'sheet-pdf-articles') return;
+
         let startY = 0;
         let currentY = 0;
         let isDragging = false;

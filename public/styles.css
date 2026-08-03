@@ -2128,6 +2128,29 @@ input::placeholder, textarea::placeholder {
         display: block !important;
     }
 
+    /* Article Main Image Fit in Live Preview */
+    .pdf-visual-zone {
+        width: 100% !important;
+        max-height: 240px !important;
+        overflow: hidden !important;
+        border-radius: 6px !important;
+        margin: 6px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #0f172a !important;
+    }
+
+    .pdf-main-visual {
+        width: 100% !important;
+        max-height: 240px !important;
+        height: auto !important;
+        object-fit: cover !important;
+        object-position: center !important;
+        display: block !important;
+        border-radius: 6px !important;
+    }
+
     /* Article Title Balanced Size (Reduced for perfect fit) */
     .pdf-article-title {
         font-size: 0.88rem !important;
