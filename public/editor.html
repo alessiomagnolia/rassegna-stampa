@@ -1427,6 +1427,7 @@ function initPdfSheetSwipeToDismiss() {
         sheet.addEventListener('touchstart', (e) => {
             const targetTag = e.target.tagName.toLowerCase();
             if (['input', 'textarea', 'select', 'button'].includes(targetTag)) return;
+            if (sheet.scrollTop > 5) return;
 
             startY = e.touches[0].clientY;
             currentY = startY;

@@ -2267,7 +2267,7 @@ input::placeholder, textarea::placeholder {
         box-shadow: 0 20px 50px rgba(0,0,0,0.8) !important;
     }
 
-    /* Canva Mobile Bottom Navigation Dock (Horizontally Scrollable) */
+    /* Canva Mobile Bottom Navigation Dock (Horizontally Scrollable - Always Top Layer) */
     .canva-bottom-dock {
         position: fixed !important;
         bottom: 0 !important;
@@ -2277,7 +2277,7 @@ input::placeholder, textarea::placeholder {
         height: 64px !important;
         background: #0b1120 !important;
         border-top: 1px solid rgba(255,255,255,0.15) !important;
-        z-index: 99999 !important;
+        z-index: 100005 !important; /* ALWAYS HIGHER THAN SHEETS (100000) SO SCROLL IS NEVER BLOCKED! */
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -2331,7 +2331,7 @@ input::placeholder, textarea::placeholder {
         transform: scale(1.05) !important;
     }
 
-    /* Canva Bottom Sheet Drawer Overlay */
+    /* Canva Bottom Sheet Drawer Overlay & Sheet Above Dock */
     .canva-sheet-overlay {
         position: fixed !important;
         top: 0 !important;
@@ -2340,7 +2340,7 @@ input::placeholder, textarea::placeholder {
         height: 100vh !important;
         background: rgba(0,0,0,0.5) !important;
         backdrop-filter: blur(4px) !important;
-        z-index: 1040 !important;
+        z-index: 99990 !important;
         opacity: 0 !important;
         pointer-events: none !important;
         transition: opacity 0.25s ease !important;
@@ -2352,19 +2352,21 @@ input::placeholder, textarea::placeholder {
 
     .canva-bottom-sheet {
         position: fixed !important;
-        bottom: 0 !important;
+        bottom: 64px !important; /* SITS CLEANLY ABOVE THE 64px DOCK BAR! */
         left: 0 !important;
+        right: 0 !important;
         width: 100vw !important;
-        max-height: 75vh !important;
-        max-height: 75dvh !important;
+        max-height: 70vh !important;
+        max-height: 70dvh !important;
         background: #0f172a !important;
         border-top-left-radius: 20px !important;
         border-top-right-radius: 20px !important;
         border-top: 1px solid rgba(255,255,255,0.15) !important;
-        z-index: 100000 !important; /* Higher than dock z-index 99999 */
-        transform: translateY(100%) !important;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.5) !important;
+        z-index: 100000 !important;
+        transform: translateY(120%) !important;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding: 1rem 1.25rem 100px !important; /* 100px bottom padding to prevent cut off */
+        padding: 1rem 1.25rem 1.5rem !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
