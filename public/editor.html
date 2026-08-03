@@ -609,6 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    updatePageCounters();
     renderPagesList();
     selectPage(-1); // Default to Cover Page (Copertina)
     initSortable();
@@ -617,10 +618,25 @@ document.addEventListener('DOMContentLoaded', () => {
     pushUndoState();
 });
 
+function updatePageCounters() {
+    const totalPages = articles.length + (hasCover ? 1 : 0);
+
+    const countEl = document.getElementById('editorArticleCount');
+    if (countEl) {
+        countEl.textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
+    }
+
+    const mobCountEl = document.getElementById('editorArticleCountMobile');
+    if (mobCountEl) {
+        mobCountEl.textContent = `${totalPages} pag.`;
+    }
+}
+
 // ============================================================
 // RENDER LEFT PANEL & MOBILE PAGES LIST
 // ============================================================
 function renderPagesList() {
+    updatePageCounters();
     const container = document.getElementById('pagesList');
     const mobContainer = document.getElementById('mobilePagesList');
     if (container) container.innerHTML = '';
@@ -1387,22 +1403,32 @@ function changePdfElementSize(delta) {
     pushUndoState();
 }
 
+function closePdfSheets() {
+    const overlay = document.getElementById('pdfSheetOverlay');
+    if (overlay) overlay.classList.remove('active');
+    document.querySelectorAll('.canva-bottom-sheet').forEach(s => {
+        s.classList.remove('open');
+        s.style.transform = '';
+    });
+}
+
 function initPdfSheetSwipeToDismiss() {
     document.querySelectorAll('.canva-bottom-sheet').forEach(sheet => {
         let startY = 0;
         let currentY = 0;
         let isDragging = false;
 
-        const handle = sheet.querySelector('.canva-sheet-handle') || sheet.querySelector('.canva-sheet-header');
-        if (!handle) return;
+        sheet.addEventListener('touchstart', (e) => {
+            const targetTag = e.target.tagName.toLowerCase();
+            if (['input', 'textarea', 'select', 'button'].includes(targetTag)) return;
 
-        handle.addEventListener('touchstart', (e) => {
             startY = e.touches[0].clientY;
+            currentY = startY;
             isDragging = true;
             sheet.style.transition = 'none';
         }, { passive: true });
 
-        handle.addEventListener('touchmove', (e) => {
+        sheet.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             currentY = e.touches[0].clientY;
             const deltaY = currentY - startY;
@@ -1411,15 +1437,15 @@ function initPdfSheetSwipeToDismiss() {
             }
         }, { passive: true });
 
-        handle.addEventListener('touchend', () => {
+        sheet.addEventListener('touchend', () => {
             if (!isDragging) return;
             isDragging = false;
             sheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             const deltaY = currentY - startY;
-            if (deltaY > 60) {
+            if (deltaY > 50) {
                 closePdfSheets();
             } else {
-                sheet.style.transform = 'translateY(0)';
+                sheet.style.transform = '';
             }
         });
     });
