@@ -657,8 +657,15 @@ function renderPagesList() {
             </div>`;
         
         const mEl = el.cloneNode(true);
-        el.addEventListener('click', () => selectPage(idx));
-        mEl.addEventListener('click', () => { selectPage(idx); closePdfSheets(); });
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('.page-thumb-drag')) return;
+            selectPage(idx);
+        });
+        mEl.addEventListener('click', (e) => {
+            if (e.target.closest('.page-thumb-drag')) return;
+            selectPage(idx);
+            closePdfSheets();
+        });
 
         if (container) container.appendChild(el);
         if (mobContainer) mobContainer.appendChild(mEl);
@@ -829,12 +836,11 @@ function initSortable() {
 
     if (mobList) {
         Sortable.create(mobList, {
+            handle: '.page-thumb-drag',
             animation: 200,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             filter: '[data-cover-page]',
-            delay: 100,
-            delayOnTouchOnly: true,
             onEnd: handleSortEnd
         });
     }
