@@ -2141,17 +2141,19 @@ input::placeholder, textarea::placeholder {
         bottom: 0 !important;
         left: 0 !important;
         width: 100vw !important;
-        max-height: 70vh !important;
+        max-height: 75vh !important;
+        max-height: 75dvh !important;
         background: #0f172a !important;
         border-top-left-radius: 20px !important;
         border-top-right-radius: 20px !important;
         border-top: 1px solid rgba(255,255,255,0.15) !important;
-        z-index: 1050 !important;
+        z-index: 100000 !important; /* Higher than dock z-index 99999 */
         transform: translateY(100%) !important;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding: 1rem 1.25rem 2rem !important;
+        padding: 1rem 1.25rem 100px !important; /* 100px bottom padding to prevent cut off */
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     .canva-bottom-sheet.open {
         transform: translateY(0) !important;
@@ -2213,43 +2215,43 @@ input::placeholder, textarea::placeholder {
     touch-action: none;
 }
 
-/* Floating Quick Size Controller Bar */
+/* Floating Quick Size Controller Bar (Anchored above Canva Mobile Dock) */
 .card-element-size-bar {
-    position: absolute;
-    bottom: -45px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #0f172a;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 4px 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
+    position: fixed !important;
+    bottom: 74px !important; /* Floats right above the 64px bottom dock! */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: #0b1120 !important;
+    border: 1px solid rgba(124, 92, 255, 0.6) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(124,92,255,0.4) !important;
+    border-radius: 30px !important;
+    padding: 6px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    z-index: 99998 !important; /* Right above bottom dock */
+    color: white !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
 }
 
 .card-element-size-bar button {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    line-height: 1;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    background: rgba(255,255,255,0.15) !important;
+    border: none !important;
+    color: white !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
 }
 
 .card-element-size-bar button:active {
-    background: #7c5cff;
+    background: #7c5cff !important;
 }
 

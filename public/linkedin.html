@@ -1256,14 +1256,13 @@
             handle.onmousedown = onTouchStart;
             handle.ontouchstart = onTouchStart;
 
-            // Floating Controller Pill
-            const stage = document.getElementById('cardStage');
+            // Floating Controller Pill (Anchored to body above Canva bottom dock)
             let sizeBar = document.getElementById('cardElementSizeBar');
             if (!sizeBar) {
                 sizeBar = document.createElement('div');
                 sizeBar.id = 'cardElementSizeBar';
                 sizeBar.className = 'card-element-size-bar';
-                stage.appendChild(sizeBar);
+                document.body.appendChild(sizeBar);
             }
 
             const updateSizeBarText = (val) => {
