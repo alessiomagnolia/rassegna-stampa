@@ -2033,11 +2033,96 @@ input::placeholder, textarea::placeholder {
         border: none !important;
     }
 
-    /* Editor Layout: Canvas Centered in Screen */
-    .editor-layout {
+    /* PDF Press Review Mobile Canva Editor */
+    .editor-body {
+        padding-top: 54px !important;
+        height: calc(100vh - 54px) !important;
+        height: calc(100dvh - 54px) !important;
         flex-direction: column !important;
-        padding-bottom: 75px !important; /* Space for Canva Bottom Dock */
+        position: relative !important;
+        overflow: hidden !important;
         background: #020617 !important;
+    }
+
+    .editor-navbar {
+        height: 54px !important;
+        padding: 0 0.65rem !important;
+        background: #0b1120 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+        gap: 6px !important;
+    }
+
+    .editor-nav-left {
+        gap: 6px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .editor-title-input {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 0.82rem !important;
+        padding: 3px 6px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .pages-panel {
+        display: none !important; /* Managed via Articoli Bottom Sheet */
+    }
+
+    .preview-area {
+        flex: 1 !important;
+        width: 100vw !important;
+        height: calc(100vh - 118px) !important;
+        padding: 0.75rem 0.5rem 75px !important;
+        background: #020617 !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .preview-wrapper {
+        width: 100% !important;
+        max-width: 92vw !important;
+        margin: 0 auto !important;
+        position: relative !important;
+    }
+
+    .pdf-page-preview, .pdf-cover-preview {
+        box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+    }
+
+    .pdf-page-nav-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        margin-bottom: 10px !important;
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 20px !important;
+        padding: 4px 12px !important;
+        color: white !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
+
+    .pdf-page-nav-bar button {
+        background: transparent !important;
+        border: none !important;
+        color: #7c5cff !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        padding: 2px 8px !important;
+        cursor: pointer !important;
     }
 
     .control-panel.mobile-hidden {

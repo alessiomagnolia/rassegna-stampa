@@ -278,17 +278,24 @@
         <div id="pagesList"><!-- injected --></div>
     </aside>
 
-    <!-- CENTER: Preview -->
+    <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
-        <div class="preview-wrapper" id="previewWrapper">
-            <button class="preview-edit-btn" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
+        <!-- Mobile Live Page Switcher Bar -->
+        <div class="pdf-page-nav-bar show-mobile-flex">
+            <button type="button" onclick="navigatePdfPage(-1)">◀ Prev</button>
+            <span id="mobilePdfPageIndicator">Pagina 1</span>
+            <button type="button" onclick="navigatePdfPage(1)">Next ▶</button>
+        </div>
+
+        <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-edit');">
+            <button class="preview-edit-btn hide-mobile" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
     </div>
 
 </div>
 
-<!-- RIGHT: Edit Panel -->
+<!-- RIGHT: Edit Panel (Desktop Side Panel) -->
 <div class="edit-panel" id="editPanel">
     <div class="edit-panel-header">
         <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
@@ -379,6 +386,89 @@
     </div>
 </div>
 
+<!-- CANVA MOBILE BOTTOM NAVIGATION DOCK FOR PDF EDITOR -->
+<nav class="canva-bottom-dock show-mobile-flex">
+    <button type="button" class="canva-dock-btn active" onclick="openPdfSheet('pdf-sheet-articles', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Articoli</span>
+    </button>
+    <button type="button" class="canva-dock-btn" onclick="openPdfSheet('pdf-sheet-edit', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Modifica</span>
+    </button>
+    <button type="button" class="canva-dock-btn" onclick="openPdfSheet('pdf-sheet-template', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>Template</span>
+    </button>
+    <button type="button" class="canva-dock-btn" onclick="openPdfSheet('pdf-sheet-options', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Opzioni</span>
+    </button>
+</nav>
+
+<!-- OVERLAY & BOTTOM SHEETS -->
+<div id="pdfSheetOverlay" class="canva-sheet-overlay" onclick="closePdfSheets()"></div>
+
+<!-- SHEET 1: ARTICOLI (List & Reorder) -->
+<div id="pdf-sheet-articles" class="canva-bottom-sheet">
+    <div class="canva-sheet-handle"></div>
+    <div class="canva-sheet-header">
+        <span class="canva-sheet-title">Pagine & Articoli</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+    </div>
+    <div id="mobilePagesList" style="display:flex; flex-direction:column; gap:6px;"></div>
+</div>
+
+<!-- SHEET 2: MODIFICA ARTICOLO CORRENTE -->
+<div id="pdf-sheet-edit" class="canva-bottom-sheet">
+    <div class="canva-sheet-handle"></div>
+    <div class="canva-sheet-header">
+        <span class="canva-sheet-title">Modifica Articolo Pagina</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+    </div>
+    <div id="mobileEditContainer">
+        <!-- Content mirrored -->
+    </div>
+</div>
+
+<!-- SHEET 3: TEMPLATE PDF -->
+<div id="pdf-sheet-template" class="canva-bottom-sheet">
+    <div class="canva-sheet-handle"></div>
+    <div class="canva-sheet-header">
+        <span class="canva-sheet-title">Template Grafico PDF</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+        <button type="button" class="btn btn-outline" onclick="selectMobilePdfTemplate('classic'); closePdfSheets();" style="padding:12px; border-radius:10px; color:white; text-align:left;">
+            🏛️ <strong>Template Classico</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">Intestazione elegante con bordo gradiente</span>
+        </button>
+        <button type="button" class="btn btn-outline" onclick="selectMobilePdfTemplate('modern'); closePdfSheets();" style="padding:12px; border-radius:10px; color:white; text-align:left;">
+            ⚡ <strong>Modern Executive</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">Layout ad alto impatto per agenzie</span>
+        </button>
+        <button type="button" class="btn btn-outline" onclick="selectMobilePdfTemplate('minimal'); closePdfSheets();" style="padding:12px; border-radius:10px; color:white; text-align:left;">
+            📰 <strong>Minimal Editorial</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">Stile minimale con tipografia nitida</span>
+        </button>
+    </div>
+</div>
+
+<!-- SHEET 4: OPZIONI RASSEGNA -->
+<div id="pdf-sheet-options" class="canva-bottom-sheet">
+    <div class="canva-sheet-handle"></div>
+    <div class="canva-sheet-header">
+        <span class="canva-sheet-title">Impostazioni Rassegna</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+    </div>
+    <div class="field-group" style="margin-bottom:0.85rem;">
+        <label style="color:white; font-size:0.8rem; font-weight:600;">Titolo Rassegna Stampa</label>
+        <input type="text" id="mobileOptionsTitle" placeholder="Es. Rassegna Stampa UGL" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+    </div>
+    <div class="field-group" style="margin-bottom:0.85rem;">
+        <label style="color:white; font-size:0.8rem; font-weight:600;">Nome Cliente / Sottotitolo</label>
+        <input type="text" id="mobileOptionsClient" placeholder="Es. Paolo Capone" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+    </div>
+    <button type="button" class="btn btn-primary" onclick="saveMobilePdfOptions(); closePdfSheets();" style="width:100%; height:44px; font-weight:700;">Salva Impostazioni</button>
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
@@ -430,11 +520,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-// RENDER LEFT PANEL
+// RENDER LEFT PANEL & MOBILE PAGES LIST
 // ============================================================
 function renderPagesList() {
     const container = document.getElementById('pagesList');
-    container.innerHTML = '';
+    const mobContainer = document.getElementById('mobilePagesList');
+    if (container) container.innerHTML = '';
+    if (mobContainer) mobContainer.innerHTML = '';
 
     // Cover page thumb (if title set)
     if (hasCover) {
@@ -446,8 +538,11 @@ function renderPagesList() {
                 <div class="page-thumb-num">COPERTINA</div>
                 <div class="page-thumb-title">${escHtml(options.title)}</div>
             </div>`;
+        const mEl = el.cloneNode(true);
         el.addEventListener('click', () => selectPage(-1));
-        container.appendChild(el);
+        mEl.addEventListener('click', () => { selectPage(-1); closePdfSheets(); });
+        if (container) container.appendChild(el);
+        if (mobContainer) mobContainer.appendChild(mEl);
     }
 
     // Article page thumbs
@@ -462,8 +557,13 @@ function renderPagesList() {
                 <div class="page-thumb-title">${escHtml(art.title)}</div>
                 <div class="page-thumb-source">${escHtml(art.source_name || '')}</div>
             </div>`;
+        
+        const mEl = el.cloneNode(true);
         el.addEventListener('click', () => selectPage(idx));
-        container.appendChild(el);
+        mEl.addEventListener('click', () => { selectPage(idx); closePdfSheets(); });
+
+        if (container) container.appendChild(el);
+        if (mobContainer) mobContainer.appendChild(mEl);
     });
 }
 
@@ -476,25 +576,36 @@ function selectPage(idx) {
     // Update active thumb
     document.querySelectorAll('.page-thumb').forEach(el => el.classList.remove('active'));
     if (idx === -1) {
-        document.querySelector('[data-cover-page]')?.classList.add('active');
+        document.querySelectorAll('[data-cover-page]').forEach(el => el.classList.add('active'));
     } else {
-        document.querySelector(`[data-idx="${idx}"]`)?.classList.add('active');
+        document.querySelectorAll(`[data-idx="${idx}"]`).forEach(el => el.classList.add('active'));
     }
 
     // Render preview
     const previewEl = document.getElementById('pagePreviewContent');
     const editBtn = document.getElementById('btnEditPage');
     
+    const total = articles.length;
+    const pageNum = idx === -1 ? 1 : (hasCover ? idx + 2 : idx + 1);
+    const totalPages = hasCover ? total + 1 : total;
+
+    const mobIndicator = document.getElementById('mobilePdfPageIndicator');
+    if (mobIndicator) {
+        mobIndicator.textContent = idx === -1 ? `Copertina (${pageNum} di ${totalPages})` : `Pagina ${pageNum} di ${totalPages}`;
+    }
+
     if (idx === -1) {
         // Cover
         previewEl.innerHTML = renderCoverPreview();
         editBtn.style.display = 'none';
     } else {
-        const total = articles.length;
-        const pageNum = hasCover ? idx + 2 : idx + 1;
-        const totalPages = hasCover ? total + 1 : total;
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
         editBtn.style.display = 'block';
+    }
+
+    // Populate mobile edit container if open
+    if (idx >= 0 && window.innerWidth <= 900) {
+        populateMobileEditForm(idx);
     }
 }
 
@@ -859,7 +970,163 @@ function showToast(message, type = 'info') {
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof feather !== 'undefined') feather.replace();
+        initPdfSheetSwipeToDismiss();
     });
+
+// ============================================================
+// MOBILE CANVA PDF EDITOR HELPERS
+// ============================================================
+function openPdfSheet(sheetId, btn) {
+    closePdfSheets();
+    const overlay = document.getElementById('pdfSheetOverlay');
+    const sheet = document.getElementById(sheetId);
+    if (overlay && sheet) {
+        overlay.classList.add('active');
+        sheet.classList.add('open');
+    }
+    if (btn) {
+        document.querySelectorAll('.canva-bottom-dock .canva-dock-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    if (sheetId === 'sheet-pdf-edit' && selectedIdx >= 0) {
+        populateMobileEditForm(selectedIdx);
+    }
+    if (sheetId === 'sheet-pdf-options') {
+        const tInput = document.getElementById('mobileOptionsTitle');
+        const cInput = document.getElementById('mobileOptionsClient');
+        if (tInput) tInput.value = options.title || '';
+        if (cInput) cInput.value = options.clientName || '';
+    }
+}
+
+function closePdfSheets() {
+    const overlay = document.getElementById('pdfSheetOverlay');
+    if (overlay) overlay.classList.remove('active');
+    document.querySelectorAll('.canva-bottom-sheet').forEach(s => s.classList.remove('open'));
+}
+
+function navigatePdfPage(direction) {
+    const total = articles.length;
+    const maxIdx = total - 1;
+    const minIdx = hasCover ? -1 : 0;
+
+    let newIdx = selectedIdx + direction;
+    if (newIdx > maxIdx) newIdx = minIdx;
+    if (newIdx < minIdx) newIdx = maxIdx;
+
+    selectPage(newIdx);
+}
+
+function selectMobilePdfTemplate(tplId) {
+    options.templateId = tplId;
+    const templateSelect = document.getElementById('editorTemplateSelect');
+    if (templateSelect) templateSelect.value = tplId;
+    selectPage(selectedIdx);
+    showToast(`Template impostato: ${tplId}`, 'success');
+}
+
+function saveMobilePdfOptions() {
+    const titleVal = document.getElementById('mobileOptionsTitle')?.value;
+    const clientVal = document.getElementById('mobileOptionsClient')?.value;
+    if (titleVal !== undefined) options.title = titleVal;
+    if (clientVal !== undefined) options.clientName = clientVal;
+    hasCover = !!(options.title && options.title.trim());
+    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title;
+    renderPagesList();
+    selectPage(selectedIdx);
+    showToast('Impostazioni aggiornate!', 'success');
+}
+
+function populateMobileEditForm(idx) {
+    const mobEditCont = document.getElementById('mobileEditContainer');
+    const art = articles[idx];
+    if (!mobEditCont || !art) return;
+
+    mobEditCont.innerHTML = `
+        <div class="field-group" style="margin-bottom:0.85rem;">
+            <label style="color:white; font-size:0.8rem; font-weight:600;">Titolo Articolo *</label>
+            <input type="text" id="mEditTitle" value="${escHtml(art.title)}" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+        </div>
+        <div class="field-group" style="margin-bottom:0.85rem;">
+            <label style="color:white; font-size:0.8rem; font-weight:600;">Testo / Estratto *</label>
+            <textarea id="mEditExcerpt" rows="4" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">${escHtml(art.excerpt)}</textarea>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:0.85rem;">
+            <div style="flex:1;">
+                <label style="color:white; font-size:0.8rem; font-weight:600;">Fonte</label>
+                <input type="text" id="mEditSourceName" value="${escHtml(art.source_name || '')}" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+            </div>
+            <div style="flex:1;">
+                <label style="color:white; font-size:0.8rem; font-weight:600;">Data</label>
+                <input type="text" id="mEditDate" value="${escHtml(art.published_date || '')}" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+            </div>
+        </div>
+        <div class="field-group" style="margin-bottom:1rem;">
+            <label style="color:white; font-size:0.8rem; font-weight:600;">Link Articolo</label>
+            <input type="url" id="mEditUrl" value="${escHtml(art.url || '')}" style="width:100%; padding:8px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.85rem;">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="saveMobileArticleEdit(${idx}); closePdfSheets();" style="width:100%; height:44px; font-weight:700;">Salva Modifiche Articolo</button>
+    `;
+}
+
+function saveMobileArticleEdit(idx) {
+    const art = articles[idx];
+    if (!art) return;
+
+    const t = document.getElementById('mEditTitle')?.value;
+    const e = document.getElementById('mEditExcerpt')?.value;
+    const s = document.getElementById('mEditSourceName')?.value;
+    const d = document.getElementById('mEditDate')?.value;
+    const u = document.getElementById('mEditUrl')?.value;
+
+    if (t !== undefined) art.title = t;
+    if (e !== undefined) art.excerpt = e;
+    if (s !== undefined) art.source_name = s;
+    if (d !== undefined) art.published_date = d;
+    if (u !== undefined) art.url = u;
+
+    renderPagesList();
+    selectPage(idx);
+    showToast('Articolo aggiornato!', 'success');
+}
+
+function initPdfSheetSwipeToDismiss() {
+    document.querySelectorAll('.canva-bottom-sheet').forEach(sheet => {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        const handle = sheet.querySelector('.canva-sheet-handle') || sheet.querySelector('.canva-sheet-header');
+        if (!handle) return;
+
+        handle.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            sheet.style.transition = 'none';
+        }, { passive: true });
+
+        handle.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+            if (deltaY > 0) {
+                sheet.style.transform = `translateY(${deltaY}px)`;
+            }
+        }, { passive: true });
+
+        handle.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            const deltaY = currentY - startY;
+            if (deltaY > 60) {
+                closePdfSheets();
+            } else {
+                sheet.style.transform = 'translateY(0)';
+            }
+        });
+    });
+}
 </script>
 </body>
 </html>
