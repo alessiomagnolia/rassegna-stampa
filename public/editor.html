@@ -297,13 +297,6 @@
 
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
-        <!-- Mobile Live Page Switcher Bar -->
-        <div class="pdf-page-nav-bar show-mobile-flex">
-            <button type="button" onclick="navigatePdfPage(-1)">◀ Prev</button>
-            <span id="mobilePdfPageIndicator">Pagina 1</span>
-            <button type="button" onclick="navigatePdfPage(1)">Next ▶</button>
-        </div>
-
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-edit');">
             <button class="preview-edit-btn hide-mobile" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
             <div id="pagePreviewContent"><!-- injected --></div>
@@ -599,9 +592,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    hasCover = !!(options.title && options.title.trim());
-    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title || '';
-    if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title || '';
+    options.title = options.title || 'Rassegna Stampa';
+    hasCover = true;
+    if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title;
+    if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title;
     if (document.getElementById('editorArticleCount')) document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
     
     // Set active template
@@ -615,9 +609,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderPagesList();
-    selectPage(0);
+    selectPage(-1); // Default to Cover Page (Copertina)
     initSortable();
     initEvents();
+    initPdfPreviewSwipe();
     pushUndoState();
 });
 
@@ -1163,6 +1158,48 @@ function navigatePdfPage(direction) {
     if (newIdx < minIdx) newIdx = maxIdx;
 
     selectPage(newIdx);
+
+    if (window.innerWidth <= 900) {
+        const pageLabel = newIdx === -1 ? 'Copertina' : `Pagina ${hasCover ? newIdx + 2 : newIdx + 1} di ${hasCover ? total + 1 : total}`;
+        showToast(`📄 ${pageLabel}`, 'info');
+    }
+}
+
+// ============================================================
+// TOUCH SWIPE GESTURES FOR PAGE NAVIGATION
+// ============================================================
+function initPdfPreviewSwipe() {
+    const container = document.getElementById('previewArea');
+    if (!container) return;
+
+    let startX = 0;
+    let startY = 0;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    container.addEventListener('touchend', (e) => {
+        if (!e.changedTouches || !e.changedTouches.length) return;
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+
+        // Horizontal swipe threshold: deltaX > 40px and more horizontal than vertical
+        if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+            if (deltaX < 0) {
+                // Swiped Left -> Next page
+                navigatePdfPage(1);
+            } else {
+                // Swiped Right -> Previous page
+                navigatePdfPage(-1);
+            }
+        }
+    }, { passive: true });
 }
 
 function selectMobilePdfTemplate(tplId) {
