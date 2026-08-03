@@ -673,12 +673,12 @@ function renderPagesList() {
             </div>`;
         
         const mEl = el.cloneNode(true);
-        el.addEventListener('click', (e) => {
-            if (e.target.closest('.page-thumb-drag')) return;
-            selectPage(idx);
-        });
-        mEl.addEventListener('click', (e) => {
-            if (e.target.closest('.page-thumb-drag')) return;
+        let isTouchMoved = false;
+        el.addEventListener('click', () => selectPage(idx));
+        mEl.addEventListener('touchstart', () => { isTouchMoved = false; }, { passive: true });
+        mEl.addEventListener('touchmove', () => { isTouchMoved = true; }, { passive: true });
+        mEl.addEventListener('click', () => {
+            if (isTouchMoved) return;
             selectPage(idx);
             closePdfSheets();
         });
@@ -852,11 +852,13 @@ function initSortable() {
 
     if (mobList) {
         Sortable.create(mobList, {
-            handle: '.page-thumb-drag',
             animation: 200,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             filter: '[data-cover-page]',
+            delay: 150, // Press & hold 150ms anywhere on card selects it & enables drag!
+            delayOnTouchOnly: true,
+            touchStartThreshold: 3,
             onEnd: handleSortEnd
         });
     }
