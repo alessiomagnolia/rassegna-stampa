@@ -2121,14 +2121,7 @@ input::placeholder, textarea::placeholder {
     /* Source Logo Ratio & Scaling Fix */
     .pdf-source-logo {
         max-height: 38px !important;
-        max-width: 160px !important;
-        width: auto !important;
-        height: auto !important;
-        object-fit: contain !important;
-        display: block !important;
-    }
-
-    /* Article Main Image Fit in Live Preview */
+    /* Article Main Image Fit in Mobile Live Preview */
     .pdf-visual-zone {
         width: 100% !important;
         max-height: 240px !important;
@@ -2151,7 +2144,7 @@ input::placeholder, textarea::placeholder {
         border-radius: 6px !important;
     }
 
-    /* Article Title Balanced Size (Reduced for perfect fit) */
+    /* Article Title Balanced Size (Mobile Only) */
     .pdf-article-title {
         font-size: 0.88rem !important;
         font-weight: 700 !important;
@@ -2191,7 +2184,7 @@ input::placeholder, textarea::placeholder {
     }
 
     .pages-panel {
-        display: none !important; /* Managed via Articoli Bottom Sheet */
+        display: none !important; /* Managed via Articoli Bottom Sheet on Mobile */
     }
 
     .preview-area {
@@ -2396,78 +2389,77 @@ input::placeholder, textarea::placeholder {
         font-weight: 700;
         color: white;
     }
-}
 
-/* Interactive Touch Element Resize Overlay */
-.card-element-selectable {
-    cursor: pointer;
-    position: relative;
-    transition: outline 0.15s ease, box-shadow 0.15s ease;
-}
+    /* Interactive Touch Element Resize Overlay (Mobile Only) */
+    .card-element-selectable {
+        cursor: pointer;
+        position: relative;
+        transition: outline 0.15s ease, box-shadow 0.15s ease;
+    }
 
-.card-element-selectable:hover {
-    outline: 1.5px dashed rgba(124, 92, 255, 0.5) !important;
-    outline-offset: 2px;
-}
+    .card-element-selectable:hover {
+        outline: 1.5px dashed rgba(124, 92, 255, 0.5) !important;
+        outline-offset: 2px;
+    }
 
-.card-element-selected {
-    outline: 2px dashed #7c5cff !important;
-    outline-offset: 3px;
-    box-shadow: 0 0 14px rgba(124, 92, 255, 0.4) !important;
-}
+    .card-element-selected {
+        outline: 2px dashed #7c5cff !important;
+        outline-offset: 3px;
+        box-shadow: 0 0 14px rgba(124, 92, 255, 0.4) !important;
+    }
 
-.card-resize-handle {
-    position: absolute;
-    bottom: -8px;
-    right: -8px;
-    width: 18px;
-    height: 18px;
-    background: #7c5cff;
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    cursor: se-resize;
-    z-index: 100;
-    touch-action: none;
-}
+    .card-resize-handle {
+        position: absolute;
+        bottom: -8px;
+        right: -8px;
+        width: 18px;
+        height: 18px;
+        background: #7c5cff;
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        cursor: se-resize;
+        z-index: 100;
+        touch-action: none;
+    }
 
-/* Floating Quick Size Controller Bar (Anchored above Canva Mobile Dock) */
-.card-element-size-bar {
-    position: fixed !important;
-    bottom: 74px !important; /* Floats right above the 64px bottom dock! */
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: #0b1120 !important;
-    border: 1px solid rgba(124, 92, 255, 0.6) !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(124,92,255,0.4) !important;
-    border-radius: 30px !important;
-    padding: 6px 14px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    z-index: 99998 !important; /* Right above bottom dock */
-    color: white !important;
-    font-size: 0.8rem !important;
-    font-weight: 700 !important;
-    white-space: nowrap !important;
-}
+    /* Floating Quick Size Controller Bar (Anchored above Canva Mobile Dock) */
+    .card-element-size-bar {
+        position: fixed !important;
+        bottom: 74px !important; /* Floats right above the 64px bottom dock! */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        background: #0b1120 !important;
+        border: 1px solid rgba(124, 92, 255, 0.6) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(124,92,255,0.4) !important;
+        border-radius: 30px !important;
+        padding: 6px 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        z-index: 99998 !important; /* Right above bottom dock */
+        color: white !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+    }
 
-.card-element-size-bar button {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 50% !important;
-    background: rgba(255,255,255,0.15) !important;
-    border: none !important;
-    color: white !important;
-    font-size: 1.1rem !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    line-height: 1 !important;
-}
+    .card-element-size-bar button {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50% !important;
+        background: rgba(255,255,255,0.15) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 1.1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        line-height: 1 !important;
+    }
 
-.card-element-size-bar button:active {
-    background: #7c5cff !important;
-}
-
+    .card-element-size-bar button:active {
+        background: #7c5cff !important;
+    }
+} /* END @media (max-width: 900px) */

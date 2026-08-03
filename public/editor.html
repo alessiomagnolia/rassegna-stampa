@@ -611,10 +611,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updatePageCounters();
     renderPagesList();
-    selectPage(-1); // Default to Cover Page (Copertina)
+    if (window.innerWidth > 900 && articles.length > 0) {
+        selectPage(0);
+    } else {
+        selectPage(-1);
+    }
     initSortable();
     initEvents();
-    initPdfPreviewSwipe();
+    if (window.innerWidth <= 900) {
+        initPdfPreviewSwipe();
+    }
     pushUndoState();
 });
 
@@ -724,11 +730,19 @@ function selectPage(idx) {
         editBtn.style.display = 'block';
     }
 
-    attachPdfTouchResizing();
+    // Desktop: Populate Desktop Right Panel when an article is selected!
+    if (idx >= 0 && typeof populateEditForm === 'function') {
+        populateEditForm(idx);
+    } else if (idx < 0 && typeof closeEditPanel === 'function') {
+        closeEditPanel();
+    }
 
-    // Populate mobile edit container if open
-    if (idx >= 0 && window.innerWidth <= 900) {
-        populateMobileEditForm(idx);
+    // Mobile Only: Touch Resizing & Mobile Form
+    if (window.innerWidth <= 900) {
+        attachPdfTouchResizing();
+        if (idx >= 0) {
+            populateMobileEditForm(idx);
+        }
     }
 }
 

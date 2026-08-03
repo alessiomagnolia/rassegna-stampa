@@ -1158,21 +1158,22 @@
         // ============================================================
         let selectedCardElement = null;
 
-        window.initCardElementResizing = function() {
-            const selectableItems = [
-                { id: 'cardMainQuote', type: 'font', min: 0.7, max: 3.2, step: 0.1, unit: 'rem' },
-                { id: 'cardSubtitle', type: 'font', min: 0.6, max: 2.0, step: 0.05, unit: 'rem' },
-                { id: 'cardPhotoContainer', type: 'height', min: 15, max: 75, step: 2, unit: '%' },
-                { id: 'cardSourceLogo', type: 'height', min: 12, max: 70, step: 2, unit: 'px' },
-                { id: 'cardAuthor', type: 'font', min: 0.7, max: 2.5, step: 0.1, unit: 'rem' },
-                { id: 'cardClientLogo', type: 'height', min: 12, max: 60, step: 2, unit: 'px' }
+        window.attachTouchResizing = function() {
+            if (window.innerWidth > 900) return; // STRICTLY MOBILE ONLY!
+            const targets = [
+                { id: 'cardMainQuote', type: 'font', unit: 'rem', min: 0.75, max: 3.5, step: 0.05 },
+                { id: 'cardAuthorName', type: 'font', unit: 'rem', min: 0.7, max: 2.2, step: 0.05 },
+                { id: 'cardAuthorRole', type: 'font', unit: 'rem', min: 0.6, max: 1.8, step: 0.05 },
+                { id: 'cardPublishDate', type: 'font', unit: 'rem', min: 0.6, max: 1.6, step: 0.05 },
+                { id: 'cardImageContainer', type: 'height', unit: '%', min: 15, max: 80, step: 2 },
+                { id: 'cardSourceLogo', type: 'height', unit: 'px', min: 16, max: 120, step: 4 },
+                { id: 'cardClientLogo', type: 'height', unit: 'px', min: 16, max: 120, step: 4 }
             ];
 
-            selectableItems.forEach(item => {
+            targets.forEach(item => {
                 const el = document.getElementById(item.id);
                 if (!el) return;
 
-                el.style.pointerEvents = 'auto';
                 el.classList.add('card-element-selectable');
 
                 const selectHandler = (e) => {
@@ -1338,11 +1339,13 @@
         window.closeCanvaSheets = function() {
             document.querySelectorAll('.canva-bottom-sheet').forEach(s => s.classList.remove('open'));
             document.getElementById('canvaSheetOverlay')?.classList.remove('active');
-            document.querySelectorAll('.canva-dock-btn').forEach(b => b.classList.remove('active'));
         };
 
         // Sync Mobile Inputs with Desktop Inputs
         document.addEventListener('DOMContentLoaded', () => {
+            initBottomSheetSwipeToDismiss();
+            autoFitCardText();
+
             const mQuote = document.getElementById('mobileInputQuote');
             const dQuote = document.getElementById('inputQuote');
             if (mQuote && dQuote) {
