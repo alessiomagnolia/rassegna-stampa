@@ -2122,6 +2122,16 @@ input::placeholder, textarea::placeholder {
         display: block !important;
     }
 
+    /* Article Title Larger by Default */
+    .pdf-article-title {
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        line-height: 1.25 !important;
+        color: #1a1a2e !important;
+        margin-top: 4px !important;
+        margin-bottom: 8px !important;
+    }
+
     .pages-panel {
         display: none !important; /* Managed via Articoli Bottom Sheet */
     }
