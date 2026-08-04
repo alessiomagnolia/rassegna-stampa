@@ -1509,8 +1509,22 @@ input::placeholder, textarea::placeholder {
     .news-import-bar {
         display: flex !important;
     }
+
+    /* ---- PDF EDITOR MOBILE: re-enable Canva dock & sheets ---- */
+    .canva-bottom-dock {
+        display: flex !important;
+    }
     .canva-bottom-sheet {
         display: block !important;
+    }
+    .canva-sheet-overlay {
+        display: block !important;
+    }
+    .editor-sub-header {
+        display: flex !important;
+    }
+    .btn-undo-floating {
+        display: flex !important;
     }
 
     /* Prevent iOS & Mobile Horizontal Scroll */
@@ -2062,6 +2076,10 @@ input::placeholder, textarea::placeholder {
     }
 
     /* PDF Press Review Mobile Canva Editor */
+    .edit-panel {
+        display: none !important; /* Desktop right panel - hidden on mobile, handled by bottom sheets */
+    }
+
     .editor-body {
         padding-top: 96px !important; /* 54px navbar + 42px sub-header */
         height: calc(100vh - 96px) !important;

@@ -277,10 +277,12 @@
 </nav>
 
 <!-- SUB-HEADER TITLE BAR (Mobile Only, Centered at Top Under Navbar) -->
-<div class="editor-sub-header show-mobile-flex" style="gap:8px;">
-    <input type="text" id="editorTitleMobile" class="editor-title-input-mobile" placeholder="Titolo della Rassegna..." oninput="syncMobileTitle(this.value)">
+<div class="editor-sub-header show-mobile-flex" style="gap:8px; justify-content:space-between;">
+    <input type="text" id="editorTitleMobile" class="editor-title-input-mobile" placeholder="Titolo della Rassegna..." oninput="syncMobileTitle(this.value)" style="flex:1; min-width:0;">
     <span id="editorArticleCountMobile" style="font-size:0.75rem; color:rgba(255,255,255,0.7); font-weight:600; white-space:nowrap; padding: 4px 8px; background: rgba(255,255,255,0.08); border-radius: 12px;">0 pag.</span>
 </div>
+<!-- MOBILE PAGE INDICATOR (shown above the preview) -->
+<div id="mobilePdfPageIndicator" style="display:none; position:fixed; top:96px; left:50%; transform:translateX(-50%); z-index:195; background:rgba(11,17,32,0.92); color:white; font-size:0.72rem; font-weight:700; padding:3px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); pointer-events:none;"></div>
 
 <!-- FLOATING UNDO (CTRL+Z) BUTTON FOR MOBILE -->
 <button type="button" id="btnUndoState" class="btn-undo-floating show-mobile-flex" onclick="undoLastEdit()" title="Annulla Modifica (Ctrl+Z)">
@@ -743,7 +745,29 @@ function selectPage(idx) {
         if (idx >= 0) {
             populateMobileEditForm(idx);
         }
+        // Show page indicator
+        const mobInd = document.getElementById('mobilePdfPageIndicator');
+        if (mobInd) mobInd.style.display = 'block';
     }
+}
+
+// Desktop alias: populate right-side edit panel
+function populateEditForm(idx) {
+    if (window.innerWidth > 900) openEditPanel(idx);
+}
+
+// Mobile: pre-fill all bottom sheet fields for the selected article
+function populateMobileEditForm(idx) {
+    if (idx < 0 || !articles[idx]) return;
+    const art = articles[idx];
+    const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    v('mTextTitle', art.title);
+    v('mTextExcerpt', art.excerpt);
+    v('mTextDate', art.published_date);
+    v('mSourceName', art.source_name);
+    if (document.getElementById('mSourceType')) document.getElementById('mSourceType').value = art.source_type || 'Web';
+    v('mobileOptionsUrl', art.url);
+    if (document.getElementById('mobileOptionsDarkHeader')) document.getElementById('mobileOptionsDarkHeader').checked = !!art.darkHeader;
 }
 
 // ============================================================
