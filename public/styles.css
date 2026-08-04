@@ -1457,7 +1457,11 @@ input::placeholder, textarea::placeholder {
     opacity: 0.85;
 }
 
-/* Desktop default utility classes & Mobile UI hiding */
+/* ==========================================================================
+   GLOBAL ELEMENT VISIBILITY CONTROL
+   Elements listed here are HIDDEN by default (mobile-first).
+   They are re-enabled in @media (min-width: 901px) below for Desktop.
+   ========================================================================== */
 .show-mobile-inline,
 .show-mobile-block,
 .show-mobile-flex,
@@ -1470,11 +1474,20 @@ input::placeholder, textarea::placeholder {
 .canva-sheet-overlay,
 .canva-sheet-handle,
 .canva-sheet-header,
-.card-element-size-bar {
+.card-element-size-bar,
+.pages-panel,
+.edit-panel {
     display: none !important;
 }
 
 @media (min-width: 901px) {
+    /* ---- RE-ENABLE DESKTOP-ONLY ELEMENTS ---- */
+    .pages-panel {
+        display: flex !important;
+    }
+    .edit-panel {
+        display: block !important;
+    }
     .news-search-form-layout {
         display: grid !important;
         grid-template-columns: 1fr 160px 160px 160px !important;
