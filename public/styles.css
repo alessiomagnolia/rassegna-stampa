@@ -1457,8 +1457,18 @@ input::placeholder, textarea::placeholder {
     opacity: 0.85;
 }
 
-/* Desktop default utility classes & Ricerca Notizie grid */
-.show-mobile-inline, .show-mobile-block, .show-mobile-flex, .editor-sub-header, .btn-undo-floating {
+/* Desktop default utility classes & Mobile UI hiding */
+.show-mobile-inline,
+.show-mobile-block,
+.show-mobile-flex,
+.editor-sub-header,
+.btn-undo-floating,
+.canva-bottom-dock,
+.canva-bottom-sheet,
+.canva-sheet-overlay,
+.canva-sheet-handle,
+.canva-sheet-header,
+.card-element-size-bar {
     display: none !important;
 }
 
@@ -1492,6 +1502,9 @@ input::placeholder, textarea::placeholder {
     }
     .show-mobile-flex {
         display: flex !important;
+    }
+    .canva-bottom-sheet {
+        display: block !important;
     }
 
     /* Prevent iOS & Mobile Horizontal Scroll */
