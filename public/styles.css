@@ -1458,7 +1458,7 @@ input::placeholder, textarea::placeholder {
 }
 
 /* Desktop default utility classes & Ricerca Notizie grid */
-.show-mobile-inline, .show-mobile-block {
+.show-mobile-inline, .show-mobile-block, .show-mobile-flex, .editor-sub-header, .btn-undo-floating {
     display: none !important;
 }
 
@@ -1489,6 +1489,9 @@ input::placeholder, textarea::placeholder {
     }
     .show-mobile-block {
         display: block !important;
+    }
+    .show-mobile-flex {
+        display: flex !important;
     }
 
     /* Prevent iOS & Mobile Horizontal Scroll */
