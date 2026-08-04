@@ -1960,11 +1960,7 @@ input::placeholder, textarea::placeholder {
         width: 100% !important;
     }
 
-    .edit-panel {
-        width: 100% !important;
-        border-left: none !important;
-        border-top: 1px solid var(--border-color) !important;
-    }
+    /* .edit-panel intentionally NOT re-enabled on mobile — handled by bottom sheets */
 
     /* 11. Universal Table, Grid & Typography Consistency on Mobile */
     .plans-grid, .pricing-grid, .saved-reviews-grid, .admin-grid, .stats-grid, .sources-grid {
@@ -2244,7 +2240,7 @@ input::placeholder, textarea::placeholder {
         flex: 1 !important;
         width: 100vw !important;
         height: calc(100vh - 118px) !important;
-        padding: 0.75rem 0.5rem 75px !important;
+        padding: 0.75rem 0.5rem 80px !important;
         background: #020617 !important;
         box-sizing: border-box !important;
         display: flex !important;
@@ -2313,24 +2309,27 @@ input::placeholder, textarea::placeholder {
         box-shadow: 0 20px 50px rgba(0,0,0,0.8) !important;
     }
 
-    /* Canva Mobile Bottom Navigation Dock (Horizontally Scrollable - Always Top Layer) */
+    /* ================================================================
+       CANVA-STYLE MOBILE BOTTOM DOCK — always visible, always on top
+       ================================================================ */
     .canva-bottom-dock {
         position: fixed !important;
         bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
         width: 100vw !important;
-        height: 64px !important;
-        background: #0b1120 !important;
-        border-top: 1px solid rgba(255,255,255,0.15) !important;
-        z-index: 100005 !important; /* ALWAYS HIGHER THAN SHEETS (100000) SO SCROLL IS NEVER BLOCKED! */
+        height: 68px !important;
+        background: linear-gradient(180deg, #0d1627 0%, #0a1020 100%) !important;
+        border-top: 1px solid rgba(124,92,255,0.25) !important;
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.6) !important;
+        z-index: 100005 !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
         align-items: center !important;
-        padding: 0 0.5rem !important;
-        gap: 6px !important;
+        justify-content: flex-start !important;
+        padding: 0 6px !important;
+        gap: 2px !important;
         box-sizing: border-box !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
@@ -2341,51 +2340,61 @@ input::placeholder, textarea::placeholder {
     .canva-bottom-dock::-webkit-scrollbar {
         display: none !important;
     }
-    .canva-bottom-dock * {
-        touch-action: pan-x !important;
-    }
 
+    /* Dock Buttons */
     .canva-dock-btn {
         flex: 0 0 auto !important;
-        min-width: 72px !important;
-        height: 52px !important;
+        min-width: 68px !important;
+        height: 58px !important;
         background: transparent !important;
         border: none !important;
-        color: rgba(255,255,255,0.7) !important;
+        border-radius: 12px !important;
+        color: rgba(255,255,255,0.55) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 3px !important;
-        font-size: 0.68rem !important;
-        font-weight: 600 !important;
-        padding: 4px 6px !important;
+        gap: 4px !important;
+        font-size: 0.62rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        padding: 6px 4px !important;
         cursor: pointer !important;
-        transition: color 0.2s ease, transform 0.15s ease !important;
+        transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease !important;
         white-space: nowrap !important;
         touch-action: pan-x !important;
         user-select: none !important;
         -webkit-user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        text-transform: uppercase !important;
     }
-    .canva-dock-btn i, .canva-dock-btn svg {
-        width: 20px !important;
-        height: 20px !important;
+    .canva-dock-btn svg {
+        width: 22px !important;
+        height: 22px !important;
         flex-shrink: 0 !important;
+        transition: stroke 0.15s ease !important;
     }
-    .canva-dock-btn.active, .canva-dock-btn:active {
-        color: #7c5cff !important;
-        transform: scale(1.05) !important;
+    .canva-dock-btn:active {
+        transform: scale(0.92) !important;
+    }
+    .canva-dock-btn.active {
+        color: #a78bfa !important;
+        background: rgba(124,92,255,0.18) !important;
+    }
+    .canva-dock-btn.active svg {
+        stroke: #a78bfa !important;
+        filter: drop-shadow(0 0 6px rgba(124,92,255,0.6)) !important;
     }
 
-    /* Canva Bottom Sheet Drawer Overlay & Sheet Above Dock */
+    /* ================================================================
+       SHEET OVERLAY (dark blur background)
+       ================================================================ */
     .canva-sheet-overlay {
         position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(0,0,0,0.5) !important;
-        backdrop-filter: blur(4px) !important;
+        inset: 0 !important;
+        background: rgba(0,0,0,0.6) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
         z-index: 99990 !important;
         opacity: 0 !important;
         pointer-events: none !important;
@@ -2396,23 +2405,26 @@ input::placeholder, textarea::placeholder {
         pointer-events: auto !important;
     }
 
+    /* ================================================================
+       CANVA BOTTOM SHEETS — slide up from dock
+       ================================================================ */
     .canva-bottom-sheet {
         position: fixed !important;
-        bottom: 64px !important; /* SITS CLEANLY ABOVE THE 64px DOCK BAR! */
+        bottom: 68px !important;
         left: 0 !important;
         right: 0 !important;
         width: 100vw !important;
-        max-height: 70vh !important;
-        max-height: 70dvh !important;
-        background: #0f172a !important;
-        border-top-left-radius: 20px !important;
-        border-top-right-radius: 20px !important;
-        border-top: 1px solid rgba(255,255,255,0.15) !important;
-        box-shadow: 0 -10px 30px rgba(0,0,0,0.5) !important;
+        max-height: 72vh !important;
+        max-height: 72dvh !important;
+        background: linear-gradient(180deg, #111827 0%, #0d1627 100%) !important;
+        border-top-left-radius: 22px !important;
+        border-top-right-radius: 22px !important;
+        border-top: 1px solid rgba(124,92,255,0.3) !important;
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.7), 0 -1px 0 rgba(124,92,255,0.15) !important;
         z-index: 100000 !important;
-        transform: translateY(120%) !important;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding: 1rem 1.25rem 1.5rem !important;
+        transform: translateY(110%) !important;
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 0 1.25rem 2rem !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -2421,26 +2433,171 @@ input::placeholder, textarea::placeholder {
         transform: translateY(0) !important;
     }
 
+    /* Drag handle pill */
     .canva-sheet-handle {
-        width: 40px;
-        height: 4px;
-        background: rgba(255,255,255,0.3);
-        border-radius: 2px;
-        margin: 0 auto 0.85rem;
+        width: 44px !important;
+        height: 4px !important;
+        background: rgba(255,255,255,0.25) !important;
+        border-radius: 3px !important;
+        margin: 12px auto 16px !important;
+        flex-shrink: 0 !important;
     }
 
+    /* Sheet header */
     .canva-sheet-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 1.1rem !important;
+        padding-bottom: 0.75rem !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
     }
     .canva-sheet-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: white;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        color: white !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    /* Close button inside sheet header */
+    .canva-sheet-header button {
+        background: rgba(255,255,255,0.08) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        color: rgba(255,255,255,0.7) !important;
+        border-radius: 50% !important;
+        width: 30px !important;
+        height: 30px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.85rem !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+    }
+
+    /* ================================================================
+       SHEET FORM INPUTS — styled dark like the rest of the app
+       ================================================================ */
+    .canva-bottom-sheet label {
+        display: block !important;
+        color: rgba(255,255,255,0.6) !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        margin-bottom: 6px !important;
+    }
+    .canva-bottom-sheet input[type="text"],
+    .canva-bottom-sheet input[type="url"],
+    .canva-bottom-sheet textarea,
+    .canva-bottom-sheet select {
+        width: 100% !important;
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 10px !important;
+        color: white !important;
+        font-size: 0.88rem !important;
+        padding: 10px 12px !important;
+        box-sizing: border-box !important;
+        outline: none !important;
+        transition: border-color 0.2s ease !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    .canva-bottom-sheet input:focus,
+    .canva-bottom-sheet textarea:focus,
+    .canva-bottom-sheet select:focus {
+        border-color: #7c5cff !important;
+        background: rgba(124,92,255,0.08) !important;
+    }
+    .canva-bottom-sheet textarea {
+        resize: vertical !important;
+        min-height: 90px !important;
+    }
+    .canva-bottom-sheet select option {
+        background: #111827 !important;
+        color: white !important;
+    }
+    .canva-bottom-sheet .field-group {
+        margin-bottom: 1rem !important;
+    }
+    /* Primary save button inside sheet */
+    .canva-bottom-sheet .btn-primary,
+    .canva-bottom-sheet button.btn-primary {
+        width: 100% !important;
+        height: 46px !important;
+        background: linear-gradient(135deg, #7c5cff 0%, #5b3fcf 100%) !important;
+        color: white !important;
+        font-weight: 800 !important;
+        font-size: 0.9rem !important;
+        border: none !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 16px rgba(124,92,255,0.4) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+    .canva-bottom-sheet .btn-primary:active {
+        transform: scale(0.97) !important;
+        box-shadow: 0 2px 8px rgba(124,92,255,0.3) !important;
+    }
+    /* Template choice buttons inside sheets */
+    .canva-bottom-sheet .btn-outline {
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 14px 16px !important;
+        text-align: left !important;
+        width: 100% !important;
+        cursor: pointer !important;
+        transition: background 0.2s ease, border-color 0.2s ease !important;
+        font-size: 0.88rem !important;
+    }
+    .canva-bottom-sheet .btn-outline:hover,
+    .canva-bottom-sheet .btn-outline:active {
+        background: rgba(124,92,255,0.2) !important;
+        border-color: #7c5cff !important;
+    }
+
+    /* File input styling */
+    .canva-bottom-sheet input[type="file"] {
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px dashed rgba(255,255,255,0.25) !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        color: rgba(255,255,255,0.6) !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Toggle switch inside sheet */
+    .canva-bottom-sheet .toggle-switch {
+        position: relative !important;
+        display: inline-block !important;
+        width: 44px !important;
+        height: 24px !important;
+    }
+    .canva-bottom-sheet .toggle-slider {
+        position: absolute !important;
+        inset: 0 !important;
+        background: rgba(255,255,255,0.2) !important;
+        border-radius: 24px !important;
+        transition: background 0.25s ease !important;
+    }
+    .canva-bottom-sheet .toggle-slider::before {
+        content: '' !important;
+        position: absolute !important;
+        width: 18px !important;
+        height: 18px !important;
+        top: 3px !important;
+        left: 3px !important;
+        background: white !important;
+        border-radius: 50% !important;
+        transition: transform 0.25s ease !important;
+    }
+    .canva-bottom-sheet input[type="checkbox"]:checked + .toggle-slider {
+        background: #7c5cff !important;
+    }
+    .canva-bottom-sheet input[type="checkbox"]:checked + .toggle-slider::before {
+        transform: translateX(20px) !important;
     }
 
     /* Interactive Touch Element Resize Overlay (Mobile Only) */
