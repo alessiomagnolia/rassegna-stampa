@@ -146,10 +146,6 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-backdrop-filter: blur(12px);
     transition: var(--transition);
 }
-    padding: 2rem;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-}
 
 .glass-card:hover {
     transform: translate(-2px, -2px);
@@ -2170,6 +2166,7 @@ input::placeholder, textarea::placeholder {
     /* Source Logo Ratio & Scaling Fix */
     .pdf-source-logo {
         max-height: 38px !important;
+    }
     /* Article Main Image Fit in Mobile Live Preview */
     .pdf-visual-zone {
         width: 100% !important;
