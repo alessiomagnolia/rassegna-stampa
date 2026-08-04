@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260804_02">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -235,15 +235,6 @@
         }
         .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); border-color: var(--accent-primary); }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: white; }
-
-        @media (max-width: 900px) {
-            body { overflow-y: auto !important; }
-            .editor-header { padding: 0.75rem 1rem !important; flex-wrap: wrap !important; gap: 8px !important; }
-            .editor-layout { flex-direction: column !important; height: auto !important; overflow-y: auto !important; }
-            .pages-panel { width: 100% !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; max-height: 220px !important; }
-            .canvas-area { padding: 1rem 0.5rem !important; width: 100% !important; min-height: 400px !important; }
-            .edit-panel { width: 100% !important; position: static !important; border-left: none !important; border-top: 1px solid rgba(255,255,255,0.1) !important; }
-        }
     </style>
 </head>
 <body>
