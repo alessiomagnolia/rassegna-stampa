@@ -2179,21 +2179,22 @@ input::placeholder, textarea::placeholder {
     /* Article Main Image Fit in Mobile Live Preview */
     .pdf-visual-zone {
         width: 100% !important;
-        max-height: 240px !important;
+        height: 140px !important;
+        max-height: 140px !important;
         overflow: hidden !important;
         border-radius: 6px !important;
         margin: 6px 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background: #0f172a !important;
+        background: #0b1120 !important;
     }
 
     .pdf-main-visual {
         width: 100% !important;
-        max-height: 240px !important;
-        height: auto !important;
-        object-fit: cover !important;
+        height: 100% !important;
+        max-height: 140px !important;
+        object-fit: contain !important;
         object-position: center !important;
         display: block !important;
         border-radius: 6px !important;
@@ -2433,7 +2434,7 @@ input::placeholder, textarea::placeholder {
         z-index: 100000 !important;
         transform: translateY(110%) !important;
         transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding: 0 1.25rem 2rem !important;
+        padding: 0 1.5rem 2.25rem !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -2458,7 +2459,7 @@ input::placeholder, textarea::placeholder {
         align-items: center !important;
         justify-content: space-between !important;
         margin-bottom: 1.1rem !important;
-        padding-bottom: 0.75rem !important;
+        padding: 0.25rem 0.5rem 0.75rem 0.5rem !important;
         border-bottom: 1px solid rgba(255,255,255,0.08) !important;
     }
     .canva-sheet-title {
