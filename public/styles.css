@@ -2095,51 +2095,18 @@ input::placeholder, textarea::placeholder {
         background: #0d0e12 !important;
     }
 
-    /* CANVA MOBILE GRADIENT TOP BAR (Matches Canva App 1:1) */
+    /* PLATFORM EXECUTIVE MOBILE TOP BAR */
     .editor-navbar {
         height: 54px !important;
         padding: 0 0.75rem !important;
-        background: linear-gradient(90deg, #00a8e8 0%, #6b21a8 100%) !important;
-        border-bottom: none !important;
+        background: #0b1120 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.12) !important;
         box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
         gap: 6px !important;
         z-index: 1000 !important;
-    }
-
-    .canva-home-btn {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 50% !important;
-        background: rgba(255,255,255,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.3) !important;
-        color: white !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
-    }
-    .canva-home-btn:active {
-        transform: scale(0.9) !important;
-        background: rgba(255,255,255,0.35) !important;
-    }
-
-    .canva-top-icon {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 50% !important;
-        background: transparent !important;
-        border: none !important;
-        color: white !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
-    }
-    .canva-top-icon:active {
-        transform: scale(0.9) !important;
-        background: rgba(255,255,255,0.2) !important;
+        justify-content: space-between !important;
     }
 
     /* Floating Undo Button (Ctrl+Z) */
@@ -2466,12 +2433,14 @@ input::placeholder, textarea::placeholder {
         border: 1px solid rgba(255,255,255,0.15) !important;
         color: rgba(255,255,255,0.7) !important;
         border-radius: 50% !important;
-        width: 30px !important;
-        height: 30px !important;
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 0.85rem !important;
+        font-size: 0.65rem !important;
+        line-height: 1 !important;
         cursor: pointer !important;
         padding: 0 !important;
     }

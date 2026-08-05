@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260804_04">
+    <link rel="stylesheet" href="styles.css?v=20260805_01">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -243,34 +243,23 @@
 <!-- TOP NAVBAR -->
 <nav class="editor-navbar">
     <div class="editor-nav-left">
-        <button class="canva-home-btn" id="btnBackToDashboard" onclick="goBackToDashboard()" title="Torna alla Dashboard">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <span class="hide-mobile" style="margin-left: 6px; font-weight:600;">Dashboard</span>
+        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()" title="Torna alla Dashboard">
+            <i data-feather="arrow-left" style="width:16px;height:16px;"></i> <span class="hide-mobile">Dashboard</span>
         </button>
         <input type="text" id="editorTitle" class="editor-title-input hide-mobile" placeholder="Titolo rassegna...">
         <span id="editorArticleCount" class="editor-article-count hide-mobile">0 articoli</span>
     </div>
-    <div style="display:flex; gap:0.5rem; align-items:center;">
-        <button type="button" class="btn btn-outline btn-sm hide-mobile" onclick="saveRassegnaToArchive()" title="Salva in Archivio">
-            <i data-feather="archive" style="width:14px;height:14px;"></i> Archivia
+    <div style="display:flex; gap:0.4rem; align-items:center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="saveRassegnaToArchive()" title="Salva in Archivio" style="display:inline-flex; align-items:center; gap:4px; padding: 5px 9px;">
+            <i data-feather="archive" style="width:15px;height:15px;"></i> <span class="hide-mobile">Archivia</span>
         </button>
         <select id="editorTemplateSelect" class="hide-mobile" title="Seleziona Template PDF" style="background: rgba(255,255,255,0.1); color: #efece5; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 5px 8px; cursor: pointer; outline: none;">
             <option value="classic" style="color: black;">🏛️ Template Classico</option>
             <option value="modern" style="color: black;">⚡ Modern Executive</option>
             <option value="minimal" style="color: black;">📰 Minimal Editorial</option>
         </select>
-        <button id="btnGeneratePDF" class="btn btn-gradient btn-sm hide-mobile" style="padding:4px 10px; font-size:0.78rem; font-weight:700;">
-            <i data-feather="download" style="width:14px;height:14px;"></i> Genera PDF
-        </button>
-        <!-- MOBILE CANVA HEADER ACTION ICONS -->
-        <button type="button" class="canva-top-icon show-mobile-flex" onclick="openPdfSheet('sheet-pdf-options')" title="Opzioni">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
-        </button>
-        <button type="button" class="canva-top-icon show-mobile-flex" onclick="generateAndDownload()" title="Scarica PDF">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
-        <button type="button" class="canva-top-icon show-mobile-flex" onclick="saveRassegnaToArchive()" title="Salva in Archivio">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <button id="btnGeneratePDF" class="btn btn-gradient btn-sm" style="padding:5px 10px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+            <i data-feather="download" style="width:15px;height:15px;"></i> <span class="hide-mobile">Genera PDF</span>
         </button>
         <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
             <div class="spinner" style="width:18px;height:18px;"></div>
