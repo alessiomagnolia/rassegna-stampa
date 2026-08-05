@@ -2173,8 +2173,10 @@ input::placeholder, textarea::placeholder {
         user-select: none !important;
         -webkit-user-select: none !important;
         cursor: grab !important;
-        padding: 6px 8px !important;
-        font-size: 1.2rem !important;
+        padding: 4px 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .page-thumb {
