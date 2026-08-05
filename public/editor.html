@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260805_04">
+    <link rel="stylesheet" href="styles.css?v=20260805_05">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -241,16 +241,16 @@
 <div class="bg-animation"></div>
 
 <!-- TOP NAVBAR -->
-<nav class="editor-navbar">
-    <div class="editor-nav-left">
-        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()" title="Torna alla Dashboard">
+<nav class="editor-navbar" style="display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:space-between; height:54px; max-height:54px; overflow:hidden;">
+    <div class="editor-nav-left" style="display:flex; align-items:center; gap:6px; flex:0 0 auto;">
+        <button class="btn btn-outline btn-sm" id="btnBackToDashboard" onclick="goBackToDashboard()" title="Torna alla Dashboard" style="display:inline-flex; align-items:center; justify-content:center; padding:6px 10px;">
             <i data-feather="arrow-left" style="width:16px;height:16px;"></i> <span class="hide-mobile">Dashboard</span>
         </button>
         <input type="text" id="editorTitle" class="editor-title-input hide-mobile" placeholder="Titolo rassegna...">
         <span id="editorArticleCount" class="editor-article-count hide-mobile">0 articoli</span>
     </div>
-    <div style="display:flex; gap:0.4rem; align-items:center;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="saveRassegnaToArchive()" title="Salva in Archivio" style="display:inline-flex; align-items:center; gap:4px; padding: 5px 9px;">
+    <div class="editor-nav-right" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:0.4rem; align-items:center; flex:0 0 auto;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="saveRassegnaToArchive()" title="Salva in Archivio" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:6px 10px;">
             <i data-feather="archive" style="width:15px;height:15px;"></i> <span class="hide-mobile">Archivia</span>
         </button>
         <select id="editorTemplateSelect" class="hide-mobile" title="Seleziona Template PDF" style="background: rgba(255,255,255,0.1); color: #efece5; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; padding: 5px 8px; cursor: pointer; outline: none;">
@@ -258,7 +258,7 @@
             <option value="modern" style="color: black;">⚡ Modern Executive</option>
             <option value="minimal" style="color: black;">📰 Minimal Editorial</option>
         </select>
-        <button id="btnGeneratePDF" class="btn btn-gradient btn-sm" style="padding:5px 10px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+        <button id="btnGeneratePDF" class="btn btn-gradient btn-sm" style="padding:6px 10px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:4px;">
             <i data-feather="download" style="width:15px;height:15px;"></i> <span class="hide-mobile">Genera PDF</span>
         </button>
         <div id="genLoading" class="hidden" style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.9rem;">
@@ -732,15 +732,28 @@ function selectPage(idx) {
         closeEditPanel();
     }
 
-    // Mobile Only: Touch Resizing & Mobile Form
+    // Mobile Only: Touch Resizing, Mobile Form & 1.5s Toast Page Indicator
     if (window.innerWidth <= 900) {
         attachPdfTouchResizing();
         if (idx >= 0) {
             populateMobileEditForm(idx);
         }
-        // Show page indicator
+        // Show page indicator for 1.5s then fade out
         const mobInd = document.getElementById('mobilePdfPageIndicator');
-        if (mobInd) mobInd.style.display = 'block';
+        if (mobInd) {
+            mobInd.style.display = 'block';
+            void mobInd.offsetWidth; // force reflow
+            mobInd.classList.add('show');
+            if (window.pageIndicatorTimeout) clearTimeout(window.pageIndicatorTimeout);
+            window.pageIndicatorTimeout = setTimeout(() => {
+                mobInd.classList.remove('show');
+                setTimeout(() => {
+                    if (!mobInd.classList.contains('show')) {
+                        mobInd.style.display = 'none';
+                    }
+                }, 300);
+            }, 1500);
+        }
     }
 }
 

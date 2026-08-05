@@ -2123,6 +2123,31 @@ input::placeholder, textarea::placeholder {
         margin: 0 !important;
     }
 
+    /* Mobile Toast Page Indicator (Fade-in on page change, auto fade-out after 1.5s) */
+    #mobilePdfPageIndicator {
+        position: fixed !important;
+        top: 96px !important;
+        left: 50% !important;
+        transform: translateX(-50%) translateY(-6px) !important;
+        z-index: 195 !important;
+        background: rgba(11, 17, 32, 0.94) !important;
+        color: white !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        padding: 5px 16px !important;
+        border-radius: 20px !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transition: opacity 0.3s ease, transform 0.3s ease !important;
+    }
+
+    #mobilePdfPageIndicator.show {
+        opacity: 1 !important;
+        transform: translateX(-50%) translateY(0) !important;
+    }
+
     /* Floating Undo Button (Ctrl+Z) */
     .btn-undo-floating {
         position: fixed !important;
