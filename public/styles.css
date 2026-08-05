@@ -2459,7 +2459,7 @@ input::placeholder, textarea::placeholder {
         align-items: center !important;
         justify-content: space-between !important;
         margin-bottom: 1.1rem !important;
-        padding: 0.25rem 0.5rem 0.75rem 0.5rem !important;
+        padding: 0.5rem 0.85rem 0.85rem 0.85rem !important;
         border-bottom: 1px solid rgba(255,255,255,0.08) !important;
     }
     .canva-sheet-title {
