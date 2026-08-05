@@ -1924,32 +1924,7 @@ input::placeholder, textarea::placeholder {
         box-sizing: border-box !important;
     }
 
-    .editor-navbar {
-        height: auto !important;
-        min-height: 54px !important;
-        padding: 0.5rem 0.75rem !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-    }
-
-    .editor-nav-left {
-        width: 100% !important;
-        justify-content: space-between !important;
-        gap: 6px !important;
-    }
-
-    .editor-title-input {
-        min-width: 0 !important;
-        width: 100% !important;
-        font-size: 0.85rem !important;
-    }
-
-    .pages-panel {
-        width: 100% !important;
-        max-height: 180px !important;
-        border-right: none !important;
-        border-bottom: 1px solid var(--border-color) !important;
-    }
+    /* .editor-navbar and .pages-panel handled in mobile section below */
 
     .canvas-area {
         padding: 0.85rem 0.35rem !important;
@@ -2102,11 +2077,33 @@ input::placeholder, textarea::placeholder {
         background: #0b1120 !important;
         border-bottom: 1px solid rgba(255,255,255,0.12) !important;
         box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
-        gap: 6px !important;
         z-index: 1000 !important;
         display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: space-between !important;
+        box-sizing: border-box !important;
+    }
+
+    .editor-nav-left {
+        width: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex: 0 0 auto !important;
+    }
+
+    .editor-navbar .btn-sm {
+        height: 36px !important;
+        padding: 0 10px !important;
+        font-size: 0.78rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
     }
 
     /* Floating Undo Button (Ctrl+Z) */
