@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260805_03">
+    <link rel="stylesheet" href="styles.css?v=20260805_04">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -426,7 +426,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Pagine & Articoli</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div id="mobilePagesList" style="display:flex; flex-direction:column; gap:6px;"></div>
 </div>
@@ -436,7 +436,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Testo Articolo</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div class="field-group" style="margin-bottom:0.85rem;">
         <label style="color:white; font-size:0.8rem; font-weight:600;">Titolo Articolo *</label>
@@ -458,7 +458,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Fonte & Tipologia Media</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div class="field-group" style="margin-bottom:0.85rem;">
         <label style="color:white; font-size:0.8rem; font-weight:600;">Nome Testata / Fonte</label>
@@ -483,7 +483,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Immagine & Logo Testata</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div class="field-group" style="margin-bottom:1rem;">
         <label style="color:white; font-size:0.8rem; font-weight:600;">Immagine Principale Articolo</label>
@@ -500,7 +500,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Template Grafico PDF</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div style="display:grid; grid-template-columns:1fr; gap:10px;">
         <button type="button" class="btn btn-outline" onclick="selectMobilePdfTemplate('classic'); closePdfSheets();" style="padding:12px; border-radius:10px; color:white; text-align:left;">
@@ -520,7 +520,7 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Impostazioni & Banner Scuro</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets()" style="padding:2px 8px; border:none; color:white;">✕</button>
+        <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div class="field-group" style="margin-bottom:0.85rem;">
         <label style="color:white; font-size:0.8rem; font-weight:600;">Titolo Rassegna Stampa</label>

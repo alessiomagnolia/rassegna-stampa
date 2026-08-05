@@ -2061,13 +2061,30 @@ input::placeholder, textarea::placeholder {
     }
 
     .editor-body {
-        padding-top: 54px !important;
-        height: calc(100vh - 54px) !important;
-        height: calc(100dvh - 54px) !important;
+        padding-top: 92px !important;
+        height: calc(100vh - 92px) !important;
+        height: calc(100dvh - 92px) !important;
         flex-direction: column !important;
         position: relative !important;
         overflow: hidden !important;
         background: #0d0e12 !important;
+    }
+
+    /* Sub-Header Title Bar for Mobile */
+    .editor-sub-header {
+        position: fixed !important;
+        top: 54px !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 38px !important;
+        background: #0b1120 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+        z-index: 190 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 0 0.85rem !important;
+        box-sizing: border-box !important;
     }
 
     /* PLATFORM EXECUTIVE MOBILE TOP BAR */
@@ -2205,15 +2222,15 @@ input::placeholder, textarea::placeholder {
     .preview-area {
         flex: 1 !important;
         width: 100vw !important;
-        height: calc(100vh - 122px) !important;
-        height: calc(100dvh - 122px) !important;
-        padding: 1rem 0.5rem 80px !important;
+        height: calc(100vh - 160px) !important;
+        height: calc(100dvh - 160px) !important;
+        padding: 44px 0.5rem 80px !important;
         background: #0d0e12 !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
