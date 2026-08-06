@@ -1397,9 +1397,9 @@
                 // Preserve active workspace if session is in progress
                 if (page === 'rassegna') {
                     const startContainer = document.getElementById('startRassegnaContainer');
-                    const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+                    const hasSavedState = !!localStorage.getItem('rs_editor_state');
                     const hasArticles = typeof state !== 'undefined' && state.articles && state.articles.length > 0;
-                    if (window.hasActiveRassegnaSession || hasArticles) {
+                    if (window.hasActiveRassegnaSession || hasSavedState || hasArticles) {
                         if (startContainer) startContainer.style.display = 'none';
                         if (workspaceContainer) workspaceContainer.style.display = 'block';
                     }

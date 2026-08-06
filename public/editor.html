@@ -1151,13 +1151,48 @@ function initEvents() {
 // ============================================================
 // NAVIGATION
 // ============================================================
-function goBackToDashboard() {
-    // Always sync latest state to localStorage before leaving,
-    // so the dashboard can restore articles automatically.
-    const currentTitle = document.getElementById('editorTitle').value.trim();
+async function goBackToDashboard() {
+    const currentTitle = (options.title || document.getElementById('editorTitle')?.value || document.getElementById('editorTitleMobile')?.value || 'Rassegna Stampa').trim();
     options.title = currentTitle;
+    
+    // Always sync latest state to localStorage before leaving,
+    // so the dashboard restores articles and stays in workspace mode.
     localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
     localStorage.setItem('rs_open_page', 'rassegna');
+
+    // Auto-save to Storico (local + database)
+    try {
+        let saved = JSON.parse(localStorage.getItem('rs_saved_reviews') || '[]');
+        saved = saved.filter(i => i.title !== currentTitle);
+        saved.unshift({
+            id: Date.now(),
+            title: currentTitle,
+            filename: `draft_${Date.now()}.pdf`,
+            article_count: articles.length,
+            articles_json: JSON.stringify(articles),
+            client_name: options.clientName || '',
+            created_at: new Date().toISOString(),
+            is_editable: 1
+        });
+        if (saved.length > 50) saved = saved.slice(0, 50);
+        localStorage.setItem('rs_saved_reviews', JSON.stringify(saved));
+
+        const token = localStorage.getItem('rs_token');
+        await fetch('/api/pdf/archive', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+                articles: articles,
+                title: currentTitle,
+                clientName: options.clientName || '',
+                clientLogo: options.clientLogo || null
+            })
+        });
+    } catch(e) {}
+
     window.location.href = 'dashboard.html';
 }
 

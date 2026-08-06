@@ -872,8 +872,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedEditorState) {
             try {
                 const editorState = JSON.parse(savedEditorState);
-                if (editorState.articles && editorState.articles.length > 0) {
-                    state.articles = editorState.articles;
+                if (editorState.articles) {
+                    state.articles = Array.isArray(editorState.articles) ? editorState.articles : [];
 
                     // Restore title
                     const titleInput = document.getElementById('rassegnaTitle');
@@ -896,11 +896,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (prevCont) prevCont.style.display = 'flex';
                     }
 
+                    window.hasActiveRassegnaSession = true;
                     renderArticles();
-                    showToast(`${state.articles.length} articoli ripristinati dall'editor`, 'success');
+
+                    // CRITICAL FIX: Hide start screen and reveal workspace!
+                    const startContainer = document.getElementById('startRassegnaContainer');
+                    const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+                    if (startContainer) startContainer.style.display = 'none';
+                    if (workspaceContainer) workspaceContainer.style.display = 'block';
+
+                    if (state.articles.length > 0) {
+                        showToast(`${state.articles.length} articol${state.articles.length === 1 ? 'o' : 'i'} ripristinat${state.articles.length === 1 ? 'o' : 'i'} dall'editor`, 'success');
+                    }
                 }
             } catch(e) {
-                localStorage.removeItem('rs_editor_state');
+                console.error('Error restoring saved editor state:', e);
             }
         }
         
