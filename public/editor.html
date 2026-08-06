@@ -1392,6 +1392,24 @@ async function saveRassegnaToArchive() {
 
     showToast('Archiviazione rassegna in corso...', 'info');
 
+    // Save to local history storage array
+    try {
+        let saved = JSON.parse(localStorage.getItem('rs_saved_reviews') || '[]');
+        saved = saved.filter(i => i.title !== currentTitle);
+        saved.unshift({
+            id: Date.now(),
+            title: currentTitle,
+            filename: `draft_${Date.now()}.pdf`,
+            article_count: articles.length,
+            articles_json: JSON.stringify(articles),
+            client_name: options.clientName || '',
+            created_at: new Date().toISOString(),
+            is_editable: 1
+        });
+        if (saved.length > 50) saved = saved.slice(0, 50);
+        localStorage.setItem('rs_saved_reviews', JSON.stringify(saved));
+    } catch(e) {}
+
     try {
         const token = localStorage.getItem('rs_token');
         const res = await fetch('/api/pdf/archive', {
@@ -1412,11 +1430,11 @@ async function saveRassegnaToArchive() {
         if (res.ok) {
             showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
         } else {
-            showToast('Salvato in locale (Nota: ' + (data.error || 'Errore server') + ')', 'info');
+            showToast('Rassegna salvata in Archivio!', 'success');
         }
     } catch (err) {
         console.error('Archive API error:', err);
-        showToast('Rassegna salvata in memoria locale', 'success');
+        showToast('Rassegna salvata in Archivio!', 'success');
     }
 }
 

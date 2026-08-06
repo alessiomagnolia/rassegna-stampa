@@ -1394,6 +1394,17 @@
                 const target = document.getElementById('page-' + page);
                 if (target) target.classList.add('active');
 
+                // Preserve active workspace if session is in progress
+                if (page === 'rassegna') {
+                    const startContainer = document.getElementById('startRassegnaContainer');
+                    const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+                    const hasArticles = typeof state !== 'undefined' && state.articles && state.articles.length > 0;
+                    if (window.hasActiveRassegnaSession || hasArticles) {
+                        if (startContainer) startContainer.style.display = 'none';
+                        if (workspaceContainer) workspaceContainer.style.display = 'block';
+                    }
+                }
+
                 // Auto-refresh history when switching to Storico tab
                 if (page === 'storico' && typeof loadHistory === 'function') {
                     loadHistory();
@@ -1414,7 +1425,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
     <script src="ui.js"></script>
 </body>
 </html>
