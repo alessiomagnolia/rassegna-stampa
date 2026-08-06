@@ -1394,6 +1394,11 @@
                 const target = document.getElementById('page-' + page);
                 if (target) target.classList.add('active');
 
+                // Auto-refresh history when switching to Storico tab
+                if (page === 'storico' && typeof loadHistory === 'function') {
+                    loadHistory();
+                }
+
                 // Auto-close sidebar after selecting a page
                 closeSidebar();
             });
@@ -1409,7 +1414,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=10"></script>
+    <script src="app.js?v=11"></script>
     <script src="ui.js"></script>
 </body>
 </html>

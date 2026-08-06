@@ -686,32 +686,47 @@ async function loadHistory() {
         
         list.innerHTML = '';
         
-        if (history.length === 0) {
-            list.innerHTML = '<div class="empty-state">Nessuna rassegna generata finora.</div>';
+        if (!history || history.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state" style="padding: 3rem 1rem; text-align: center;">
+                    <i data-feather="book-open" style="width:40px;height:40px;color:var(--text-muted);margin-bottom:0.75rem;"></i>
+                    <p style="font-weight:600; font-size:1rem; margin-bottom:0.25rem;">Nessuna rassegna nello storico</p>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Le rassegne create negli ultimi 30 giorni appariranno qui.</p>
+                </div>`;
+            if (typeof feather !== 'undefined') feather.replace();
             return;
         }
 
         history.forEach(item => {
-            const date = new Date(item.created_at).toLocaleDateString('it-IT');
+            const date = new Date(item.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const isDraft = item.filename && item.filename.startsWith('draft_');
             const div = document.createElement('div');
             div.className = 'history-item';
+            div.style.cssText = 'padding: 1.25rem; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 0.85rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.75rem;';
+            
             div.innerHTML = `
-                <div class="history-info">
-                    <strong style="font-size:1.05rem;">${item.title}</strong>
-                    <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.85rem;">
-                        ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${item.client_name}` : ''}
+                <div class="history-info" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong style="font-size:1.05rem; color:white;">${item.title || 'Rassegna Stampa'}</strong>
+                        <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.82rem;">
+                            ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${item.client_name}` : ''}
+                        </span>
+                    </div>
+                    <span style="font-size:0.72rem; padding:3px 10px; border-radius:12px; font-weight:700; background:${isDraft ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isDraft ? '#eab308' : '#22c55e'}; border:1px solid ${isDraft ? 'rgba(234,179,8,0.3)' : 'rgba(34,197,94,0.3)'};">
+                        ${isDraft ? 'Bozza / In Modifica' : 'PDF Generato'}
                     </span>
                 </div>
-                <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
-                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
-                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Riapri ed Edita</button>` : ''}
-                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                    ${!isDraft ? `<button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>` : ''}
+                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> ${isDraft ? 'Continua Modifica' : 'Riapri ed Edita'}</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;" title="Elimina dallo Storico"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
             list.appendChild(div);
         });
-        feather.replace();
+        if (typeof feather !== 'undefined') feather.replace();
     } catch (error) {
+        console.error('loadHistory error:', error);
         list.innerHTML = '<div class="empty-state">Errore nel caricamento dello storico.</div>';
     }
 }
@@ -732,8 +747,8 @@ async function reopenFromHistory(reviewId) {
     try {
         showToast('Caricamento rassegna per modifica...', 'info');
         const data = await apiCall('GET', `/api/pdf/review/${reviewId}`);
-        if (data.articles && data.articles.length > 0) {
-            state.articles = data.articles;
+        if (data && data.articles) {
+            state.articles = Array.isArray(data.articles) ? data.articles : [];
             if (data.title) {
                 const titleEl = document.getElementById('rassegnaTitle');
                 if (titleEl) titleEl.value = data.title;
@@ -752,13 +767,21 @@ async function reopenFromHistory(reviewId) {
                 }
             }
 
+            window.currentRassegnaId = reviewId;
             renderArticles();
+
+            // Ensure workspace container is visible and start screen is hidden
+            const startContainer = document.getElementById('startRassegnaContainer');
+            const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+            if (startContainer) startContainer.style.display = 'none';
+            if (workspaceContainer) workspaceContainer.style.display = 'block';
+
             const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
             if (rassegnaNav) rassegnaNav.click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
             showToast('Rassegna riaperta per la modifica!', 'success');
         } else {
-            showToast('Nessun articolo trovato in questa rassegna.', 'warning');
+            showToast('Nessun dato trovato per questa rassegna.', 'warning');
         }
     } catch (err) {
         showToast('Errore nel caricamento della rassegna: ' + err.message, 'error');
