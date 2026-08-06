@@ -2361,6 +2361,70 @@ document.addEventListener('DOMContentLoaded', () => {
     renderArchiveLogos();
 });
 
+// --- START NEW RASSEGNA SESSION ---
+window.startNewRassegnaSession = async function() {
+    const btn = document.getElementById('btnStartNewRassegna');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Creazione rassegna in corso...';
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    try {
+        if (typeof resetState === 'function') resetState();
+
+        const todayDateStr = new Date().toLocaleDateString('it-IT');
+        const defaultTitle = `Rassegna Stampa del ${todayDateStr}`;
+
+        const titleInput = document.getElementById('rassegnaTitle');
+        if (titleInput) titleInput.value = defaultTitle;
+
+        // Register initial draft in 30-day history database
+        const res = await apiCall('POST', '/api/pdf/archive', {
+            articles: [],
+            title: defaultTitle,
+            clientName: '',
+            clientLogo: null
+        });
+
+        if (res && res.id) {
+            window.currentRassegnaId = res.id;
+        }
+
+        // Hide start screen, reveal full editor workspace
+        const startContainer = document.getElementById('startRassegnaContainer');
+        const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+        if (startContainer) startContainer.style.display = 'none';
+        if (workspaceContainer) workspaceContainer.style.display = 'block';
+
+        showToast('Nuova rassegna creata e salvata nello Storico!', 'success');
+        if (typeof loadHistory === 'function') loadHistory();
+    } catch (err) {
+        console.error('Error starting rassegna session:', err);
+        // Fallback open workspace
+        const startContainer = document.getElementById('startRassegnaContainer');
+        const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+        if (startContainer) startContainer.style.display = 'none';
+        if (workspaceContainer) workspaceContainer.style.display = 'block';
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="plus-circle" style="width:22px;height:22px;vertical-align:middle;margin-right:8px;"></i> CREA NUOVA RASSEGNA';
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+    }
+};
+
+window.resetRassegnaToStartScreen = function() {
+    if (confirm('Vuoi avviare una nuova rassegna? Gli articoli attuali verranno svuotati.')) {
+        if (typeof resetState === 'function') resetState();
+        const startContainer = document.getElementById('startRassegnaContainer');
+        const workspaceContainer = document.getElementById('workspaceRassegnaContainer');
+        if (startContainer) startContainer.style.display = 'block';
+        if (workspaceContainer) workspaceContainer.style.display = 'none';
+    }
+};
+
 
 
 

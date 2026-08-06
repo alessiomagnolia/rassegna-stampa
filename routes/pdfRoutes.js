@@ -126,19 +126,17 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
 router.post('/archive', authMiddleware, async (req, res) => {
     try {
         const { articles, title, clientName, clientLogo } = req.body;
-        if (!articles || !Array.isArray(articles) || articles.length === 0) {
-            return res.status(400).json({ error: 'Fornisci almeno un articolo per archiviare la rassegna.' });
-        }
+        const articleList = Array.isArray(articles) ? articles : [];
 
         const reviewTitle = title || 'Rassegna Stampa Archiviata';
         const db = getDb();
-        const articlesJsonStr = JSON.stringify(articles);
+        const articlesJsonStr = JSON.stringify(articleList);
         const placeholderFilename = `draft_${Date.now()}.pdf`;
 
         const info = db.prepare(`
             INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '');
+        `).run(req.userId, reviewTitle, placeholderFilename, articleList.length, articlesJsonStr, clientName || '', clientLogo || '');
 
         res.json({
             id: info.lastInsertRowid,
