@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comunicati Stampa | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260804_02">
+    <link rel="stylesheet" href="styles.css?v=20260902_03">
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
         body { overflow: hidden; }
@@ -102,11 +102,95 @@
         @media (max-width: 900px) {
             body { overflow-y: auto !important; }
             .app-layout { flex-direction: column !important; height: auto !important; }
-            .sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; max-height: 250px !important; }
+            
+            /* Sidebar Off-canvas / Drawer on Mobile */
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                width: 280px !important;
+                max-width: 85vw !important;
+                z-index: 1050 !important;
+                transform: translateX(-100%) !important;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                border-right: 1px solid var(--border-color) !important;
+                border-bottom: none !important;
+                max-height: none !important;
+                background: rgba(10, 10, 26, 0.98) !important;
+            }
+            .sidebar.open, .sidebar.active {
+                transform: translateX(0) !important;
+            }
+
+            /* Workspace & Layout */
             .workspace { flex-direction: column !important; overflow: visible !important; }
             .generator-form { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; padding: 1rem !important; }
             .editor-container { width: 100% !important; padding: 1rem !important; min-height: 500px !important; }
-            .top-bar { padding: 0.5rem 1rem !important; height: auto !important; flex-wrap: wrap !important; }
+            
+            /* Clean Mobile Top Bar Header */
+            .top-bar {
+                padding: 0.75rem 1rem !important;
+                height: auto !important;
+                min-height: 54px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                background: rgba(255, 255, 255, 0.02) !important;
+                border-bottom: 1px solid var(--border-color) !important;
+                gap: 0.5rem !important;
+            }
+            .top-bar h1 {
+                font-size: 1.05rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            .top-bar h1 svg {
+                width: 18px !important;
+                height: 18px !important;
+                flex-shrink: 0 !important;
+            }
+            .top-actions {
+                display: flex !important;
+                gap: 0.4rem !important;
+                align-items: center !important;
+                flex-shrink: 0 !important;
+            }
+            .top-actions .btn {
+                padding: 6px 12px !important;
+                font-size: 0.78rem !important;
+                height: 34px !important;
+                white-space: nowrap !important;
+                border-radius: 8px !important;
+            }
+
+            /* Clean Mobile Navbar */
+            .navbar {
+                padding: 0 0.75rem !important;
+                height: 56px !important;
+            }
+            .nav-left .nav-brand {
+                display: none !important;
+            }
+            .nav-center {
+                display: none !important;
+            }
+            .nav-company {
+                max-width: 110px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                font-size: 0.8rem !important;
+            }
+            .btn-upgrade-nav {
+                font-size: 0.72rem !important;
+                padding: 5px 8px !important;
+                white-space: nowrap !important;
+            }
         }
         .editor-paper {
             flex-grow: 1; background: var(--bg-secondary);
