@@ -59,7 +59,7 @@ router.post('/extract', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('Route extract error:', error);
-        res.status(500).json({ error: 'Si è verificato un errore durante l\'estrazione dell\'articolo.' });
+        res.status(500).json({ error: error.message || 'Si è verificato un errore durante l\'estrazione dell\'articolo.' });
     }
 });
 

@@ -269,12 +269,24 @@ async function extractArticle(url) {
 
     const sourceName = extractSourceName(url);
 
-    // Run heavy tasks in parallel
-    const [screenshotBase64, logoBase64, imageBase64] = await Promise.all([
-        takeScreenshot(url),
-        extractLogo(url, sourceName),
-        article.image ? downloadImageAsBase64(article.image) : Promise.resolve(null)
-    ]);
+    // Run heavy tasks in parallel safely with Promise.allSettled
+    let rawScreenshot = null;
+    let logoBase64 = null;
+    let imageBase64 = null;
+
+    try {
+        const results = await Promise.allSettled([
+            takeScreenshot(url).catch(e => { console.log('[Screenshot Notice]:', e.message); return null; }),
+            extractLogo(url, sourceName).catch(e => { console.log('[Logo Notice]:', e.message); return null; }),
+            article.image ? downloadImageAsBase64(article.image).catch(e => { console.log('[Image Notice]:', e.message); return null; }) : Promise.resolve(null)
+        ]);
+
+        rawScreenshot = results[0]?.status === 'fulfilled' ? results[0].value : null;
+        logoBase64 = results[1]?.status === 'fulfilled' ? results[1].value : null;
+        imageBase64 = results[2]?.status === 'fulfilled' ? results[2].value : null;
+    } catch(err) {
+        console.log('[Secondary Asset Notice]:', err.message);
+    }
 
     return {
         url,
@@ -286,7 +298,7 @@ async function extractArticle(url) {
         excerpt: cleanText(article.content, 500),
         imageBase64,
         logoBase64,
-        screenshotBase64: screenshotBase64 ? `data:image/png;base64,${screenshotBase64}` : null
+        screenshotBase64: rawScreenshot ? (rawScreenshot.startsWith('data:') ? rawScreenshot : `data:image/png;base64,${rawScreenshot}`) : null
     };
 }
 
