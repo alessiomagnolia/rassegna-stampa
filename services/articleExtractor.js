@@ -231,7 +231,7 @@ function formatDate(dateStr) {
 // ---------------------------------------------------------------
 // Main extractor — primary + cheerio fallback
 // ---------------------------------------------------------------
-async function extractArticle(url) {
+async function extractArticle(url, options = {}) {
     let article = null;
     let usedFallback = false;
 
@@ -274,9 +274,13 @@ async function extractArticle(url) {
     let logoBase64 = null;
     let imageBase64 = null;
 
+    const screenshotTask = options.skipScreenshot 
+        ? Promise.resolve(null) 
+        : takeScreenshot(url).catch(e => { console.log('[Screenshot Notice]:', e.message); return null; });
+
     try {
         const results = await Promise.allSettled([
-            takeScreenshot(url).catch(e => { console.log('[Screenshot Notice]:', e.message); return null; }),
+            screenshotTask,
             extractLogo(url, sourceName).catch(e => { console.log('[Logo Notice]:', e.message); return null; }),
             article.image ? downloadImageAsBase64(article.image).catch(e => { console.log('[Image Notice]:', e.message); return null; }) : Promise.resolve(null)
         ]);

@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/extract', authMiddleware, async (req, res) => {
     try {
-        let { url } = req.body;
+        let { url, skipScreenshot } = req.body;
 
         if (!url) {
             return res.status(400).json({ error: 'L\'URL è obbligatorio.' });
@@ -33,14 +33,14 @@ router.post('/extract', authMiddleware, async (req, res) => {
 
         // Set a timeout to prevent hanging requests
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('TIMEOUT')), 90000)
+            setTimeout(() => reject(new Error('TIMEOUT')), 45000)
         );
 
         console.log(`[Extraction] Inizio estrazione per URL pulito: ${url}`);
         
         try {
             const articleData = await Promise.race([
-                extractArticle(url),
+                extractArticle(url, { skipScreenshot: !!skipScreenshot }),
                 timeoutPromise
             ]);
             

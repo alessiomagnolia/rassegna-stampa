@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Post LinkedIn | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Source+Serif+4:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260907_01">
+    <link rel="stylesheet" href="styles.css?v=20260907_02">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -713,7 +713,7 @@
 
                         <!-- TEMPLATE 2 BANNER HEADER -->
                         <div class="card-banner-header" id="cardBannerHeader" style="display: none;">
-                            <div id="cardBannerLogoContainer">
+                            <div id="cardBannerLogoContainer" style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
                                 <img id="cardBannerLogo" style="max-height: 26px; max-width: 150px; object-fit: contain; filter: brightness(0) invert(1);" src="/logos/repubblica.png" alt="Logo Banner">
                                 <span id="cardBannerText" style="font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; color: white; display: none;">la Repubblica</span>
                             </div>
@@ -725,7 +725,7 @@
                         <!-- TEMPLATE 3 EDITORIAL HEADER -->
                         <div class="card-editorial-header" id="cardEditorialHeader" style="display: none;">
                             <i data-feather="menu" style="width:16px;height:16px;color:#1a1a2e;"></i>
-                            <div id="cardEditorialLogoContainer" style="display: flex; align-items: center; justify-content: center;">
+                            <div id="cardEditorialLogoContainer" style="display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer;">
                                 <img id="cardEditorialLogo" style="max-height: 24px; max-width: 140px; object-fit: contain;" src="/logos/repubblica.png" alt="Logo Testata">
                                 <span id="cardEditorialText" style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.9rem; text-transform: lowercase; color: #1a1a2e; display: none;">la repubblica</span>
                             </div>
@@ -743,7 +743,7 @@
                             <!-- TOP HEADER META (Template 1 Speech) -->
                             <div class="banner-top-meta" id="bannerTopMeta" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <div>
-                                    <div id="cardSourceLogoContainer" style="margin-bottom: 2px;">
+                                    <div id="cardSourceLogoContainer" style="margin-bottom: 2px; position: relative; display: inline-flex; align-items: center; cursor: pointer;">
                                         <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
                                         <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
                                     </div>
@@ -1084,7 +1084,7 @@
                     const res = await fetch('/api/articles/extract', {
                         method: 'POST',
                         headers,
-                        body: JSON.stringify({ url })
+                        body: JSON.stringify({ url, skipScreenshot: true })
                     });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Estrazione fallita');
@@ -1246,12 +1246,20 @@
             if (window.innerWidth > 900) return; // STRICTLY MOBILE ONLY!
             const targets = [
                 { id: 'cardMainQuote', type: 'font', unit: 'rem', min: 0.75, max: 3.5, step: 0.05 },
-                { id: 'cardAuthorName', type: 'font', unit: 'rem', min: 0.7, max: 2.2, step: 0.05 },
-                { id: 'cardAuthorRole', type: 'font', unit: 'rem', min: 0.6, max: 1.8, step: 0.05 },
+                { id: 'cardSubtitle', type: 'font', unit: 'rem', min: 0.6, max: 2.2, step: 0.05 },
+                { id: 'cardDate', type: 'font', unit: 'rem', min: 0.6, max: 1.6, step: 0.05 },
                 { id: 'cardPublishDate', type: 'font', unit: 'rem', min: 0.6, max: 1.6, step: 0.05 },
-                { id: 'cardImageContainer', type: 'height', unit: '%', min: 15, max: 80, step: 2 },
-                { id: 'cardSourceLogo', type: 'height', unit: 'px', min: 16, max: 120, step: 4 },
-                { id: 'cardClientLogo', type: 'height', unit: 'px', min: 16, max: 120, step: 4 }
+                { id: 'cardAuthor', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 },
+                { id: 'cardBannerText', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 },
+                { id: 'cardEditorialText', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 },
+                { id: 'cardSourceLogo', type: 'height', unit: 'px', min: 14, max: 90, step: 2 },
+                { id: 'cardSourceLogoContainer', type: 'height', unit: 'px', min: 14, max: 90, step: 2 },
+                { id: 'cardBannerLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 },
+                { id: 'cardBannerLogoContainer', type: 'height', unit: 'px', min: 14, max: 80, step: 2 },
+                { id: 'cardEditorialLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 },
+                { id: 'cardEditorialLogoContainer', type: 'height', unit: 'px', min: 14, max: 80, step: 2 },
+                { id: 'cardClientLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 },
+                { id: 'cardClientLogoContainer', type: 'height', unit: 'px', min: 14, max: 80, step: 2 }
             ];
 
             targets.forEach(item => {
@@ -1284,89 +1292,160 @@
 
         function selectCardElement(el, item) {
             deselectCardElements();
-            selectedCardElement = el;
-            el.classList.add('card-element-selected');
 
-            // Add visual corner handle ●
-            let handle = el.querySelector('.card-resize-handle');
-            if (!handle) {
-                handle = document.createElement('div');
-                handle.className = 'card-resize-handle';
-                el.appendChild(handle);
+            // Intelligent target resolution: distinguish between logo image and text testata
+            let targetItem = { ...item };
+            let targetEl = el;
+            let container = el;
+
+            if (el.id === 'cardSourceLogoContainer' || el.id === 'cardSourceLogo') {
+                const img = document.getElementById('cardSourceLogo');
+                const author = document.getElementById('cardAuthor');
+                if (img && img.style.display !== 'none' && img.src) {
+                    targetEl = img;
+                    container = document.getElementById('cardSourceLogoContainer') || img.parentElement;
+                    targetItem = { id: 'cardSourceLogo', type: 'height', unit: 'px', min: 14, max: 90, step: 2 };
+                } else if (author) {
+                    targetEl = author;
+                    container = author;
+                    targetItem = { id: 'cardAuthor', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 };
+                }
+            } else if (el.id === 'cardBannerLogoContainer' || el.id === 'cardBannerLogo') {
+                const img = document.getElementById('cardBannerLogo');
+                const text = document.getElementById('cardBannerText');
+                if (img && img.style.display !== 'none' && img.src) {
+                    targetEl = img;
+                    container = document.getElementById('cardBannerLogoContainer') || img.parentElement;
+                    targetItem = { id: 'cardBannerLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 };
+                } else if (text) {
+                    targetEl = text;
+                    container = text;
+                    targetItem = { id: 'cardBannerText', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 };
+                }
+            } else if (el.id === 'cardEditorialLogoContainer' || el.id === 'cardEditorialLogo') {
+                const img = document.getElementById('cardEditorialLogo');
+                const text = document.getElementById('cardEditorialText');
+                if (img && img.style.display !== 'none' && img.src) {
+                    targetEl = img;
+                    container = document.getElementById('cardEditorialLogoContainer') || img.parentElement;
+                    targetItem = { id: 'cardEditorialLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 };
+                } else if (text) {
+                    targetEl = text;
+                    container = text;
+                    targetItem = { id: 'cardEditorialText', type: 'font', unit: 'rem', min: 0.6, max: 2.5, step: 0.05 };
+                }
+            } else if (el.id === 'cardClientLogo' || el.id === 'cardClientLogoContainer') {
+                const img = document.getElementById('cardClientLogo');
+                if (img) {
+                    targetEl = img;
+                    container = document.getElementById('cardClientLogoContainer') || img.parentElement;
+                    targetItem = { id: 'cardClientLogo', type: 'height', unit: 'px', min: 14, max: 80, step: 2 };
+                }
+            }
+
+            selectedCardElement = targetEl;
+            targetEl.classList.add('card-element-selected');
+            if (container && container !== targetEl) {
+                container.classList.add('card-element-selected');
+            }
+
+            // Mount handle on container or element (never directly on void IMG element)
+            const mountPoint = targetEl.tagName === 'IMG' ? (container || targetEl.parentElement) : targetEl;
+            if (mountPoint) {
+                mountPoint.style.position = 'relative';
+                let handle = mountPoint.querySelector('.card-resize-handle');
+                if (!handle) {
+                    handle = document.createElement('div');
+                    handle.className = 'card-resize-handle';
+                    mountPoint.appendChild(handle);
+                }
+
+                // Drag touch handler on handle
+                let startY = 0;
+                let startVal = 0;
+
+                const onTouchStart = (e) => {
+                    e.stopPropagation();
+                    const touch = e.touches ? e.touches[0] : e;
+                    startY = touch.clientY;
+                    startVal = currentVal;
+
+                    const onTouchMove = (moveEvt) => {
+                        const moveTouch = moveEvt.touches ? moveEvt.touches[0] : moveEvt;
+                        const deltaY = moveTouch.clientY - startY;
+                        const factor = targetItem.type === 'font' ? 0.02 : 0.4;
+                        applySize(startVal + (deltaY * factor));
+                    };
+
+                    const onTouchEnd = () => {
+                        window.removeEventListener('mousemove', onTouchMove);
+                        window.removeEventListener('mouseup', onTouchEnd);
+                        window.removeEventListener('touchmove', onTouchMove);
+                        window.removeEventListener('touchend', onTouchEnd);
+                    };
+
+                    window.addEventListener('mousemove', onTouchMove);
+                    window.addEventListener('mouseup', onTouchEnd);
+                    window.addEventListener('touchmove', onTouchMove, { passive: true });
+                    window.addEventListener('touchend', onTouchEnd);
+                };
+
+                handle.onmousedown = onTouchStart;
+                handle.ontouchstart = onTouchStart;
             }
 
             // Read current value accurately
             let currentVal = 0;
-            if (el.dataset.customSize) {
-                currentVal = parseFloat(el.dataset.customSize);
-            } else if (item.type === 'font') {
-                const compPx = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+            if (targetEl.dataset.customSize) {
+                currentVal = parseFloat(targetEl.dataset.customSize);
+            } else if (targetItem.type === 'font') {
+                const compPx = parseFloat(window.getComputedStyle(targetEl).fontSize) || 16;
                 currentVal = Math.round((compPx / 16) * 20) / 20; // Snap to 0.05 step
-            } else if (item.type === 'height' && item.unit === '%') {
-                currentVal = parseInt(el.style.height || '48');
+            } else if (targetItem.type === 'height' && targetItem.unit === '%') {
+                currentVal = parseInt(targetEl.style.height || '48');
             } else {
-                currentVal = parseInt(el.style.maxHeight || window.getComputedStyle(el).maxHeight || '28');
+                // Height in px for logos
+                const compH = parseFloat(window.getComputedStyle(targetEl).height) || parseFloat(window.getComputedStyle(targetEl).maxHeight) || 30;
+                currentVal = Math.round(compH / targetItem.step) * targetItem.step;
+                if (!currentVal || currentVal < targetItem.min) currentVal = 30;
             }
 
             const updateSizeBarText = (val) => {
                 const span = document.getElementById('sizeBarValue');
                 if (!span) return;
-                const formattedVal = typeof val === 'number' ? (item.type === 'font' ? val.toFixed(2) : Math.round(val)) : val;
-                span.textContent = `Dimensione: ${formattedVal}${item.unit}`;
+                const formattedVal = typeof val === 'number' ? (targetItem.type === 'font' ? val.toFixed(2) : Math.round(val)) : val;
+                const label = targetItem.type === 'height' && targetItem.unit === 'px' ? 'Logo' : 'Dimensione';
+                span.textContent = `${label}: ${formattedVal}${targetItem.unit}`;
             };
 
             const applySize = (newVal) => {
-                newVal = Math.min(item.max, Math.max(item.min, newVal));
+                newVal = Math.min(targetItem.max, Math.max(targetItem.min, newVal));
                 currentVal = newVal;
-                el.dataset.userResized = 'true';
-                el.dataset.customSize = newVal;
+                targetEl.dataset.userResized = 'true';
+                targetEl.dataset.customSize = newVal;
 
-                if (item.type === 'font') {
-                    el.style.setProperty('font-size', `${newVal.toFixed(2)}${item.unit}`, 'important');
-                    if (el.id === 'cardMainQuote') {
-                        el.style.setProperty('line-height', '1.25', 'important');
+                if (targetItem.type === 'font') {
+                    targetEl.style.setProperty('font-size', `${newVal.toFixed(2)}${targetItem.unit}`, 'important');
+                    if (targetEl.id === 'cardMainQuote') {
+                        targetEl.style.setProperty('line-height', '1.25', 'important');
                     }
-                } else if (item.type === 'height' && item.unit === '%') {
-                    el.style.setProperty('height', `${Math.round(newVal)}%`, 'important');
+                } else if (targetItem.type === 'height' && targetItem.unit === '%') {
+                    targetEl.style.setProperty('height', `${Math.round(newVal)}%`, 'important');
                 } else {
-                    el.style.setProperty('max-height', `${Math.round(newVal)}px`, 'important');
-                    el.style.setProperty('height', `${Math.round(newVal)}px`, 'important');
+                    // Logo height (px)
+                    const pxVal = Math.round(newVal);
+                    targetEl.style.setProperty('height', `${pxVal}px`, 'important');
+                    targetEl.style.setProperty('max-height', `${pxVal}px`, 'important');
+                    // Allow proportional width expansion so max-width never blocks it:
+                    targetEl.style.setProperty('max-width', `${Math.round(pxVal * 7)}px`, 'important');
+                    targetEl.style.setProperty('width', 'auto', 'important');
+                    if (container && container !== targetEl) {
+                        container.style.setProperty('height', 'auto', 'important');
+                        container.style.setProperty('max-height', `${pxVal + 10}px`, 'important');
+                    }
                 }
                 updateSizeBarText(newVal);
             };
-
-            // Drag touch handler on handle
-            let startY = 0;
-            let startVal = 0;
-
-            const onTouchStart = (e) => {
-                e.stopPropagation();
-                const touch = e.touches ? e.touches[0] : e;
-                startY = touch.clientY;
-                startVal = currentVal;
-
-                const onTouchMove = (moveEvt) => {
-                    const moveTouch = moveEvt.touches ? moveEvt.touches[0] : moveEvt;
-                    const deltaY = moveTouch.clientY - startY;
-                    const factor = item.type === 'font' ? 0.02 : 0.4;
-                    applySize(startVal + (deltaY * factor));
-                };
-
-                const onTouchEnd = () => {
-                    window.removeEventListener('mousemove', onTouchMove);
-                    window.removeEventListener('mouseup', onTouchEnd);
-                    window.removeEventListener('touchmove', onTouchMove);
-                    window.removeEventListener('touchend', onTouchEnd);
-                };
-
-                window.addEventListener('mousemove', onTouchMove);
-                window.addEventListener('mouseup', onTouchEnd);
-                window.addEventListener('touchmove', onTouchMove, { passive: true });
-                window.addEventListener('touchend', onTouchEnd);
-            };
-
-            handle.onmousedown = onTouchStart;
-            handle.ontouchstart = onTouchStart;
 
             // Floating Controller Pill (Anchored to body above Canva bottom dock)
             let sizeBar = document.getElementById('cardElementSizeBar');
@@ -1379,7 +1458,7 @@
 
             sizeBar.innerHTML = `
                 <button type="button" id="btnSizeMinus" aria-label="Riduci">−</button>
-                <span id="sizeBarValue">Dimensione: ...</span>
+                <span id="sizeBarValue">...</span>
                 <button type="button" id="btnSizePlus" aria-label="Aumenta">+</button>
                 <button type="button" id="btnSizeClose" style="margin-left:6px; background:rgba(255,255,255,0.2);">✕</button>
             `;
@@ -1389,7 +1468,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                 }
-                const step = item.step || (item.type === 'font' ? 0.05 : 2);
+                const step = targetItem.step || (targetItem.type === 'font' ? 0.05 : 2);
                 applySize(currentVal + (direction * step));
             };
 
