@@ -404,11 +404,86 @@
 
         @media (max-width: 900px) {
             body { overflow-y: auto !important; }
-            .editor-header { padding: 0.75rem 1rem !important; flex-wrap: wrap !important; gap: 8px !important; }
-            .editor-layout { flex-direction: column !important; height: auto !important; }
-            .control-panel { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; padding: 1rem !important; }
-            .stage-area { padding: 1rem 0.5rem !important; width: 100% !important; overflow-x: auto !important; }
-            .card-stage { transform: scale(0.85); transform-origin: top center; }
+            
+            /* Header compatto su mobile */
+            .editor-header {
+                padding: 0.5rem 0.85rem !important;
+                height: 50px !important;
+                flex-wrap: nowrap !important;
+                gap: 8px !important;
+            }
+
+            /* Layout verticale su mobile */
+            .editor-layout {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+
+            /* Il pannello controlli desktop è nascosto (.hide-mobile), i controlli sono nel bottom dock */
+            .control-panel {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid var(--border-color) !important;
+                padding: 1rem !important;
+            }
+
+            /* Preview panel: area canvas su mobile, centrata, niente padding eccessivo */
+            .preview-panel {
+                padding: 1rem 0.5rem !important;
+                width: 100% !important;
+                justify-content: center !important;
+                align-items: flex-start !important;
+                overflow-x: hidden !important;
+                min-height: auto !important;
+            }
+
+            /* Card stage: dimensioni calcolate per stare dentro lo schermo */
+            /* Su mobile (< 900px) forziamo max-width: 94vw e height proporzionale */
+            .card-stage {
+                position: relative !important;
+                top: 0 !important;
+                max-width: 94vw !important;
+                transform: none !important;
+                transform-origin: unset !important;
+                margin: 0 auto !important;
+            }
+            /* Quadrato 1:1: max 94vw x 94vw */
+            .card-stage[data-format="1080x1080"] {
+                width: min(94vw, 400px) !important;
+                height: min(94vw, 400px) !important;
+            }
+            /* 4:5 Portrait */
+            .card-stage[data-format="1080x1350"] {
+                width: min(85vw, 340px) !important;
+                height: min(106.25vw, 425px) !important;
+            }
+            /* 9:16 Story */
+            .card-stage[data-format="1080x1920"] {
+                width: min(65vw, 260px) !important;
+                height: min(115.5vw, 462px) !important;
+            }
+
+            /* Scale down card text content proportionally to smaller card */
+            .linkedin-card .card-main-quote {
+                font-size: clamp(0.75rem, 3.5vw, 1.15rem) !important;
+            }
+            .linkedin-card .card-subtitle {
+                font-size: clamp(0.65rem, 2.5vw, 0.85rem) !important;
+            }
+            .linkedin-card #cardPublishDate,
+            .linkedin-card #cardDate {
+                font-size: clamp(0.6rem, 2.2vw, 0.78rem) !important;
+            }
+            .linkedin-card #cardAuthor,
+            .linkedin-card #cardBannerText,
+            .linkedin-card #cardEditorialText {
+                font-size: clamp(0.6rem, 2.2vw, 0.78rem) !important;
+            }
+            .linkedin-card #cardSourceLogo,
+            .linkedin-card #cardBannerLogo,
+            .linkedin-card #cardEditorialLogo {
+                max-height: 28px !important;
+            }
         }
     </style>
 </head>
@@ -1157,6 +1232,14 @@
         // INTERACTIVE TOUCH & DRAG ELEMENT RESIZING
         // ============================================================
         let selectedCardElement = null;
+
+        // Alias: initCardElementResizing is called by updateCardView and after extraction.
+        // It delegates to attachTouchResizing (mobile only).
+        window.initCardElementResizing = function() {
+            if (typeof window.attachTouchResizing === 'function') {
+                window.attachTouchResizing();
+            }
+        };
 
         window.attachTouchResizing = function() {
             if (window.innerWidth > 900) return; // STRICTLY MOBILE ONLY!
