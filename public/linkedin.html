@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Post LinkedIn | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Source+Serif+4:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260904_01">
+    <link rel="stylesheet" href="styles.css?v=20260907_01">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -463,26 +463,26 @@
                 height: min(115.5vw, 462px) !important;
             }
 
-            /* Scale down card text content proportionally to smaller card */
+            /* Scale down card text content proportionally to smaller card (default baseline, overrideable by user resizing) */
             .linkedin-card .card-main-quote {
-                font-size: clamp(0.75rem, 3.5vw, 1.15rem) !important;
+                font-size: clamp(0.75rem, 3.5vw, 1.15rem);
             }
             .linkedin-card .card-subtitle {
-                font-size: clamp(0.65rem, 2.5vw, 0.85rem) !important;
+                font-size: clamp(0.65rem, 2.5vw, 0.85rem);
             }
             .linkedin-card #cardPublishDate,
             .linkedin-card #cardDate {
-                font-size: clamp(0.6rem, 2.2vw, 0.78rem) !important;
+                font-size: clamp(0.6rem, 2.2vw, 0.78rem);
             }
             .linkedin-card #cardAuthor,
             .linkedin-card #cardBannerText,
             .linkedin-card #cardEditorialText {
-                font-size: clamp(0.6rem, 2.2vw, 0.78rem) !important;
+                font-size: clamp(0.6rem, 2.2vw, 0.78rem);
             }
             .linkedin-card #cardSourceLogo,
             .linkedin-card #cardBannerLogo,
             .linkedin-card #cardEditorialLogo {
-                max-height: 28px !important;
+                max-height: 28px;
             }
         }
     </style>
@@ -1150,6 +1150,7 @@
 
             // Download Image Function (High Res HTML2Canvas export)
             async function downloadCardImage(formatType = 'png') {
+                if (window.deselectCardElements) window.deselectCardElements();
                 const fmt = cardStage.dataset.format;
                 let targetWidth = 1080;
 
@@ -1294,6 +1295,46 @@
                 el.appendChild(handle);
             }
 
+            // Read current value accurately
+            let currentVal = 0;
+            if (el.dataset.customSize) {
+                currentVal = parseFloat(el.dataset.customSize);
+            } else if (item.type === 'font') {
+                const compPx = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+                currentVal = Math.round((compPx / 16) * 20) / 20; // Snap to 0.05 step
+            } else if (item.type === 'height' && item.unit === '%') {
+                currentVal = parseInt(el.style.height || '48');
+            } else {
+                currentVal = parseInt(el.style.maxHeight || window.getComputedStyle(el).maxHeight || '28');
+            }
+
+            const updateSizeBarText = (val) => {
+                const span = document.getElementById('sizeBarValue');
+                if (!span) return;
+                const formattedVal = typeof val === 'number' ? (item.type === 'font' ? val.toFixed(2) : Math.round(val)) : val;
+                span.textContent = `Dimensione: ${formattedVal}${item.unit}`;
+            };
+
+            const applySize = (newVal) => {
+                newVal = Math.min(item.max, Math.max(item.min, newVal));
+                currentVal = newVal;
+                el.dataset.userResized = 'true';
+                el.dataset.customSize = newVal;
+
+                if (item.type === 'font') {
+                    el.style.setProperty('font-size', `${newVal.toFixed(2)}${item.unit}`, 'important');
+                    if (el.id === 'cardMainQuote') {
+                        el.style.setProperty('line-height', '1.25', 'important');
+                    }
+                } else if (item.type === 'height' && item.unit === '%') {
+                    el.style.setProperty('height', `${Math.round(newVal)}%`, 'important');
+                } else {
+                    el.style.setProperty('max-height', `${Math.round(newVal)}px`, 'important');
+                    el.style.setProperty('height', `${Math.round(newVal)}px`, 'important');
+                }
+                updateSizeBarText(newVal);
+            };
+
             // Drag touch handler on handle
             let startY = 0;
             let startVal = 0;
@@ -1302,28 +1343,13 @@
                 e.stopPropagation();
                 const touch = e.touches ? e.touches[0] : e;
                 startY = touch.clientY;
-                if (item.type === 'font') {
-                    startVal = parseFloat(window.getComputedStyle(el).fontSize) / 16;
-                } else if (item.type === 'height' && item.unit === '%') {
-                    startVal = parseInt(el.style.height || '48');
-                } else {
-                    startVal = parseInt(el.style.maxHeight || window.getComputedStyle(el).maxHeight || '32');
-                }
+                startVal = currentVal;
 
                 const onTouchMove = (moveEvt) => {
                     const moveTouch = moveEvt.touches ? moveEvt.touches[0] : moveEvt;
                     const deltaY = moveTouch.clientY - startY;
                     const factor = item.type === 'font' ? 0.02 : 0.4;
-                    let newVal = Math.min(item.max, Math.max(item.min, startVal + (deltaY * factor)));
-                    
-                    if (item.type === 'font') {
-                        el.style.fontSize = `${newVal.toFixed(2)}${item.unit}`;
-                    } else if (item.type === 'height' && item.unit === '%') {
-                        el.style.height = `${newVal.toFixed(0)}%`;
-                    } else {
-                        el.style.maxHeight = `${newVal.toFixed(0)}px`;
-                    }
-                    updateSizeBarText(newVal);
+                    applySize(startVal + (deltaY * factor));
                 };
 
                 const onTouchEnd = () => {
@@ -1351,45 +1377,44 @@
                 document.body.appendChild(sizeBar);
             }
 
-            const updateSizeBarText = (val) => {
-                if (val === undefined) {
-                    if (item.type === 'font') {
-                        val = parseFloat(window.getComputedStyle(el).fontSize) / 16;
-                        val = Math.round(val * 20) / 20;
-                    } else {
-                        val = parseInt(el.style.height || el.style.maxHeight || window.getComputedStyle(el).height);
-                    }
+            sizeBar.innerHTML = `
+                <button type="button" id="btnSizeMinus" aria-label="Riduci">−</button>
+                <span id="sizeBarValue">Dimensione: ...</span>
+                <button type="button" id="btnSizePlus" aria-label="Aumenta">+</button>
+                <button type="button" id="btnSizeClose" style="margin-left:6px; background:rgba(255,255,255,0.2);">✕</button>
+            `;
+
+            const handleStep = (direction, e) => {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                 }
-                const formattedVal = typeof val === 'number' ? (item.type === 'font' ? val.toFixed(2) : Math.round(val)) : val;
-                sizeBar.innerHTML = `
-                    <button type="button" onclick="adjustElementSize(-1)">−</button>
-                    <span>Dimensione: ${formattedVal}${item.unit}</span>
-                    <button type="button" onclick="adjustElementSize(1)">+</button>
-                    <button type="button" onclick="deselectCardElements()" style="margin-left:6px; background:rgba(255,255,255,0.2);">✕</button>
-                `;
+                const step = item.step || (item.type === 'font' ? 0.05 : 2);
+                applySize(currentVal + (direction * step));
             };
+
+            const btnMinus = document.getElementById('btnSizeMinus');
+            const btnPlus = document.getElementById('btnSizePlus');
+            const btnClose = document.getElementById('btnSizeClose');
+
+            if (btnMinus) {
+                btnMinus.addEventListener('click', (e) => handleStep(-1, e));
+            }
+            if (btnPlus) {
+                btnPlus.addEventListener('click', (e) => handleStep(1, e));
+            }
+            if (btnClose) {
+                btnClose.addEventListener('click', (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    deselectCardElements();
+                });
+            }
 
             window.adjustElementSize = function(direction) {
-                let currentVal;
-                if (item.type === 'font') {
-                    currentVal = parseFloat(window.getComputedStyle(el).fontSize) / 16;
-                    let newVal = Math.min(item.max, Math.max(item.min, currentVal + (direction * item.step)));
-                    el.style.fontSize = `${newVal.toFixed(2)}${item.unit}`;
-                    updateSizeBarText(newVal);
-                } else if (item.type === 'height' && item.unit === '%') {
-                    currentVal = parseInt(el.style.height || '48');
-                    let newVal = Math.min(item.max, Math.max(item.min, currentVal + (direction * item.step)));
-                    el.style.height = `${newVal}%`;
-                    updateSizeBarText(newVal);
-                } else if (item.type === 'height' && item.unit === 'px') {
-                    currentVal = parseInt(el.style.maxHeight || window.getComputedStyle(el).maxHeight || '32');
-                    let newVal = Math.min(item.max, Math.max(item.min, currentVal + (direction * item.step)));
-                    el.style.maxHeight = `${newVal}px`;
-                    updateSizeBarText(newVal);
-                }
+                handleStep(direction);
             };
 
-            updateSizeBarText();
+            updateSizeBarText(currentVal);
         }
 
         window.deselectCardElements = function() {

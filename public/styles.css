@@ -2678,21 +2678,25 @@ input::placeholder, textarea::placeholder {
     }
 
     .card-element-size-bar button {
-        width: 28px !important;
-        height: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
         border-radius: 50% !important;
-        background: rgba(255,255,255,0.15) !important;
+        background: rgba(255,255,255,0.18) !important;
         border: none !important;
         color: white !important;
-        font-size: 1.1rem !important;
+        font-size: 1.15rem !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
         line-height: 1 !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        touch-action: manipulation !important;
     }
 
     .card-element-size-bar button:active {
         background: #7c5cff !important;
+        transform: scale(0.92) !important;
     }
 } /* END @media (max-width: 900px) */
