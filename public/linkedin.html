@@ -961,27 +961,20 @@
                 if (window.autoFitCardText) window.autoFitCardText();
 
                 setTimeout(initCardElementResizing, 100);
+
+                // Programma uno snapshot undo dopo ogni render del card
+                if (window.scheduleUndoSnapshot) window.scheduleUndoSnapshot();
             }
 
-            // Expose updateCardView globally so undo system can call it
+            // Expose updateCardView globally
             window.updateCardView = updateCardView;
 
-            // Debounced snapshot for text inputs (push before user finishes typing)
-            let _undoDebounceTimer = null;
-            function scheduleUndoSnapshot() {
-                clearTimeout(_undoDebounceTimer);
-                _undoDebounceTimer = setTimeout(() => {
-                    if (window.pushCardSnapshot) window.pushCardSnapshot();
-                }, 700);
-            }
-
             [inputQuote, inputSubtitle, inputDate, inputAuthor, inputImagePosition, colorText, colorAccent].forEach(el => {
-                el.addEventListener('input', () => { scheduleUndoSnapshot(); updateCardView(); });
+                el.addEventListener('input', updateCardView);
             });
 
             // Newspaper Logo Selection
             sourceLogoSelect.addEventListener('change', (e) => {
-                if (window.pushCardSnapshot) window.pushCardSnapshot();
                 const val = e.target.value;
                 if (val) {
                     cardSourceLogo.src = `/logos/${val}.png`;
@@ -1010,7 +1003,6 @@
             // Shared Upload Handlers (Direct FileReader support for Android/iOS gallery & Desktop)
             function handleSourceLogoUpload(file) {
                 if (!file) return;
-                if (window.pushCardSnapshot) window.pushCardSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     const src = evt.target.result;
@@ -1038,7 +1030,6 @@
 
             function handleClientLogoUpload(file) {
                 if (!file) return;
-                if (window.pushCardSnapshot) window.pushCardSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     const src = evt.target.result;
@@ -1057,7 +1048,6 @@
 
             function handleNewsPhotoUpload(file) {
                 if (!file) return;
-                if (window.pushCardSnapshot) window.pushCardSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     cardPhoto.src = evt.target.result;
@@ -1718,196 +1708,156 @@
         });
 
         // ============================================================
-        // UNDO HISTORY SYSTEM
+        // UNDO HISTORY SYSTEM — DOM innerHTML snapshot (semplice e affidabile)
         // ============================================================
-        const cardUndoStack = [];
-        const CARD_UNDO_MAX = 20;
-        let _undoRestoring = false; // guard to prevent re-entrant pushes during restore
+        // Salviamo l'intero innerHTML del card ad ogni cambiamento.
+        // Ctrl+Z / tasto ↺ ripristina l'HTML precedente.
+        // ============================================================
+        var _undoHistory = [];      // array di oggetti { cardHTML, cardClass, inputs, photoPos }
+        var _undoPointer  = -1;     // indice dello stato corrente
+        var _undoMax      = 20;
+        var _undoLocked   = false;  // blocca nuove snapshot durante il ripristino
+        var _undoTimer    = null;   // timer per il debounce
 
-        function _getUndoBtn() {
-            return document.getElementById('headerBtnUndo');
+        function _undoBtnEl() { return document.getElementById('headerBtnUndo'); }
+
+        function _undoRefreshBtn() {
+            var btn = _undoBtnEl();
+            if (btn) btn.style.opacity = _undoPointer > 0 ? '1' : '0.35';
         }
 
-        function _updateUndoBtnState() {
-            const btn = _getUndoBtn();
-            if (!btn) return;
-            btn.style.opacity = cardUndoStack.length > 1 ? '1' : '0.35';
-        }
+        // Cattura lo stato corrente del card e di tutti i controlli
+        window.takeUndoSnapshot = function() {
+            if (_undoLocked) return;
+            var card = document.getElementById('linkedinCard');
+            if (!card) return;
 
-        function captureCardSnapshot() {
-            const cardPhoto = document.getElementById('cardPhoto');
-            const cardMainQuote = document.getElementById('cardMainQuote');
-            const cardSubtitle = document.getElementById('cardSubtitle');
-            const cardDate = document.getElementById('cardDate');
-            const cardSourceLogo = document.getElementById('cardSourceLogo');
-            const cardClientLogo = document.getElementById('cardClientLogo');
-            const cardBannerLogo = document.getElementById('cardBannerLogo');
-            const cardEditorialLogo = document.getElementById('cardEditorialLogo');
-            const colorText = document.getElementById('colorText');
-            const colorAccent = document.getElementById('colorAccent');
-            const cardStage = document.getElementById('cardStage');
-            const inputQuote = document.getElementById('inputQuote');
-            const inputSubtitle = document.getElementById('inputSubtitle');
-            const inputDate = document.getElementById('inputDate');
+            // Salva valori di tutti gli input principali
+            var inputs = {};
+            ['inputQuote','inputSubtitle','inputDate','inputAuthor','colorText','colorAccent'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) inputs[id] = el.value;
+            });
 
-            return {
-                quote: inputQuote ? inputQuote.value : '',
-                subtitle: inputSubtitle ? inputSubtitle.value : '',
-                date: inputDate ? inputDate.value : '',
-                photoSrc: cardPhoto ? cardPhoto.src : '',
-                photoPosition: cardPhoto ? cardPhoto.style.objectPosition : '',
-                sourceLogoSrc: cardSourceLogo ? cardSourceLogo.src : '',
-                sourceLogoDisplay: cardSourceLogo ? cardSourceLogo.style.display : '',
-                clientLogoSrc: cardClientLogo ? cardClientLogo.src : '',
-                bannerLogoSrc: cardBannerLogo ? cardBannerLogo.src : '',
-                editorialLogoSrc: cardEditorialLogo ? cardEditorialLogo.src : '',
-                colorText: colorText ? colorText.value : '',
-                colorAccent: colorAccent ? colorAccent.value : '',
-                format: cardStage ? cardStage.dataset.format : '',
-                quoteSize: cardMainQuote ? cardMainQuote.style.fontSize : '',
-                quoteSizeCustom: cardMainQuote ? cardMainQuote.dataset.customSize || '' : '',
-                quoteUserResized: cardMainQuote ? cardMainQuote.dataset.userResized || '' : '',
+            var photo = document.getElementById('cardPhoto');
+            var snap = {
+                cardHTML  : card.innerHTML,
+                cardClass : card.className,
+                stageFormat: (document.getElementById('cardStage') || {}).dataset && document.getElementById('cardStage').dataset.format || '',
+                inputs    : inputs,
+                photoPos  : photo ? photo.style.objectPosition : ''
             };
-        }
 
-        function pushCardSnapshot() {
-            if (_undoRestoring) return; // skip pushes during a restore operation
-            const snap = captureCardSnapshot();
-            // Avoid duplicate snapshots
-            if (cardUndoStack.length > 0) {
-                const last = cardUndoStack[cardUndoStack.length - 1];
-                if (JSON.stringify(last) === JSON.stringify(snap)) return;
+            // Confronta con lo stato corrente: se identico, non aggiunge nulla
+            if (_undoPointer >= 0) {
+                var cur = _undoHistory[_undoPointer];
+                if (cur && cur.cardHTML === snap.cardHTML) return;
             }
-            cardUndoStack.push(snap);
-            if (cardUndoStack.length > CARD_UNDO_MAX) cardUndoStack.shift();
-            _updateUndoBtnState();
-        }
-        window.pushCardSnapshot = pushCardSnapshot;
 
-        function applyCardSnapshot(snap) {
-            _undoRestoring = true;
-            try {
-                const cardPhoto = document.getElementById('cardPhoto');
-                const cardMainQuote = document.getElementById('cardMainQuote');
-                const cardSubtitle = document.getElementById('cardSubtitle');
-                const cardDate = document.getElementById('cardDate');
-                const cardSourceLogo = document.getElementById('cardSourceLogo');
-                const cardAuthor = document.getElementById('cardAuthor');
-                const cardClientLogo = document.getElementById('cardClientLogo');
-                const cardClientLogoContainer = document.getElementById('cardClientLogoContainer');
-                const cardBannerLogo = document.getElementById('cardBannerLogo');
-                const cardBannerClientContainer = document.getElementById('cardBannerClientContainer');
-                const cardBannerClient = document.getElementById('cardBannerClient');
-                const cardEditorialLogo = document.getElementById('cardEditorialLogo');
-                const colorText = document.getElementById('colorText');
-                const colorTextHex = document.getElementById('colorTextHex');
-                const colorAccent = document.getElementById('colorAccent');
-                const colorAccentHex = document.getElementById('colorAccentHex');
-                const inputQuote = document.getElementById('inputQuote');
-                const inputSubtitle = document.getElementById('inputSubtitle');
-                const inputDate = document.getElementById('inputDate');
-                const mobileInputQuote = document.getElementById('mobileInputQuote');
-                const mobileInputSubtitle = document.getElementById('mobileInputSubtitle');
-                const mobileInputDate = document.getElementById('mobileInputDate');
-                const mobileImgPosY = document.getElementById('mobileInputImagePositionY');
-                const mobileImgPosLabel = document.getElementById('mobileImgPositionLabel');
+            // Tronca la storia "futura" (redo) se ci siamo mossi indietro
+            _undoHistory.splice(_undoPointer + 1);
+            _undoHistory.push(snap);
+            if (_undoHistory.length > _undoMax) _undoHistory.shift();
+            else _undoPointer++;
 
-                // Restore text inputs
-                if (inputQuote) inputQuote.value = snap.quote;
-                if (inputSubtitle) inputSubtitle.value = snap.subtitle;
-                if (inputDate) inputDate.value = snap.date;
-                if (mobileInputQuote) mobileInputQuote.value = snap.quote;
-                if (mobileInputSubtitle) mobileInputSubtitle.value = snap.subtitle;
-                if (mobileInputDate) mobileInputDate.value = snap.date;
-
-                // Restore font size on quote element
-                if (cardMainQuote) {
-                    if (snap.quoteSize) cardMainQuote.style.setProperty('font-size', snap.quoteSize, 'important');
-                    cardMainQuote.dataset.customSize = snap.quoteSizeCustom;
-                    cardMainQuote.dataset.userResized = snap.quoteUserResized;
-                }
-
-                // Restore photo
-                if (cardPhoto && snap.photoSrc) {
-                    cardPhoto.src = snap.photoSrc;
-                    if (snap.photoPosition) {
-                        cardPhoto.style.objectPosition = snap.photoPosition;
-                        if (mobileImgPosY) {
-                            const match = snap.photoPosition.match(/(\d+)%/);
-                            if (match) {
-                                mobileImgPosY.value = match[1];
-                                if (mobileImgPosLabel) mobileImgPosLabel.textContent = match[1] == 50 ? 'Centro' : match[1] + '%';
-                            }
-                        }
-                    }
-                }
-
-                // Restore logos
-                if (cardSourceLogo && snap.sourceLogoSrc) {
-                    cardSourceLogo.src = snap.sourceLogoSrc;
-                    if (snap.sourceLogoDisplay !== undefined) cardSourceLogo.style.display = snap.sourceLogoDisplay;
-                }
-                if (cardBannerLogo && snap.bannerLogoSrc) cardBannerLogo.src = snap.bannerLogoSrc;
-                if (cardEditorialLogo && snap.editorialLogoSrc) cardEditorialLogo.src = snap.editorialLogoSrc;
-                if (cardClientLogo && snap.clientLogoSrc) {
-                    cardClientLogo.src = snap.clientLogoSrc;
-                    if (cardBannerClient) cardBannerClient.src = snap.clientLogoSrc;
-                }
-
-                // Restore colors
-                if (colorText && snap.colorText) {
-                    colorText.value = snap.colorText;
-                    if (colorTextHex) colorTextHex.value = snap.colorText.toUpperCase();
-                }
-                if (colorAccent && snap.colorAccent) {
-                    colorAccent.value = snap.colorAccent;
-                    if (colorAccentHex) colorAccentHex.value = snap.colorAccent.toUpperCase();
-                }
-
-                // Re-render card using the native function
-                if (window.updateCardView) window.updateCardView();
-            } finally {
-                _undoRestoring = false;
-            }
-        }
-
-        window.undoCardAction = function() {
-            if (cardUndoStack.length <= 1) {
-                const btn = _getUndoBtn();
-                if (btn) {
-                    btn.style.transform = 'scale(0.80)';
-                    setTimeout(() => btn.style.transform = '', 150);
-                }
-                return;
-            }
-            cardUndoStack.pop(); // discard current state
-            const prev = cardUndoStack[cardUndoStack.length - 1];
-            applyCardSnapshot(prev);
-            _updateUndoBtnState();
+            _undoRefreshBtn();
         };
 
-        // Keyboard Ctrl+Z / Cmd+Z support
-        document.addEventListener('keydown', (e) => {
+        // Versione debounced: chiamata da updateCardView per non sovraccaricare
+        window.scheduleUndoSnapshot = function() {
+            if (_undoLocked) return;
+            clearTimeout(_undoTimer);
+            _undoTimer = setTimeout(window.takeUndoSnapshot, 500);
+        };
+
+        // Ripristina lo stato precedente
+        window.undoCardAction = function() {
+            if (_undoPointer <= 0) {
+                var btn = _undoBtnEl();
+                if (btn) { btn.style.transform = 'scale(0.8)'; setTimeout(function(){ btn.style.transform = ''; }, 160); }
+                return;
+            }
+
+            _undoLocked = true;
+            clearTimeout(_undoTimer);
+
+            _undoPointer--;
+            var snap = _undoHistory[_undoPointer];
+
+            // Ripristina HTML del card
+            var card = document.getElementById('linkedinCard');
+            if (card && snap.cardHTML) {
+                card.innerHTML = snap.cardHTML;
+                card.className = snap.cardClass;
+            }
+
+            // Ripristina formato stage
+            var stage = document.getElementById('cardStage');
+            if (stage && snap.stageFormat) stage.dataset.format = snap.stageFormat;
+
+            // Ripristina i valori degli input del pannello controlli
+            if (snap.inputs) {
+                Object.keys(snap.inputs).forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = snap.inputs[id];
+                });
+                // Sync input mobili
+                var mq = document.getElementById('mobileInputQuote');
+                var ms = document.getElementById('mobileInputSubtitle');
+                var md = document.getElementById('mobileInputDate');
+                if (mq && snap.inputs.inputQuote !== undefined) mq.value = snap.inputs.inputQuote;
+                if (ms && snap.inputs.inputSubtitle !== undefined) ms.value = snap.inputs.inputSubtitle;
+                if (md && snap.inputs.inputDate !== undefined) md.value = snap.inputs.inputDate;
+            }
+
+            // Ripristina posizione foto sullo slider mobile
+            if (snap.photoPos) {
+                var sliderY = document.getElementById('mobileInputImagePositionY');
+                var sliderLabel = document.getElementById('mobileImgPositionLabel');
+                if (sliderY) {
+                    var m = snap.photoPos.match(/(\d+)%/);
+                    if (m) {
+                        sliderY.value = m[1];
+                        if (sliderLabel) sliderLabel.textContent = parseInt(m[1]) === 50 ? 'Centro' : m[1] + '%';
+                    }
+                }
+            }
+
+            // Aggiorna hex fields colore
+            var ct = document.getElementById('colorText');
+            var ctHex = document.getElementById('colorTextHex');
+            var ca = document.getElementById('colorAccent');
+            var caHex = document.getElementById('colorAccentHex');
+            if (ct && ctHex) ctHex.value = ct.value.toUpperCase();
+            if (ca && caHex) caHex.value = ca.value.toUpperCase();
+
+            // Re-init handler tocco (il DOM del card è stato sostituito)
+            if (window.initCardElementResizing) setTimeout(window.initCardElementResizing, 200);
+
+            _undoLocked = false;
+            _undoRefreshBtn();
+        };
+
+        // Ctrl+Z / Cmd+Z da tastiera (non intercettare quando il cursore è in un input)
+        document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                // Don't intercept inside text inputs
-                const tag = (e.target.tagName || '').toLowerCase();
+                var tag = (e.target.tagName || '').toLowerCase();
                 if (tag === 'input' || tag === 'textarea') return;
                 e.preventDefault();
                 window.undoCardAction();
             }
         });
 
-        // Take initial snapshot once card is fully rendered
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                pushCardSnapshot();
-                _updateUndoBtnState();
-            }, 800);
+        // Snapshot iniziale: attende che l'estrazione (se presente) completi
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                window.takeUndoSnapshot();
+                _undoRefreshBtn();
+            }, 1500); // 1.5s dà tempo all'estrazione automatica di popolare il card
         });
 
         // Helper: Apply Palette Preset
         function applyColorPreset(textCol, accentCol) {
-            if (window.pushCardSnapshot) window.pushCardSnapshot();
             const colorText = document.getElementById('colorText');
             const colorTextHex = document.getElementById('colorTextHex');
             const colorAccent = document.getElementById('colorAccent');
