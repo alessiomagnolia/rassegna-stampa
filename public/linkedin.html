@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Post LinkedIn | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Source+Serif+4:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260907_02">
+    <link rel="stylesheet" href="styles.css?v=20260908_01">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -465,24 +465,52 @@
 
             /* Scale down card text content proportionally to smaller card (default baseline, overrideable by user resizing) */
             .linkedin-card .card-main-quote {
-                font-size: clamp(0.75rem, 3.5vw, 1.15rem);
+                font-size: clamp(0.75rem, 3.2vw, 1.05rem);
             }
             .linkedin-card .card-subtitle {
                 font-size: clamp(0.65rem, 2.5vw, 0.85rem);
             }
             .linkedin-card #cardPublishDate,
             .linkedin-card #cardDate {
-                font-size: clamp(0.6rem, 2.2vw, 0.78rem);
+                font-size: 0.70rem;
+                margin-top: 0 !important;
             }
-            .linkedin-card #cardAuthor,
+            .linkedin-card #cardAuthor {
+                font-size: 0.92rem;
+                line-height: 1.15;
+                margin-bottom: 1px;
+            }
             .linkedin-card #cardBannerText,
             .linkedin-card #cardEditorialText {
                 font-size: clamp(0.6rem, 2.2vw, 0.78rem);
             }
-            .linkedin-card #cardSourceLogo,
+            .linkedin-card #cardSourceLogo {
+                max-height: 22px;
+            }
             .linkedin-card #cardBannerLogo,
             .linkedin-card #cardEditorialLogo {
-                max-height: 28px;
+                max-height: 24px;
+            }
+
+            /* Template 1 (Speech): refine photo/content ratio and padding so title never hits the bottom edge */
+            .tpl-speech #cardPhotoContainer {
+                height: 44% !important;
+            }
+            .tpl-speech #cardContentBox {
+                padding: 8px 16px 14px !important;
+                justify-content: flex-start !important;
+            }
+            .tpl-speech #bannerTopMeta {
+                margin-bottom: 2px !important;
+            }
+            .tpl-speech #cardSourceLogoContainer {
+                margin-bottom: 0 !important;
+            }
+            .tpl-speech #cardDivider {
+                margin-top: 2px !important;
+                margin-bottom: 6px !important;
+                height: 2px !important;
+                width: 38px !important;
             }
         }
     </style>
@@ -745,7 +773,7 @@
                                 <div>
                                     <div id="cardSourceLogoContainer" style="margin-bottom: 2px; position: relative; display: inline-flex; align-items: center; cursor: pointer;">
                                         <img id="cardSourceLogo" style="max-height: 32px; max-width: 160px; object-fit: contain; display: none;" src="" alt="Logo Testata">
-                                        <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
+                                        <div id="cardAuthor" class="card-meta-author" style="font-family: 'Playfair Display', serif; font-weight: 800; color: #1a1a2e;">la Repubblica</div>
                                     </div>
                                     <div id="cardDate" class="card-meta-role" style="font-family: 'Inter', sans-serif; font-size: 0.78rem; font-style: italic; color: #64748b; margin-top: 2px;">22/07/2026</div>
                                 </div>
@@ -963,41 +991,66 @@
                 }
             });
 
-            // Custom Source Logo Upload
-            inputSourceLogoFile.addEventListener('change', (e) => {
-                const file = e.target.files[0];
+            // Shared Upload Handlers (Direct FileReader support for Android/iOS gallery & Desktop)
+            function handleSourceLogoUpload(file) {
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    cardSourceLogo.src = evt.target.result;
+                    const src = evt.target.result;
+                    cardSourceLogo.src = src;
                     cardSourceLogo.style.display = 'block';
                     cardAuthor.style.display = 'none';
 
-                    cardBannerLogo.src = evt.target.result;
+                    cardBannerLogo.src = src;
                     cardBannerLogo.style.display = 'block';
                     cardBannerText.style.display = 'none';
 
-                    cardEditorialLogo.src = evt.target.result;
+                    cardEditorialLogo.src = src;
                     cardEditorialLogo.style.display = 'block';
                     cardEditorialText.style.display = 'none';
+
+                    sourceLogoSelect.value = '';
+                    const mSelect = document.getElementById('mobileSourceLogoSelect');
+                    if (mSelect) mSelect.value = '';
+
+                    updateCardView();
                 };
                 reader.readAsDataURL(file);
-            });
+            }
+            window.handleSourceLogoUpload = handleSourceLogoUpload;
 
-            // Custom Client Logo Upload
-            inputClientLogoFile.addEventListener('change', (e) => {
-                const file = e.target.files[0];
+            function handleClientLogoUpload(file) {
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    cardClientLogo.src = evt.target.result;
+                    const src = evt.target.result;
+                    cardClientLogo.src = src;
                     cardClientLogoContainer.style.display = 'block';
-                    cardBannerClient.src = evt.target.result;
+                    cardBannerClient.src = src;
                     cardBannerClientContainer.style.display = 'block';
                     btnRemoveClientLogo.classList.remove('hidden');
+                    const mBtnRemove = document.getElementById('mobileBtnRemoveClientLogo');
+                    if (mBtnRemove) mBtnRemove.classList.remove('hidden');
+                    updateCardView();
                 };
                 reader.readAsDataURL(file);
-            });
+            }
+            window.handleClientLogoUpload = handleClientLogoUpload;
+
+            function handleNewsPhotoUpload(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    cardPhoto.src = evt.target.result;
+                    updateCardView();
+                };
+                reader.readAsDataURL(file);
+            }
+            window.handleNewsPhotoUpload = handleNewsPhotoUpload;
+
+            inputSourceLogoFile.addEventListener('change', (e) => handleSourceLogoUpload(e.target.files[0]));
+            inputClientLogoFile.addEventListener('change', (e) => handleClientLogoUpload(e.target.files[0]));
+            inputImageFile.addEventListener('change', (e) => handleNewsPhotoUpload(e.target.files[0]));
 
             btnRemoveClientLogo.addEventListener('click', () => {
                 cardClientLogo.src = '';
@@ -1005,17 +1058,8 @@
                 cardBannerClient.src = '';
                 cardBannerClientContainer.style.display = 'none';
                 btnRemoveClientLogo.classList.add('hidden');
-            });
-
-            // Image File Upload
-            inputImageFile.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    cardPhoto.src = evt.target.result;
-                };
-                reader.readAsDataURL(file);
+                const mBtnRemove = document.getElementById('mobileBtnRemoveClientLogo');
+                if (mBtnRemove) mBtnRemove.classList.add('hidden');
             });
 
             // Image URL Input
@@ -1104,30 +1148,46 @@
                     if (data.imageBase64) cardPhoto.src = data.imageBase64;
                     if (data.source_name) inputAuthor.value = data.source_name;
 
-                    // Auto match source logo
+                    // Automatic source logo detection (data.logoBase64 or known outlet match)
+                    let logoSrc = data.logoBase64 || null;
                     const lowerSource = (data.source_name || '').toLowerCase();
                     let matchedKey = '';
-                    if (lowerSource.includes('repubblica')) matchedKey = 'repubblica';
-                    else if (lowerSource.includes('corriere')) matchedKey = 'corriere';
-                    else if (lowerSource.includes('sole')) matchedKey = 'ilsole24ore';
-                    else if (lowerSource.includes('stampa')) matchedKey = 'stampa';
-                    else if (lowerSource.includes('diario')) matchedKey = 'ildiariodellavoro';
 
-                    if (matchedKey) {
-                        sourceLogoSelect.value = matchedKey;
-                        cardSourceLogo.src = `/logos/${matchedKey}.png`;
+                    if (!logoSrc) {
+                        if (lowerSource.includes('repubblica')) { matchedKey = 'repubblica'; logoSrc = '/logos/repubblica.png'; }
+                        else if (lowerSource.includes('corriere')) { matchedKey = 'corriere'; logoSrc = '/logos/corriere.png'; }
+                        else if (lowerSource.includes('sole')) { matchedKey = 'ilsole24ore'; logoSrc = '/logos/ilsole24ore.png'; }
+                        else if (lowerSource.includes('stampa')) { matchedKey = 'stampa'; logoSrc = '/logos/stampa.png'; }
+                        else if (lowerSource.includes('diario')) { matchedKey = 'ildiariodellavoro'; logoSrc = '/logos/ildiariodellavoro.png'; }
+                        else if (lowerSource.includes('fanpage')) { matchedKey = 'fanpage'; logoSrc = '/logos/fanpage.svg'; }
+                        else if (lowerSource.includes('ansa')) { matchedKey = 'ansa'; logoSrc = '/logos/ansa.png'; }
+                        else if (lowerSource.includes('askanews')) { matchedKey = 'Askanews'; logoSrc = '/logos/Askanews.png'; }
+                        else if (lowerSource.includes('mattino')) { matchedKey = 'ilmattino'; logoSrc = '/logos/ilmattino.png'; }
+                        else if (lowerSource.includes('tempo')) { matchedKey = 'iltempo'; logoSrc = '/logos/iltempo.png'; }
+                        else if (lowerSource.includes('giornale d')) { matchedKey = 'ilgiornaleditalia'; logoSrc = '/logos/ilgiornaleditalia.png'; }
+                    }
+
+                    if (logoSrc) {
+                        sourceLogoSelect.value = matchedKey || '';
+                        const mSelect = document.getElementById('mobileSourceLogoSelect');
+                        if (mSelect) mSelect.value = matchedKey || '';
+
+                        cardSourceLogo.src = logoSrc;
                         cardSourceLogo.style.display = 'block';
                         cardAuthor.style.display = 'none';
 
-                        cardBannerLogo.src = `/logos/${matchedKey}.png`;
+                        cardBannerLogo.src = logoSrc;
                         cardBannerLogo.style.display = 'block';
                         cardBannerText.style.display = 'none';
 
-                        cardEditorialLogo.src = `/logos/${matchedKey}.png`;
+                        cardEditorialLogo.src = logoSrc;
                         cardEditorialLogo.style.display = 'block';
                         cardEditorialText.style.display = 'none';
                     } else {
                         sourceLogoSelect.value = '';
+                        const mSelect = document.getElementById('mobileSourceLogoSelect');
+                        if (mSelect) mSelect.value = '';
+
                         cardSourceLogo.style.display = 'none';
                         cardAuthor.style.display = 'block';
 
@@ -1555,36 +1615,18 @@
             }
 
             const mImg = document.getElementById('mobileInputImageFile');
-            const dImg = document.getElementById('inputImageFile');
-            if (mImg && dImg) {
-                mImg.addEventListener('change', (e) => {
-                    const dt = new DataTransfer();
-                    if (e.target.files[0]) dt.items.add(e.target.files[0]);
-                    dImg.files = dt.files;
-                    dImg.dispatchEvent(new Event('change'));
-                });
+            if (mImg) {
+                mImg.addEventListener('change', (e) => handleNewsPhotoUpload(e.target.files[0]));
             }
 
             const mSourceLogo = document.getElementById('mobileInputSourceLogoFile');
-            const dSourceLogo = document.getElementById('inputSourceLogoFile');
-            if (mSourceLogo && dSourceLogo) {
-                mSourceLogo.addEventListener('change', (e) => {
-                    const dt = new DataTransfer();
-                    if (e.target.files[0]) dt.items.add(e.target.files[0]);
-                    dSourceLogo.files = dt.files;
-                    dSourceLogo.dispatchEvent(new Event('change'));
-                });
+            if (mSourceLogo) {
+                mSourceLogo.addEventListener('change', (e) => handleSourceLogoUpload(e.target.files[0]));
             }
 
             const mClientLogo = document.getElementById('mobileInputClientLogoFile');
-            const dClientLogo = document.getElementById('inputClientLogoFile');
-            if (mClientLogo && dClientLogo) {
-                mClientLogo.addEventListener('change', (e) => {
-                    const dt = new DataTransfer();
-                    if (e.target.files[0]) dt.items.add(e.target.files[0]);
-                    dClientLogo.files = dt.files;
-                    dClientLogo.dispatchEvent(new Event('change'));
-                });
+            if (mClientLogo) {
+                mClientLogo.addEventListener('change', (e) => handleClientLogoUpload(e.target.files[0]));
             }
 
             // Sync Mobile Custom Color Pickers
@@ -1632,20 +1674,21 @@
 
             if (quote.dataset.userResized === 'true') return;
 
+            const isMobile = window.innerWidth <= 900;
             const textLength = quote.textContent.trim().length;
-            let baseSize = 1.35;
-            if (textLength > 160) {
-                baseSize = 0.95;
-            } else if (textLength > 120) {
-                baseSize = 1.05;
-            } else if (textLength > 80) {
-                baseSize = 1.15;
-            } else if (textLength > 50) {
-                baseSize = 1.25;
+            let baseSize = isMobile ? 1.15 : 1.35;
+            if (textLength > 150) {
+                baseSize = isMobile ? 0.82 : 0.95;
+            } else if (textLength > 110) {
+                baseSize = isMobile ? 0.88 : 1.05;
+            } else if (textLength > 75) {
+                baseSize = isMobile ? 0.94 : 1.15;
+            } else if (textLength > 45) {
+                baseSize = isMobile ? 1.02 : 1.25;
             }
 
             quote.style.fontSize = `${baseSize}rem`;
-            quote.style.lineHeight = textLength > 120 ? '1.25' : '1.35';
+            quote.style.lineHeight = textLength > 75 ? (isMobile ? '1.20' : '1.25') : '1.30';
         }
         window.autoFitCardText = autoFitCardText;
 
