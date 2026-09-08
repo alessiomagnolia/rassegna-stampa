@@ -893,6 +893,7 @@
             let currentTemplate = 'speech';
             document.querySelectorAll('.tpl-post-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                     document.querySelectorAll('.tpl-post-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentTemplate = btn.dataset.tpl;
@@ -975,6 +976,7 @@
 
             // Newspaper Logo Selection
             sourceLogoSelect.addEventListener('change', (e) => {
+                if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                 const val = e.target.value;
                 if (val) {
                     cardSourceLogo.src = `/logos/${val}.png`;
@@ -1003,6 +1005,7 @@
             // Shared Upload Handlers (Direct FileReader support for Android/iOS gallery & Desktop)
             function handleSourceLogoUpload(file) {
                 if (!file) return;
+                if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     const src = evt.target.result;
@@ -1030,6 +1033,7 @@
 
             function handleClientLogoUpload(file) {
                 if (!file) return;
+                if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     const src = evt.target.result;
@@ -1048,6 +1052,7 @@
 
             function handleNewsPhotoUpload(file) {
                 if (!file) return;
+                if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     cardPhoto.src = evt.target.result;
@@ -1112,6 +1117,7 @@
             });
 
             window.applyColorPreset = function(textColor, accentColor) {
+                if (window.takeUndoSnapshot) window.takeUndoSnapshot();
                 colorText.value = textColor;
                 colorTextHex.value = textColor.toUpperCase();
                 colorAccent.value = accentColor;
@@ -1208,6 +1214,13 @@
                     }
 
                     updateCardView();
+
+                    // Dopo l'estrazione, azzera la storia e salva questo come baseline.
+                    // L'utente non potrà annullare PRIMA dell'estrazione (comportamento corretto).
+                    setTimeout(function() {
+                        if (window.resetUndoHistory) window.resetUndoHistory();
+                    }, 300);
+
                     alert('Notizia estratta con successo!');
                 } catch(err) {
                     alert('Impossibile estrarre la notizia: ' + err.message);
@@ -1514,6 +1527,8 @@
                     }
                 }
                 updateSizeBarText(newVal);
+                // Schedula uno snapshot undo dopo ogni step di ridimensionamento
+                if (window.scheduleUndoSnapshot) window.scheduleUndoSnapshot();
             };
 
             // Floating Controller Pill (Anchored to body above Canva bottom dock)
@@ -1668,6 +1683,9 @@
             const cardPhoto = document.getElementById('cardPhoto');
             if (mImgPosY && cardPhoto) {
                 const posLabels = { 0:'Alto', 10:'Quasi in alto', 20:'Alto-centro', 30:'', 40:'', 50:'Centro', 60:'', 70:'', 80:'Basso-centro', 90:'Quasi in basso', 100:'Basso' };
+                // Salva snapshot PRIMA di iniziare a muovere lo slider
+                mImgPosY.addEventListener('mousedown', function() { if (window.takeUndoSnapshot) window.takeUndoSnapshot(); });
+                mImgPosY.addEventListener('touchstart', function() { if (window.takeUndoSnapshot) window.takeUndoSnapshot(); }, { passive: true });
                 mImgPosY.addEventListener('input', () => {
                     const val = mImgPosY.value;
                     cardPhoto.style.objectPosition = `center ${val}%`;
@@ -1682,6 +1700,7 @@
                         const lbl = posLabels[parseInt(val)];
                         mImgPosLabel.textContent = lbl || `${val}%`;
                     }
+                    if (window.scheduleUndoSnapshot) window.scheduleUndoSnapshot();
                 });
             }
 
@@ -1850,14 +1869,23 @@
 
         // Snapshot iniziale: attende che l'estrazione (se presente) completi
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                window.takeUndoSnapshot();
-                _undoRefreshBtn();
-            }, 1500); // 1.5s dà tempo all'estrazione automatica di popolare il card
+            // Non prendiamo più snapshot al caricamento della pagina:
+            // il baseline viene impostato da resetUndoHistory() dopo l'estrazione.
         });
+
+        // Espone una funzione per azzerare la storia e salvare il baseline corrente.
+        // Chiamata dopo l'estrazione articolo in modo che il card estratto
+        // sia il punto di partenza dell'undo (non si può tornare al card vuoto).
+        window.resetUndoHistory = function() {
+            _undoHistory = [];
+            _undoPointer  = -1;
+            window.takeUndoSnapshot();
+            _undoRefreshBtn();
+        };
 
         // Helper: Apply Palette Preset
         function applyColorPreset(textCol, accentCol) {
+            if (window.takeUndoSnapshot) window.takeUndoSnapshot();
             const colorText = document.getElementById('colorText');
             const colorTextHex = document.getElementById('colorTextHex');
             const colorAccent = document.getElementById('colorAccent');
