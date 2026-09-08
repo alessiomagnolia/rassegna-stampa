@@ -440,13 +440,13 @@ function renderArticles() {
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
                 <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer; font-size:0.75rem; padding:4px 8px;">
-                            <i data-feather="image" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Cambia logo
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <label for="uploadLogo_${idx}" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:30px; padding:0 10px; font-size:0.78rem; font-weight:500; border-radius:6px; border:1px solid rgba(255,255,255,0.25); color:var(--text-primary); background:transparent; white-space:nowrap; box-sizing:border-box; line-height:1;">
+                            <i data-feather="image" style="width:13px;height:13px;flex-shrink:0;"></i> Cambia logo
                         </label>
                         <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="handleLogoUpload(event, ${idx})">
-                        <button type="button" class="btn btn-outline btn-sm" onclick="copyArticleLink(${idx})" style="font-size:0.75rem; padding:4px 8px; border-color:rgba(255,255,255,0.2);" title="Copia link originale">
-                            <i data-feather="copy" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Copia link
+                        <button type="button" onclick="copyArticleLink(${idx})" title="Copia link originale" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:30px; padding:0 10px; font-size:0.78rem; font-weight:500; border-radius:6px; border:1px solid rgba(255,255,255,0.25); color:var(--text-primary); background:transparent; white-space:nowrap; box-sizing:border-box; line-height:1;">
+                            <i data-feather="copy" style="width:13px;height:13px;flex-shrink:0;"></i> Copia link
                         </button>
                     </div>
                     ${article.logoBase64 ? `<div style="background: white; padding: 2px 8px; border-radius: 4px; display: flex; align-items: center;"><img src="${article.logoBase64}" style="max-height: 20px; object-fit: contain;"></div>` : ''}
