@@ -444,19 +444,16 @@ function renderArticles() {
                         <label for="uploadLogo_${idx}" class="article-action-btn">
                             <i data-feather="image" style="width:12px;height:12px;flex-shrink:0;"></i> Cambia logo
                         </label>
-                        <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="handleLogoUpload(event, ${idx})">
+                        <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
                         <button type="button" class="article-action-btn" onclick="copyArticleLink(${idx})" title="Copia link originale">
                             <i data-feather="copy" style="width:12px;height:12px;flex-shrink:0;"></i> Copia link
                         </button>
                     </div>
-                    <button class="btn-icon btn-delete-article show-mobile-flex" onclick="removeArticle(${idx})" title="Rimuovi">
-                        <i data-feather="trash-2" style="width:15px;height:15px;color:var(--danger);"></i>
+                    <button type="button" class="btn-icon btn-delete-article" onclick="removeArticle(${idx})" title="Elimina articolo" aria-label="Elimina articolo">
+                        <i data-feather="trash-2" style="width:15px;height:15px;color:var(--danger, #ff5252);"></i>
                     </button>
                 </div>
             </div>
-            <button class="btn-icon btn-delete-article hide-mobile" onclick="removeArticle(${idx})" title="Rimuovi">
-                <i data-feather="trash-2" style="width:18px;height:18px;color:var(--danger);"></i>
-            </button>
         `;
         list.appendChild(card);
     });

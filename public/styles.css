@@ -10,6 +10,11 @@
     --accent-primary: #7B2CBF; /* Purple */
     --accent-secondary: #00E676; /* Green */
     --border-color: #121212;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --danger-border: rgba(239, 68, 68, 0.35);
+    --success: #10b981;
     --shadow: none;
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -28,6 +33,11 @@
     --text-secondary: #b3b3b3;
     --text-muted: #888888;
     --border-color: #333333;
+    --danger: #ff5252;
+    --danger-hover: #ff6e6e;
+    --danger-bg: rgba(255, 82, 82, 0.12);
+    --danger-border: rgba(255, 82, 82, 0.35);
+    --success: #00e6b8;
 }
 
 * {
@@ -561,7 +571,7 @@ input::placeholder, textarea::placeholder {
     border-radius: var(--radius-md);
     padding: 1.2rem;
     display: grid;
-    grid-template-columns: 24px 80px 1fr 40px;
+    grid-template-columns: 24px 80px 1fr;
     gap: 1rem;
     align-items: start;
     transition: var(--transition);
@@ -648,7 +658,90 @@ input::placeholder, textarea::placeholder {
 
 .btn-icon:hover {
     color: var(--danger);
-    background: rgba(255, 77, 106, 0.1);
+    background: var(--danger-bg, rgba(255, 77, 106, 0.1));
+}
+
+/* Article Card Footer & Actions (Desktop & Base) */
+.article-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    box-sizing: border-box;
+    gap: 8px;
+}
+
+.article-card-actions-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.article-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: var(--text-primary);
+    background: transparent;
+    white-space: nowrap;
+    box-sizing: border-box;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.article-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.article-card .btn-delete-article {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    margin: 0;
+    border-radius: 6px;
+    border: 1px solid var(--danger-border, rgba(255, 82, 82, 0.35));
+    background: var(--danger-bg, rgba(255, 82, 82, 0.12));
+    color: var(--danger, #ff5252);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.article-card .btn-delete-article:hover {
+    background: var(--danger-bg, rgba(255, 82, 82, 0.25));
+    border-color: var(--danger, #ff5252);
+    color: var(--danger, #ff5252);
+    transform: scale(1.05);
+}
+
+.article-card .btn-delete-article svg {
+    width: 15px !important;
+    height: 15px !important;
+    stroke: var(--danger, #ff5252) !important;
+    stroke-width: 2 !important;
+    display: block !important;
 }
 
 /* History */
@@ -1748,7 +1841,7 @@ input::placeholder, textarea::placeholder {
     .article-content {
         width: 100% !important;
         box-sizing: border-box !important;
-        padding-right: 28px !important;
+        padding-right: 0 !important;
     }
 
     .article-meta {
@@ -1758,6 +1851,8 @@ input::placeholder, textarea::placeholder {
         font-size: 0.78rem !important;
         color: var(--text-muted) !important;
         flex-wrap: wrap !important;
+        padding-right: 32px !important;
+        box-sizing: border-box !important;
     }
 
     .article-source-badge {
@@ -1873,18 +1968,24 @@ input::placeholder, textarea::placeholder {
         padding: 0 !important;
         margin: 0 !important;
         border-radius: 6px !important;
-        border: 1px solid rgba(255, 77, 106, 0.35) !important;
-        background: rgba(255, 77, 106, 0.1) !important;
-        color: var(--danger) !important;
+        border: 1px solid var(--danger-border, rgba(255, 82, 82, 0.35)) !important;
+        background: var(--danger-bg, rgba(255, 82, 82, 0.12)) !important;
+        color: var(--danger, #ff5252) !important;
         cursor: pointer !important;
         flex-shrink: 0 !important;
     }
 
     .article-card .btn-delete-article svg {
-        width: 14px !important;
-        height: 14px !important;
-        stroke: var(--danger) !important;
+        width: 15px !important;
+        height: 15px !important;
+        stroke: var(--danger, #ff5252) !important;
+        stroke-width: 2 !important;
         display: block !important;
+    }
+
+    /* Prevent any direct-child delete button from ever appearing on mobile */
+    .article-card > .btn-delete-article {
+        display: none !important;
     }
 
     /* 6. Action Buttons Section (.generate-actions) */
