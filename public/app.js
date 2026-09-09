@@ -423,12 +423,12 @@ function renderArticles() {
             <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
             <img src="${imgSrc}" class="article-thumb" alt="Thumb">
             <div class="article-content">
-                <div class="article-meta">
-                    ${article.logoBase64 ? `<span class="article-source-badge"><img src="${article.logoBase64}" class="article-source-logo"></span>` : ''}
+                <div class="article-meta" style="align-items: center;">
+                    ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" style="max-height: 24px; margin-right: 8px;">` : ''}
                     <span>${article.source_name} &bull; ${article.published_date}</span>
                 </div>
-                <div class="article-type-wrapper">
-                    <select onchange="changeArticleType(event, ${idx})" class="article-type-select">
+                <div style="margin-top: 5px; margin-bottom: 5px;">
+                    <select onchange="changeArticleType(event, ${idx})" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary);">
                         <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>Web</option>
                         <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>Quotidiano Nazionale</option>
                         <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>Quotidiano Locale</option>
@@ -439,21 +439,19 @@ function renderArticles() {
                 </div>
                 <div class="article-title">${article.title}</div>
                 <div class="article-excerpt">${article.excerpt}</div>
-                <div class="article-card-footer">
-                    <div class="article-card-actions-left">
-                        <label for="uploadLogo_${idx}" class="article-action-btn">
-                            <i data-feather="image" style="width:12px;height:12px;flex-shrink:0;"></i> Cambia logo
-                        </label>
-                        <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
-                        <button type="button" class="article-action-btn" onclick="copyArticleLink(${idx})" title="Copia link originale">
-                            <i data-feather="copy" style="width:12px;height:12px;flex-shrink:0;"></i> Copia link
-                        </button>
-                    </div>
-                    <button type="button" class="btn-icon btn-delete-article" onclick="removeArticle(${idx})" title="Elimina articolo" aria-label="Elimina articolo">
-                        <i data-feather="trash-2" style="width:15px;height:15px;color:var(--danger, #ff5252);"></i>
+                <div style="margin-top: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-right: 36px;">
+                    <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 9px; font-size:0.75rem; font-weight:500; font-family:inherit; text-transform:none; letter-spacing:normal; border-radius:6px; border:1px solid rgba(255,255,255,0.28); color:rgba(255,255,255,0.85); background:transparent; white-space:nowrap; box-sizing:border-box; flex-shrink:0;">
+                        <i data-feather="image" style="width:12px;height:12px;flex-shrink:0;"></i> Cambia logo
+                    </label>
+                    <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyArticleLink(${idx})" title="Copia link originale" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 9px; font-size:0.75rem; font-weight:500; font-family:inherit; text-transform:none; letter-spacing:normal; border-radius:6px; border:1px solid rgba(255,255,255,0.28); color:rgba(255,255,255,0.85); background:transparent; white-space:nowrap; box-sizing:border-box; flex-shrink:0;">
+                        <i data-feather="copy" style="width:12px;height:12px;flex-shrink:0;"></i> Copia link
                     </button>
                 </div>
             </div>
+            <button type="button" class="btn-icon btn-article-delete" onclick="removeArticle(${idx})" title="Rimuovi" aria-label="Rimuovi">
+                <i data-feather="trash-2" style="width:18px;height:18px;color:var(--danger, #ff4d6a);"></i>
+            </button>
         `;
         list.appendChild(card);
     });

@@ -1810,95 +1810,30 @@ input::placeholder, textarea::placeholder {
         display: flex !important;
         flex-direction: column !important;
         position: relative !important;
-        padding: 0.9rem !important;
+        padding: 0.95rem !important;
         gap: 0.45rem !important;
         border-radius: 12px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         background: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
-        overflow: hidden !important;
     }
 
-    .article-thumb {
-        display: none !important;
-    }
-
+    .article-thumb,
     .article-card .drag-handle {
-        position: absolute !important;
-        top: 10px !important;
-        right: 10px !important;
-        color: var(--text-muted) !important;
-        font-size: 1rem !important;
-        padding: 4px !important;
-        cursor: grab !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 5 !important;
+        display: none !important;
     }
 
     .article-content {
         width: 100% !important;
         box-sizing: border-box !important;
-        padding-right: 0 !important;
-    }
-
-    .article-meta {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        font-size: 0.78rem !important;
-        color: var(--text-muted) !important;
-        flex-wrap: wrap !important;
-        padding-right: 32px !important;
-        box-sizing: border-box !important;
-    }
-
-    .article-source-badge {
-        display: inline-flex !important;
-        align-items: center !important;
-        background: #ffffff !important;
-        padding: 2px 6px !important;
-        border-radius: 4px !important;
-        max-height: 20px !important;
-    }
-
-    .article-source-logo {
-        max-height: 16px !important;
-        max-width: 75px !important;
-        object-fit: contain !important;
-        display: block !important;
-    }
-
-    .article-type-wrapper {
-        margin-top: 3px !important;
-        margin-bottom: 3px !important;
-    }
-
-    .article-type-select {
-        width: auto !important;
-        min-width: 130px !important;
-        max-width: 200px !important;
-        height: 28px !important;
-        padding: 2px 8px !important;
-        font-size: 0.78rem !important;
-        border-radius: 6px !important;
-        background: rgba(0, 0, 0, 0.35) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        color: var(--text-primary) !important;
-        outline: none !important;
-        box-sizing: border-box !important;
     }
 
     .article-title {
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
+        font-size: 0.92rem !important;
         line-height: 1.35 !important;
-        margin-top: 3px !important;
-        margin-bottom: 3px !important;
-        color: var(--text-primary) !important;
-        word-break: break-word !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
     }
 
     .article-excerpt {
@@ -1909,83 +1844,38 @@ input::placeholder, textarea::placeholder {
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
         line-height: 1.4 !important;
-        margin-bottom: 4px !important;
     }
 
-    /* Bottom footer inside article card */
-    .article-card-footer {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        margin-top: 6px !important;
-        padding-top: 8px !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        gap: 8px !important;
-    }
-
-    .article-card-actions-left {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        flex-wrap: nowrap !important;
-    }
-
-    /* Coherent action buttons: Cambia logo & Copia link */
-    .article-action-btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        height: 28px !important;
-        min-height: 28px !important;
-        padding: 0 9px !important;
-        font-size: 0.75rem !important;
-        font-weight: 500 !important;
-        font-family: inherit !important;
-        text-transform: none !important;
-        letter-spacing: normal !important;
-        border-radius: 6px !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        color: rgba(255, 255, 255, 0.85) !important;
+    /* Tasto cestino: SEMPLICEMENTE l'icona del cestino in basso a destra del box, SENZA box rosso */
+    .article-card .btn-article-delete {
+        position: absolute !important;
+        bottom: 10px !important;
+        right: 10px !important;
+        top: auto !important;
+        left: auto !important;
         background: transparent !important;
-        white-space: nowrap !important;
-        box-sizing: border-box !important;
-        cursor: pointer !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Trash button in bottom-right corner of card */
-    .article-card .btn-delete-article {
-        display: inline-flex !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        padding: 6px !important;
+        margin: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
-        min-height: 28px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border-radius: 6px !important;
-        border: 1px solid var(--danger-border, rgba(255, 82, 82, 0.35)) !important;
-        background: var(--danger-bg, rgba(255, 82, 82, 0.12)) !important;
-        color: var(--danger, #ff5252) !important;
+        color: var(--danger, #ff4d6a) !important;
         cursor: pointer !important;
-        flex-shrink: 0 !important;
+        z-index: 10 !important;
     }
 
-    .article-card .btn-delete-article svg {
-        width: 15px !important;
-        height: 15px !important;
-        stroke: var(--danger, #ff5252) !important;
-        stroke-width: 2 !important;
+    .article-card .btn-article-delete svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke: var(--danger, #ff4d6a) !important;
         display: block !important;
-    }
-
-    /* Prevent any direct-child delete button from ever appearing on mobile */
-    .article-card > .btn-delete-article {
-        display: none !important;
     }
 
     /* 6. Action Buttons Section (.generate-actions) */
