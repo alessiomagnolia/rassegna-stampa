@@ -100,22 +100,31 @@
 
         /* --- Center: Preview --- */
         .preview-area {
-            flex: 1; overflow-y: auto;
+            flex: 1; min-width: 0; overflow-y: auto;
             display: flex; flex-direction: column;
-            align-items: center; padding: 2rem 1rem;
+            align-items: center; padding: 2.5rem 1rem 2rem;
             background: #1a1a2a;
+            transition: flex 0.32s ease;
         }
         .preview-wrapper {
             position: relative; width: 100%; max-width: 760px;
+            margin-top: 12px;
+            transition: max-width 0.3s ease;
         }
         .preview-edit-btn {
-            position: absolute; top: 1rem; right: 1rem; z-index: 10;
-            background: rgba(124,92,255,0.9); color: white;
-            border: none; border-radius: 8px; padding: 8px 16px;
-            font-family: inherit; font-size: 0.85rem; font-weight: 600;
-            cursor: pointer; transition: var(--transition);
+            position: absolute; top: -38px; right: 0; z-index: 10;
+            background: rgba(20,20,45,0.92); color: #efece5;
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 6px 14px;
+            font-family: inherit; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
-        .preview-edit-btn:hover { background: var(--accent-primary); box-shadow: 0 0 15px rgba(124,92,255,0.5); }
+        .preview-edit-btn:hover {
+            background: #7c5cff; color: white; border-color: transparent;
+            box-shadow: 0 0 15px rgba(124,92,255,0.5);
+            transform: translateY(-1px);
+        }
 
         /* ============ DESKTOP PREVIEW TOOLBAR & RESIZE CONTROLLERS ============ */
         .desktop-preview-toolbar {
@@ -355,29 +364,86 @@
         .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
 
-        /* ============ RIGHT EDIT PANEL ============ */
+        /* ============ RIGHT EDIT PANEL (DESKTOP DOCKED SIDEBAR) ============ */
         .edit-panel {
-            position: fixed; top: 60px; right: 0; bottom: 0;
-            width: 400px; z-index: 150;
+            position: relative;
+            top: 0; right: 0; bottom: 0;
+            width: 0; min-width: 0;
+            height: calc(100vh - 60px);
+            flex-shrink: 0;
+            z-index: 50;
             background: rgba(12,12,28,0.98);
             backdrop-filter: blur(20px);
-            border-left: 1px solid rgba(255,255,255,0.1);
-            transform: translateX(100%);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid transparent;
             color: #efece5;
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            transition: width 0.32s cubic-bezier(0.4,0,0.2,1), border-color 0.32s ease, opacity 0.25s ease;
             display: flex; flex-direction: column;
             overflow: hidden;
+            visibility: hidden;
+            opacity: 0;
+            box-shadow: -6px 0 24px rgba(0,0,0,0.35);
         }
-        .edit-panel.open { transform: translateX(0); }
+        .edit-panel.open {
+            width: 420px;
+            min-width: 420px;
+            border-left-color: rgba(255,255,255,0.12);
+            visibility: visible;
+            opacity: 1;
+        }
+        .edit-panel-header,
+        .edit-panel-body,
+        .edit-panel-footer {
+            width: 420px;
+            box-sizing: border-box;
+        }
         .edit-panel-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+            padding: 1.15rem 1.4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             flex-shrink: 0;
         }
-        .edit-panel-header h3 { font-size: 1rem; margin: 0; }
-        .edit-panel-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
-        .edit-panel-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+        .edit-panel-header h3 { font-size: 0.95rem; margin: 0; font-weight: 700; color: #efece5; }
+        .edit-panel-body { flex: 1; overflow-y: auto; padding: 1.4rem; }
+        .edit-panel-footer { padding: 1rem 1.4rem; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; background: rgba(10,10,24,0.95); }
+
+        /* FLOATING SIDE TAB ON RIGHT EDGE (TENDA HANDLE) */
+        .desktop-side-tab {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(18, 18, 40, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(124, 92, 255, 0.45);
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+            padding: 10px 14px 10px 12px;
+            color: #efece5;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            box-shadow: -4px 4px 18px rgba(0, 0, 0, 0.4);
+            z-index: 90;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .desktop-side-tab:hover {
+            background: rgba(124, 92, 255, 0.28);
+            border-color: #7c5cff;
+            color: #ffffff;
+            padding-left: 16px;
+            box-shadow: -6px 6px 22px rgba(124, 92, 255, 0.45);
+        }
+        .desktop-side-tab.tab-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-50%) translateX(100%);
+        }
 
         .edit-field { margin-bottom: 1.25rem; }
         .edit-field label { display: block; font-size: 0.8rem; font-weight: 600; color: #b3b3b3; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
@@ -481,7 +547,7 @@
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <button class="preview-edit-btn hide-mobile" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
+            <button type="button" class="preview-edit-btn hide-mobile" id="btnEditPage" onclick="toggleEditPanel()"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
 
@@ -497,6 +563,12 @@
             </button>
 
             <div class="desktop-tool-divider"></div>
+
+            <!-- Modifica Articolo (Pannello Dati / Tenda) -->
+            <button type="button" id="btnToggleEditPanel" class="desktop-tool-btn" onclick="toggleEditPanel()" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+                <i data-feather="edit-3" style="width:14px;height:14px;"></i>
+                <span>Modifica Articolo</span>
+            </button>
 
             <!-- Regola Dimensioni Testo -->
             <button type="button" id="btnToggleElementResize" class="desktop-tool-btn" title="Clicca per regolare le dimensioni dei testi sulla pagina">
@@ -578,14 +650,12 @@
         </div>
     </div>
 
-</div>
-
-<!-- RIGHT: Edit Panel (Desktop Side Panel) -->
-<div class="edit-panel" id="editPanel">
-    <div class="edit-panel-header">
-        <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
-        <button class="btn-icon" id="btnCloseEditPanel"><i data-feather="x"></i></button>
-    </div>
+    <!-- RIGHT: Edit Panel (Desktop Side Panel) -->
+    <div class="edit-panel hide-mobile" id="editPanel">
+        <div class="edit-panel-header">
+            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
+            <button type="button" class="btn-icon" id="btnCloseEditPanel" onclick="closeEditPanel()" title="Chiudi pannello"><i data-feather="x"></i></button>
+        </div>
     <div class="edit-panel-body">
         <div class="edit-field">
             <label>Titolo *</label>
@@ -670,6 +740,15 @@
         <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva modifiche</button>
     </div>
 </div>
+
+</div><!-- closes editor-body -->
+
+<!-- FLOATING SIDE TAB ON RIGHT EDGE (TENDA HANDLE) -->
+<button type="button" id="btnSidePanelTab" class="desktop-side-tab hide-mobile" onclick="toggleEditPanel()" title="Apri opzioni di modifica articolo">
+    <i data-feather="edit-3" style="width:14px;height:14px;"></i>
+    <span>Modifica Articolo</span>
+    <i data-feather="chevron-left" style="width:14px;height:14px;margin-left:-2px;"></i>
+</button>
 
 <!-- CANVA MOBILE BOTTOM NAVIGATION DOCK FOR PDF EDITOR (Horizontally Scrollable) -->
 <nav class="canva-bottom-dock show-mobile-flex">
@@ -1006,11 +1085,22 @@ function selectPage(idx) {
         editBtn.style.display = 'block';
     }
 
-    // Desktop: Populate Desktop Right Panel when an article is selected!
+    // Desktop: Update Desktop Right Panel data if an article is selected
     if (idx >= 0 && typeof populateEditForm === 'function') {
         populateEditForm(idx);
     } else if (idx < 0 && typeof closeEditPanel === 'function') {
         closeEditPanel();
+    }
+
+    const btnTogglePanel = document.getElementById('btnToggleEditPanel');
+    if (btnTogglePanel) {
+        if (idx < 0) {
+            btnTogglePanel.style.opacity = '0.5';
+            btnTogglePanel.title = 'Passa a un articolo per modificarne i dati';
+        } else {
+            btnTogglePanel.style.opacity = '1';
+            btnTogglePanel.title = 'Modifica dati articolo (titolo, testo, fonte, immagini)';
+        }
     }
 
     // Desktop Only: Attach element resizing & image toolbar listeners
@@ -1043,9 +1133,10 @@ function selectPage(idx) {
     }
 }
 
-// Desktop alias: populate right-side edit panel
+// Desktop: populate right-side edit panel fields without forcing open
 function populateEditForm(idx) {
-    if (window.innerWidth > 900) openEditPanel(idx);
+    if (window.innerWidth <= 900) return;
+    fillEditForm(idx);
 }
 
 // Mobile: pre-fill all bottom sheet fields for the selected article
@@ -1208,56 +1299,126 @@ function initSortable() {
 }
 
 // ============================================================
-// EDIT PANEL
+// EDIT PANEL (DESKTOP DOCKED SIDEBAR)
 // ============================================================
 let editingIdx = -1;
 
-function openEditPanel(idx) {
+function fillEditForm(idx) {
+    if (idx < 0 || idx >= articles.length) return;
     editingIdx = idx;
     const art = articles[idx];
-    
-    document.getElementById('editTitle').value = art.title || '';
-    document.getElementById('editExcerpt').value = art.excerpt || '';
-    document.getElementById('editSourceName').value = art.source_name || '';
-    document.getElementById('editSourceType').value = art.source_type || 'Web';
-    document.getElementById('editDate').value = art.published_date || '';
-    document.getElementById('editUrl').value = art.url || '';
+    if (!art) return;
+
+    const titleEl = document.getElementById('editTitle');
+    if (titleEl) titleEl.value = art.title || '';
+    const excerptEl = document.getElementById('editExcerpt');
+    if (excerptEl) excerptEl.value = art.excerpt || '';
+    const sourceNameEl = document.getElementById('editSourceName');
+    if (sourceNameEl) sourceNameEl.value = art.source_name || '';
+    const sourceTypeEl = document.getElementById('editSourceType');
+    if (sourceTypeEl) sourceTypeEl.value = art.source_type || 'Web';
+    const dateEl = document.getElementById('editDate');
+    if (dateEl) dateEl.value = art.published_date || '';
+    const urlEl = document.getElementById('editUrl');
+    if (urlEl) urlEl.value = art.url || '';
 
     // Image
     const imgPrev = document.getElementById('editImagePreview');
     const imgPrevCont = document.getElementById('editImagePreviewContainer');
-    if (art.imageBase64) {
-        imgPrev.src = art.imageBase64;
-        document.getElementById('editImagePosition').value = art.imagePosition || 'top center';
-        imgPrevCont.classList.remove('hidden');
-    } else {
-        imgPrevCont.classList.add('hidden');
-        imgPrev.src = '';
+    if (imgPrev && imgPrevCont) {
+        if (art.imageBase64) {
+            imgPrev.src = art.imageBase64;
+            const posEl = document.getElementById('editImagePosition');
+            if (posEl) posEl.value = art.imagePosition || 'top center';
+            imgPrevCont.classList.remove('hidden');
+        } else {
+            imgPrevCont.classList.add('hidden');
+            imgPrev.src = '';
+        }
     }
 
     // Logo
     const logoPrev = document.getElementById('editLogoPreview');
     const logoPrevCont = document.getElementById('editLogoPreviewContainer');
-    if (art.logoBase64) {
-        logoPrev.src = art.logoBase64;
-        logoPrevCont.classList.remove('hidden');
-    } else {
-        logoPrevCont.classList.add('hidden');
-        logoPrev.src = '';
+    if (logoPrev && logoPrevCont) {
+        if (art.logoBase64) {
+            logoPrev.src = art.logoBase64;
+            logoPrevCont.classList.remove('hidden');
+        } else {
+            logoPrevCont.classList.add('hidden');
+            logoPrev.src = '';
+        }
     }
 
     // Dark header toggle
     const darkHeaderCb = document.getElementById('editDarkHeader');
-    darkHeaderCb.checked = !!art.darkHeader;
-    updateDarkHeaderSwatch(darkHeaderCb.checked);
+    if (darkHeaderCb) {
+        darkHeaderCb.checked = !!art.darkHeader;
+        updateDarkHeaderSwatch(darkHeaderCb.checked);
+    }
+}
 
-    document.getElementById('editPanel').classList.add('open');
+function openEditPanel(idx) {
+    if (window.innerWidth <= 900) return;
+    const targetIdx = (idx !== undefined && idx >= 0) ? idx : (selectedIdx >= 0 ? selectedIdx : 0);
+    if (selectedIdx < 0 && articles.length > 0) {
+        selectPage(0);
+    }
+    fillEditForm(targetIdx);
+
+    // Close text and image resize panels if open
+    if (typeof isDesktopResizeModeActive !== 'undefined' && isDesktopResizeModeActive) {
+        isDesktopResizeModeActive = false;
+        const btnResize = document.getElementById('btnToggleElementResize');
+        if (btnResize) btnResize.classList.remove('active');
+        const resizePanel = document.getElementById('desktopElementSizePanel');
+        if (resizePanel) resizePanel.style.display = 'none';
+        const pw = document.getElementById('previewWrapper');
+        if (pw) pw.classList.remove('resize-mode-active');
+        if (typeof deselectDesktopElement === 'function') deselectDesktopElement();
+    }
+    if (typeof isDesktopImagePanelActive !== 'undefined' && isDesktopImagePanelActive) {
+        isDesktopImagePanelActive = false;
+        const btnImage = document.getElementById('btnToggleImageResize');
+        if (btnImage) btnImage.classList.remove('active');
+        const imgPanel = document.getElementById('desktopImagePanel');
+        if (imgPanel) imgPanel.style.display = 'none';
+    }
+
+    const panel = document.getElementById('editPanel');
+    if (panel) panel.classList.add('open');
+
+    const btnToggle = document.getElementById('btnToggleEditPanel');
+    if (btnToggle) btnToggle.classList.add('active');
+
+    const sideTab = document.getElementById('btnSidePanelTab');
+    if (sideTab) sideTab.classList.add('tab-hidden');
 }
 
 function closeEditPanel() {
-    document.getElementById('editPanel').classList.remove('open');
+    const panel = document.getElementById('editPanel');
+    if (panel) panel.classList.remove('open');
+
+    const btnToggle = document.getElementById('btnToggleEditPanel');
+    if (btnToggle) btnToggle.classList.remove('active');
+
+    const sideTab = document.getElementById('btnSidePanelTab');
+    if (sideTab) sideTab.classList.remove('tab-hidden');
+
     editingIdx = -1;
 }
+
+function toggleEditPanel() {
+    const panel = document.getElementById('editPanel');
+    if (panel && panel.classList.contains('open')) {
+        closeEditPanel();
+    } else {
+        openEditPanel(selectedIdx >= 0 ? selectedIdx : 0);
+    }
+}
+window.openEditPanel = openEditPanel;
+window.closeEditPanel = closeEditPanel;
+window.toggleEditPanel = toggleEditPanel;
 
 function saveEdit() {
     if (editingIdx < 0 || editingIdx >= articles.length) return;
@@ -1271,6 +1432,7 @@ function saveEdit() {
     art.imagePosition  = document.getElementById('editImagePosition').value;
     art.darkHeader     = document.getElementById('editDarkHeader').checked;
 
+    pushUndoState();
     closeEditPanel();
     renderPagesList();
     selectPage(editingIdx);
@@ -1373,10 +1535,25 @@ function fileToBase64(file) {
 // INIT EVENTS
 // ============================================================
 function initEvents() {
-    document.getElementById('btnEditPage').addEventListener('click', () => {
-        if (selectedIdx >= 0) openEditPanel(selectedIdx);
-    });
-    document.getElementById('btnCloseEditPanel').addEventListener('click', closeEditPanel);
+    const btnEdit = document.getElementById('btnEditPage');
+    if (btnEdit) {
+        btnEdit.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEditPanel();
+        });
+    }
+    const btnClose = document.getElementById('btnCloseEditPanel');
+    if (btnClose) {
+        btnClose.addEventListener('click', closeEditPanel);
+    }
+    const btnToggle = document.getElementById('btnToggleEditPanel');
+    if (btnToggle) {
+        btnToggle.addEventListener('click', toggleEditPanel);
+    }
+    const sideTab = document.getElementById('btnSidePanelTab');
+    if (sideTab) {
+        sideTab.addEventListener('click', toggleEditPanel);
+    }
     document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);
     document.getElementById('btnGeneratePDF').addEventListener('click', generateAndDownload);
 
@@ -1887,10 +2064,11 @@ function initDesktopToolbar() {
                 btnResize.classList.add('active');
                 if (resizePanel) resizePanel.style.display = 'flex';
 
-                // Close Image panel
+                // Close Image panel & Edit panel
                 isDesktopImagePanelActive = false;
                 if (btnImage) btnImage.classList.remove('active');
                 if (imagePanel) imagePanel.style.display = 'none';
+                if (typeof closeEditPanel === 'function') closeEditPanel();
 
                 if (previewWrapper) previewWrapper.classList.add('resize-mode-active');
                 deselectDesktopElement();
@@ -1911,10 +2089,11 @@ function initDesktopToolbar() {
                 btnImage.classList.add('active');
                 if (imagePanel) imagePanel.style.display = 'flex';
 
-                // Close Text Resize panel
+                // Close Text Resize panel & Edit panel
                 isDesktopResizeModeActive = false;
                 if (btnResize) btnResize.classList.remove('active');
                 if (resizePanel) resizePanel.style.display = 'none';
+                if (typeof closeEditPanel === 'function') closeEditPanel();
                 if (previewWrapper) previewWrapper.classList.remove('resize-mode-active');
                 deselectDesktopElement();
 
@@ -2022,13 +2201,16 @@ function initDesktopToolbar() {
         });
     }
 
-    // Global keyboard shortcut: Ctrl+Z / Cmd+Z
+    // Global keyboard shortcut: Ctrl+Z / Cmd+Z & Escape
     document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             const tag = (e.target.tagName || '').toLowerCase();
             if (tag === 'input' || tag === 'textarea') return;
             e.preventDefault();
             undoLastEdit();
+        } else if (e.key === 'Escape') {
+            if (typeof closeEditPanel === 'function') closeEditPanel();
+            if (typeof deselectDesktopElement === 'function') deselectDesktopElement();
         }
     });
 
