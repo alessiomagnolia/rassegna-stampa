@@ -33,6 +33,7 @@
     --text-secondary: #b3b3b3;
     --text-muted: #888888;
     --border-color: #333333;
+    --accent-primary: #a78bfa; /* Bright readable violet for dark theme */
     --danger: #ff5252;
     --danger-hover: #ff6e6e;
     --danger-bg: rgba(255, 82, 82, 0.12);

@@ -101,6 +101,10 @@
             justify-content: space-between;
             align-items: center;
             user-select: none;
+            transition: opacity 0.15s ease;
+        }
+        .panel-section-header:hover {
+            opacity: 0.92;
         }
 
         .panel-section-title {
@@ -112,7 +116,13 @@
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+        }
+        .panel-section-title i,
+        .panel-section-title svg {
+            color: var(--accent-primary);
+            stroke: var(--accent-primary);
+            flex-shrink: 0;
         }
 
         .panel-toggle-icon {
@@ -122,6 +132,41 @@
         }
         .panel-section.open .panel-toggle-icon {
             transform: rotate(180deg);
+        }
+
+        /* DARK THEME SPECIFIC CONTRAST FIXES */
+        [data-theme="dark"] {
+            --accent-primary: #a78bfa;
+            --accent-primary-hover: #c4b5fd;
+        }
+        [data-theme="dark"] .panel-section {
+            background: rgba(255, 255, 255, 0.035);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-theme="dark"] .panel-section:hover {
+            border-color: rgba(167, 139, 250, 0.35);
+        }
+        [data-theme="dark"] .panel-section-title {
+            color: #a78bfa;
+        }
+        [data-theme="dark"] .panel-section-title i,
+        [data-theme="dark"] .panel-section-title svg {
+            color: #a78bfa;
+            stroke: #a78bfa;
+        }
+        [data-theme="dark"] .panel-section-header:hover .panel-section-title {
+            color: #c4b5fd;
+        }
+        [data-theme="dark"] .panel-section-header:hover .panel-section-title i,
+        [data-theme="dark"] .panel-section-header:hover .panel-section-title svg {
+            color: #c4b5fd;
+            stroke: #c4b5fd;
+        }
+        [data-theme="dark"] .panel-toggle-icon {
+            color: rgba(255, 255, 255, 0.45);
+        }
+        [data-theme="dark"] .panel-section-header:hover .panel-toggle-icon {
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .panel-section-body {
@@ -177,6 +222,12 @@
             border-color: var(--accent-primary);
             background: rgba(124,92,255,0.15);
             color: var(--accent-primary);
+        }
+        [data-theme="dark"] .format-btn.active,
+        [data-theme="dark"] .tpl-post-btn.active {
+            border-color: #a78bfa;
+            background: rgba(167, 139, 250, 0.18);
+            color: #c4b5fd;
         }
 
         /* RIGHT CANVAS PREVIEW PANEL - STICKY SCROLLING */
