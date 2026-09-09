@@ -1360,33 +1360,64 @@
             closeSidebar();
         });
 
-        // ---- PAGE NAVIGATION ----
+        // ---- PAGE NAVIGATION WITH PERSISTENCE ACROSS REFRESH ----
+        function showDashboardPage(page, updateHash = true) {
+            if (!page) return;
+            const targetItem = document.querySelector(`.sidebar-item[data-page="${page}"]`);
+            const targetPage = document.getElementById('page-' + page);
+            if (!targetPage) return;
+
+            // Update active state in sidebar
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            if (targetItem) targetItem.classList.add('active');
+
+            // Show correct page view
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            targetPage.classList.add('active');
+
+            // Persist the current page across page refreshes
+            sessionStorage.setItem('rs_current_page', page);
+            localStorage.setItem('rs_current_page', page);
+            if (updateHash) {
+                history.replaceState(null, '', '#' + page);
+            }
+
+            // Auto-close sidebar after selecting a page
+            closeSidebar();
+        }
+        window.showDashboardPage = showDashboardPage;
+
         document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                const page = item.dataset.page;
-
-                // Update active state
-                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-
-                // Show correct page
-                document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-                const target = document.getElementById('page-' + page);
-                if (target) target.classList.add('active');
-
-                // Auto-close sidebar after selecting a page
-                closeSidebar();
+                showDashboardPage(item.dataset.page, true);
             });
         });
 
-        // Restore target page if requested
+        // Restore target page on load / refresh:
+        // Priority 1: rs_open_page (explicit redirect from other pages)
+        // Priority 2: URL hash (e.g. #rassegna, #storico, #ricerca-notizie)
+        // Priority 3: rs_current_page (saved in sessionStorage / localStorage)
         const openPage = localStorage.getItem('rs_open_page');
         if (openPage) {
             localStorage.removeItem('rs_open_page');
-            const targetItem = document.querySelector(`.sidebar-item[data-page="${openPage}"]`);
-            if (targetItem) targetItem.click();
+            showDashboardPage(openPage, true);
+        } else {
+            const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+            const saved = sessionStorage.getItem('rs_current_page') || localStorage.getItem('rs_current_page');
+            const targetPageKey = (hash && document.getElementById('page-' + hash)) ? hash : (saved && document.getElementById('page-' + saved) ? saved : '');
+            if (targetPageKey) {
+                showDashboardPage(targetPageKey, false);
+            }
         }
+
+        // Listen for browser back / forward navigation
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+            if (hash && document.getElementById('page-' + hash)) {
+                showDashboardPage(hash, false);
+            }
+        });
 
         feather.replace();
     </script>

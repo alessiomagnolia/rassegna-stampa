@@ -397,6 +397,7 @@ function renderArticles() {
     });
 
     if (state.articles.length === 0) {
+        sessionStorage.removeItem('rs_draft_articles');
         empty.classList.remove('hidden');
         if (btnGenerate)  btnGenerate.classList.add('hidden');
         if (btnEditor)    btnEditor.classList.add('hidden');
@@ -405,6 +406,7 @@ function renderArticles() {
         return;
     }
 
+    sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
     empty.classList.add('hidden');
     if (btnGenerate)  btnGenerate.classList.remove('hidden');
     if (btnEditor)    btnEditor.classList.remove('hidden');
@@ -855,6 +857,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) {
                 localStorage.removeItem('rs_editor_state');
+            }
+        } else if (state.articles.length === 0) {
+            // Restore draft articles on simple page refresh
+            const savedDraft = sessionStorage.getItem('rs_draft_articles');
+            if (savedDraft) {
+                try {
+                    const draft = JSON.parse(savedDraft);
+                    if (Array.isArray(draft) && draft.length > 0) {
+                        state.articles = draft;
+                        renderArticles();
+                    }
+                } catch(e) {
+                    sessionStorage.removeItem('rs_draft_articles');
+                }
             }
         }
         
