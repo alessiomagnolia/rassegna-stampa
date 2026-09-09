@@ -892,17 +892,17 @@
         <!-- Left: Home & Brand / Breadcrumb -->
         <div style="display:flex; align-items:center; gap:12px;">
             <!-- Mobile: compact home icon -->
-            <a href="dashboard.html" class="canva-header-icon show-mobile-flex" title="Torna alla Dashboard">
+            <a href="dashboard.html#home" onclick="goToHome(event)" class="canva-header-icon show-mobile-flex" title="Torna alla Dashboard">
                 <i data-feather="home" style="width:18px;height:18px;"></i>
             </a>
 
             <!-- Desktop: Torna alla Home (tutto a sinistra) -->
-            <a href="dashboard.html" class="btn btn-outline btn-sm hide-mobile" style="text-decoration:none; display:flex; align-items:center; gap:6px; font-weight:600; height:34px; padding:0 12px; border-radius:8px;">
+            <a href="dashboard.html#home" onclick="goToHome(event)" class="btn btn-outline btn-sm hide-mobile" style="text-decoration:none; display:flex; align-items:center; gap:6px; font-weight:600; height:34px; padding:0 12px; border-radius:8px;">
                 <i data-feather="home" style="width:14px;height:14px;"></i> Torna alla Home
             </a>
 
             <!-- Desktop: classic brand title + breadcrumb -->
-            <a href="dashboard.html" class="nav-brand hide-mobile" style="font-size:1.15rem; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:8px; margin-left:4px;">
+            <a href="dashboard.html#home" onclick="goToHome(event)" class="nav-brand hide-mobile" style="font-size:1.15rem; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:8px; margin-left:4px;">
                 Rassegna Stampa
             </a>
             <span class="hide-mobile" style="color:var(--text-muted); font-size:0.85rem; font-weight:600;">/ Post LinkedIn</span>
@@ -1290,6 +1290,18 @@
 
     <!-- JS LOGIC -->
     <script>
+        // Explicit navigation to Dashboard Home
+        function goToHome(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            try {
+                localStorage.setItem('rs_open_page', 'home');
+                sessionStorage.setItem('rs_current_page', 'home');
+                localStorage.setItem('rs_current_page', 'home');
+            } catch (err) {}
+            window.location.href = 'dashboard.html#home';
+        }
+        window.goToHome = goToHome;
+
         document.addEventListener('DOMContentLoaded', () => {
             feather.replace();
 
