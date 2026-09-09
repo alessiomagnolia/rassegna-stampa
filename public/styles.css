@@ -1566,6 +1566,7 @@ input::placeholder, textarea::placeholder {
     /* ---- RE-ENABLE DESKTOP-ONLY ELEMENTS ---- */
     .pages-panel {
         display: flex !important;
+        flex-direction: column !important;
     }
     .edit-panel {
         display: block !important;

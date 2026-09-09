@@ -52,11 +52,19 @@
             background: rgba(10,10,26,0.95); border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto; padding: 1rem 0.75rem;
             color: #efece5;
+            display: flex;
+            flex-direction: column;
         }
         .pages-panel-label {
             font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
             letter-spacing: 1.5px; color: var(--text-muted);
             margin-bottom: 0.75rem; padding: 0 0.25rem;
+            width: 100%;
+        }
+        #pagesList {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
         .page-thumb {
             display: flex; align-items: center; gap: 0.6rem;
@@ -64,6 +72,8 @@
             cursor: pointer; margin-bottom: 4px;
             border: 1px solid transparent;
             transition: var(--transition); position: relative;
+            width: 100%;
+            box-sizing: border-box;
         }
         .page-thumb:hover { background: rgba(255,255,255,0.06); border-color: var(--border-color); }
         .page-thumb.active { background: rgba(124,92,255,0.15); border-color: var(--accent-primary); }
