@@ -1819,9 +1819,32 @@ input::placeholder, textarea::placeholder {
         border: 1px solid var(--border-color) !important;
     }
 
-    .article-thumb,
-    .article-card .drag-handle {
+    .article-thumb {
         display: none !important;
+    }
+
+    /* Tasto per riordinare le notizie: in alto a destra nel box della notizia */
+    .article-card .drag-handle {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        width: 32px !important;
+        height: 32px !important;
+        color: var(--text-muted, rgba(255, 255, 255, 0.6)) !important;
+        cursor: grab !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 5 !important;
+        touch-action: none !important;
+        padding: 4px !important;
+    }
+
+    .article-card .drag-handle svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke: var(--text-muted, rgba(255, 255, 255, 0.6)) !important;
+        display: block !important;
     }
 
     .article-content {

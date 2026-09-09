@@ -423,7 +423,7 @@ function renderArticles() {
             <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
             <img src="${imgSrc}" class="article-thumb" alt="Thumb">
             <div class="article-content">
-                <div class="article-meta" style="align-items: center;">
+                <div class="article-meta" style="align-items: center; padding-right: 36px;">
                     ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" style="max-height: 24px; margin-right: 8px;">` : ''}
                     <span>${article.source_name} &bull; ${article.published_date}</span>
                 </div>
