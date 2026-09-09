@@ -301,15 +301,24 @@
             margin-bottom: 6px;
             display: -webkit-box;
             -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
             overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
         }
 
         .card-subtitle {
             font-family: 'Inter', sans-serif;
             font-size: 0.85rem;
             color: #334155;
-            line-height: 1.35;
+            line-height: 1.3;
             margin-top: 4px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
         }
 
         .card-divider {
@@ -720,6 +729,42 @@
             }
             .position-mode-active #cardPhoto {
                 cursor: ns-resize !important;
+            }
+
+            /* Desktop Proportions when Subtitle is Active (guarantees content never overflows) */
+            .has-subtitle.tpl-speech #cardPhotoContainer {
+                height: 39% !important;
+            }
+            .has-subtitle.tpl-speech #cardContentBox {
+                padding: 3.5% 6% 3.5% !important;
+            }
+            .has-subtitle.tpl-speech #bannerTopMeta {
+                margin-bottom: 3px !important;
+            }
+            .has-subtitle.tpl-speech #cardDivider {
+                margin-top: 2px !important;
+                margin-bottom: 6px !important;
+            }
+            .has-subtitle.tpl-speech .card-main-quote {
+                margin-bottom: 3px !important;
+                -webkit-line-clamp: 3;
+            }
+            .has-subtitle.tpl-speech .card-subtitle {
+                -webkit-line-clamp: 3;
+            }
+
+            .has-subtitle.tpl-banner #cardContentBox,
+            .has-subtitle.tpl-editorial #cardContentBox {
+                padding: 3% 6% 1.5% !important;
+            }
+            .has-subtitle.tpl-banner .card-main-quote,
+            .has-subtitle.tpl-editorial .card-main-quote {
+                margin-bottom: 3px !important;
+                -webkit-line-clamp: 3;
+            }
+            .has-subtitle.tpl-banner .card-subtitle,
+            .has-subtitle.tpl-editorial .card-subtitle {
+                -webkit-line-clamp: 3;
             }
         }
 
@@ -1368,8 +1413,8 @@
                     document.querySelectorAll('.tpl-post-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentTemplate = btn.dataset.tpl;
-
-                    linkedinCard.className = `linkedin-card tpl-${currentTemplate}`;
+                    const hasSub = inputSubtitle && inputSubtitle.value.trim().length > 0;
+                    linkedinCard.className = `linkedin-card tpl-${currentTemplate}${hasSub ? ' has-subtitle' : ''}`;
                     updateCardView();
                 });
             });
@@ -1399,10 +1444,12 @@
                 }
                 
                 // Subtitle
-                if (inputSubtitle.value.trim()) {
-                    cardSubtitle.textContent = inputSubtitle.value.trim();
-                    cardSubtitle.style.display = 'block';
+                const subVal = inputSubtitle ? inputSubtitle.value.trim() : '';
+                if (subVal) {
+                    cardSubtitle.textContent = subVal;
+                    cardSubtitle.style.display = '-webkit-box';
                 } else {
+                    cardSubtitle.textContent = '';
                     cardSubtitle.style.display = 'none';
                 }
 
@@ -1424,6 +1471,17 @@
 
                 // Colors
                 cardMainQuote.style.color = colorText.value;
+                if (cardSubtitle) {
+                    const textCol = colorText.value || '#1a1a2e';
+                    const isLightText = textCol.toLowerCase() === '#ffffff' || textCol.toLowerCase() === '#fff' || textCol.toLowerCase().startsWith('#f') || textCol.toLowerCase().startsWith('#e');
+                    if (isLightText) {
+                        cardSubtitle.style.color = textCol;
+                        cardSubtitle.style.opacity = '0.85';
+                    } else {
+                        cardSubtitle.style.color = '#475569';
+                        cardSubtitle.style.opacity = '1';
+                    }
+                }
                 cardDivider.style.backgroundColor = colorAccent.value;
                 cardBannerHeader.style.backgroundColor = colorAccent.value;
 
@@ -1443,7 +1501,10 @@
             window.updateCardView = updateCardView;
 
             [inputQuote, inputSubtitle, inputDate, inputAuthor, inputImagePosition, colorText, colorAccent].forEach(el => {
-                el.addEventListener('input', updateCardView);
+                if (el) {
+                    el.addEventListener('input', updateCardView);
+                    el.addEventListener('change', updateCardView);
+                }
             });
 
             // Newspaper Logo Selection
@@ -1562,6 +1623,7 @@
                     btn.classList.add('active');
                     const fmt = btn.dataset.format;
                     cardStage.dataset.format = fmt;
+                    if (window.autoFitCardText) window.autoFitCardText();
                 });
             });
 
@@ -2899,28 +2961,81 @@
         }
         window.applyColorPreset = applyColorPreset;
 
-        // Helper: Auto-Fit Title Font Size
+        // Helper: Auto-Fit Title & Subtitle Font Sizes (guarantees text never overflows)
         function autoFitCardText() {
             const quote = document.getElementById('cardMainQuote');
+            const subtitle = document.getElementById('cardSubtitle');
+            const card = document.getElementById('linkedinCard');
+            const stage = document.getElementById('cardStage');
             if (!quote) return;
 
-            if (quote.dataset.userResized === 'true') return;
+            const titleText = quote.textContent ? quote.textContent.trim() : '';
+            const subText = subtitle && subtitle.style.display !== 'none' && subtitle.textContent ? subtitle.textContent.trim() : '';
+            const hasSubtitle = subText.length > 0;
 
-            const isMobile = window.innerWidth <= 900;
-            const textLength = quote.textContent.trim().length;
-            let baseSize = isMobile ? 1.15 : 1.35;
-            if (textLength > 150) {
-                baseSize = isMobile ? 0.82 : 0.95;
-            } else if (textLength > 110) {
-                baseSize = isMobile ? 0.88 : 1.05;
-            } else if (textLength > 75) {
-                baseSize = isMobile ? 0.94 : 1.15;
-            } else if (textLength > 45) {
-                baseSize = isMobile ? 1.02 : 1.25;
+            if (card) {
+                if (hasSubtitle) {
+                    card.classList.add('has-subtitle');
+                } else {
+                    card.classList.remove('has-subtitle');
+                }
             }
 
-            quote.style.fontSize = `${baseSize}rem`;
-            quote.style.lineHeight = textLength > 75 ? (isMobile ? '1.20' : '1.25') : '1.30';
+            const isMobile = window.innerWidth <= 900;
+            const fmt = (stage && stage.dataset.format) || '1080x1080';
+            const isStory = fmt === '1080x1920';
+
+            // Auto-fit Title Font Size (if not manually resized by user)
+            if (quote.dataset.userResized !== 'true') {
+                const textLength = titleText.length;
+                let baseSize;
+
+                if (hasSubtitle) {
+                    if (textLength > 130) {
+                        baseSize = isMobile ? 0.76 : (isStory ? 0.82 : 0.88);
+                    } else if (textLength > 90) {
+                        baseSize = isMobile ? 0.82 : (isStory ? 0.88 : 0.96);
+                    } else if (textLength > 55) {
+                        baseSize = isMobile ? 0.88 : (isStory ? 0.95 : 1.06);
+                    } else if (textLength > 30) {
+                        baseSize = isMobile ? 0.95 : (isStory ? 1.05 : 1.16);
+                    } else {
+                        baseSize = isMobile ? 1.05 : (isStory ? 1.15 : 1.25);
+                    }
+                } else {
+                    if (textLength > 150) {
+                        baseSize = isMobile ? 0.82 : 0.95;
+                    } else if (textLength > 110) {
+                        baseSize = isMobile ? 0.88 : 1.05;
+                    } else if (textLength > 75) {
+                        baseSize = isMobile ? 0.94 : 1.15;
+                    } else if (textLength > 45) {
+                        baseSize = isMobile ? 1.02 : 1.25;
+                    } else {
+                        baseSize = isMobile ? 1.15 : 1.35;
+                    }
+                }
+
+                quote.style.fontSize = `${baseSize}rem`;
+                quote.style.lineHeight = (textLength > 75 || hasSubtitle) ? (isMobile ? '1.20' : '1.22') : '1.28';
+            }
+
+            // Auto-fit Subtitle Font Size (if not manually resized by user)
+            if (subtitle && hasSubtitle && subtitle.dataset.userResized !== 'true') {
+                const subLen = subText.length;
+                let subSize;
+
+                if (subLen > 140) {
+                    subSize = isMobile ? 0.65 : (isStory ? 0.70 : 0.74);
+                } else if (subLen > 80) {
+                    subSize = isMobile ? 0.70 : (isStory ? 0.75 : 0.80);
+                } else {
+                    subSize = isMobile ? 0.75 : (isStory ? 0.80 : 0.85);
+                }
+
+                subtitle.style.fontSize = `${subSize}rem`;
+                subtitle.style.lineHeight = '1.26';
+            }
         }
         window.autoFitCardText = autoFitCardText;
 
