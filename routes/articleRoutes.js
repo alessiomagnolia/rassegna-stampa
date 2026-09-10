@@ -52,14 +52,14 @@ router.post('/extract', authMiddleware, async (req, res) => {
             res.json(articleData);
         } catch (extractError) {
             if (extractError.message === 'TIMEOUT') {
-                return res.status(504).json({ error: 'Tempo scaduto. Il sito è troppo lento o blocca l\'estrazione.' });
+                return res.status(504).json({ error: 'Tempo scaduto durante l\'estrazione. Il sito è troppo lento o blocca l\'accesso automatico. Usa l\'inserimento manuale.' });
             }
             throw extractError;
         }
 
     } catch (error) {
         console.error('Route extract error:', error);
-        res.status(500).json({ error: error.message || 'Si è verificato un errore durante l\'estrazione dell\'articolo.' });
+        res.status(422).json({ error: error.message || 'Impossibile estrarre l\'articolo da questo link. Usa l\'inserimento manuale.' });
     }
 });
 

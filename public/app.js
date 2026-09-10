@@ -280,14 +280,42 @@ async function addArticle() {
         urlInput.disabled = true;
         loading.classList.remove('hidden');
         
-        const article = await apiCall('POST', '/api/articles/extract', { url });
+        const article = await apiCall('POST', '/api/articles/extract', { url, skipScreenshot: true });
         
         state.articles.push(article);
         urlInput.value = '';
         renderArticles();
-        showToast('Articolo aggiunto', 'success');
+        showToast('Articolo aggiunto con successo', 'success');
     } catch (error) {
-        showToast(error.message, 'error');
+        console.error('Extraction error:', error);
+        showToast(error.message || 'Impossibile estrarre automaticamente l\'articolo', 'error');
+        
+        // Auto-open manual modal pre-filled with the URL so the user is never blocked
+        try {
+            const manualModal = document.getElementById('manualEntryModal');
+            if (manualModal) {
+                const manualUrl = document.getElementById('manualUrl');
+                if (manualUrl) manualUrl.value = url;
+                
+                const manualDate = document.getElementById('manualDate');
+                if (manualDate && !manualDate.value) {
+                    manualDate.value = new Date().toISOString().split('T')[0];
+                }
+                
+                const manualSourceName = document.getElementById('manualSourceName');
+                if (manualSourceName && !manualSourceName.value) {
+                    try {
+                        const h = new URL(url).hostname.replace(/^www\./, '').split('.')[0];
+                        manualSourceName.value = h.charAt(0).toUpperCase() + h.slice(1);
+                    } catch(e) {}
+                }
+                
+                manualModal.classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('manualTitle')?.focus();
+                }, 100);
+            }
+        } catch(e) {}
     } finally {
         btn.disabled = false;
         urlInput.disabled = false;
@@ -419,7 +447,7 @@ function renderArticles() {
         card.dataset.idx = idx;
         card.style.animationDelay = `${idx * 0.1}s`;
         
-        const imgSrc = article.screenshotBase64 || article.imageBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
+        const imgSrc = article.imageBase64 || article.screenshotBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
         
         card.innerHTML = `
             <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
@@ -1117,14 +1145,14 @@ async function startMultiLinkExtraction() {
         document.getElementById('mlProgressCount').textContent = url.length > 55 ? url.slice(0, 55) + '...' : url;
 
         try {
-            const article = await apiCall('POST', '/api/articles/extract', { url });
+            const article = await apiCall('POST', '/api/articles/extract', { url, skipScreenshot: true });
             state.articles.push(article);
             succeeded++;
             mlLog(`<i data-feather="check" style="color:var(--success);width:14px;height:14px;vertical-align:middle;"></i> ${article.source_name} — ${article.title.slice(0, 60)}${article.title.length > 60 ? '...' : ''}`, 'success');
         } catch (err) {
             failed++;
             const shortUrl = url.length > 55 ? url.slice(0, 55) + '...' : url;
-            mlLog(`<i data-feather="x" style="color:var(--danger);width:14px;height:14px;vertical-align:middle;"></i> Errore: ${shortUrl}`, 'error');
+            mlLog(`<i data-feather="x" style="color:var(--danger);width:14px;height:14px;vertical-align:middle;"></i> ${shortUrl} (${err.message || 'Errore estrazione'})`, 'error');
         }
     }
 

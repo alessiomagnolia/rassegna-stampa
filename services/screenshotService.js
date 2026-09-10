@@ -1,7 +1,15 @@
-const puppeteer = require('puppeteer');
+let puppeteer = null;
+try {
+    puppeteer = require('puppeteer');
+} catch (e) {
+    console.warn('[ScreenshotService] Puppeteer non caricabile:', e.message);
+}
 
 // Launch a fresh browser instance optimized for low-memory servers (512MB RAM)
 async function launchBrowser() {
+    if (!puppeteer) {
+        throw new Error('Puppeteer non installato o non disponibile');
+    }
     console.log('Avvio di Puppeteer...');
     return await puppeteer.launch({
         headless: 'new',
@@ -10,7 +18,9 @@ async function launchBrowser() {
             '--no-sandbox', 
             '--disable-setuid-sandbox', 
             '--disable-dev-shm-usage',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--disable-extensions',
+            '--disable-background-networking'
         ]
     });
 }
@@ -28,9 +38,34 @@ async function takeScreenshot(url) {
         page = await browser.newPage();
         
         await page.setViewport({ width: 1280, height: 900 });
+
+        // Filter out slow/heavy resources (media, fonts, heavy ad/tracker domains) to prevent hangs
+        try {
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+                const rt = req.resourceType();
+                const reqUrl = req.url().toLowerCase();
+                const isBlockedDomain = 
+                    reqUrl.includes('google-analytics') || 
+                    reqUrl.includes('doubleclick') || 
+                    reqUrl.includes('googletagservices') ||
+                    reqUrl.includes('taboola') || 
+                    reqUrl.includes('outbrain') || 
+                    reqUrl.includes('criteo') ||
+                    reqUrl.includes('hotjar') ||
+                    reqUrl.includes('facebook.net');
+
+                if (rt === 'media' || rt === 'font' || isBlockedDomain) {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
+            });
+        } catch (e) {}
         
         console.log(`[Screenshot] Navigazione verso: ${url}`);
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+        // Use domcontentloaded with a reasonable timeout instead of networkidle2
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
 
         // Try to close common cookie banners
         await page.evaluate(() => {
@@ -38,7 +73,7 @@ async function takeScreenshot(url) {
             const buttons = Array.from(document.querySelectorAll('button, a, [role="button"]'));
             
             for (const btn of buttons) {
-                const text = btn.innerText.toLowerCase().trim();
+                const text = btn.innerText?.toLowerCase().trim() || '';
                 if (acceptTexts.some(t => text === t || text.includes(t))) {
                     btn.click();
                     break;
@@ -47,15 +82,16 @@ async function takeScreenshot(url) {
             
             const selectorsToHide = [
                 '#iubenda-cs-banner', '.qc-cmp2-container', '#cookie-notice', 
-                '#cookie-law-info-bar', '.cookie-banner', '.cookie-consent'
+                '#cookie-law-info-bar', '.cookie-banner', '.cookie-consent',
+                '.tp-modal', '.tp-backdrop', '#onesignal-slidedown-dialog'
             ];
             selectorsToHide.forEach(sel => {
                 const els = document.querySelectorAll(sel);
-                els.forEach(el => el.style.display = 'none');
+                els.forEach(el => { el.style.display = 'none'; });
             });
-        });
+        }).catch(() => {});
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         console.log(`[Screenshot] Cattura in corso...`);
         const screenshotBuffer = await page.screenshot({ type: 'png' });
@@ -65,8 +101,8 @@ async function takeScreenshot(url) {
         console.error(`[Screenshot] Errore per ${url}:`, error.message);
         return null;
     } finally {
-        if (page) await page.close().catch(e => console.error(e));
-        if (browser) await browser.close().catch(e => console.error(e));
+        if (page) await page.close().catch(() => {});
+        if (browser) await browser.close().catch(() => {});
     }
 }
 

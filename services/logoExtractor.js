@@ -1,4 +1,9 @@
-const cheerio = require('cheerio');
+let cheerio = null;
+try {
+    cheerio = require('cheerio');
+} catch (e) {
+    // Cheerio loaded if present
+}
 const fs = require('fs');
 const path = require('path');
 
@@ -87,7 +92,7 @@ async function extractLogo(url, sourceName = '') {
             });
             clearTimeout(timeoutId);
 
-            if (response.ok) {
+            if (response.ok && cheerio) {
                 const html = await response.text();
                 const $ = cheerio.load(html);
 
