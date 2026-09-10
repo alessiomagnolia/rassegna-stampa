@@ -117,72 +117,15 @@
             margin-top: 44px;
             transition: max-width 0.3s ease;
         }
-        /* Top action bar above preview (Zoom on left, Undo + Edit Article on right) */
+        /* Top action bar above preview (Prominent Undo + Edit Article) */
         .preview-actions-bar {
             position: absolute;
             top: -46px;
-            left: 0;
             right: 0;
             z-index: 30;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .preview-actions-right {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-        }
-        .preview-zoom-group {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            background: rgba(26, 27, 50, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-        }
-        .btn-preview-tool {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.06);
-            color: #ffffff;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s ease;
-        }
-        .btn-preview-tool:hover {
-            border-color: #7c5cff;
-            background: rgba(124, 92, 255, 0.25);
-            color: #c4b5fd;
-            transform: translateY(-1px);
-        }
-        .btn-preview-tool:active {
-            transform: translateY(0);
-        }
-        .preview-zoom-badge {
-            font-size: 0.76rem;
-            font-weight: 700;
-            font-family: monospace;
-            color: #c4b5fd;
-            padding: 2px 8px;
-            min-width: 48px;
-            text-align: center;
-            cursor: pointer;
-            user-select: none;
-            border-radius: 4px;
-            transition: background 0.15s;
-        }
-        .preview-zoom-badge:hover {
-            background: rgba(124, 92, 255, 0.2);
-            color: #ffffff;
         }
 
         /* Bottom persistent floating zoom pill */
@@ -1083,36 +1026,19 @@
         </div>
 
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <!-- TASTI IN ALTO SULL'ANTEPRIMA: ZOOM SULLA SINISTRA + ANNULLA & MODIFICA SULLA DESTRA -->
+            <!-- TASTI EVIDENTI IN ALTO A DESTRA DELL'ANTEPRIMA: ANNULLA & MODIFICA ARTICOLO -->
             <div class="preview-actions-bar hide-mobile" id="previewActionsBar">
-                <!-- ZOOM CONTROLS (OUTSIDE EDIT DRAWER) -->
-                <div class="preview-zoom-group" id="previewZoomGroup">
-                    <button type="button" class="btn-preview-tool" id="btnZoomOut" onclick="changePreviewZoom(-0.1)" title="Zoom Out (−)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                    <span class="preview-zoom-badge" id="previewZoomVal" onclick="resetPreviewZoom()" title="Clicca per ripristinare 100%">100%</span>
-                    <button type="button" class="btn-preview-tool" id="btnZoomIn" onclick="changePreviewZoom(0.1)" title="Zoom In (+)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                    <button type="button" class="btn-preview-tool" id="btnZoomReset" onclick="resetPreviewZoom()" title="Reimposta zoom originale (100%)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                    </button>
-                </div>
-
-                <!-- UNDO + EDIT ARTICLE -->
-                <div class="preview-actions-right">
-                    <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
-                            <polyline points="3 3 3 11 11 11"/>
-                        </svg>
-                        <span>Annulla</span>
-                    </button>
-                    <button type="button" class="btn-prominent-edit-article" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
-                        <i data-feather="edit-3" style="width:15px;height:15px;"></i>
-                        <span>MODIFICA L'ARTICOLO</span>
-                    </button>
-                </div>
+                <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
+                        <polyline points="3 3 3 11 11 11"/>
+                    </svg>
+                    <span>Annulla</span>
+                </button>
+                <button type="button" class="btn-prominent-edit-article" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+                    <i data-feather="edit-3" style="width:15px;height:15px;"></i>
+                    <span>MODIFICA L'ARTICOLO</span>
+                </button>
             </div>
 
             <!-- FLOATING MINI TOOLBAR FOR SELECTED ELEMENT (DIRECT RESIZING ON PREVIEW) -->
@@ -1994,8 +1920,6 @@ function applyPreviewZoom() {
     }
 
     const pct = Math.round(currentPreviewZoom * 100) + '%';
-    const b1 = document.getElementById('previewZoomVal');
-    if (b1) b1.textContent = pct;
     const b2 = document.getElementById('floatingZoomVal');
     if (b2) b2.textContent = pct;
 
