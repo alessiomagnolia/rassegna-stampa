@@ -378,33 +378,83 @@
 
             <!-- Main Feature Section (full width) -->
             <section class="section glass-card main-feature-section">
-                <h2><i data-feather="plus-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></i> Nuova Rassegna Stampa</h2>
-
-                <div class="input-group rassegna-title-group">
-                    <label for="rassegnaTitle">Titolo Rassegna (opzionale)</label>
-                    <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
+                    <h2 style="margin:0;"><i data-feather="file-text" style="width:22px;height:22px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> Nuova Rassegna Stampa</h2>
+                    <span style="font-size:0.85rem; color:var(--text-muted);"><span id="articleCountBadge">0</span> articoli inseriti</span>
                 </div>
 
-                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                    <label for="clientName">Nome Cliente (opzionale, per copertina)</label>
-                    <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A.">
-                </div>
+                <!-- HERO: Inserimento Articolo (Fulcro Principale della Pagina) -->
+                <div class="article-hero-box">
+                    <div class="article-hero-header">
+                        <div class="article-hero-title-group">
+                            <span class="hero-ai-badge">
+                                <i data-feather="zap" style="width:13px;height:13px;"></i> Estrazione Automatica AI
+                            </span>
+                            <span class="article-hero-hint">Incolla l'indirizzo web dell'articolo da includere nella rassegna</span>
+                        </div>
+                    </div>
 
-                <div class="input-group rassegna-title-group" style="margin-top: 15px;">
-                    <label>Logo Cliente (opzionale, apparirà grande in copertina)</label>
-                    <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                    <label for="clientLogoInput" class="btn btn-outline" style="display: inline-block; margin-top: 5px; cursor: pointer; text-align: center;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli Logo Cliente</label>
-                    <div id="clientLogoPreviewContainer" style="display:none; margin-top:10px; align-items: center;">
-                        <img id="clientLogoPreview" style="max-height: 50px; object-fit: contain;" src="">
-                        <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="margin-left: 10px;">Rimuovi</button>
+                    <div class="article-omnibar-container">
+                        <div class="article-omnibar" id="articleOmnibar">
+                            <div class="omnibar-icon-box" title="Link Articolo">
+                                <i data-feather="link-2" style="width:18px;height:18px;"></i>
+                            </div>
+                            <input type="url" id="articleUrl" class="omnibar-input" placeholder="Incolla il link dell'articolo qui (es. corriere.it, repubblica.it, ansa.it...)" autocomplete="off" spellcheck="false">
+                            <button type="button" id="btnPasteUrl" class="btn-paste-pill" title="Incolla dagli appunti">
+                                <i data-feather="clipboard" style="width:13px;height:13px;"></i> <span>Incolla</span>
+                            </button>
+                            <button id="btnAddArticle" class="btn btn-hero-extract" title="Estrai e genera articolo">
+                                <i data-feather="plus" style="width:18px;height:18px;"></i>
+                                <span class="hide-mobile">Aggiungi Articolo</span>
+                                <span class="show-mobile-inline">Aggiungi</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="article-hero-footer">
+                        <div class="hero-alt-actions">
+                            <button id="btnOpenManual" class="btn btn-subtle-alt" type="button">
+                                <i data-feather="edit-3" style="width:14px;height:14px;"></i> Inserimento Manuale
+                            </button>
+                            <button id="btnOpenMultiLink" class="btn btn-subtle-alt" type="button">
+                                <i data-feather="layers" style="width:14px;height:14px;"></i> Rassegna Multi Link
+                            </button>
+                        </div>
+                        <div class="hero-sources-pill hide-mobile">
+                            <i data-feather="check-circle" style="width:13px;height:13px;color:var(--success);"></i>
+                            <span>Oltre 500+ testate online e agenzie supportate</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="add-article-bar">
-                    <input type="url" id="articleUrl" placeholder="Incolla il link dell'articolo qui (es. https://www.corriere.it/...)">
-                    <button id="btnAddArticle" class="btn btn-primary"><i data-feather="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Aggiungi</span><span class="show-mobile-inline">Aggiungi</span></button>
-                    <button id="btnOpenManual" class="btn btn-secondary"><i data-feather="edit" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Inserimento Manuale</span><span class="show-mobile-inline">Manuale</span></button>
-                    <button id="btnOpenMultiLink" class="btn btn-multilink"><i data-feather="layers" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Rassegna Multi Link</span><span class="show-mobile-inline">Multi Link</span></button>
+                <!-- Dettagli Copertina & Intestazione (Opzionali) -->
+                <div class="rassegna-cover-meta-card">
+                    <div class="cover-meta-header" id="toggleCoverMeta" onclick="toggleCoverMetaCard()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem;">
+                            <i data-feather="sliders" style="width:15px;height:15px;color:var(--accent-primary);"></i>
+                            <span>Dati Copertina & Intestazione <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(Opzionali)</span></span>
+                        </div>
+                        <span id="coverMetaToggleIcon" style="font-size:0.75rem; color:var(--text-muted); transition: transform 0.2s;">▼</span>
+                    </div>
+                    <div id="coverMetaContent" style="margin-top:1rem; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                        <div class="input-group" style="margin:0;">
+                            <label for="rassegnaTitle" style="font-size:0.8rem; font-weight:600;">Titolo Rassegna</label>
+                            <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio" style="height:40px; font-size:0.85rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label for="clientName" style="font-size:0.8rem; font-weight:600;">Nome Cliente</label>
+                            <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A." style="height:40px; font-size:0.85rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.8rem; font-weight:600;">Logo Cliente</label>
+                            <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                            <label for="clientLogoInput" class="btn btn-outline btn-sm" style="display: flex; align-items:center; justify-content:center; gap:4px; height:40px; cursor: pointer; text-align: center; width:100%;"><i data-feather="image" style="width:14px;height:14px;"></i> Scegli Logo</label>
+                            <div id="clientLogoPreviewContainer" style="display:none; margin-top:8px; align-items: center; gap:8px;">
+                                <img id="clientLogoPreview" style="max-height: 36px; object-fit: contain;" src="">
+                                <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="padding:2px 6px;">Rimuovi</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Loading State -->

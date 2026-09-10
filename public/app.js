@@ -424,6 +424,10 @@ function renderArticles() {
         if (child.id !== 'emptyArticles') child.remove();
     });
 
+    // Update article count badge
+    const countBadge = document.getElementById('articleCountBadge');
+    if (countBadge) countBadge.textContent = state.articles.length;
+
     if (state.articles.length === 0) {
         sessionStorage.removeItem('rs_draft_articles');
         empty.classList.remove('hidden');
@@ -962,6 +966,26 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnAddArticle')?.addEventListener('click', addArticle);
         document.getElementById('articleUrl')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addArticle();
+        });
+
+        // Paste URL Helper Button
+        document.getElementById('btnPasteUrl')?.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && text.trim()) {
+                    const urlInput = document.getElementById('articleUrl');
+                    if (urlInput) {
+                        urlInput.value = text.trim();
+                        urlInput.focus();
+                        showToast('Link incollato dagli appunti', 'info');
+                    }
+                } else {
+                    showToast('Nessun testo trovato negli appunti', 'warning');
+                }
+            } catch (err) {
+                // If clipboard permission is not granted, simply focus the input
+                document.getElementById('articleUrl')?.focus();
+            }
         });
         
         // Manual Entry Modal
@@ -1972,6 +1996,17 @@ window.toggleTemplateCard = function() {
     if (icon) {
         if (isHidden) icon.classList.add('open');
         else icon.classList.remove('open');
+    }
+};
+
+window.toggleCoverMetaCard = function() {
+    const content = document.getElementById('coverMetaContent');
+    const icon = document.getElementById('coverMetaToggleIcon');
+    if (!content) return;
+    const isHidden = content.style.display === 'none';
+    content.style.display = isHidden ? 'grid' : 'none';
+    if (icon) {
+        icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
     }
 };
 
