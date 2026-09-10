@@ -108,22 +108,40 @@
         }
         .preview-wrapper {
             position: relative; width: 100%; max-width: 760px;
-            margin-top: 12px;
+            margin-top: 28px;
             transition: max-width 0.3s ease;
         }
-        .preview-edit-btn {
-            position: absolute; top: -38px; left: 0; z-index: 10;
-            background: rgba(20,20,45,0.92); color: #efece5;
-            border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 6px 14px;
-            font-family: inherit; font-size: 0.78rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease;
-            display: inline-flex; align-items: center; gap: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        .btn-prominent-edit-article {
+            position: absolute; top: -50px; left: 0; z-index: 30;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(124, 92, 255, 0.65);
+            background: linear-gradient(135deg, #7c5cff 0%, #5028f8 100%);
+            color: #ffffff !important;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(124, 92, 255, 0.45);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
         }
-        .preview-edit-btn:hover {
-            background: #7c5cff; color: white; border-color: transparent;
-            box-shadow: 0 0 15px rgba(124,92,255,0.5);
-            transform: translateY(-1px);
+        .btn-prominent-edit-article:hover {
+            background: linear-gradient(135deg, #8f72ff 0%, #633cfb 100%);
+            box-shadow: 0 6px 24px rgba(124, 92, 255, 0.65);
+            transform: translateY(-2px);
+            border-color: #a289ff;
+        }
+        .btn-prominent-edit-article:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(124, 92, 255, 0.4);
+        }
+        .btn-prominent-edit-article.active {
+            background: linear-gradient(135deg, #00d4aa 0%, #00a885 100%);
+            border-color: rgba(0, 212, 170, 0.8);
+            box-shadow: 0 4px 18px rgba(0, 212, 170, 0.45);
         }
 
         /* ============ DESKTOP PREVIEW TOOLBAR & RESIZE CONTROLLERS ============ */
@@ -364,100 +382,151 @@
         .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
 
-        /* ============ LEFT DOCKED EDIT PANEL ============ */
-        .edit-panel {
-            position: relative;
-            top: 0; left: 0; bottom: 0;
-            width: 0; min-width: 0;
-            height: calc(100vh - 60px);
-            flex-shrink: 0;
-            z-index: 50;
-            background: rgba(12,12,28,0.98);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid transparent;
-            border-left: 1px solid rgba(255,255,255,0.08);
-            color: #efece5;
-            transition: width 0.32s cubic-bezier(0.4,0,0.2,1), border-color 0.32s ease, opacity 0.25s ease;
-            display: flex; flex-direction: column;
-            overflow: hidden;
-            visibility: hidden;
+        /* ============ LEFT-OPENING EDIT PANEL DRAWER (FIXED AT LEFT: 0) ============ */
+        .desktop-edit-backdrop {
+            position: fixed;
+            top: 60px; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 990;
             opacity: 0;
-            box-shadow: 6px 0 24px rgba(0,0,0,0.35);
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .desktop-edit-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .edit-panel {
+            position: fixed !important;
+            top: 60px !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            width: 440px !important;
+            max-width: 90vw !important;
+            height: calc(100vh - 60px) !important;
+            max-height: calc(100vh - 60px) !important;
+            z-index: 1000 !important;
+            background: #0f1023 !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 16px 0 48px rgba(0, 0, 0, 0.75) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            transform: translateX(-100%) !important;
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            color: #efece5;
         }
         .edit-panel.open {
-            width: 420px;
-            min-width: 420px;
-            border-right-color: rgba(255,255,255,0.12);
-            visibility: visible;
-            opacity: 1;
-        }
-        .edit-panel-header,
-        .edit-panel-body,
-        .edit-panel-footer {
-            width: 420px;
-            box-sizing: border-box;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
         .edit-panel-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 1.15rem 1.4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 1.1rem 1.4rem !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+            flex: 0 0 auto !important;
+            background: #14152e !important;
+            z-index: 2 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
         }
-        .edit-panel-header h3 { font-size: 0.95rem; margin: 0; font-weight: 700; color: #efece5; }
-        .edit-panel-body { flex: 1; overflow-y: auto; padding: 1.4rem; }
-        .edit-panel-footer { padding: 1rem 1.4rem; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; background: rgba(10,10,24,0.95); }
-
-        /* PROMINENT EDIT BUTTON IN LEFT SIDEBAR */
-        .btn-edit-article-left {
-            width: 100%;
-            margin-bottom: 12px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(124, 92, 255, 0.45);
-            background: linear-gradient(135deg, #7c5cff, #5028f8);
-            color: #ffffff;
-            font-size: 0.82rem;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
-            transition: all 0.2s ease;
-            user-select: none;
-            flex-shrink: 0;
+        .edit-panel-header h3 {
+            font-size: 0.95rem !important;
+            margin: 0 !important;
+            font-weight: 700 !important;
+            color: #efece5 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
         }
-        .btn-edit-article-left:hover {
-            background: linear-gradient(135deg, #8d70ff, #623cf8);
-            box-shadow: 0 6px 18px rgba(124, 92, 255, 0.55);
-            transform: translateY(-1px);
+        .edit-panel-body {
+            flex: 1 1 auto !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 1.35rem !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
         }
-        .btn-edit-article-left.active {
-            background: rgba(124, 92, 255, 0.22);
-            border-color: #7c5cff;
-            color: #ffffff;
-            box-shadow: 0 0 12px rgba(124, 92, 255, 0.35);
+        .edit-panel-body::-webkit-scrollbar {
+            width: 8px;
         }
-
-        .edit-field { margin-bottom: 1.25rem; }
-        .edit-field label { display: block; font-size: 0.8rem; font-weight: 600; color: #b3b3b3; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
+        .edit-panel-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .edit-panel-body::-webkit-scrollbar-thumb {
+            background: rgba(124, 92, 255, 0.5);
+            border-radius: 4px;
+        }
+        .edit-panel-body::-webkit-scrollbar-thumb:hover {
+            background: #7c5cff;
+        }
+        .edit-panel-footer {
+            flex: 0 0 auto !important;
+            padding: 1rem 1.4rem !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+            background: #14152e !important;
+            z-index: 2 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+        .edit-field {
+            margin-bottom: 1.15rem !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .edit-field label {
+            display: block !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            color: #a0a0b8 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.8px !important;
+            margin-bottom: 0.45rem !important;
+        }
         .edit-field input[type="text"],
         .edit-field input[type="url"],
         .edit-field input[type="date"],
         .edit-field select,
         .edit-field textarea {
-            width: 100%; padding: 0.65rem 0.9rem;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; color: #efece5;
-            font-family: inherit; font-size: 0.9rem; transition: var(--transition);
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 0.65rem 0.85rem !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            border-radius: 8px !important;
+            color: #ffffff !important;
+            font-family: inherit !important;
+            font-size: 0.9rem !important;
+            pointer-events: auto !important;
+            cursor: text !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
         }
-        .edit-field textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
-        .edit-field input:focus, .edit-field textarea:focus, .edit-field select:focus {
-            outline: none; border-color: var(--accent-primary);
-            box-shadow: 0 0 0 2px rgba(124,92,255,0.2);
+        .edit-field select {
+            cursor: pointer !important;
+        }
+        .edit-field input:focus,
+        .edit-field select:focus,
+        .edit-field textarea:focus {
+            outline: none !important;
+            border-color: #7c5cff !important;
+            box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        .edit-field textarea {
+            resize: vertical !important;
+            min-height: 110px !important;
+            line-height: 1.5 !important;
         }
         .edit-image-preview {
             width: 100%; height: 80px; object-fit: cover; border-radius: 6px;
@@ -538,20 +607,19 @@
     <!-- LEFT: Pages List -->
     <aside class="pages-panel">
         <div class="pages-panel-label">Pagine</div>
-        <button type="button" id="btnEditArticleLeft" class="btn-edit-article-left hide-mobile" title="Modifica dati articolo (titolo, testo, fonte, immagini)">
-            <i data-feather="edit-3" style="width:14px;height:14px;"></i>
-            <span>Modifica Articolo</span>
-        </button>
         <div id="pagesList"><!-- injected --></div>
     </aside>
 
-    <!-- LEFT DOCKED: Edit Panel (Desktop Side Panel) -->
+    <!-- DESKTOP EDIT BACKDROP (CLICK OUTSIDE TO CLOSE) -->
+    <div id="desktopEditBackdrop" class="desktop-edit-backdrop hide-mobile" onclick="closeEditPanel()"></div>
+
+    <!-- LEFT DRAWER: Edit Panel (Fixed at left: 0) -->
     <div class="edit-panel hide-mobile" id="editPanel">
         <div class="edit-panel-header">
-            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
-            <button type="button" class="btn-icon" id="btnCloseEditPanel" title="Chiudi pannello"><i data-feather="x"></i></button>
+            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Modifica articolo</h3>
+            <button type="button" class="btn-icon" id="btnCloseEditPanel" onclick="closeEditPanel()" title="Chiudi pannello (Esc)"><i data-feather="x"></i></button>
         </div>
-        <div class="edit-panel-body">
+        <div class="edit-panel-body" id="editPanelBody">
             <div class="edit-field">
                 <label>Titolo *</label>
                 <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
@@ -639,7 +707,11 @@
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <button type="button" class="preview-edit-btn hide-mobile" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
+            <!-- TASTO EVIDENTE ALLA SINISTRA DELL'ANTEPRIMA DELLA PAGINA -->
+            <button type="button" class="btn-prominent-edit-article hide-mobile" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+                <i data-feather="edit-3"></i>
+                <span>MODIFICA L'ARTICOLO</span>
+            </button>
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
 
@@ -1073,13 +1145,13 @@ function selectPage(idx) {
     if (idx === -1) {
         // Cover
         previewEl.innerHTML = renderCoverPreview();
-        editBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'none';
     } else {
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
-        editBtn.style.display = 'block';
+        if (editBtn) editBtn.style.display = 'inline-flex';
     }
 
-    // Desktop: Update Desktop Right Panel data if an article is selected
+    // Desktop: Update Desktop Drawer data if an article is selected
     if (idx >= 0 && typeof populateEditForm === 'function') {
         populateEditForm(idx);
     } else if (idx < 0 && typeof closeEditPanel === 'function') {
@@ -1094,19 +1166,6 @@ function selectPage(idx) {
         } else {
             btnTogglePanel.style.opacity = '1';
             btnTogglePanel.title = 'Modifica dati articolo (titolo, testo, fonte, immagini)';
-        }
-    }
-
-    const btnEditLeft = document.getElementById('btnEditArticleLeft');
-    if (btnEditLeft) {
-        if (idx < 0) {
-            btnEditLeft.style.opacity = '0.5';
-            btnEditLeft.style.pointerEvents = 'none';
-            btnEditLeft.title = 'Passa a un articolo per modificarne i dati';
-        } else {
-            btnEditLeft.style.opacity = '1';
-            btnEditLeft.style.pointerEvents = 'auto';
-            btnEditLeft.title = 'Modifica dati articolo (titolo, testo, fonte, immagini)';
         }
     }
 
@@ -1395,22 +1454,31 @@ function openEditPanel(idx) {
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.add('open');
 
+    const backdrop = document.getElementById('desktopEditBackdrop');
+    if (backdrop) backdrop.classList.add('active');
+
+    const btnEdit = document.getElementById('btnEditPage');
+    if (btnEdit) btnEdit.classList.add('active');
+
     const btnToggle = document.getElementById('btnToggleEditPanel');
     if (btnToggle) btnToggle.classList.add('active');
 
-    const btnLeft = document.getElementById('btnEditArticleLeft');
-    if (btnLeft) btnLeft.classList.add('active');
+    const bodyEl = document.getElementById('editPanelBody');
+    if (bodyEl) bodyEl.scrollTop = 0;
 }
 
 function closeEditPanel() {
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.remove('open');
 
+    const backdrop = document.getElementById('desktopEditBackdrop');
+    if (backdrop) backdrop.classList.remove('active');
+
+    const btnEdit = document.getElementById('btnEditPage');
+    if (btnEdit) btnEdit.classList.remove('active');
+
     const btnToggle = document.getElementById('btnToggleEditPanel');
     if (btnToggle) btnToggle.classList.remove('active');
-
-    const btnLeft = document.getElementById('btnEditArticleLeft');
-    if (btnLeft) btnLeft.classList.remove('active');
 
     editingIdx = -1;
 }
@@ -1542,13 +1610,6 @@ function fileToBase64(file) {
 // INIT EVENTS
 // ============================================================
 function initEvents() {
-    const btnLeft = document.getElementById('btnEditArticleLeft');
-    if (btnLeft) {
-        btnLeft.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleEditPanel();
-        });
-    }
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) {
         btnEdit.addEventListener('click', (e) => {
@@ -1568,6 +1629,13 @@ function initEvents() {
         btnToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleEditPanel();
+        });
+    }
+    const backdrop = document.getElementById('desktopEditBackdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeEditPanel();
         });
     }
     document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);

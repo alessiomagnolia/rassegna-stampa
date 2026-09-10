@@ -1569,7 +1569,7 @@ input::placeholder, textarea::placeholder {
         flex-direction: column !important;
     }
     .edit-panel {
-        display: block !important;
+        display: flex !important;
     }
     .news-search-form-layout {
         display: grid !important;
