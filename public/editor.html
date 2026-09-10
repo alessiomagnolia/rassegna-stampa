@@ -541,20 +541,38 @@
         .pdf-main-visual { width: 100%; max-height: 100%; object-fit: cover; display: block; }
         .pdf-content-zone { flex: 1 1 auto; padding: 0 1.9%; margin-bottom: 1.9%; overflow: hidden; }
         .pdf-content-text { font-size: clamp(7px, 1.2vw, 11pt); line-height: 1.6; color: #333; text-align: justify; font-family: 'Times New Roman', Times, serif; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 20; }
+        .pdf-footer {
+            flex: 0 0 auto;
+            min-height: 3.8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 1%;
+            padding-left: 1.9%;
+            padding-right: 1.9%;
+            font-size: clamp(5px, 0.9vw, 9pt);
+            color: #888;
+            gap: 8px;
+        }
         .pdf-footer-link {
             color: #0066CC;
-            max-width: 80%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            flex: 1 1 auto;
+            min-width: 0;
+            line-height: 1.25;
+            word-break: break-all;
+            overflow-wrap: anywhere;
             text-decoration: none;
             cursor: pointer;
-            display: inline-block;
             transition: color 0.15s ease;
         }
         .pdf-footer-link:hover {
             color: #004499;
             text-decoration: underline;
+        }
+        .pdf-footer-page {
+            flex: 0 0 auto;
+            white-space: nowrap;
         }
 
         /* Cover page preview */
@@ -1579,8 +1597,8 @@ function renderArticlePreview(art, pageNum, totalPages) {
             <div class="pdf-content-text pdf-resize-selectable" data-elem-type="excerpt" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(art.excerpt || ''), buildKeywordRegex(options.title, options.clientName))}</div>
         </div>
         <div class="pdf-footer">
-            ${art.url ? `<a href="${escHtml(formatLinkUrl(art.url))}" target="_blank" rel="noopener noreferrer" class="pdf-footer-link" title="Clicca per aprire la notizia completa: ${escHtml(art.url)}">${escHtml(art.url)}</a>` : '<span class="pdf-footer-link"></span>'}
-            <span>Pagina ${pageNum} di ${totalPages}</span>
+            ${art.url ? `<a href="${escHtml(formatLinkUrl(art.url))}" target="_blank" rel="noopener noreferrer" class="pdf-footer-link" style="${(art.url || '').length > 110 ? 'font-size:clamp(4.5px, 0.65vw, 6.8pt);' : ((art.url || '').length > 70 ? 'font-size:clamp(5px, 0.75vw, 7.5pt);' : 'font-size:clamp(5.5px, 0.85vw, 8.5pt);')}" title="Clicca per aprire la notizia completa: ${escHtml(art.url)}">${escHtml(art.url)}</a>` : '<span class="pdf-footer-link"></span>'}
+            <span class="pdf-footer-page">Pagina ${pageNum} di ${totalPages}</span>
         </div>
     </div>`;
 }

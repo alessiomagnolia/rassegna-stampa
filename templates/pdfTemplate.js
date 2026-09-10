@@ -214,11 +214,16 @@ function buildClassicHTML(articles, options) {
         .content-text strong { font-weight: 700; color: #1a1a2e; }
 
         .footer {
-            flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: flex-end;
-            border-top: 1px solid #e0e0e0; padding-top: 3mm; padding-left: 5mm; padding-right: 5mm;
+            flex: 0 0 auto; min-height: 8mm; display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #e0e0e0; padding-top: 2.5mm; padding-left: 5mm; padding-right: 5mm; gap: 10px;
         }
-        .footer-link { font-size: 9pt; color: #0066CC; text-decoration: none; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
-        .footer-page { font-size: 9pt; color: #888; }
+        .footer-link {
+            color: #0066CC; text-decoration: none;
+            flex: 1 1 auto; min-width: 0; line-height: 1.25;
+            word-break: break-all; overflow-wrap: anywhere;
+            display: inline-block; cursor: pointer;
+        }
+        .footer-page { font-size: 8.5pt; color: #888; flex: 0 0 auto; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -296,7 +301,7 @@ function buildClassicHTML(articles, options) {
 
         <!-- FOOTER -->
         <div class="footer">
-            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link" title="${article.url || ''}">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link" style="${(article.url || '').length > 110 ? 'font-size: 6.8pt;' : ((article.url || '').length > 70 ? 'font-size: 7.5pt;' : 'font-size: 8.5pt;')}" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page">Articolo ${index + 1} di ${articles.length}</div>
         </div>
     </div>
@@ -402,11 +407,16 @@ function buildModernHTML(articles, options) {
 
         /* FOOTER MODERN */
         .footer-m {
-            flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: center;
-            border-top: 1px solid #e2e8f0; padding-top: 3mm; padding-left: 4px; padding-right: 4px;
+            flex: 0 0 auto; min-height: 8mm; display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #e2e8f0; padding-top: 2.5mm; padding-left: 4px; padding-right: 4px; gap: 10px;
         }
-        .footer-link-m { font-size: 8.5pt; color: #6366f1; text-decoration: none; font-weight: 500; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
-        .footer-page-m { font-size: 8.5pt; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 12px; }
+        .footer-link-m {
+            color: #6366f1; text-decoration: none; font-weight: 500;
+            flex: 1 1 auto; min-width: 0; line-height: 1.25;
+            word-break: break-all; overflow-wrap: anywhere;
+            display: inline-block; cursor: pointer;
+        }
+        .footer-page-m { font-size: 8pt; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 12px; flex: 0 0 auto; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -460,7 +470,7 @@ function buildModernHTML(articles, options) {
         </div>
 
         <div class="footer-m">
-            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-m" title="${article.url || ''}">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-m" style="${(article.url || '').length > 110 ? 'font-size: 6.8pt;' : ((article.url || '').length > 70 ? 'font-size: 7.5pt;' : 'font-size: 8.5pt;')}" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page-m">PAGINA ${index + 1} DI ${articles.length}</div>
         </div>
     </div>`;
@@ -559,11 +569,16 @@ function buildMinimalHTML(articles, options) {
 
         /* FOOTER MINIMAL */
         .footer-e {
-            flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: center;
-            border-top: 1px solid #d6d3d1; padding-top: 3mm;
+            flex: 0 0 auto; min-height: 8mm; display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #d6d3d1; padding-top: 2.5mm; gap: 10px;
         }
-        .footer-link-e { font-size: 8.5pt; color: #57534e; text-decoration: none; font-style: italic; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
-        .footer-page-e { font-size: 8.5pt; color: #78716c; font-style: italic; }
+        .footer-link-e {
+            color: #57534e; text-decoration: none; font-style: italic;
+            flex: 1 1 auto; min-width: 0; line-height: 1.25;
+            word-break: break-all; overflow-wrap: anywhere;
+            display: inline-block; cursor: pointer;
+        }
+        .footer-page-e { font-size: 8pt; color: #78716c; font-style: italic; flex: 0 0 auto; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -616,7 +631,7 @@ function buildMinimalHTML(articles, options) {
         </div>
 
         <div class="footer-e">
-            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-e" title="${article.url || ''}">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-e" style="${(article.url || '').length > 110 ? 'font-size: 6.8pt;' : ((article.url || '').length > 70 ? 'font-size: 7.5pt;' : 'font-size: 8.5pt;')}" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page-e">Articolo ${index + 1} di ${articles.length}</div>
         </div>
     </div>`;
