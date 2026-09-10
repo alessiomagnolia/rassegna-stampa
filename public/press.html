@@ -6,6 +6,12 @@
     <title>Comunicati Stampa | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260902_03">
+    <script>
+        (function() {
+            var theme = localStorage.getItem('rs_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
         body { overflow: hidden; }

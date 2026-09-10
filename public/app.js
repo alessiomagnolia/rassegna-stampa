@@ -2087,13 +2087,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSaveSet) btnSaveSet.addEventListener('click', savePlatformSettings);
 
     const themeToggleSettings = document.getElementById('themeToggleSettings');
-    if (themeToggleSettings) {
-        themeToggleSettings.addEventListener('click', () => {
-            const currentTheme = document.body.getAttribute('data-theme') || 'light';
-            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', nextTheme);
-            localStorage.setItem('rs_theme', nextTheme);
-            showToast(`Tema impostato: ${nextTheme === 'dark' ? 'Scuro' : 'Chiaro'}`, 'info');
+    if (themeToggleSettings && !themeToggleSettings.dataset.themeBound) {
+        themeToggleSettings.dataset.themeBound = 'true';
+        themeToggleSettings.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof window.toggleTheme === 'function') {
+                window.toggleTheme(true);
+            }
         });
     }
 });

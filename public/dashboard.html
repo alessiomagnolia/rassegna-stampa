@@ -6,6 +6,12 @@
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260909_01">
+    <script>
+        (function() {
+            var theme = localStorage.getItem('rs_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
@@ -36,6 +42,11 @@
             <!-- Desktop Only: Upgrade Button -->
             <button id="btnUpgradePlanHeader" class="btn btn-gradient btn-sm hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="padding:4px 10px; font-size:0.75rem; font-weight:700; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase;">
                 <i data-feather="zap" style="width:13px;height:13px;"></i> Upgrade
+            </button>
+
+            <!-- Navbar Quick Theme Toggle Button -->
+            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" aria-label="Cambia Tema" style="padding:4px 8px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; height:30px;">
+                <i data-feather="moon" style="width:14px;height:14px;"></i>
             </button>
 
             <!-- Client Selector Box -->
@@ -922,10 +933,10 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; border-bottom:1px solid var(--border-color);">
                         <div>
                             <div style="font-weight:600; font-size:0.9rem;">Tema Grafico della Piattaforma</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">Scegli tra la modalità Chiara e Scura</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);" id="themeStatusLabel">Scegli tra la modalità Chiara e Scura</div>
                         </div>
-                        <button id="themeToggleSettings" class="btn btn-outline btn-sm">
-                            <i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia Tema
+                        <button id="themeToggleSettings" class="btn btn-outline btn-sm" style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+                            <i data-feather="moon" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Passa a Tema Scuro
                         </button>
                     </div>
 
