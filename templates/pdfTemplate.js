@@ -37,6 +37,16 @@ function boldKeywords(text, regex) {
     return text.replace(regex, '<strong style="color:#1a1a2e;font-weight:700;">$1</strong>');
 }
 
+function formatLinkUrl(url) {
+    if (!url) return '#';
+    let str = String(url).trim();
+    if (!str) return '#';
+    if (!/^https?:\/\//i.test(str)) {
+        str = 'https://' + str;
+    }
+    return str;
+}
+
 // ---------------------------------------------------------------------------
 // MAIN BUILDER SWITCH
 // ---------------------------------------------------------------------------
@@ -207,7 +217,7 @@ function buildClassicHTML(articles, options) {
             flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: flex-end;
             border-top: 1px solid #e0e0e0; padding-top: 3mm; padding-left: 5mm; padding-right: 5mm;
         }
-        .footer-link { font-size: 9pt; color: #0066CC; text-decoration: none; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .footer-link { font-size: 9pt; color: #0066CC; text-decoration: none; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
         .footer-page { font-size: 9pt; color: #888; }
     </style>
 </head>
@@ -286,7 +296,7 @@ function buildClassicHTML(articles, options) {
 
         <!-- FOOTER -->
         <div class="footer">
-            <a href="${article.url || ''}" class="footer-link">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page">Articolo ${index + 1} di ${articles.length}</div>
         </div>
     </div>
@@ -395,7 +405,7 @@ function buildModernHTML(articles, options) {
             flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: center;
             border-top: 1px solid #e2e8f0; padding-top: 3mm; padding-left: 4px; padding-right: 4px;
         }
-        .footer-link-m { font-size: 8.5pt; color: #6366f1; text-decoration: none; font-weight: 500; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .footer-link-m { font-size: 8.5pt; color: #6366f1; text-decoration: none; font-weight: 500; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
         .footer-page-m { font-size: 8.5pt; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 12px; }
     </style>
 </head>
@@ -450,7 +460,7 @@ function buildModernHTML(articles, options) {
         </div>
 
         <div class="footer-m">
-            <a href="${article.url || ''}" class="footer-link-m">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-m" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page-m">PAGINA ${index + 1} DI ${articles.length}</div>
         </div>
     </div>`;
@@ -552,7 +562,7 @@ function buildMinimalHTML(articles, options) {
             flex: 0 0 10mm; display: flex; justify-content: space-between; align-items: center;
             border-top: 1px solid #d6d3d1; padding-top: 3mm;
         }
-        .footer-link-e { font-size: 8.5pt; color: #57534e; text-decoration: none; font-style: italic; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .footer-link-e { font-size: 8.5pt; color: #57534e; text-decoration: none; font-style: italic; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; cursor: pointer; }
         .footer-page-e { font-size: 8.5pt; color: #78716c; font-style: italic; }
     </style>
 </head>
@@ -606,7 +616,7 @@ function buildMinimalHTML(articles, options) {
         </div>
 
         <div class="footer-e">
-            <a href="${article.url || ''}" class="footer-link-e">${article.url || ''}</a>
+            <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-e" title="${article.url || ''}">${article.url || ''}</a>
             <div class="footer-page-e">Articolo ${index + 1} di ${articles.length}</div>
         </div>
     </div>`;

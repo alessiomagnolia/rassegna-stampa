@@ -541,8 +541,21 @@
         .pdf-main-visual { width: 100%; max-height: 100%; object-fit: cover; display: block; }
         .pdf-content-zone { flex: 1 1 auto; padding: 0 1.9%; margin-bottom: 1.9%; overflow: hidden; }
         .pdf-content-text { font-size: clamp(7px, 1.2vw, 11pt); line-height: 1.6; color: #333; text-align: justify; font-family: 'Times New Roman', Times, serif; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 20; }
-        .pdf-footer { flex: 0 0 3.8%; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e0e0e0; padding-top: 1%; padding-left: 1.9%; padding-right: 1.9%; font-size: clamp(5px, 0.9vw, 9pt); color: #888; }
-        .pdf-footer-link { color: #0066CC; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pdf-footer-link {
+            color: #0066CC;
+            max-width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-block;
+            transition: color 0.15s ease;
+        }
+        .pdf-footer-link:hover {
+            color: #004499;
+            text-decoration: underline;
+        }
 
         /* Cover page preview */
         .pdf-cover-preview {
@@ -1566,7 +1579,7 @@ function renderArticlePreview(art, pageNum, totalPages) {
             <div class="pdf-content-text pdf-resize-selectable" data-elem-type="excerpt" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(art.excerpt || ''), buildKeywordRegex(options.title, options.clientName))}</div>
         </div>
         <div class="pdf-footer">
-            <span class="pdf-footer-link">${escHtml(art.url || '')}</span>
+            ${art.url ? `<a href="${escHtml(formatLinkUrl(art.url))}" target="_blank" rel="noopener noreferrer" class="pdf-footer-link" title="Clicca per aprire la notizia completa: ${escHtml(art.url)}">${escHtml(art.url)}</a>` : '<span class="pdf-footer-link"></span>'}
             <span>Pagina ${pageNum} di ${totalPages}</span>
         </div>
     </div>`;
@@ -2557,6 +2570,16 @@ function goBackToDashboard() {
 // ============================================================
 function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatLinkUrl(url) {
+    if (!url) return '';
+    let str = String(url).trim();
+    if (!str) return '';
+    if (!/^https?:\/\//i.test(str)) {
+        str = 'https://' + str;
+    }
+    return str;
 }
 
 function showToast(message, type = 'info') {
