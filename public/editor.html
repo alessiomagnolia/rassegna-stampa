@@ -112,7 +112,7 @@
             transition: max-width 0.3s ease;
         }
         .preview-edit-btn {
-            position: absolute; top: -38px; right: 0; z-index: 10;
+            position: absolute; top: -38px; left: 0; z-index: 10;
             background: rgba(20,20,45,0.92); color: #efece5;
             border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 6px 14px;
             font-family: inherit; font-size: 0.78rem; font-weight: 600;
@@ -364,10 +364,10 @@
         .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
 
-        /* ============ RIGHT EDIT PANEL (DESKTOP DOCKED SIDEBAR) ============ */
+        /* ============ LEFT DOCKED EDIT PANEL ============ */
         .edit-panel {
             position: relative;
-            top: 0; right: 0; bottom: 0;
+            top: 0; left: 0; bottom: 0;
             width: 0; min-width: 0;
             height: calc(100vh - 60px);
             flex-shrink: 0;
@@ -375,19 +375,20 @@
             background: rgba(12,12,28,0.98);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-left: 1px solid transparent;
+            border-right: 1px solid transparent;
+            border-left: 1px solid rgba(255,255,255,0.08);
             color: #efece5;
             transition: width 0.32s cubic-bezier(0.4,0,0.2,1), border-color 0.32s ease, opacity 0.25s ease;
             display: flex; flex-direction: column;
             overflow: hidden;
             visibility: hidden;
             opacity: 0;
-            box-shadow: -6px 0 24px rgba(0,0,0,0.35);
+            box-shadow: 6px 0 24px rgba(0,0,0,0.35);
         }
         .edit-panel.open {
             width: 420px;
             min-width: 420px;
-            border-left-color: rgba(255,255,255,0.12);
+            border-right-color: rgba(255,255,255,0.12);
             visibility: visible;
             opacity: 1;
         }
@@ -407,42 +408,38 @@
         .edit-panel-body { flex: 1; overflow-y: auto; padding: 1.4rem; }
         .edit-panel-footer { padding: 1rem 1.4rem; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; background: rgba(10,10,24,0.95); }
 
-        /* FLOATING SIDE TAB ON RIGHT EDGE (TENDA HANDLE) */
-        .desktop-side-tab {
-            position: fixed;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(18, 18, 40, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        /* PROMINENT EDIT BUTTON IN LEFT SIDEBAR */
+        .btn-edit-article-left {
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 9px 12px;
+            border-radius: 8px;
             border: 1px solid rgba(124, 92, 255, 0.45);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            padding: 10px 14px 10px 12px;
-            color: #efece5;
-            font-size: 0.78rem;
-            font-weight: 600;
+            background: linear-gradient(135deg, #7c5cff, #5028f8);
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 7px;
-            box-shadow: -4px 4px 18px rgba(0, 0, 0, 0.4);
-            z-index: 90;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+            transition: all 0.2s ease;
             user-select: none;
+            flex-shrink: 0;
         }
-        .desktop-side-tab:hover {
-            background: rgba(124, 92, 255, 0.28);
+        .btn-edit-article-left:hover {
+            background: linear-gradient(135deg, #8d70ff, #623cf8);
+            box-shadow: 0 6px 18px rgba(124, 92, 255, 0.55);
+            transform: translateY(-1px);
+        }
+        .btn-edit-article-left.active {
+            background: rgba(124, 92, 255, 0.22);
             border-color: #7c5cff;
             color: #ffffff;
-            padding-left: 16px;
-            box-shadow: -6px 6px 22px rgba(124, 92, 255, 0.45);
-        }
-        .desktop-side-tab.tab-hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-50%) translateX(100%);
+            box-shadow: 0 0 12px rgba(124, 92, 255, 0.35);
         }
 
         .edit-field { margin-bottom: 1.25rem; }
@@ -541,13 +538,108 @@
     <!-- LEFT: Pages List -->
     <aside class="pages-panel">
         <div class="pages-panel-label">Pagine</div>
+        <button type="button" id="btnEditArticleLeft" class="btn-edit-article-left hide-mobile" title="Modifica dati articolo (titolo, testo, fonte, immagini)">
+            <i data-feather="edit-3" style="width:14px;height:14px;"></i>
+            <span>Modifica Articolo</span>
+        </button>
         <div id="pagesList"><!-- injected --></div>
     </aside>
+
+    <!-- LEFT DOCKED: Edit Panel (Desktop Side Panel) -->
+    <div class="edit-panel hide-mobile" id="editPanel">
+        <div class="edit-panel-header">
+            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
+            <button type="button" class="btn-icon" id="btnCloseEditPanel" title="Chiudi pannello"><i data-feather="x"></i></button>
+        </div>
+        <div class="edit-panel-body">
+            <div class="edit-field">
+                <label>Titolo *</label>
+                <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
+            </div>
+            <div class="edit-field">
+                <label>Testo / Estratto *</label>
+                <textarea id="editExcerpt" placeholder="Testo dell'articolo..."></textarea>
+            </div>
+            <div class="edit-field" style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                    <label>Fonte</label>
+                    <input type="text" id="editSourceName" placeholder="es. Corriere della Sera">
+                </div>
+                <div style="flex:1;">
+                    <label>Tipologia</label>
+                    <select id="editSourceType">
+                        <option value="Web">Web</option>
+                        <option value="Quotidiano Nazionale">Quotidiano Naz.</option>
+                        <option value="Quotidiano Locale">Quotidiano Loc.</option>
+                        <option value="Agenzia di Stampa">Agenzia</option>
+                        <option value="Periodico">Periodico</option>
+                        <option value="Radio/TV">Radio/TV</option>
+                    </select>
+                </div>
+            </div>
+            <div class="edit-field">
+                <label>Data Pubblicazione</label>
+                <input type="text" id="editDate" placeholder="es. 21/07/2026">
+            </div>
+            <div class="edit-field">
+                <label>Link articolo</label>
+                <input type="url" id="editUrl" placeholder="https://...">
+            </div>
+
+            <!-- Image -->
+            <div class="edit-field">
+                <label>Immagine principale</label>
+                <div id="editImagePreviewContainer" class="hidden">
+                    <img id="editImagePreview" class="edit-image-preview" src="" alt="">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; padding: 0 2px;">
+                        <select id="editImagePosition" style="width: auto; padding: 2px 6px; font-size: 0.75rem; background: rgba(255,255,255,0.1); color: #efece5; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                            <option value="top center" style="color: black;">Posizione: Alto</option>
+                            <option value="center center" style="color: black;">Posizione: Centro</option>
+                            <option value="bottom center" style="color: black;">Posizione: Basso</option>
+                        </select>
+                        <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
+                    </div>
+                </div>
+                <input type="file" id="editImageInput" accept="image/*" class="hidden">
+                <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia immagine</label>
+            </div>
+
+            <!-- Logo -->
+            <div class="edit-field">
+                <label>Logo testata</label>
+                <div id="editLogoPreviewContainer" class="hidden">
+                    <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
+                    <button class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi logo</button>
+                </div>
+                <input type="file" id="editLogoInput" accept="image/*" class="hidden">
+                <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo</label>
+            </div>
+
+            <!-- Dark Header Toggle -->
+            <div class="edit-field">
+                <label>Fascia header nel PDF</label>
+                <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--border-color);">
+                    <label class="toggle-switch" title="Attiva header scuro quando il logo è bianco">
+                        <input type="checkbox" id="editDarkHeader">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <div>
+                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Header scuro</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
+                    </div>
+                    <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:32px; height:32px; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0; transition:background 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="edit-panel-footer">
+            <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva modifiche</button>
+        </div>
+    </div>
 
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <button type="button" class="preview-edit-btn hide-mobile" id="btnEditPage" onclick="toggleEditPanel()"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
+            <button type="button" class="preview-edit-btn hide-mobile" id="btnEditPage"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica questa pagina</button>
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
 
@@ -565,7 +657,7 @@
             <div class="desktop-tool-divider"></div>
 
             <!-- Modifica Articolo (Pannello Dati / Tenda) -->
-            <button type="button" id="btnToggleEditPanel" class="desktop-tool-btn" onclick="toggleEditPanel()" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+            <button type="button" id="btnToggleEditPanel" class="desktop-tool-btn" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
                 <i data-feather="edit-3" style="width:14px;height:14px;"></i>
                 <span>Modifica Articolo</span>
             </button>
@@ -650,105 +742,7 @@
         </div>
     </div>
 
-    <!-- RIGHT: Edit Panel (Desktop Side Panel) -->
-    <div class="edit-panel hide-mobile" id="editPanel">
-        <div class="edit-panel-header">
-            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Modifica articolo</h3>
-            <button type="button" class="btn-icon" id="btnCloseEditPanel" onclick="closeEditPanel()" title="Chiudi pannello"><i data-feather="x"></i></button>
-        </div>
-    <div class="edit-panel-body">
-        <div class="edit-field">
-            <label>Titolo *</label>
-            <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
-        </div>
-        <div class="edit-field">
-            <label>Testo / Estratto *</label>
-            <textarea id="editExcerpt" placeholder="Testo dell'articolo..."></textarea>
-        </div>
-        <div class="edit-field" style="display:flex;gap:10px;">
-            <div style="flex:1;">
-                <label>Fonte</label>
-                <input type="text" id="editSourceName" placeholder="es. Corriere della Sera">
-            </div>
-            <div style="flex:1;">
-                <label>Tipologia</label>
-                <select id="editSourceType">
-                    <option value="Web">Web</option>
-                    <option value="Quotidiano Nazionale">Quotidiano Naz.</option>
-                    <option value="Quotidiano Locale">Quotidiano Loc.</option>
-                    <option value="Agenzia di Stampa">Agenzia</option>
-                    <option value="Periodico">Periodico</option>
-                    <option value="Radio/TV">Radio/TV</option>
-                </select>
-            </div>
-        </div>
-        <div class="edit-field">
-            <label>Data Pubblicazione</label>
-            <input type="text" id="editDate" placeholder="es. 21/07/2026">
-        </div>
-        <div class="edit-field">
-            <label>Link articolo</label>
-            <input type="url" id="editUrl" placeholder="https://...">
-        </div>
-
-        <!-- Image -->
-        <div class="edit-field">
-            <label>Immagine principale</label>
-            <div id="editImagePreviewContainer" class="hidden">
-                <img id="editImagePreview" class="edit-image-preview" src="" alt="">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; padding: 0 2px;">
-                    <select id="editImagePosition" style="width: auto; padding: 2px 6px; font-size: 0.75rem; background: rgba(255,255,255,0.1); color: #efece5; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
-                        <option value="top center" style="color: black;">Posizione: Alto</option>
-                        <option value="center center" style="color: black;">Posizione: Centro</option>
-                        <option value="bottom center" style="color: black;">Posizione: Basso</option>
-                    </select>
-                    <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
-                </div>
-            </div>
-            <input type="file" id="editImageInput" accept="image/*" class="hidden">
-            <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia immagine</label>
-        </div>
-
-        <!-- Logo -->
-        <div class="edit-field">
-            <label>Logo testata</label>
-            <div id="editLogoPreviewContainer" class="hidden">
-                <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
-                <button class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi logo</button>
-            </div>
-            <input type="file" id="editLogoInput" accept="image/*" class="hidden">
-            <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo</label>
-        </div>
-
-        <!-- Dark Header Toggle -->
-        <div class="edit-field">
-            <label>Fascia header nel PDF</label>
-            <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--border-color);">
-                <label class="toggle-switch" title="Attiva header scuro quando il logo è bianco">
-                    <input type="checkbox" id="editDarkHeader">
-                    <span class="toggle-slider"></span>
-                </label>
-                <div>
-                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Header scuro</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
-                </div>
-                <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:32px; height:32px; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0; transition:background 0.3s;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="edit-panel-footer">
-        <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva modifiche</button>
-    </div>
-</div>
-
 </div><!-- closes editor-body -->
-
-<!-- FLOATING SIDE TAB ON RIGHT EDGE (TENDA HANDLE) -->
-<button type="button" id="btnSidePanelTab" class="desktop-side-tab hide-mobile" onclick="toggleEditPanel()" title="Apri opzioni di modifica articolo">
-    <i data-feather="edit-3" style="width:14px;height:14px;"></i>
-    <span>Modifica Articolo</span>
-    <i data-feather="chevron-left" style="width:14px;height:14px;margin-left:-2px;"></i>
-</button>
 
 <!-- CANVA MOBILE BOTTOM NAVIGATION DOCK FOR PDF EDITOR (Horizontally Scrollable) -->
 <nav class="canva-bottom-dock show-mobile-flex">
@@ -1103,6 +1097,19 @@ function selectPage(idx) {
         }
     }
 
+    const btnEditLeft = document.getElementById('btnEditArticleLeft');
+    if (btnEditLeft) {
+        if (idx < 0) {
+            btnEditLeft.style.opacity = '0.5';
+            btnEditLeft.style.pointerEvents = 'none';
+            btnEditLeft.title = 'Passa a un articolo per modificarne i dati';
+        } else {
+            btnEditLeft.style.opacity = '1';
+            btnEditLeft.style.pointerEvents = 'auto';
+            btnEditLeft.title = 'Modifica dati articolo (titolo, testo, fonte, immagini)';
+        }
+    }
+
     // Desktop Only: Attach element resizing & image toolbar listeners
     if (window.innerWidth > 900 && typeof attachDesktopElementListeners === 'function') {
         attachDesktopElementListeners();
@@ -1391,8 +1398,8 @@ function openEditPanel(idx) {
     const btnToggle = document.getElementById('btnToggleEditPanel');
     if (btnToggle) btnToggle.classList.add('active');
 
-    const sideTab = document.getElementById('btnSidePanelTab');
-    if (sideTab) sideTab.classList.add('tab-hidden');
+    const btnLeft = document.getElementById('btnEditArticleLeft');
+    if (btnLeft) btnLeft.classList.add('active');
 }
 
 function closeEditPanel() {
@@ -1402,8 +1409,8 @@ function closeEditPanel() {
     const btnToggle = document.getElementById('btnToggleEditPanel');
     if (btnToggle) btnToggle.classList.remove('active');
 
-    const sideTab = document.getElementById('btnSidePanelTab');
-    if (sideTab) sideTab.classList.remove('tab-hidden');
+    const btnLeft = document.getElementById('btnEditArticleLeft');
+    if (btnLeft) btnLeft.classList.remove('active');
 
     editingIdx = -1;
 }
@@ -1535,6 +1542,13 @@ function fileToBase64(file) {
 // INIT EVENTS
 // ============================================================
 function initEvents() {
+    const btnLeft = document.getElementById('btnEditArticleLeft');
+    if (btnLeft) {
+        btnLeft.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEditPanel();
+        });
+    }
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) {
         btnEdit.addEventListener('click', (e) => {
@@ -1544,15 +1558,17 @@ function initEvents() {
     }
     const btnClose = document.getElementById('btnCloseEditPanel');
     if (btnClose) {
-        btnClose.addEventListener('click', closeEditPanel);
+        btnClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeEditPanel();
+        });
     }
     const btnToggle = document.getElementById('btnToggleEditPanel');
     if (btnToggle) {
-        btnToggle.addEventListener('click', toggleEditPanel);
-    }
-    const sideTab = document.getElementById('btnSidePanelTab');
-    if (sideTab) {
-        sideTab.addEventListener('click', toggleEditPanel);
+        btnToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEditPanel();
+        });
     }
     document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);
     document.getElementById('btnGeneratePDF').addEventListener('click', generateAndDownload);
