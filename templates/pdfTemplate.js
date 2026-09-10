@@ -246,13 +246,21 @@ function buildClassicHTML(articles, options) {
         const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
         const clampLines = article.imageBase64 ? 14 : 28;
 
+        const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+        const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
+        const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
+        const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
+        const visualZoneStyle = article.customImageHeight ? `style="max-height: ${article.customImageHeight}px; height: ${article.customImageHeight}px;"` : '';
+        const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
+        const imgStyle = `style="object-position: center ${imgPosY}%; ${article.customImageHeight ? `max-height:${article.customImageHeight}px;` : ''}"`;
+
         html += `
     <div class="page">
         <!-- HEADER -->
         <div class="header ${darkClass}" ${skipAttr}>
             <div class="header-left">
                 ${article.logoBase64
-                    ? `<img src="${article.logoBase64}" class="source-logo-large" alt="Source Logo">`
+                    ? `<img src="${article.logoBase64}" class="source-logo-large" ${logoStyle} alt="Source Logo">`
                     : `<div class="source-name-large">${article.source_name || ''}</div>`}
             </div>
             <div class="header-right">
@@ -263,15 +271,15 @@ function buildClassicHTML(articles, options) {
 
         <!-- TITLE -->
         <div class="title-zone">
-            <div class="article-source-label">${article.source_name || ''}</div>
-            <div class="article-title">${article.title || ''}</div>
+            <div class="article-source-label" ${sourceStyle}>${article.source_name || ''}</div>
+            <div class="article-title" ${titleStyle}>${article.title || ''}</div>
         </div>
         ${article.imageBase64 ? `
-        <div class="visual-zone">
-            <img src="${article.imageBase64}" class="main-visual" style="object-position: ${article.imagePosition || 'top center'};" alt="Article Image">
+        <div class="visual-zone" ${visualZoneStyle}>
+            <img src="${article.imageBase64}" class="main-visual" ${imgStyle} alt="Article Image">
         </div>` : ''}
         <div class="content-zone">
-            <div class="content-text" style="-webkit-line-clamp: ${clampLines};">
+            <div class="content-text" style="-webkit-line-clamp: ${clampLines}; ${article.customTextSize ? `font-size: ${article.customTextSize}px;` : ''}">
                 ${processedExcerpt}
             </div>
         </div>

@@ -104,22 +104,141 @@
             display: flex; flex-direction: column;
             align-items: center; padding: 2.5rem 1rem 2rem;
             background: #1a1a2a;
-            transition: flex 0.32s ease;
+            transition: margin-right 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
+            position: relative;
+        }
+        @media (min-width: 901px) {
+            .editor-body.panel-open .preview-area {
+                margin-right: 440px !important;
+            }
         }
         .preview-wrapper {
             position: relative; width: 100%; max-width: 760px;
             margin-top: 44px;
             transition: max-width 0.3s ease;
         }
-        /* Top action bar above preview (Prominent Undo + Edit Article) */
+        /* Top action bar above preview (Zoom on left, Undo + Edit Article on right) */
         .preview-actions-bar {
             position: absolute;
             top: -46px;
+            left: 0;
             right: 0;
             z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .preview-actions-right {
             display: inline-flex;
             align-items: center;
             gap: 10px;
+        }
+        .preview-zoom-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: rgba(26, 27, 50, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+        .btn-preview-tool {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .btn-preview-tool:hover {
+            border-color: #7c5cff;
+            background: rgba(124, 92, 255, 0.25);
+            color: #c4b5fd;
+            transform: translateY(-1px);
+        }
+        .btn-preview-tool:active {
+            transform: translateY(0);
+        }
+        .preview-zoom-badge {
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: #c4b5fd;
+            padding: 2px 8px;
+            min-width: 48px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+        .preview-zoom-badge:hover {
+            background: rgba(124, 92, 255, 0.2);
+            color: #ffffff;
+        }
+
+        /* Bottom persistent floating zoom pill */
+        .floating-zoom-pill {
+            position: fixed;
+            bottom: 22px;
+            left: 240px;
+            z-index: 80;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 9px;
+            background: rgba(18, 19, 38, 0.94);
+            border: 1px solid rgba(124, 92, 255, 0.4);
+            border-radius: 24px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+            transition: all 0.2s ease;
+        }
+        .floating-zoom-pill:hover {
+            border-color: rgba(124, 92, 255, 0.8);
+            box-shadow: 0 10px 28px rgba(124, 92, 255, 0.25);
+        }
+        .btn-zoom-pill {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .btn-zoom-pill:hover {
+            background: rgba(124, 92, 255, 0.35);
+            border-color: #7c5cff;
+            color: #ffffff;
+            transform: scale(1.08);
+        }
+        .btn-zoom-pill:active {
+            transform: scale(0.92);
+        }
+        .zoom-pill-text {
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: #c4b5fd;
+            padding: 2px 7px;
+            min-width: 44px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
         }
         .btn-prominent-undo {
             display: inline-flex;
@@ -311,22 +430,139 @@
             color: #ffffff;
         }
 
-        /* CARD RESIZE & POSITION INTERACTIVE STATES */
-        .resize-mode-active .pdf-resize-selectable {
+        /* PREVIEW INTERACTIVE ELEMENT SELECTION & FLOATING TOOLBAR */
+        .pdf-resize-selectable {
             cursor: pointer !important;
             position: relative;
             transition: outline 0.15s ease, box-shadow 0.15s ease;
+            border-radius: 3px;
         }
-        .resize-mode-active .pdf-resize-selectable:hover {
-            outline: 2px dashed #7c5cff !important;
+        .pdf-resize-selectable:hover {
+            outline: 2px dashed rgba(124, 92, 255, 0.85) !important;
             outline-offset: 3px;
-            border-radius: 4px;
         }
         .pdf-element-selected {
-            outline: 2px solid #7c5cff !important;
+            outline: 2.5px solid #7c5cff !important;
             outline-offset: 3px;
             border-radius: 4px;
-            box-shadow: 0 0 12px rgba(124, 92, 255, 0.4) !important;
+            box-shadow: 0 0 16px rgba(124, 92, 255, 0.5) !important;
+        }
+
+        /* Inline floating toolbar for preview selection */
+        .preview-selection-toolbar {
+            position: absolute;
+            z-index: 90;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(15, 16, 35, 0.96);
+            border: 1.5px solid #7c5cff;
+            border-radius: 30px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 15px rgba(124, 92, 255, 0.35);
+            animation: selToolbarPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            pointer-events: auto;
+        }
+        @keyframes selToolbarPop {
+            0% { opacity: 0; transform: translateY(6px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .sel-pill-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #c4b5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-right: 2px;
+        }
+        .sel-pill-divider {
+            width: 1px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 2px;
+        }
+        .btn-sel-step {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.12s ease;
+        }
+        .btn-sel-step:hover {
+            border-color: #7c5cff;
+            background: #7c5cff;
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        .btn-sel-step:active {
+            transform: scale(0.92);
+        }
+        .sel-pill-val {
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: #00d4aa;
+            min-width: 44px;
+            text-align: center;
+        }
+        .sel-img-tools {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-sel-tool {
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #efece5;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: all 0.12s ease;
+        }
+        .btn-sel-tool:hover {
+            border-color: #7c5cff;
+            background: rgba(124, 92, 255, 0.3);
+            color: #ffffff;
+        }
+        .btn-sel-close {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            font-size: 0.72rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s ease;
+            margin-left: 2px;
+        }
+        .btn-sel-close:hover {
+            background: rgba(255, 77, 77, 0.3);
+            border-color: #ff4d4d;
+            color: #ff8888;
         }
 
         /* ============ PDF PAGE PREVIEW STYLES ============ */
@@ -390,19 +626,7 @@
 
         /* ============ RIGHT-OPENING EDIT PANEL DRAWER (FIXED AT RIGHT: 0) ============ */
         .desktop-edit-backdrop {
-            position: fixed;
-            top: 54px; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            z-index: 990;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-        .desktop-edit-backdrop.active {
-            opacity: 1;
-            pointer-events: auto;
+            display: none !important;
         }
         .edit-panel {
             position: fixed !important;
@@ -630,7 +854,7 @@
         <div class="edit-panel-body" id="editPanelBody">
 
             <!-- SECTION 1: CONTENUTI ARTICOLO -->
-            <div class="edit-section-card">
+            <div class="edit-section-card" id="editCardContent">
                 <div class="edit-section-card-title">
                     <i data-feather="file-text" style="width:15px;height:15px;"></i>
                     <span>Contenuto Articolo</span>
@@ -673,7 +897,7 @@
             </div>
 
             <!-- SECTION 2: DIMENSIONI TESTI (LIVE) -->
-            <div class="edit-section-card">
+            <div class="edit-section-card" id="editCardSizes">
                 <div class="edit-section-card-title">
                     <i data-feather="type" style="width:15px;height:15px;"></i>
                     <span>Dimensione Testi (Live)</span>
@@ -720,7 +944,7 @@
             </div>
 
             <!-- SECTION 3: REGOLAZIONE IMMAGINE (LIVE) -->
-            <div class="edit-section-card">
+            <div class="edit-section-card" id="editCardImage">
                 <div class="edit-section-card-title">
                     <i data-feather="image" style="width:15px;height:15px;"></i>
                     <span>Regolazione Immagine (Live)</span>
@@ -787,7 +1011,7 @@
             </div>
 
             <!-- SECTION 4: TESTATA & LOGO -->
-            <div class="edit-section-card">
+            <div class="edit-section-card" id="editCardHeader">
                 <div class="edit-section-card-title">
                     <i data-feather="layout" style="width:15px;height:15px;"></i>
                     <span>Testata & Header</span>
@@ -802,6 +1026,19 @@
                     </div>
                     <input type="file" id="editLogoInput" accept="image/*" class="hidden">
                     <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Carica / Cambia logo</label>
+
+                    <!-- Logo Size Slider -->
+                    <div class="slider-control-group" id="editLogoSizeGroup" style="margin-top:10px; display:none;">
+                        <div class="slider-label-row">
+                            <span>Dimensione Logo</span>
+                            <span id="editLogoHeightBadge" class="val-badge">38px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditLogoHeightMinus" title="Riduci logo">−</button>
+                            <input type="range" class="range-slider-custom" id="editLogoHeightSlider" min="18" max="75" step="2" value="38">
+                            <button type="button" class="btn-step-sm" id="btnEditLogoHeightPlus" title="Aumenta logo">+</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Dark Header Toggle -->
@@ -831,21 +1068,78 @@
 
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
+        <!-- FLOATING PERSISTENT ZOOM CONTROLLER (OUTSIDE DRAWER, BOTTOM LEFT) -->
+        <div class="floating-zoom-pill hide-mobile" id="floatingZoomPill">
+            <button type="button" class="btn-zoom-pill" onclick="changePreviewZoom(-0.1)" title="Zoom Out (−)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <span class="zoom-pill-text" id="floatingZoomVal" onclick="resetPreviewZoom()" title="Ripristina 100%">100%</span>
+            <button type="button" class="btn-zoom-pill" onclick="changePreviewZoom(0.1)" title="Zoom In (+)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button type="button" class="btn-zoom-pill" onclick="resetPreviewZoom()" title="Reimposta 100%">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+        </div>
+
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <!-- TASTI EVIDENTI IN ALTO A DESTRA DELL'ANTEPRIMA DELLA PAGINA -->
+            <!-- TASTI IN ALTO SULL'ANTEPRIMA: ZOOM SULLA SINISTRA + ANNULLA & MODIFICA SULLA DESTRA -->
             <div class="preview-actions-bar hide-mobile" id="previewActionsBar">
-                <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
-                        <polyline points="3 3 3 11 11 11"/>
-                    </svg>
-                    <span>Annulla</span>
-                </button>
-                <button type="button" class="btn-prominent-edit-article" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
-                    <i data-feather="edit-3" style="width:15px;height:15px;"></i>
-                    <span>MODIFICA L'ARTICOLO</span>
-                </button>
+                <!-- ZOOM CONTROLS (OUTSIDE EDIT DRAWER) -->
+                <div class="preview-zoom-group" id="previewZoomGroup">
+                    <button type="button" class="btn-preview-tool" id="btnZoomOut" onclick="changePreviewZoom(-0.1)" title="Zoom Out (−)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <span class="preview-zoom-badge" id="previewZoomVal" onclick="resetPreviewZoom()" title="Clicca per ripristinare 100%">100%</span>
+                    <button type="button" class="btn-preview-tool" id="btnZoomIn" onclick="changePreviewZoom(0.1)" title="Zoom In (+)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <button type="button" class="btn-preview-tool" id="btnZoomReset" onclick="resetPreviewZoom()" title="Reimposta zoom originale (100%)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                </div>
+
+                <!-- UNDO + EDIT ARTICLE -->
+                <div class="preview-actions-right">
+                    <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
+                            <polyline points="3 3 3 11 11 11"/>
+                        </svg>
+                        <span>Annulla</span>
+                    </button>
+                    <button type="button" class="btn-prominent-edit-article" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+                        <i data-feather="edit-3" style="width:15px;height:15px;"></i>
+                        <span>MODIFICA L'ARTICOLO</span>
+                    </button>
+                </div>
             </div>
+
+            <!-- FLOATING MINI TOOLBAR FOR SELECTED ELEMENT (DIRECT RESIZING ON PREVIEW) -->
+            <div id="previewSelectionToolbar" class="preview-selection-toolbar hide-mobile" style="display:none;">
+                <div class="sel-pill-tag">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span id="selBarTitle">Titolo Articolo</span>
+                </div>
+                <div class="sel-pill-divider"></div>
+                <button type="button" class="btn-sel-step" id="btnSelMinus" title="Riduci dimensione" onclick="changeSelectedElementSize(-1)">−</button>
+                <span class="sel-pill-val" id="selBarValue">20px</span>
+                <button type="button" class="btn-sel-step" id="btnSelPlus" title="Aumenta dimensione" onclick="changeSelectedElementSize(1)">+</button>
+                
+                <div class="sel-img-tools" id="selBarImgControls" style="display:none;">
+                    <div class="sel-pill-divider"></div>
+                    <button type="button" class="btn-sel-tool" onclick="adjustSelectedImagePos(-5)" title="Sposta inquadratura su">▲ Su</button>
+                    <button type="button" class="btn-sel-tool" onclick="adjustSelectedImagePos(5)" title="Sposta inquadratura giù">▼ Giù</button>
+                </div>
+
+                <div class="sel-pill-divider"></div>
+                <button type="button" class="btn-sel-tool" onclick="openDrawerForSelectedElement()" title="Apri opzioni nel pannello">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+                    <span>Opzioni</span>
+                </button>
+                <button type="button" class="btn-sel-close" onclick="deselectPreviewElement()" title="Chiudi selezione">✕</button>
+            </div>
+
             <div id="pagePreviewContent"><!-- injected --></div>
         </div>
     </div>
@@ -1157,6 +1451,11 @@ function renderPagesList() {
 function selectPage(idx) {
     selectedIdx = idx;
     
+    // Deselect any previous preview element
+    if (typeof deselectPreviewElement === 'function') {
+        deselectPreviewElement();
+    }
+
     // Update active thumb
     document.querySelectorAll('.page-thumb').forEach(el => el.classList.remove('active'));
     if (idx === -1) {
@@ -1189,6 +1488,11 @@ function selectPage(idx) {
         if (visualImg && articles[idx].imageBase64) {
             enableDesktopImageDrag(visualImg);
         }
+    }
+
+    // Apply preview zoom to newly rendered page
+    if (typeof applyPreviewZoom === 'function') {
+        applyPreviewZoom();
     }
 
     // Desktop: Update Desktop Drawer data if an article is selected
@@ -1303,6 +1607,9 @@ function renderArticlePreview(art, pageNum, totalPages) {
     const titleStyle = art.customTitleSize ? `font-size:${art.customTitleSize}px;` : '';
     const textStyle  = art.customTextSize ? `font-size:${art.customTextSize}px;` : '';
     const sourceStyle = art.customSourceSize ? `font-size:${art.customSourceSize}px;` : '';
+    const logoHeight = art.customLogoHeight || 38;
+    const logoStyle = `max-height:${logoHeight}px; height:${logoHeight}px; object-fit:contain;`;
+    const sourceNameStyle = `${hdBg ? 'color:#fff;' : ''}${art.customSourceNameSize ? `font-size:${art.customSourceNameSize}px;` : ''}`;
     const imgHeight = art.customImageHeight || 160;
     const imgPosY   = art.customImagePosY !== undefined ? art.customImagePosY : 50;
     const visualZoneStyle = `max-height:${imgHeight}px; height:${imgHeight}px;`;
@@ -1313,8 +1620,8 @@ function renderArticlePreview(art, pageNum, totalPages) {
         <div class="pdf-header" ${hdBg ? `style="background:${hdBg};"` : ''}>
             <div class="pdf-header-left">
                 ${art.logoBase64
-                    ? `<img src="${art.logoBase64}" class="pdf-source-logo pdf-resize-selectable" data-elem-name="Logo Fonte" alt="Logo">`
-                    : `<div class="pdf-source-name pdf-resize-selectable" data-elem-name="Nome Fonte Header" ${hdBg ? 'style="color:#fff;"' : ''}>${escHtml(art.source_name || '')}</div>`}
+                    ? `<img src="${art.logoBase64}" class="pdf-source-logo pdf-resize-selectable" data-elem-type="logo" data-elem-name="Logo Testata" style="${logoStyle}" alt="Logo">`
+                    : `<div class="pdf-source-name pdf-resize-selectable" data-elem-type="source_name" data-elem-name="Testata Header" style="${sourceNameStyle}">${escHtml(art.source_name || '')}</div>`}
             </div>
             <div class="pdf-header-right" ${hdDate ? `style="color:${hdDate};"` : ''}>
                 <span>${escHtml(art.published_date || '')}</span>
@@ -1322,15 +1629,15 @@ function renderArticlePreview(art, pageNum, totalPages) {
             </div>
         </div>
         <div class="pdf-title-zone">
-            <div class="pdf-source-label pdf-resize-selectable" data-elem-name="Fonte" style="${sourceStyle}">${escHtml(art.source_name || '')}</div>
-            <div class="pdf-article-title pdf-resize-selectable" data-elem-name="Titolo Articolo" style="${titleStyle}">${escHtml(art.title || '')}</div>
+            <div class="pdf-source-label pdf-resize-selectable" data-elem-type="source" data-elem-name="Nome Fonte" style="${sourceStyle}">${escHtml(art.source_name || '')}</div>
+            <div class="pdf-article-title pdf-resize-selectable" data-elem-type="title" data-elem-name="Titolo Articolo" style="${titleStyle}">${escHtml(art.title || '')}</div>
         </div>
         ${art.imageBase64 ? `
         <div class="pdf-visual-zone" style="${visualZoneStyle}">
-            <img src="${art.imageBase64}" class="pdf-main-visual pdf-resize-selectable" data-elem-name="Immagine" style="${imgStyle}" alt="Immagine">
+            <img src="${art.imageBase64}" class="pdf-main-visual pdf-resize-selectable" data-elem-type="image" data-elem-name="Immagine Articolo" style="${imgStyle}" alt="Immagine">
         </div>` : ''}
         <div class="pdf-content-zone">
-            <div class="pdf-content-text pdf-resize-selectable" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(art.excerpt || ''), buildKeywordRegex(options.title, options.clientName))}</div>
+            <div class="pdf-content-text pdf-resize-selectable" data-elem-type="excerpt" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(art.excerpt || ''), buildKeywordRegex(options.title, options.clientName))}</div>
         </div>
         <div class="pdf-footer">
             <span class="pdf-footer-link">${escHtml(art.url || '')}</span>
@@ -1474,6 +1781,14 @@ function fillEditForm(idx) {
             logoPrev.src = '';
         }
     }
+    // Logo Height slider in drawer
+    const logoH = art.customLogoHeight || 38;
+    const lSlider = document.getElementById('editLogoHeightSlider');
+    const lBadge = document.getElementById('editLogoHeightBadge');
+    if (lSlider) lSlider.value = logoH;
+    if (lBadge) lBadge.textContent = `${logoH}px`;
+    const lGroup = document.getElementById('editLogoSizeGroup');
+    if (lGroup) lGroup.style.display = art.logoBase64 ? 'block' : 'none';
 
     // Dark header toggle
     const darkHeaderCb = document.getElementById('editDarkHeader');
@@ -1502,6 +1817,7 @@ function syncLivePreview() {
     const textSizeVal = parseFloat(document.getElementById('editTextSizeSlider')?.value);
     const sourceSizeVal = parseInt(document.getElementById('editSourceSizeSlider')?.value);
     const imgHeightVal = parseInt(document.getElementById('editImgHeightSlider')?.value);
+    const logoHeightVal = parseInt(document.getElementById('editLogoHeightSlider')?.value);
 
     art.title          = titleVal;
     art.excerpt        = excerptVal;
@@ -1514,6 +1830,7 @@ function syncLivePreview() {
     if (!isNaN(textSizeVal) && textSizeVal > 0) art.customTextSize = textSizeVal;
     if (!isNaN(sourceSizeVal) && sourceSizeVal > 0) art.customSourceSize = sourceSizeVal;
     if (!isNaN(imgHeightVal) && imgHeightVal > 0) art.customImageHeight = imgHeightVal;
+    if (!isNaN(logoHeightVal) && logoHeightVal > 0) art.customLogoHeight = logoHeightVal;
 
     // Re-render preview immediately
     const previewEl = document.getElementById('pagePreviewContent');
@@ -1526,6 +1843,16 @@ function syncLivePreview() {
         const visualImg = previewEl.querySelector('.pdf-main-visual');
         if (visualImg && art.imageBase64) {
             enableDesktopImageDrag(visualImg);
+        }
+        // Re-apply preview zoom
+        if (typeof applyPreviewZoom === 'function') {
+            applyPreviewZoom();
+        }
+        // Re-select element if one was selected
+        if (selectedPreviewElemType) {
+            const reSel = previewEl.querySelector(`[data-elem-type="${selectedPreviewElemType}"]`);
+            if (reSel) selectPreviewElement(reSel, false);
+            else deselectPreviewElement();
         }
     }
 
@@ -1584,14 +1911,19 @@ function openEditPanel(idx) {
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.add('open');
 
-    const backdrop = document.getElementById('desktopEditBackdrop');
-    if (backdrop) backdrop.classList.add('active');
+    // Smoothly shift preview area towards the left so drawer doesn't occlude it
+    const editorBody = document.querySelector('.editor-body');
+    if (editorBody) editorBody.classList.add('panel-open');
 
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) btnEdit.classList.add('active');
 
     const bodyEl = document.getElementById('editPanelBody');
     if (bodyEl) bodyEl.scrollTop = 0;
+
+    if (selectedPreviewElem) {
+        setTimeout(() => positionSelectionToolbar(selectedPreviewElem), 320);
+    }
 
     if (window.feather) feather.replace();
 }
@@ -1600,11 +1932,16 @@ function closeEditPanel() {
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.remove('open');
 
-    const backdrop = document.getElementById('desktopEditBackdrop');
-    if (backdrop) backdrop.classList.remove('active');
+    // Return preview area smoothly to normal center position
+    const editorBody = document.querySelector('.editor-body');
+    if (editorBody) editorBody.classList.remove('panel-open');
 
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) btnEdit.classList.remove('active');
+
+    if (selectedPreviewElem) {
+        setTimeout(() => positionSelectionToolbar(selectedPreviewElem), 320);
+    }
 
     try {
         localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
@@ -1629,6 +1966,280 @@ function saveEdit() {
     closeEditPanel();
     showToast('Modifiche salvate', 'success');
 }
+
+// ============================================================
+// PREVIEW ZOOM SYSTEM (OUTSIDE EDIT DRAWER)
+// ============================================================
+let currentPreviewZoom = 1.0;
+
+function setPreviewZoom(val) {
+    currentPreviewZoom = Math.max(0.5, Math.min(1.6, Math.round(val * 10) / 10));
+    applyPreviewZoom();
+}
+
+function applyPreviewZoom() {
+    const previewContent = document.getElementById('pagePreviewContent');
+    if (previewContent) {
+        previewContent.style.transform = `scale(${currentPreviewZoom})`;
+        previewContent.style.transformOrigin = 'top center';
+        previewContent.style.transition = 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)';
+        
+        // Expand bottom margin so the scrollable container can reach the bottom when zoomed in
+        const h = previewContent.offsetHeight || 980;
+        if (currentPreviewZoom > 1.0) {
+            previewContent.style.marginBottom = Math.round((currentPreviewZoom - 1.0) * h + 24) + 'px';
+        } else {
+            previewContent.style.marginBottom = '0px';
+        }
+    }
+
+    const pct = Math.round(currentPreviewZoom * 100) + '%';
+    const b1 = document.getElementById('previewZoomVal');
+    if (b1) b1.textContent = pct;
+    const b2 = document.getElementById('floatingZoomVal');
+    if (b2) b2.textContent = pct;
+
+    if (selectedPreviewElem) {
+        setTimeout(() => positionSelectionToolbar(selectedPreviewElem), 200);
+    }
+}
+
+function changePreviewZoom(delta) {
+    setPreviewZoom(currentPreviewZoom + delta);
+}
+
+function resetPreviewZoom() {
+    setPreviewZoom(1.0);
+}
+window.setPreviewZoom = setPreviewZoom;
+window.changePreviewZoom = changePreviewZoom;
+window.resetPreviewZoom = resetPreviewZoom;
+
+// ============================================================
+// DIRECT PREVIEW ELEMENT SELECTION & RESIZING
+// ============================================================
+let selectedPreviewElem = null;
+let selectedPreviewElemType = null;
+
+function selectPreviewElement(el, scrollDrawer = true) {
+    if (!el) return;
+    if (selectedPreviewElem && selectedPreviewElem !== el) {
+        selectedPreviewElem.classList.remove('pdf-element-selected');
+    }
+    selectedPreviewElem = el;
+    el.classList.add('pdf-element-selected');
+
+    const type = el.dataset.elemType || '';
+    selectedPreviewElemType = type;
+    const name = el.dataset.elemName || 'Elemento';
+    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    const art = articles[idx];
+    if (!art) return;
+
+    const toolbar = document.getElementById('previewSelectionToolbar');
+    const titleEl = document.getElementById('selBarTitle');
+    const valEl = document.getElementById('selBarValue');
+    const imgTools = document.getElementById('selBarImgControls');
+
+    if (titleEl) titleEl.textContent = name;
+
+    let currentVal = '';
+    if (type === 'title') {
+        currentVal = (art.customTitleSize || 20) + 'px';
+        if (imgTools) imgTools.style.display = 'none';
+    } else if (type === 'excerpt') {
+        currentVal = (art.customTextSize || 11) + 'px';
+        if (imgTools) imgTools.style.display = 'none';
+    } else if (type === 'source') {
+        currentVal = (art.customSourceSize || 13) + 'px';
+        if (imgTools) imgTools.style.display = 'none';
+    } else if (type === 'source_name') {
+        currentVal = (art.customSourceNameSize || 16) + 'px';
+        if (imgTools) imgTools.style.display = 'none';
+    } else if (type === 'image') {
+        currentVal = (art.customImageHeight || 160) + 'px';
+        if (imgTools) imgTools.style.display = 'inline-flex';
+    } else if (type === 'logo') {
+        currentVal = (art.customLogoHeight || 38) + 'px';
+        if (imgTools) imgTools.style.display = 'none';
+    }
+    if (valEl) valEl.textContent = currentVal;
+
+    positionSelectionToolbar(el);
+    if (toolbar) toolbar.style.display = 'inline-flex';
+
+    // If edit drawer is open and requested, highlight matching section
+    const panel = document.getElementById('editPanel');
+    if (scrollDrawer && panel && panel.classList.contains('open')) {
+        highlightDrawerSectionForType(type);
+    }
+}
+
+function deselectPreviewElement() {
+    if (selectedPreviewElem) {
+        selectedPreviewElem.classList.remove('pdf-element-selected');
+        selectedPreviewElem = null;
+    }
+    selectedPreviewElemType = null;
+    const toolbar = document.getElementById('previewSelectionToolbar');
+    if (toolbar) toolbar.style.display = 'none';
+}
+
+function positionSelectionToolbar(el) {
+    const toolbar = document.getElementById('previewSelectionToolbar');
+    const wrapper = document.getElementById('previewWrapper');
+    if (!toolbar || !wrapper || !el) return;
+
+    const wrapRect = wrapper.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    // Calculate position in wrapper coordinates
+    let top = elRect.top - wrapRect.top - 46;
+    if (top < 8) {
+        // Place below if not enough room on top
+        top = elRect.bottom - wrapRect.top + 8;
+    }
+
+    let left = (elRect.left - wrapRect.left) + (elRect.width / 2) - (toolbar.offsetWidth / 2);
+    const maxLeft = Math.max(8, wrapper.clientWidth - toolbar.offsetWidth - 8);
+    left = Math.max(8, Math.min(left, maxLeft));
+
+    toolbar.style.top = top + 'px';
+    toolbar.style.left = left + 'px';
+}
+
+function highlightDrawerSectionForType(type) {
+    let cardId = null;
+    if (type === 'title' || type === 'excerpt' || type === 'source' || type === 'source_name') {
+        cardId = 'editCardSizes';
+    } else if (type === 'image') {
+        cardId = 'editCardImage';
+    } else if (type === 'logo') {
+        cardId = 'editCardHeader';
+    }
+    if (!cardId) return;
+    const card = document.getElementById(cardId);
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+        card.style.borderColor = '#7c5cff';
+        card.style.boxShadow = '0 0 16px rgba(124, 92, 255, 0.5)';
+        setTimeout(() => {
+            card.style.borderColor = '';
+            card.style.boxShadow = '';
+        }, 1200);
+    }
+}
+
+function openDrawerForSelectedElement() {
+    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    openEditPanel(idx);
+    if (selectedPreviewElemType) {
+        setTimeout(() => highlightDrawerSectionForType(selectedPreviewElemType), 150);
+    }
+}
+
+function adjustSelectedImagePos(deltaPercent) {
+    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    if (idx < 0 || !articles[idx]) return;
+    const art = articles[idx];
+    let cur = art.customImagePosY !== undefined ? art.customImagePosY : 50;
+    setDrawerImagePosition(cur + deltaPercent);
+}
+
+function changeSelectedElementSize(delta) {
+    if (!selectedPreviewElem) return;
+    const type = selectedPreviewElem.dataset.elemType || selectedPreviewElemType;
+    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    if (idx < 0 || !articles[idx]) return;
+    const art = articles[idx];
+
+    if (type === 'title') {
+        let val = (art.customTitleSize || 20) + delta;
+        val = Math.max(12, Math.min(38, Math.round(val)));
+        art.customTitleSize = val;
+        selectedPreviewElem.style.fontSize = val + 'px';
+        const slider = document.getElementById('editTitleSizeSlider');
+        if (slider) slider.value = val;
+        const badge = document.getElementById('editTitleSizeBadge');
+        if (badge) badge.textContent = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    } else if (type === 'excerpt') {
+        let val = (art.customTextSize || 11) + (delta * 0.5);
+        val = Math.max(7, Math.min(22, Math.round(val * 2) / 2));
+        art.customTextSize = val;
+        selectedPreviewElem.style.fontSize = val + 'px';
+        const slider = document.getElementById('editTextSizeSlider');
+        if (slider) slider.value = val;
+        const badge = document.getElementById('editTextSizeBadge');
+        if (badge) badge.textContent = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    } else if (type === 'source') {
+        let val = (art.customSourceSize || 13) + delta;
+        val = Math.max(8, Math.min(22, Math.round(val)));
+        art.customSourceSize = val;
+        selectedPreviewElem.style.fontSize = val + 'px';
+        const slider = document.getElementById('editSourceSizeSlider');
+        if (slider) slider.value = val;
+        const badge = document.getElementById('editSourceSizeBadge');
+        if (badge) badge.textContent = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    } else if (type === 'source_name') {
+        let val = (art.customSourceNameSize || 16) + delta;
+        val = Math.max(10, Math.min(28, Math.round(val)));
+        art.customSourceNameSize = val;
+        selectedPreviewElem.style.fontSize = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    } else if (type === 'image') {
+        let val = (art.customImageHeight || 160) + (delta * 10);
+        val = Math.max(60, Math.min(380, Math.round(val)));
+        art.customImageHeight = val;
+        const visualZone = selectedPreviewElem.closest('.pdf-visual-zone');
+        if (visualZone) {
+            visualZone.style.maxHeight = val + 'px';
+            visualZone.style.height = val + 'px';
+        }
+        const slider = document.getElementById('editImgHeightSlider');
+        if (slider) slider.value = val;
+        const badge = document.getElementById('editImgHeightBadge');
+        if (badge) badge.textContent = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    } else if (type === 'logo') {
+        let val = (art.customLogoHeight || 38) + (delta * 2);
+        val = Math.max(18, Math.min(75, Math.round(val)));
+        art.customLogoHeight = val;
+        selectedPreviewElem.style.maxHeight = val + 'px';
+        selectedPreviewElem.style.height = val + 'px';
+        const slider = document.getElementById('editLogoHeightSlider');
+        if (slider) slider.value = val;
+        const badge = document.getElementById('editLogoHeightBadge');
+        if (badge) badge.textContent = val + 'px';
+        const barVal = document.getElementById('selBarValue');
+        if (barVal) barVal.textContent = val + 'px';
+    }
+
+    setTimeout(() => {
+        if (selectedPreviewElem) positionSelectionToolbar(selectedPreviewElem);
+    }, 20);
+
+    clearTimeout(_liveSyncDebounce);
+    _liveSyncDebounce = setTimeout(() => {
+        pushUndoState();
+        try {
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        } catch(e) {}
+    }, 500);
+}
+window.selectPreviewElement = selectPreviewElement;
+window.deselectPreviewElement = deselectPreviewElement;
+window.changeSelectedElementSize = changeSelectedElementSize;
+window.adjustSelectedImagePos = adjustSelectedImagePos;
+window.openDrawerForSelectedElement = openDrawerForSelectedElement;
 
 function updateDarkHeaderSwatch(isDark) {
     const swatch = document.getElementById('darkHeaderPreviewSwatch');
@@ -1928,6 +2539,26 @@ function initEvents() {
         });
     }
 
+    // Logo Height controls
+    document.getElementById('btnEditLogoHeightMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editLogoHeightSlider');
+        if (!slider) return;
+        slider.value = Math.max(18, parseInt(slider.value) - 2);
+        document.getElementById('editLogoHeightBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('btnEditLogoHeightPlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editLogoHeightSlider');
+        if (!slider) return;
+        slider.value = Math.min(75, parseInt(slider.value) + 2);
+        document.getElementById('editLogoHeightBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('editLogoHeightSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editLogoHeightBadge').textContent = `${e.target.value}px`;
+        syncLivePreview();
+    });
+
     // Title input: update hasCover state live
     document.getElementById('editorTitle')?.addEventListener('input', (e) => {
         options.title = e.target.value.trim();
@@ -1936,6 +2567,45 @@ function initEvents() {
             hasCover = newHasCover;
             renderPagesList();
             if (selectedIdx === -1 && !hasCover) selectPage(0);
+        }
+    });
+
+    // Desktop: Select elements directly on the preview
+    const previewWrap = document.getElementById('previewWrapper');
+    if (previewWrap) {
+        previewWrap.addEventListener('click', (e) => {
+            if (window.innerWidth <= 900) return;
+            const selectable = e.target.closest('.pdf-resize-selectable');
+            if (selectable) {
+                e.stopPropagation();
+                selectPreviewElement(selectable);
+            }
+        });
+    }
+
+    // Deselect element when clicking outside
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 900) return;
+        if (!e.target.closest('.pdf-resize-selectable') && !e.target.closest('#previewSelectionToolbar')) {
+            deselectPreviewElement();
+        }
+    });
+
+    // Zoom on Ctrl + Wheel over preview area
+    const pArea = document.getElementById('previewArea');
+    if (pArea) {
+        pArea.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                changePreviewZoom(e.deltaY < 0 ? 0.08 : -0.08);
+            }
+        }, { passive: false });
+    }
+
+    // Window resize reposition for selection toolbar
+    window.addEventListener('resize', () => {
+        if (selectedPreviewElem) {
+            positionSelectionToolbar(selectedPreviewElem);
         }
     });
 
