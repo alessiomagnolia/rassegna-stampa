@@ -108,13 +108,58 @@
         }
         .preview-wrapper {
             position: relative; width: 100%; max-width: 760px;
-            margin-top: 28px;
+            margin-top: 44px;
             transition: max-width 0.3s ease;
         }
+        /* Top action bar above preview (Prominent Undo + Edit Article) */
+        .preview-actions-bar {
+            position: absolute;
+            top: -46px;
+            right: 0;
+            z-index: 30;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-prominent-undo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(26, 27, 50, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff !important;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .btn-prominent-undo:hover {
+            background: rgba(44, 46, 80, 0.98);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+        }
+        .btn-prominent-undo:active {
+            transform: translateY(0);
+        }
+        .btn-prominent-undo:disabled,
+        .btn-prominent-undo[disabled] {
+            opacity: 0.38 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
         .btn-prominent-edit-article {
-            position: absolute; top: -50px; left: 0; z-index: 30;
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 9px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
             border-radius: 8px;
             border: 1px solid rgba(124, 92, 255, 0.65);
             background: linear-gradient(135deg, #7c5cff 0%, #5028f8 100%);
@@ -144,165 +189,126 @@
             box-shadow: 0 4px 18px rgba(0, 212, 170, 0.45);
         }
 
-        /* ============ DESKTOP PREVIEW TOOLBAR & RESIZE CONTROLLERS ============ */
-        .desktop-preview-toolbar {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 30px;
-            background: rgba(10, 10, 26, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            z-index: 50;
-            margin-top: 22px;
-            margin-bottom: 6px;
-            transition: all 0.2s ease;
+        /* Card sections inside the right drawer */
+        .edit-section-card {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
         }
-        .desktop-tool-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #efece5;
-            cursor: pointer;
-            display: inline-flex;
+        .edit-section-card-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #c4b5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 12px;
+            display: flex;
             align-items: center;
             gap: 7px;
-            transition: all 0.18s ease;
-            user-select: none;
         }
-        .desktop-tool-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-        .desktop-tool-btn.active {
-            background: linear-gradient(135deg, #7c5cff, #5028f8) !important;
-            color: #ffffff !important;
-            border-color: transparent !important;
-            box-shadow: 0 4px 12px rgba(124, 92, 255, 0.35);
-        }
-        .desktop-tool-divider {
-            width: 1px;
-            height: 18px;
-            background: rgba(255, 255, 255, 0.2);
-            opacity: 0.6;
-            margin: 0 2px;
-        }
-
-        /* TOOL PANELS UNDER TOOLBAR */
-        .desktop-tool-panel {
-            width: 100%;
-            max-width: 680px;
-            background: rgba(15, 15, 35, 0.96);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 14px;
-            padding: 12px 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        .slider-control-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            z-index: 50;
-            box-sizing: border-box;
-            animation: fadeInTool 0.2s ease;
-            color: #efece5;
-            margin-bottom: 24px;
+            gap: 6px;
+            margin-bottom: 12px;
         }
-        @keyframes fadeInTool {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
+        .slider-control-group:last-child {
+            margin-bottom: 0;
         }
-        .desktop-tool-prompt {
-            font-size: 0.8rem;
+        .slider-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
             font-weight: 600;
-            color: #efece5;
+            color: #d1d5db;
+        }
+        .slider-inputs-row {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .btn-step-size {
-            width: 28px;
-            height: 28px;
+        .btn-step-sm {
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             background: rgba(255, 255, 255, 0.08);
-            color: #efece5;
-            font-size: 1rem;
+            color: #ffffff;
+            font-size: 0.95rem;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
-            transition: all 0.15s;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            user-select: none;
         }
-        .btn-step-size:hover {
+        .btn-step-sm:hover {
             border-color: #7c5cff;
-            color: #7c5cff;
+            background: rgba(124, 92, 255, 0.2);
+            color: #a78bfa;
             transform: scale(1.08);
         }
-        .btn-step-size:active {
+        .btn-step-sm:active {
             transform: scale(0.92);
         }
-        .btn-close-tool {
-            background: transparent !important;
-            border: none !important;
-            font-size: 0.85rem !important;
-            color: var(--text-muted) !important;
+        .range-slider-custom {
+            flex: 1;
+            height: 6px;
+            accent-color: #7c5cff;
             cursor: pointer;
         }
-        .btn-close-tool:hover {
-            color: #ff5c5c !important;
-        }
-        .desktop-val-badge {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 3px 8px;
-            border-radius: 6px;
+        .val-badge {
+            background: rgba(124, 92, 255, 0.15);
+            border: 1px solid rgba(124, 92, 255, 0.35);
+            padding: 2px 7px;
+            border-radius: 5px;
             font-size: 0.75rem;
             font-weight: 700;
             font-family: monospace;
-            color: #a78bfa;
-            white-space: nowrap;
+            color: #c4b5fd;
+            min-width: 44px;
+            text-align: center;
         }
         .btn-pos-preset {
-            padding: 4px 10px;
-            font-size: 0.72rem;
+            padding: 5px 11px;
+            font-size: 0.73rem;
             font-weight: 600;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
             color: #efece5;
             cursor: pointer;
             transition: all 0.15s;
         }
         .btn-pos-preset:hover {
             border-color: #7c5cff;
-            color: #7c5cff;
+            background: rgba(124, 92, 255, 0.2);
+            color: #ffffff;
         }
         .btn-pos-step {
-            padding: 4px 10px;
+            padding: 5px 11px;
             font-size: 0.75rem;
             font-weight: 600;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
             color: #efece5;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 4px;
             transition: all 0.15s;
         }
         .btn-pos-step:hover {
             border-color: #7c5cff;
-            color: #7c5cff;
+            background: rgba(124, 92, 255, 0.2);
+            color: #ffffff;
         }
 
         /* CARD RESIZE & POSITION INTERACTIVE STATES */
@@ -382,11 +388,11 @@
         .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
 
-        /* ============ LEFT-OPENING EDIT PANEL DRAWER (FIXED AT LEFT: 0) ============ */
+        /* ============ RIGHT-OPENING EDIT PANEL DRAWER (FIXED AT RIGHT: 0) ============ */
         .desktop-edit-backdrop {
             position: fixed;
-            top: 60px; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
+            top: 54px; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(2px);
             -webkit-backdrop-filter: blur(2px);
             z-index: 990;
@@ -400,20 +406,22 @@
         }
         .edit-panel {
             position: fixed !important;
-            top: 60px !important;
-            left: 0 !important;
+            top: 54px !important;
+            right: 0 !important;
+            left: auto !important;
             bottom: 0 !important;
             width: 440px !important;
-            max-width: 90vw !important;
-            height: calc(100vh - 60px) !important;
-            max-height: calc(100vh - 60px) !important;
+            max-width: 92vw !important;
+            height: calc(100vh - 54px) !important;
+            max-height: calc(100vh - 54px) !important;
             z-index: 1000 !important;
             background: #0f1023 !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
-            box-shadow: 16px 0 48px rgba(0, 0, 0, 0.75) !important;
+            border-left: 1px solid rgba(255, 255, 255, 0.16) !important;
+            border-right: none !important;
+            box-shadow: -16px 0 48px rgba(0, 0, 0, 0.75) !important;
             display: flex !important;
             flex-direction: column !important;
-            transform: translateX(-100%) !important;
+            transform: translateX(100%) !important;
             transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -613,204 +621,232 @@
     <!-- DESKTOP EDIT BACKDROP (CLICK OUTSIDE TO CLOSE) -->
     <div id="desktopEditBackdrop" class="desktop-edit-backdrop hide-mobile" onclick="closeEditPanel()"></div>
 
-    <!-- LEFT DRAWER: Edit Panel (Fixed at left: 0) -->
+    <!-- RIGHT DRAWER: Edit Panel (Fixed at right: 0) -->
     <div class="edit-panel hide-mobile" id="editPanel">
         <div class="edit-panel-header">
-            <h3><i data-feather="edit-3" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Modifica articolo</h3>
+            <h3><i data-feather="sliders" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;color:#7c5cff;"></i> Modifica Articolo</h3>
             <button type="button" class="btn-icon" id="btnCloseEditPanel" onclick="closeEditPanel()" title="Chiudi pannello (Esc)"><i data-feather="x"></i></button>
         </div>
         <div class="edit-panel-body" id="editPanelBody">
-            <div class="edit-field">
-                <label>Titolo *</label>
-                <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
-            </div>
-            <div class="edit-field">
-                <label>Testo / Estratto *</label>
-                <textarea id="editExcerpt" placeholder="Testo dell'articolo..."></textarea>
-            </div>
-            <div class="edit-field" style="display:flex;gap:10px;">
-                <div style="flex:1;">
-                    <label>Fonte</label>
-                    <input type="text" id="editSourceName" placeholder="es. Corriere della Sera">
+
+            <!-- SECTION 1: CONTENUTI ARTICOLO -->
+            <div class="edit-section-card">
+                <div class="edit-section-card-title">
+                    <i data-feather="file-text" style="width:15px;height:15px;"></i>
+                    <span>Contenuto Articolo</span>
                 </div>
-                <div style="flex:1;">
-                    <label>Tipologia</label>
-                    <select id="editSourceType">
-                        <option value="Web">Web</option>
-                        <option value="Quotidiano Nazionale">Quotidiano Naz.</option>
-                        <option value="Quotidiano Locale">Quotidiano Loc.</option>
-                        <option value="Agenzia di Stampa">Agenzia</option>
-                        <option value="Periodico">Periodico</option>
-                        <option value="Radio/TV">Radio/TV</option>
-                    </select>
+                <div class="edit-field">
+                    <label>Titolo Articolo *</label>
+                    <input type="text" id="editTitle" placeholder="Titolo dell'articolo">
                 </div>
-            </div>
-            <div class="edit-field">
-                <label>Data Pubblicazione</label>
-                <input type="text" id="editDate" placeholder="es. 21/07/2026">
-            </div>
-            <div class="edit-field">
-                <label>Link articolo</label>
-                <input type="url" id="editUrl" placeholder="https://...">
+                <div class="edit-field">
+                    <label>Testo / Estratto *</label>
+                    <textarea id="editExcerpt" placeholder="Testo dell'articolo..."></textarea>
+                </div>
+                <div class="edit-field" style="display:flex;gap:10px;">
+                    <div style="flex:1;">
+                        <label>Fonte</label>
+                        <input type="text" id="editSourceName" placeholder="es. Corriere della Sera">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Tipologia</label>
+                        <select id="editSourceType">
+                            <option value="Web">Web</option>
+                            <option value="Quotidiano Nazionale">Quotidiano Naz.</option>
+                            <option value="Quotidiano Locale">Quotidiano Loc.</option>
+                            <option value="Agenzia di Stampa">Agenzia</option>
+                            <option value="Periodico">Periodico</option>
+                            <option value="Radio/TV">Radio/TV</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-field" style="display:flex;gap:10px;">
+                    <div style="flex:1;">
+                        <label>Data Pubblicazione</label>
+                        <input type="text" id="editDate" placeholder="es. 21/07/2026">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Link Articolo</label>
+                        <input type="url" id="editUrl" placeholder="https://...">
+                    </div>
+                </div>
             </div>
 
-            <!-- Image -->
-            <div class="edit-field">
-                <label>Immagine principale</label>
-                <div id="editImagePreviewContainer" class="hidden">
-                    <img id="editImagePreview" class="edit-image-preview" src="" alt="">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; padding: 0 2px;">
-                        <select id="editImagePosition" style="width: auto; padding: 2px 6px; font-size: 0.75rem; background: rgba(255,255,255,0.1); color: #efece5; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
-                            <option value="top center" style="color: black;">Posizione: Alto</option>
-                            <option value="center center" style="color: black;">Posizione: Centro</option>
-                            <option value="bottom center" style="color: black;">Posizione: Basso</option>
-                        </select>
-                        <button class="edit-remove-btn" onclick="removeEditImage()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi immagine</button>
+            <!-- SECTION 2: DIMENSIONI TESTI (LIVE) -->
+            <div class="edit-section-card">
+                <div class="edit-section-card-title">
+                    <i data-feather="type" style="width:15px;height:15px;"></i>
+                    <span>Dimensione Testi (Live)</span>
+                </div>
+
+                <!-- Dimensione Titolo -->
+                <div class="slider-control-group">
+                    <div class="slider-label-row">
+                        <span>Dimensione Titolo</span>
+                        <span id="editTitleSizeBadge" class="val-badge">20px</span>
                     </div>
+                    <div class="slider-inputs-row">
+                        <button type="button" class="btn-step-sm" id="btnEditTitleSizeMinus" title="Riduci titolo">−</button>
+                        <input type="range" class="range-slider-custom" id="editTitleSizeSlider" min="12" max="38" step="1" value="20">
+                        <button type="button" class="btn-step-sm" id="btnEditTitleSizePlus" title="Aumenta titolo">+</button>
+                    </div>
+                </div>
+
+                <!-- Dimensione Estratto -->
+                <div class="slider-control-group" style="margin-top:10px;">
+                    <div class="slider-label-row">
+                        <span>Dimensione Testo / Estratto</span>
+                        <span id="editTextSizeBadge" class="val-badge">11px</span>
+                    </div>
+                    <div class="slider-inputs-row">
+                        <button type="button" class="btn-step-sm" id="btnEditTextSizeMinus" title="Riduci testo">−</button>
+                        <input type="range" class="range-slider-custom" id="editTextSizeSlider" min="7" max="22" step="0.5" value="11">
+                        <button type="button" class="btn-step-sm" id="btnEditTextSizePlus" title="Aumenta testo">+</button>
+                    </div>
+                </div>
+
+                <!-- Dimensione Fonte -->
+                <div class="slider-control-group" style="margin-top:10px;">
+                    <div class="slider-label-row">
+                        <span>Dimensione Nome Fonte</span>
+                        <span id="editSourceSizeBadge" class="val-badge">13px</span>
+                    </div>
+                    <div class="slider-inputs-row">
+                        <button type="button" class="btn-step-sm" id="btnEditSourceSizeMinus" title="Riduci fonte">−</button>
+                        <input type="range" class="range-slider-custom" id="editSourceSizeSlider" min="8" max="22" step="1" value="13">
+                        <button type="button" class="btn-step-sm" id="btnEditSourceSizePlus" title="Aumenta fonte">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: REGOLAZIONE IMMAGINE (LIVE) -->
+            <div class="edit-section-card">
+                <div class="edit-section-card-title">
+                    <i data-feather="image" style="width:15px;height:15px;"></i>
+                    <span>Regolazione Immagine (Live)</span>
+                </div>
+
+                <div id="editImageControlsCard">
+                    <!-- Thumbnail preview + Quick actions -->
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; padding:8px; background:rgba(0,0,0,0.25); border-radius:8px;">
+                        <img id="editImageThumbPreview" src="" style="width:58px; height:42px; object-fit:cover; border-radius:4px; border:1px solid rgba(255,255,255,0.15);" alt="Foto">
+                        <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                            <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer; padding:3px 8px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px; width:fit-content;">
+                                <i data-feather="upload" style="width:12px;height:12px;"></i> Cambia foto
+                            </label>
+                            <button type="button" class="edit-remove-btn" onclick="removeEditImage()" style="text-align:left; font-size:0.72rem;">
+                                <i data-feather="trash-2" style="width:12px;height:12px;vertical-align:middle;"></i> Rimuovi foto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Altezza Immagine -->
+                    <div class="slider-control-group">
+                        <div class="slider-label-row">
+                            <span>Altezza Riquadro Foto</span>
+                            <span id="editImgHeightBadge" class="val-badge">160px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditImgHeightMinus" title="Riduci altezza">−</button>
+                            <input type="range" class="range-slider-custom" id="editImgHeightSlider" min="60" max="380" step="5" value="160">
+                            <button type="button" class="btn-step-sm" id="btnEditImgHeightPlus" title="Aumenta altezza">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Posizione Verticale Foto -->
+                    <div class="slider-control-group" style="margin-top:12px;">
+                        <div class="slider-label-row">
+                            <span>Posizione Verticale (Inquadratura)</span>
+                            <span id="editImgPosBadge" class="val-badge">Centro (50%)</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px;">
+                            <button type="button" class="btn-pos-preset" onclick="setDrawerImagePosition(0)">In Alto</button>
+                            <button type="button" class="btn-pos-preset" onclick="setDrawerImagePosition(50)">Centro</button>
+                            <button type="button" class="btn-pos-preset" onclick="setDrawerImagePosition(100)">In Basso</button>
+                            <button type="button" class="btn-pos-step" id="btnDrawerPosUp" title="Sposta foto verso l'alto">
+                                <i data-feather="chevron-up" style="width:12px;height:12px;"></i> Su
+                            </button>
+                            <button type="button" class="btn-pos-step" id="btnDrawerPosDown" title="Sposta foto verso il basso">
+                                <i data-feather="chevron-down" style="width:12px;height:12px;"></i> Giù
+                            </button>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+                            💡 Puoi anche trascinare la foto col mouse direttamente sull'anteprima!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box if no image present -->
+                <div id="editNoImageNotice" style="display:none; padding:12px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.15); border-radius:8px; text-align:center;">
+                    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Nessuna immagine presente in questo articolo</div>
+                    <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:5px 12px; font-size:0.78rem;">
+                        <i data-feather="image" style="width:14px;height:14px;"></i> Carica Foto
+                    </label>
                 </div>
                 <input type="file" id="editImageInput" accept="image/*" class="hidden">
-                <label for="editImageInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia immagine</label>
             </div>
 
-            <!-- Logo -->
-            <div class="edit-field">
-                <label>Logo testata</label>
-                <div id="editLogoPreviewContainer" class="hidden">
-                    <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
-                    <button class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Rimuovi logo</button>
+            <!-- SECTION 4: TESTATA & LOGO -->
+            <div class="edit-section-card">
+                <div class="edit-section-card-title">
+                    <i data-feather="layout" style="width:15px;height:15px;"></i>
+                    <span>Testata & Header</span>
                 </div>
-                <input type="file" id="editLogoInput" accept="image/*" class="hidden">
-                <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Cambia logo</label>
-            </div>
 
-            <!-- Dark Header Toggle -->
-            <div class="edit-field">
-                <label>Fascia header nel PDF</label>
-                <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--border-color);">
-                    <label class="toggle-switch" title="Attiva header scuro quando il logo è bianco">
-                        <input type="checkbox" id="editDarkHeader">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <div>
-                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Header scuro</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
+                <!-- Logo -->
+                <div class="edit-field">
+                    <label>Logo Testata</label>
+                    <div id="editLogoPreviewContainer" class="hidden">
+                        <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
+                        <button type="button" class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi logo</button>
                     </div>
-                    <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:32px; height:32px; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0; transition:background 0.3s;"></div>
+                    <input type="file" id="editLogoInput" accept="image/*" class="hidden">
+                    <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Carica / Cambia logo</label>
+                </div>
+
+                <!-- Dark Header Toggle -->
+                <div class="edit-field" style="margin-bottom:0 !important;">
+                    <label>Fascia Header nel PDF</label>
+                    <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+                        <label class="toggle-switch" title="Attiva header scuro quando il logo è bianco">
+                            <input type="checkbox" id="editDarkHeader">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div>
+                            <div style="font-size:0.82rem; font-weight:600; color:var(--text-primary);">Header scuro</div>
+                            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
+                        </div>
+                        <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:28px; height:28px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); flex-shrink:0; transition:background 0.3s;"></div>
+                    </div>
                 </div>
             </div>
+
         </div>
         <div class="edit-panel-footer">
-            <button class="btn btn-primary" style="width:100%;" id="btnSaveEdit"><i data-feather="save" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Salva modifiche</button>
+            <button class="btn btn-primary" style="width:100%; font-weight:700; font-size:0.88rem;" id="btnSaveEdit" onclick="closeEditPanel()">
+                <i data-feather="check" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> Chiudi Modifica
+            </button>
         </div>
     </div>
 
     <!-- CENTER: Preview Area -->
     <div class="preview-area" id="previewArea">
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
-            <!-- TASTO EVIDENTE ALLA SINISTRA DELL'ANTEPRIMA DELLA PAGINA -->
-            <button type="button" class="btn-prominent-edit-article hide-mobile" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
-                <i data-feather="edit-3"></i>
-                <span>MODIFICA L'ARTICOLO</span>
-            </button>
+            <!-- TASTI EVIDENTI IN ALTO A DESTRA DELL'ANTEPRIMA DELLA PAGINA -->
+            <div class="preview-actions-bar hide-mobile" id="previewActionsBar">
+                <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
+                        <polyline points="3 3 3 11 11 11"/>
+                    </svg>
+                    <span>Annulla</span>
+                </button>
+                <button type="button" class="btn-prominent-edit-article" id="btnEditPage" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
+                    <i data-feather="edit-3" style="width:15px;height:15px;"></i>
+                    <span>MODIFICA L'ARTICOLO</span>
+                </button>
+            </div>
             <div id="pagePreviewContent"><!-- injected --></div>
-        </div>
-
-        <!-- DESKTOP ACTION TOOLBAR UNDER PREVIEW -->
-        <div class="desktop-preview-toolbar hide-mobile" id="desktopPreviewToolbar">
-            <!-- Undo -->
-            <button type="button" id="btnDesktopUndo" class="desktop-tool-btn" onclick="undoLastEdit()" title="Annulla ultima azione (Ctrl+Z)" style="opacity:0.35;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 7h10a7 7 0 1 1 0 14H3"/>
-                    <polyline points="3 3 3 11 11 11"/>
-                </svg>
-                <span>Annulla</span>
-            </button>
-
-            <div class="desktop-tool-divider"></div>
-
-            <!-- Modifica Articolo (Pannello Dati / Tenda) -->
-            <button type="button" id="btnToggleEditPanel" class="desktop-tool-btn" title="Modifica titolo, testo, fonte, immagini e impostazioni articolo">
-                <i data-feather="edit-3" style="width:14px;height:14px;"></i>
-                <span>Modifica Articolo</span>
-            </button>
-
-            <!-- Regola Dimensioni Testo -->
-            <button type="button" id="btnToggleElementResize" class="desktop-tool-btn" title="Clicca per regolare le dimensioni dei testi sulla pagina">
-                <i data-feather="type" style="width:14px;height:14px;"></i>
-                <span>Dimensione Testo</span>
-            </button>
-
-            <!-- Regola Immagine -->
-            <button type="button" id="btnToggleImageResize" class="desktop-tool-btn" title="Regola altezza e posizione dell'immagine">
-                <i data-feather="image" style="width:14px;height:14px;"></i>
-                <span>Dimensione Immagine</span>
-            </button>
-        </div>
-
-        <!-- CONTROLLER DINAMICO: REGOLA DIMENSIONI TESTO -->
-        <div id="desktopElementSizePanel" class="desktop-tool-panel hide-mobile" style="display:none;">
-            <div id="desktopSizePrompt" class="desktop-tool-prompt">
-                <i data-feather="mouse-pointer" style="width:14px;height:14px;color:#7c5cff;"></i>
-                <span>Clicca su qualsiasi testo della pagina (titolo, estratto, fonte) per regolarne la dimensione.</span>
-            </div>
-            <div id="desktopSizeActiveControls" style="display:none; align-items:center; gap:10px; width:100%;">
-                <span id="desktopSelectedElementName" style="font-weight:700; font-size:0.82rem; color:#7c5cff; white-space:nowrap; min-width:80px;">Elemento</span>
-                <button type="button" id="btnDesktopSizeMinus" class="btn-step-size" title="Riduci dimensione">−</button>
-                <input type="range" id="desktopSizeSlider" min="8" max="48" step="1" style="flex:1; cursor:pointer;">
-                <button type="button" id="btnDesktopSizePlus" class="btn-step-size" title="Aumenta dimensione">+</button>
-                <span id="desktopSizeValueBadge" class="desktop-val-badge">16px</span>
-                <button type="button" id="btnDesktopSizeDeselect" class="btn-step-size btn-close-tool" title="Deseleziona">✕</button>
-            </div>
-        </div>
-
-        <!-- CONTROLLER DINAMICO: REGOLA IMMAGINE (DIMENSIONE & POSIZIONE) -->
-        <div id="desktopImagePanel" class="desktop-tool-panel hide-mobile" style="display:none;">
-            <div id="desktopImageControlsContent" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                <!-- Row 1: Header / Presets / Close -->
-                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <i data-feather="image" style="width:15px;height:15px;color:#7c5cff;"></i>
-                        <span style="font-weight:700; font-size:0.82rem; white-space:nowrap;">Regola Immagine:</span>
-                        <span id="desktopImgHeightBadge" class="desktop-val-badge">160px</span>
-                    </div>
-
-                    <!-- Close -->
-                    <button type="button" id="btnCloseImagePanel" class="btn-step-size btn-close-tool" title="Chiudi">✕</button>
-                </div>
-
-                <!-- Row 2: Altezza Slider -->
-                <div style="display:flex; align-items:center; gap:10px; width:100%;">
-                    <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted); min-width:55px;">Altezza:</span>
-                    <button type="button" id="btnImgHeightMinus" class="btn-step-size" title="Riduci altezza">−</button>
-                    <input type="range" id="desktopImgHeightSlider" min="60" max="380" step="5" style="flex:1; cursor:pointer;">
-                    <button type="button" id="btnImgHeightPlus" class="btn-step-size" title="Aumenta altezza">+</button>
-                </div>
-
-                <!-- Row 3: Posizione Verticale & Presets -->
-                <div style="display:flex; align-items:center; gap:10px; width:100%; flex-wrap:wrap;">
-                    <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted); min-width:55px;">Posizione:</span>
-                    <div style="display:flex; align-items:center; gap:4px;">
-                        <button type="button" class="btn-pos-preset" onclick="setDesktopImagePosition(0)">In Alto</button>
-                        <button type="button" class="btn-pos-preset" onclick="setDesktopImagePosition(50)">Centro</button>
-                        <button type="button" class="btn-pos-preset" onclick="setDesktopImagePosition(100)">In Basso</button>
-                    </div>
-                    <button type="button" id="btnImgPosUp" class="btn-pos-step" title="Sposta foto in alto">
-                        <i data-feather="chevron-up" style="width:13px;height:13px;"></i> Su
-                    </button>
-                    <button type="button" id="btnImgPosDown" class="btn-pos-step" title="Sposta foto in basso">
-                        <i data-feather="chevron-down" style="width:13px;height:13px;"></i> Giù
-                    </button>
-                    <span id="desktopImgPosBadge" class="desktop-val-badge">50%</span>
-                </div>
-                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
-                    💡 Puoi anche trascinare la foto direttamente col mouse all'interno del riquadro per regolarne la posizione!
-                </div>
-            </div>
-            <!-- Message if no image on page -->
-            <div id="desktopImageEmptyMsg" style="display:none; font-size:0.8rem; color:var(--text-muted); padding:4px 0;">
-                <i data-feather="info" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
-                Nessuna immagine presente in questa pagina. Puoi caricarne una cliccando su <strong>Modifica questa pagina</strong>.
-            </div>
         </div>
     </div>
 
@@ -1149,6 +1185,10 @@ function selectPage(idx) {
     } else {
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
         if (editBtn) editBtn.style.display = 'inline-flex';
+        const visualImg = previewEl.querySelector('.pdf-main-visual');
+        if (visualImg && articles[idx].imageBase64) {
+            enableDesktopImageDrag(visualImg);
+        }
     }
 
     // Desktop: Update Desktop Drawer data if an article is selected
@@ -1158,21 +1198,6 @@ function selectPage(idx) {
         closeEditPanel();
     }
 
-    const btnTogglePanel = document.getElementById('btnToggleEditPanel');
-    if (btnTogglePanel) {
-        if (idx < 0) {
-            btnTogglePanel.style.opacity = '0.5';
-            btnTogglePanel.title = 'Passa a un articolo per modificarne i dati';
-        } else {
-            btnTogglePanel.style.opacity = '1';
-            btnTogglePanel.title = 'Modifica dati articolo (titolo, testo, fonte, immagini)';
-        }
-    }
-
-    // Desktop Only: Attach element resizing & image toolbar listeners
-    if (window.innerWidth > 900 && typeof attachDesktopElementListeners === 'function') {
-        attachDesktopElementListeners();
-    }
 
     // Mobile Only: Touch Resizing, Mobile Form & 1.5s Toast Page Indicator
     if (window.innerWidth <= 900) {
@@ -1365,9 +1390,10 @@ function initSortable() {
 }
 
 // ============================================================
-// EDIT PANEL (DESKTOP DOCKED SIDEBAR)
+// EDIT PANEL (DESKTOP RIGHT DOCKED DRAWER)
 // ============================================================
 let editingIdx = -1;
+let _liveSyncDebounce = null;
 
 function fillEditForm(idx) {
     if (idx < 0 || idx >= articles.length) return;
@@ -1375,6 +1401,7 @@ function fillEditForm(idx) {
     const art = articles[idx];
     if (!art) return;
 
+    // Content fields
     const titleEl = document.getElementById('editTitle');
     if (titleEl) titleEl.value = art.title || '';
     const excerptEl = document.getElementById('editExcerpt');
@@ -1388,19 +1415,51 @@ function fillEditForm(idx) {
     const urlEl = document.getElementById('editUrl');
     if (urlEl) urlEl.value = art.url || '';
 
-    // Image
-    const imgPrev = document.getElementById('editImagePreview');
-    const imgPrevCont = document.getElementById('editImagePreviewContainer');
-    if (imgPrev && imgPrevCont) {
-        if (art.imageBase64) {
-            imgPrev.src = art.imageBase64;
-            const posEl = document.getElementById('editImagePosition');
-            if (posEl) posEl.value = art.imagePosition || 'top center';
-            imgPrevCont.classList.remove('hidden');
-        } else {
-            imgPrevCont.classList.add('hidden');
-            imgPrev.src = '';
+    // Text Sizes
+    const titleSize = art.customTitleSize || 20;
+    const textSize = art.customTextSize || 11;
+    const sourceSize = art.customSourceSize || 13;
+
+    const tSlider = document.getElementById('editTitleSizeSlider');
+    const tBadge = document.getElementById('editTitleSizeBadge');
+    if (tSlider) tSlider.value = titleSize;
+    if (tBadge) tBadge.textContent = `${titleSize}px`;
+
+    const txtSlider = document.getElementById('editTextSizeSlider');
+    const txtBadge = document.getElementById('editTextSizeBadge');
+    if (txtSlider) txtSlider.value = textSize;
+    if (txtBadge) txtBadge.textContent = `${textSize}px`;
+
+    const sSlider = document.getElementById('editSourceSizeSlider');
+    const sBadge = document.getElementById('editSourceSizeBadge');
+    if (sSlider) sSlider.value = sourceSize;
+    if (sBadge) sBadge.textContent = `${sourceSize}px`;
+
+    // Image Sizing & Position
+    const imgControls = document.getElementById('editImageControlsCard');
+    const noImgNotice = document.getElementById('editNoImageNotice');
+    const imgPrev = document.getElementById('editImageThumbPreview');
+
+    if (art.imageBase64) {
+        if (imgControls) imgControls.style.display = 'block';
+        if (noImgNotice) noImgNotice.style.display = 'none';
+        if (imgPrev) imgPrev.src = art.imageBase64;
+
+        const imgH = art.customImageHeight || 160;
+        const imgHSlider = document.getElementById('editImgHeightSlider');
+        const imgHBadge = document.getElementById('editImgHeightBadge');
+        if (imgHSlider) imgHSlider.value = imgH;
+        if (imgHBadge) imgHBadge.textContent = `${imgH}px`;
+
+        const imgPos = art.customImagePosY !== undefined ? art.customImagePosY : 50;
+        const imgPosBadge = document.getElementById('editImgPosBadge');
+        if (imgPosBadge) {
+            imgPosBadge.textContent = imgPos === 50 ? 'Centro (50%)' : (imgPos === 0 ? 'In Alto (0%)' : (imgPos === 100 ? 'In Basso (100%)' : `${imgPos}%`));
         }
+    } else {
+        if (imgControls) imgControls.style.display = 'none';
+        if (noImgNotice) noImgNotice.style.display = 'block';
+        if (imgPrev) imgPrev.src = '';
     }
 
     // Logo
@@ -1424,32 +1483,103 @@ function fillEditForm(idx) {
     }
 }
 
+function syncLivePreview() {
+    if (editingIdx < 0 || editingIdx >= articles.length) return;
+    const art = articles[editingIdx];
+    if (!art) return;
+
+    // Read content inputs
+    const titleVal = document.getElementById('editTitle')?.value ?? '';
+    const excerptVal = document.getElementById('editExcerpt')?.value ?? '';
+    const sourceVal = document.getElementById('editSourceName')?.value ?? '';
+    const typeVal = document.getElementById('editSourceType')?.value ?? 'Web';
+    const dateVal = document.getElementById('editDate')?.value ?? '';
+    const urlVal = document.getElementById('editUrl')?.value ?? '';
+    const darkHeaderVal = document.getElementById('editDarkHeader')?.checked ?? false;
+
+    // Read sizes
+    const titleSizeVal = parseInt(document.getElementById('editTitleSizeSlider')?.value);
+    const textSizeVal = parseFloat(document.getElementById('editTextSizeSlider')?.value);
+    const sourceSizeVal = parseInt(document.getElementById('editSourceSizeSlider')?.value);
+    const imgHeightVal = parseInt(document.getElementById('editImgHeightSlider')?.value);
+
+    art.title          = titleVal;
+    art.excerpt        = excerptVal;
+    art.source_name    = sourceVal;
+    art.source_type    = typeVal;
+    art.published_date = dateVal;
+    art.url            = urlVal;
+    art.darkHeader     = darkHeaderVal;
+    if (!isNaN(titleSizeVal) && titleSizeVal > 0) art.customTitleSize = titleSizeVal;
+    if (!isNaN(textSizeVal) && textSizeVal > 0) art.customTextSize = textSizeVal;
+    if (!isNaN(sourceSizeVal) && sourceSizeVal > 0) art.customSourceSize = sourceSizeVal;
+    if (!isNaN(imgHeightVal) && imgHeightVal > 0) art.customImageHeight = imgHeightVal;
+
+    // Re-render preview immediately
+    const previewEl = document.getElementById('pagePreviewContent');
+    const total = articles.length;
+    const pageNum = hasCover ? editingIdx + 2 : editingIdx + 1;
+    const totalPages = hasCover ? total + 1 : total;
+    if (previewEl) {
+        previewEl.innerHTML = renderArticlePreview(art, pageNum, totalPages);
+        // Enable in-preview image dragging
+        const visualImg = previewEl.querySelector('.pdf-main-visual');
+        if (visualImg && art.imageBase64) {
+            enableDesktopImageDrag(visualImg);
+        }
+    }
+
+    // Update thumbnail in pages panel
+    const thumbEl = document.querySelector(`.pages-panel [data-idx="${editingIdx}"]`);
+    if (thumbEl) {
+        const thumbTitle = thumbEl.querySelector('.page-thumb-title');
+        if (thumbTitle) thumbTitle.textContent = art.title || 'Senza titolo';
+        const thumbSource = thumbEl.querySelector('.page-thumb-source');
+        if (thumbSource) thumbSource.textContent = art.source_name || '';
+    }
+
+    // Debounce undo stack push and localStorage save
+    clearTimeout(_liveSyncDebounce);
+    _liveSyncDebounce = setTimeout(() => {
+        pushUndoState();
+        try {
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        } catch(e) {}
+    }, 500);
+}
+
+function setDrawerImagePosition(val) {
+    if (editingIdx < 0 || !articles[editingIdx]) return;
+    val = Math.max(0, Math.min(100, Math.round(val)));
+    articles[editingIdx].customImagePosY = val;
+
+    const badge = document.getElementById('editImgPosBadge');
+    if (badge) {
+        badge.textContent = val === 50 ? 'Centro (50%)' : (val === 0 ? 'In Alto (0%)' : (val === 100 ? 'In Basso (100%)' : `${val}%`));
+    }
+
+    const visualImg = document.querySelector('.pdf-main-visual');
+    if (visualImg) {
+        visualImg.style.objectPosition = `center ${val}%`;
+    }
+
+    clearTimeout(_liveSyncDebounce);
+    _liveSyncDebounce = setTimeout(() => {
+        pushUndoState();
+        try {
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        } catch(e) {}
+    }, 500);
+}
+window.setDrawerImagePosition = setDrawerImagePosition;
+
 function openEditPanel(idx) {
     if (window.innerWidth <= 900) return;
     const targetIdx = (idx !== undefined && idx >= 0) ? idx : (selectedIdx >= 0 ? selectedIdx : 0);
-    if (selectedIdx < 0 && articles.length > 0) {
-        selectPage(0);
+    if (selectedIdx !== targetIdx && articles.length > targetIdx) {
+        selectPage(targetIdx);
     }
     fillEditForm(targetIdx);
-
-    // Close text and image resize panels if open
-    if (typeof isDesktopResizeModeActive !== 'undefined' && isDesktopResizeModeActive) {
-        isDesktopResizeModeActive = false;
-        const btnResize = document.getElementById('btnToggleElementResize');
-        if (btnResize) btnResize.classList.remove('active');
-        const resizePanel = document.getElementById('desktopElementSizePanel');
-        if (resizePanel) resizePanel.style.display = 'none';
-        const pw = document.getElementById('previewWrapper');
-        if (pw) pw.classList.remove('resize-mode-active');
-        if (typeof deselectDesktopElement === 'function') deselectDesktopElement();
-    }
-    if (typeof isDesktopImagePanelActive !== 'undefined' && isDesktopImagePanelActive) {
-        isDesktopImagePanelActive = false;
-        const btnImage = document.getElementById('btnToggleImageResize');
-        if (btnImage) btnImage.classList.remove('active');
-        const imgPanel = document.getElementById('desktopImagePanel');
-        if (imgPanel) imgPanel.style.display = 'none';
-    }
 
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.add('open');
@@ -1460,11 +1590,10 @@ function openEditPanel(idx) {
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) btnEdit.classList.add('active');
 
-    const btnToggle = document.getElementById('btnToggleEditPanel');
-    if (btnToggle) btnToggle.classList.add('active');
-
     const bodyEl = document.getElementById('editPanelBody');
     if (bodyEl) bodyEl.scrollTop = 0;
+
+    if (window.feather) feather.replace();
 }
 
 function closeEditPanel() {
@@ -1477,8 +1606,9 @@ function closeEditPanel() {
     const btnEdit = document.getElementById('btnEditPage');
     if (btnEdit) btnEdit.classList.remove('active');
 
-    const btnToggle = document.getElementById('btnToggleEditPanel');
-    if (btnToggle) btnToggle.classList.remove('active');
+    try {
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    } catch(e) {}
 
     editingIdx = -1;
 }
@@ -1496,21 +1626,7 @@ window.closeEditPanel = closeEditPanel;
 window.toggleEditPanel = toggleEditPanel;
 
 function saveEdit() {
-    if (editingIdx < 0 || editingIdx >= articles.length) return;
-    const art = articles[editingIdx];
-    art.title          = document.getElementById('editTitle').value.trim();
-    art.excerpt        = document.getElementById('editExcerpt').value.trim();
-    art.source_name    = document.getElementById('editSourceName').value.trim();
-    art.source_type    = document.getElementById('editSourceType').value;
-    art.published_date = document.getElementById('editDate').value.trim();
-    art.url            = document.getElementById('editUrl').value.trim();
-    art.imagePosition  = document.getElementById('editImagePosition').value;
-    art.darkHeader     = document.getElementById('editDarkHeader').checked;
-
-    pushUndoState();
     closeEditPanel();
-    renderPagesList();
-    selectPage(editingIdx);
     showToast('Modifiche salvate', 'success');
 }
 
@@ -1520,16 +1636,25 @@ function updateDarkHeaderSwatch(isDark) {
 }
 
 function removeEditImage() {
-    if (editingIdx < 0) return;
+    if (editingIdx < 0 || !articles[editingIdx]) return;
     articles[editingIdx].imageBase64 = null;
-    document.getElementById('editImagePreviewContainer').classList.add('hidden');
-    document.getElementById('editImagePreview').src = '';
+    const controls = document.getElementById('editImageControlsCard');
+    const notice = document.getElementById('editNoImageNotice');
+    if (controls) controls.style.display = 'none';
+    if (notice) notice.style.display = 'block';
+    const thumb = document.getElementById('editImageThumbPreview');
+    if (thumb) thumb.src = '';
+    syncLivePreview();
 }
+
 function removeEditLogo() {
-    if (editingIdx < 0) return;
+    if (editingIdx < 0 || !articles[editingIdx]) return;
     articles[editingIdx].logoBase64 = null;
-    document.getElementById('editLogoPreviewContainer').classList.add('hidden');
-    document.getElementById('editLogoPreview').src = '';
+    const logoPrevCont = document.getElementById('editLogoPreviewContainer');
+    if (logoPrevCont) logoPrevCont.classList.add('hidden');
+    const logoPrev = document.getElementById('editLogoPreview');
+    if (logoPrev) logoPrev.src = '';
+    syncLivePreview();
 }
 
 // ============================================================
@@ -1624,13 +1749,6 @@ function initEvents() {
             closeEditPanel();
         });
     }
-    const btnToggle = document.getElementById('btnToggleEditPanel');
-    if (btnToggle) {
-        btnToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleEditPanel();
-        });
-    }
     const backdrop = document.getElementById('desktopEditBackdrop');
     if (backdrop) {
         backdrop.addEventListener('click', (e) => {
@@ -1638,29 +1756,148 @@ function initEvents() {
             closeEditPanel();
         });
     }
-    document.getElementById('btnSaveEdit').addEventListener('click', saveEdit);
-    document.getElementById('btnGeneratePDF').addEventListener('click', generateAndDownload);
+    const btnSave = document.getElementById('btnSaveEdit');
+    if (btnSave) btnSave.addEventListener('click', saveEdit);
+
+    const btnGen = document.getElementById('btnGeneratePDF');
+    if (btnGen) btnGen.addEventListener('click', generateAndDownload);
+
+    // Live sync on text inputs
+    ['editTitle', 'editExcerpt', 'editSourceName', 'editDate', 'editUrl'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncLivePreview);
+    });
+    const typeSelect = document.getElementById('editSourceType');
+    if (typeSelect) typeSelect.addEventListener('change', syncLivePreview);
+
+    // Title Size controls
+    document.getElementById('btnEditTitleSizeMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editTitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(12, parseInt(slider.value) - 1);
+        document.getElementById('editTitleSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('btnEditTitleSizePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editTitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(38, parseInt(slider.value) + 1);
+        document.getElementById('editTitleSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('editTitleSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editTitleSizeBadge').textContent = `${e.target.value}px`;
+        syncLivePreview();
+    });
+
+    // Text Size controls
+    document.getElementById('btnEditTextSizeMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editTextSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(7, parseFloat(slider.value) - 0.5);
+        document.getElementById('editTextSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('btnEditTextSizePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editTextSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(22, parseFloat(slider.value) + 0.5);
+        document.getElementById('editTextSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('editTextSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editTextSizeBadge').textContent = `${e.target.value}px`;
+        syncLivePreview();
+    });
+
+    // Source Size controls
+    document.getElementById('btnEditSourceSizeMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editSourceSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(8, parseInt(slider.value) - 1);
+        document.getElementById('editSourceSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('btnEditSourceSizePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editSourceSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(22, parseInt(slider.value) + 1);
+        document.getElementById('editSourceSizeBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('editSourceSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editSourceSizeBadge').textContent = `${e.target.value}px`;
+        syncLivePreview();
+    });
+
+    // Image Height controls
+    document.getElementById('btnEditImgHeightMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editImgHeightSlider');
+        if (!slider) return;
+        slider.value = Math.max(60, parseInt(slider.value) - 15);
+        document.getElementById('editImgHeightBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('btnEditImgHeightPlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editImgHeightSlider');
+        if (!slider) return;
+        slider.value = Math.min(380, parseInt(slider.value) + 15);
+        document.getElementById('editImgHeightBadge').textContent = `${slider.value}px`;
+        syncLivePreview();
+    });
+    document.getElementById('editImgHeightSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editImgHeightBadge').textContent = `${e.target.value}px`;
+        syncLivePreview();
+    });
+
+    // Image Position Step controls
+    document.getElementById('btnDrawerPosUp')?.addEventListener('click', () => {
+        if (editingIdx < 0 || !articles[editingIdx]) return;
+        const cur = articles[editingIdx].customImagePosY !== undefined ? articles[editingIdx].customImagePosY : 50;
+        setDrawerImagePosition(cur - 10);
+    });
+    document.getElementById('btnDrawerPosDown')?.addEventListener('click', () => {
+        if (editingIdx < 0 || !articles[editingIdx]) return;
+        const cur = articles[editingIdx].customImagePosY !== undefined ? articles[editingIdx].customImagePosY : 50;
+        setDrawerImagePosition(cur + 10);
+    });
 
     // Image file input
-    document.getElementById('editImageInput').addEventListener('change', async (e) => {
+    document.getElementById('editImageInput')?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || editingIdx < 0) return;
         const b64 = await fileToBase64(file);
         articles[editingIdx].imageBase64 = b64;
-        document.getElementById('editImagePreview').src = b64;
-        document.getElementById('editImagePreviewContainer').classList.remove('hidden');
+        const thumb = document.getElementById('editImageThumbPreview');
+        if (thumb) thumb.src = b64;
+        const controls = document.getElementById('editImageControlsCard');
+        const notice = document.getElementById('editNoImageNotice');
+        if (controls) controls.style.display = 'block';
+        if (notice) notice.style.display = 'none';
+        syncLivePreview();
+        if (window.feather) feather.replace();
         e.target.value = '';
     });
 
     // Logo file input
-    document.getElementById('editLogoInput').addEventListener('change', async (e) => {
+    document.getElementById('editLogoInput')?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || editingIdx < 0) return;
         const b64 = await fileToBase64(file);
         articles[editingIdx].logoBase64 = b64;
-        document.getElementById('editLogoPreview').src = b64;
-        document.getElementById('editLogoPreviewContainer').classList.remove('hidden');
+        const logoPrev = document.getElementById('editLogoPreview');
+        if (logoPrev) logoPrev.src = b64;
+        const logoPrevCont = document.getElementById('editLogoPreviewContainer');
+        if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+        syncLivePreview();
+        if (window.feather) feather.replace();
         e.target.value = '';
+    });
+
+    // Dark header toggle live swatch
+    document.getElementById('editDarkHeader')?.addEventListener('change', (e) => {
+        updateDarkHeaderSwatch(e.target.checked);
+        syncLivePreview();
     });
 
     // Mobile Image file input
@@ -1691,13 +1928,8 @@ function initEvents() {
         });
     }
 
-    // Dark header toggle live swatch
-    document.getElementById('editDarkHeader').addEventListener('change', (e) => {
-        updateDarkHeaderSwatch(e.target.checked);
-    });
-
     // Title input: update hasCover state live
-    document.getElementById('editorTitle').addEventListener('input', (e) => {
+    document.getElementById('editorTitle')?.addEventListener('input', (e) => {
         options.title = e.target.value.trim();
         const newHasCover = !!options.title;
         if (newHasCover !== hasCover) {
@@ -2109,179 +2341,33 @@ let _desktopImgHeightDebounce = null;
 
 function _updateUndoBtnState() {
     const canUndo = undoStack.length > 1;
-    const opacityVal = canUndo ? '1' : '0.35';
-    const cursorVal = canUndo ? 'pointer' : 'default';
-
-    const dUndo = document.getElementById('btnDesktopUndo');
-    if (dUndo) {
-        dUndo.style.opacity = opacityVal;
-        dUndo.style.cursor = cursorVal;
+    const btnDesktopUndo = document.getElementById('btnDesktopUndo');
+    if (btnDesktopUndo) {
+        if (canUndo) {
+            btnDesktopUndo.style.opacity = '1';
+            btnDesktopUndo.style.cursor = 'pointer';
+            btnDesktopUndo.removeAttribute('disabled');
+        } else {
+            btnDesktopUndo.style.opacity = '0.38';
+            btnDesktopUndo.style.cursor = 'not-allowed';
+            btnDesktopUndo.setAttribute('disabled', 'true');
+        }
     }
     const mUndo = document.getElementById('btnUndoState');
     if (mUndo) {
-        mUndo.style.opacity = opacityVal;
+        mUndo.style.opacity = canUndo ? '1' : '0.35';
     }
 }
 
 function initDesktopToolbar() {
     if (window.innerWidth <= 900) return;
 
-    // Undo button
+    // Prominent Undo button in preview actions bar
     const btnUndo = document.getElementById('btnDesktopUndo');
     if (btnUndo) {
-        btnUndo.addEventListener('click', () => {
+        btnUndo.addEventListener('click', (e) => {
+            e.stopPropagation();
             undoLastEdit();
-        });
-    }
-
-    // Toggle Element Resize
-    const btnResize = document.getElementById('btnToggleElementResize');
-    const resizePanel = document.getElementById('desktopElementSizePanel');
-    const btnImage = document.getElementById('btnToggleImageResize');
-    const imagePanel = document.getElementById('desktopImagePanel');
-    const previewWrapper = document.getElementById('previewWrapper');
-
-    if (btnResize) {
-        btnResize.addEventListener('click', () => {
-            isDesktopResizeModeActive = !isDesktopResizeModeActive;
-            if (isDesktopResizeModeActive) {
-                btnResize.classList.add('active');
-                if (resizePanel) resizePanel.style.display = 'flex';
-
-                // Close Image panel & Edit panel
-                isDesktopImagePanelActive = false;
-                if (btnImage) btnImage.classList.remove('active');
-                if (imagePanel) imagePanel.style.display = 'none';
-                if (typeof closeEditPanel === 'function') closeEditPanel();
-
-                if (previewWrapper) previewWrapper.classList.add('resize-mode-active');
-                deselectDesktopElement();
-            } else {
-                btnResize.classList.remove('active');
-                if (resizePanel) resizePanel.style.display = 'none';
-                if (previewWrapper) previewWrapper.classList.remove('resize-mode-active');
-                deselectDesktopElement();
-            }
-        });
-    }
-
-    // Toggle Image Controller
-    if (btnImage) {
-        btnImage.addEventListener('click', () => {
-            isDesktopImagePanelActive = !isDesktopImagePanelActive;
-            if (isDesktopImagePanelActive) {
-                btnImage.classList.add('active');
-                if (imagePanel) imagePanel.style.display = 'flex';
-
-                // Close Text Resize panel & Edit panel
-                isDesktopResizeModeActive = false;
-                if (btnResize) btnResize.classList.remove('active');
-                if (resizePanel) resizePanel.style.display = 'none';
-                if (typeof closeEditPanel === 'function') closeEditPanel();
-                if (previewWrapper) previewWrapper.classList.remove('resize-mode-active');
-                deselectDesktopElement();
-
-                updateDesktopImagePanelForCurrentPage();
-            } else {
-                btnImage.classList.remove('active');
-                if (imagePanel) imagePanel.style.display = 'none';
-            }
-        });
-    }
-
-    // Close buttons
-    const btnCloseImg = document.getElementById('btnCloseImagePanel');
-    if (btnCloseImg) {
-        btnCloseImg.addEventListener('click', () => {
-            isDesktopImagePanelActive = false;
-            if (btnImage) btnImage.classList.remove('active');
-            if (imagePanel) imagePanel.style.display = 'none';
-        });
-    }
-
-    const btnDeselect = document.getElementById('btnDesktopSizeDeselect');
-    if (btnDeselect) {
-        btnDeselect.addEventListener('click', deselectDesktopElement);
-    }
-
-    // Size Slider & +/- buttons
-    const sizeSlider = document.getElementById('desktopSizeSlider');
-    if (sizeSlider) {
-        sizeSlider.addEventListener('input', (e) => {
-            setDesktopElementSize(parseFloat(e.target.value));
-        });
-    }
-
-    const btnSizeMinus = document.getElementById('btnDesktopSizeMinus');
-    if (btnSizeMinus) {
-        btnSizeMinus.addEventListener('click', () => {
-            if (!selectedDesktopElement) return;
-            const cur = parseFloat(window.getComputedStyle(selectedDesktopElement).fontSize) || 16;
-            setDesktopElementSize(cur - 1);
-        });
-    }
-
-    const btnSizePlus = document.getElementById('btnDesktopSizePlus');
-    if (btnSizePlus) {
-        btnSizePlus.addEventListener('click', () => {
-            if (!selectedDesktopElement) return;
-            const cur = parseFloat(window.getComputedStyle(selectedDesktopElement).fontSize) || 16;
-            setDesktopElementSize(cur + 1);
-        });
-    }
-
-    // Image Height Slider & +/- buttons
-    const imgHeightSlider = document.getElementById('desktopImgHeightSlider');
-    if (imgHeightSlider) {
-        imgHeightSlider.addEventListener('input', (e) => {
-            setDesktopImageHeight(parseFloat(e.target.value));
-        });
-    }
-
-    const btnHeightMinus = document.getElementById('btnImgHeightMinus');
-    if (btnHeightMinus) {
-        btnHeightMinus.addEventListener('click', () => {
-            const visualZone = document.querySelector('.pdf-visual-zone');
-            const cur = parseInt(visualZone?.style.height) || 160;
-            setDesktopImageHeight(cur - 15);
-        });
-    }
-
-    const btnHeightPlus = document.getElementById('btnImgHeightPlus');
-    if (btnHeightPlus) {
-        btnHeightPlus.addEventListener('click', () => {
-            const visualZone = document.querySelector('.pdf-visual-zone');
-            const cur = parseInt(visualZone?.style.height) || 160;
-            setDesktopImageHeight(cur + 15);
-        });
-    }
-
-    // Image Position buttons
-    const btnPosUp = document.getElementById('btnImgPosUp');
-    if (btnPosUp) {
-        btnPosUp.addEventListener('click', () => {
-            setDesktopImagePosition(currentDesktopImgPosY - 10);
-        });
-    }
-
-    const btnPosDown = document.getElementById('btnImgPosDown');
-    if (btnPosDown) {
-        btnPosDown.addEventListener('click', () => {
-            setDesktopImagePosition(currentDesktopImgPosY + 10);
-        });
-    }
-
-    // Click outside to deselect
-    const previewArea = document.getElementById('previewArea');
-    if (previewArea) {
-        previewArea.addEventListener('click', (e) => {
-            if (window.innerWidth <= 900) return;
-            if (!e.target.closest('.pdf-resize-selectable') &&
-                !e.target.closest('#desktopElementSizePanel') &&
-                !e.target.closest('#desktopPreviewToolbar') &&
-                !e.target.closest('#desktopImagePanel')) {
-                deselectDesktopElement();
-            }
         });
     }
 
@@ -2294,7 +2380,6 @@ function initDesktopToolbar() {
             undoLastEdit();
         } else if (e.key === 'Escape') {
             if (typeof closeEditPanel === 'function') closeEditPanel();
-            if (typeof deselectDesktopElement === 'function') deselectDesktopElement();
         }
     });
 
@@ -2302,190 +2387,8 @@ function initDesktopToolbar() {
     if (window.feather) feather.replace();
 }
 
-function attachDesktopElementListeners() {
-    if (window.innerWidth <= 900) return;
-    const preview = document.getElementById('pagePreviewContent');
-    if (!preview) return;
+window.setDesktopImagePosition = setDrawerImagePosition;
 
-    preview.querySelectorAll('.pdf-resize-selectable').forEach(el => {
-        el.addEventListener('click', (e) => {
-            if (!isDesktopResizeModeActive) return;
-            e.stopPropagation();
-            selectDesktopElement(el);
-        });
-    });
-
-    if (isDesktopImagePanelActive) {
-        updateDesktopImagePanelForCurrentPage();
-    }
-}
-
-function selectDesktopElement(el) {
-    deselectDesktopElement();
-    selectedDesktopElement = el;
-    el.classList.add('pdf-element-selected');
-
-    const promptEl = document.getElementById('desktopSizePrompt');
-    const controlsEl = document.getElementById('desktopSizeActiveControls');
-    const nameEl = document.getElementById('desktopSelectedElementName');
-    const slider = document.getElementById('desktopSizeSlider');
-    const badge = document.getElementById('desktopSizeValueBadge');
-
-    if (promptEl) promptEl.style.display = 'none';
-    if (controlsEl) controlsEl.style.display = 'flex';
-
-    const elemName = el.dataset.elemName || 'Elemento';
-    if (nameEl) nameEl.textContent = elemName;
-
-    const computed = window.getComputedStyle(el);
-    const curSize = parseFloat(computed.fontSize) || 16;
-    const rounded = Math.round(curSize);
-
-    if (slider) {
-        slider.min = 8;
-        slider.max = 54;
-        slider.value = rounded;
-    }
-    if (badge) badge.textContent = `${rounded}px`;
-}
-
-function deselectDesktopElement() {
-    if (selectedDesktopElement) {
-        selectedDesktopElement.classList.remove('pdf-element-selected');
-        selectedDesktopElement = null;
-    }
-    const promptEl = document.getElementById('desktopSizePrompt');
-    const controlsEl = document.getElementById('desktopSizeActiveControls');
-    if (promptEl) promptEl.style.display = 'flex';
-    if (controlsEl) controlsEl.style.display = 'none';
-}
-
-function setDesktopElementSize(val) {
-    if (!selectedDesktopElement) return;
-    val = Math.max(8, Math.min(64, Math.round(val)));
-    selectedDesktopElement.style.fontSize = `${val}px`;
-
-    const slider = document.getElementById('desktopSizeSlider');
-    const badge = document.getElementById('desktopSizeValueBadge');
-    if (slider) slider.value = val;
-    if (badge) badge.textContent = `${val}px`;
-
-    const elemName = selectedDesktopElement.dataset.elemName || '';
-    if (selectedIdx === -1) {
-        if (elemName.includes('Titolo')) options.customCoverTitleSize = val;
-        else if (elemName.includes('Sottotitolo')) options.customCoverSubtitleSize = val;
-        else if (elemName.includes('Data')) options.customCoverDateSize = val;
-    } else if (articles[selectedIdx]) {
-        if (elemName.includes('Titolo')) articles[selectedIdx].customTitleSize = val;
-        else if (elemName.includes('Testo')) articles[selectedIdx].customTextSize = val;
-        else if (elemName.includes('Fonte')) articles[selectedIdx].customSourceSize = val;
-    }
-
-    clearTimeout(_desktopResizeDebounce);
-    _desktopResizeDebounce = setTimeout(() => {
-        pushUndoState();
-    }, 400);
-}
-
-function updateDesktopImagePanelForCurrentPage() {
-    const controls = document.getElementById('desktopImageControlsContent');
-    const emptyMsg = document.getElementById('desktopImageEmptyMsg');
-    const heightSlider = document.getElementById('desktopImgHeightSlider');
-    const heightBadge = document.getElementById('desktopImgHeightBadge');
-    const posBadge = document.getElementById('desktopImgPosBadge');
-
-    if (selectedIdx === -1) {
-        const coverLogo = document.querySelector('.pdf-cover-client-logo');
-        if (coverLogo && options.clientLogo) {
-            if (controls) controls.style.display = 'flex';
-            if (emptyMsg) emptyMsg.style.display = 'none';
-            const curH = parseInt(window.getComputedStyle(coverLogo).maxHeight) || options.customLogoSize || 80;
-            if (heightSlider) { heightSlider.min = 30; heightSlider.max = 200; heightSlider.value = curH; }
-            if (heightBadge) heightBadge.textContent = `${curH}px`;
-            if (posBadge) posBadge.textContent = 'Copertina';
-        } else {
-            if (controls) controls.style.display = 'none';
-            if (emptyMsg) {
-                emptyMsg.style.display = 'block';
-                emptyMsg.innerHTML = '<i data-feather="info" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Nessun logo presente nella copertina. Puoi caricarne uno dalla Dashboard o dal pannello Modifica.';
-                if (window.feather) feather.replace();
-            }
-        }
-        return;
-    }
-
-    const art = articles[selectedIdx];
-    const visualImg = document.querySelector('.pdf-main-visual');
-    const visualZone = document.querySelector('.pdf-visual-zone');
-
-    if (art && art.imageBase64 && visualImg && visualZone) {
-        if (controls) controls.style.display = 'flex';
-        if (emptyMsg) emptyMsg.style.display = 'none';
-
-        const curH = art.customImageHeight || parseInt(visualZone.style.height) || 160;
-        const curPos = art.customImagePosY !== undefined ? art.customImagePosY : 50;
-        currentDesktopImgPosY = curPos;
-
-        if (heightSlider) { heightSlider.min = 60; heightSlider.max = 380; heightSlider.value = curH; }
-        if (heightBadge) heightBadge.textContent = `${curH}px`;
-        if (posBadge) posBadge.textContent = curPos === 50 ? 'Centro (50%)' : (curPos === 0 ? 'In Alto (0%)' : (curPos === 100 ? 'In Basso (100%)' : `${curPos}%`));
-
-        enableDesktopImageDrag(visualImg);
-    } else {
-        if (controls) controls.style.display = 'none';
-        if (emptyMsg) {
-            emptyMsg.style.display = 'block';
-            emptyMsg.innerHTML = '<i data-feather="info" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Nessuna immagine presente in questa pagina. Clicca su <strong>Modifica questa pagina</strong> per caricarne una.';
-            if (window.feather) feather.replace();
-        }
-    }
-}
-
-function setDesktopImageHeight(val) {
-    val = Math.max(40, Math.min(450, Math.round(val)));
-    const heightSlider = document.getElementById('desktopImgHeightSlider');
-    const heightBadge = document.getElementById('desktopImgHeightBadge');
-    if (heightSlider) heightSlider.value = val;
-    if (heightBadge) heightBadge.textContent = `${val}px`;
-
-    if (selectedIdx === -1) {
-        options.customLogoSize = val;
-        const coverLogo = document.querySelector('.pdf-cover-client-logo');
-        if (coverLogo) coverLogo.style.maxHeight = `${val}px`;
-    } else if (articles[selectedIdx]) {
-        articles[selectedIdx].customImageHeight = val;
-        const visualZone = document.querySelector('.pdf-visual-zone');
-        if (visualZone) {
-            visualZone.style.maxHeight = `${val}px`;
-            visualZone.style.height = `${val}px`;
-        }
-    }
-
-    clearTimeout(_desktopImgHeightDebounce);
-    _desktopImgHeightDebounce = setTimeout(() => {
-        pushUndoState();
-    }, 400);
-}
-
-function setDesktopImagePosition(val) {
-    val = Math.max(0, Math.min(100, Math.round(val)));
-    currentDesktopImgPosY = val;
-
-    const posBadge = document.getElementById('desktopImgPosBadge');
-    if (posBadge) {
-        posBadge.textContent = val === 50 ? 'Centro (50%)' : (val === 0 ? 'In Alto (0%)' : (val === 100 ? 'In Basso (100%)' : `${val}%`));
-    }
-
-    if (selectedIdx >= 0 && articles[selectedIdx]) {
-        articles[selectedIdx].customImagePosY = val;
-        const visualImg = document.querySelector('.pdf-main-visual');
-        if (visualImg) {
-            visualImg.style.objectPosition = `center ${val}%`;
-        }
-        pushUndoState();
-    }
-}
-window.setDesktopImagePosition = setDesktopImagePosition;
 
 function enableDesktopImageDrag(imgEl) {
     if (!imgEl || imgEl.dataset.dragBound === 'true') return;
@@ -2497,23 +2400,25 @@ function enableDesktopImageDrag(imgEl) {
     let startVal = 50;
 
     imgEl.addEventListener('mousedown', (e) => {
-        if (!isDesktopImagePanelActive) return;
+        if (window.innerWidth <= 900) return;
         isDragging = true;
         startY = e.clientY;
-        startVal = articles[selectedIdx]?.customImagePosY !== undefined ? articles[selectedIdx].customImagePosY : 50;
+        const curIdx = editingIdx >= 0 ? editingIdx : selectedIdx;
+        startVal = (curIdx >= 0 && articles[curIdx]?.customImagePosY !== undefined) ? articles[curIdx].customImagePosY : 50;
         e.preventDefault();
     });
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
+        const curIdx = editingIdx >= 0 ? editingIdx : selectedIdx;
+        if (curIdx < 0 || !articles[curIdx]) return;
         const deltaY = e.clientY - startY;
         const newVal = Math.max(0, Math.min(100, Math.round(startVal - deltaY * 0.35)));
-        currentDesktopImgPosY = newVal;
-        if (articles[selectedIdx]) {
-            articles[selectedIdx].customImagePosY = newVal;
-            imgEl.style.objectPosition = `center ${newVal}%`;
-            const posBadge = document.getElementById('desktopImgPosBadge');
-            if (posBadge) posBadge.textContent = `${newVal}%`;
+        articles[curIdx].customImagePosY = newVal;
+        imgEl.style.objectPosition = `center ${newVal}%`;
+        const posBadge = document.getElementById('editImgPosBadge');
+        if (posBadge) {
+            posBadge.textContent = newVal === 50 ? 'Centro (50%)' : (newVal === 0 ? 'In Alto (0%)' : (newVal === 100 ? 'In Basso (100%)' : `${newVal}%`));
         }
     });
 
