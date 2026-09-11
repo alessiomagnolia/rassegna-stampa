@@ -2369,26 +2369,6 @@ input::placeholder, textarea::placeholder {
         border-radius: 12px !important;
     }
 
-    .news-search-form-layout {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 0.75rem !important;
-    }
-
-    .news-date-inputs-row {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.75rem !important;
-        width: 100% !important;
-    }
-
-    .news-search-actions-row {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
-        width: 100% !important;
-    }
-
     .news-search-grid {
         flex-direction: column !important;
         align-items: stretch !important;
