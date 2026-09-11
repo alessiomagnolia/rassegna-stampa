@@ -252,9 +252,15 @@
         <!-- PAGE: NUOVA RASSEGNA -->
         <div id="page-rassegna" class="page-view">
         <!-- back to rassegna page (actual content below) -->
-            <div class="page-header">
-                <h1 class="page-title"><i data-feather="file-plus" style="width:28px;height:28px;vertical-align:middle;"></i> Nuova Rassegna Stampa</h1>
-                <p class="page-subtitle">Aggiungi articoli e genera il tuo PDF professionale</p>
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="file-plus" style="width:28px;height:28px;vertical-align:middle;"></i> Nuova Rassegna Stampa</h1>
+                    <p class="page-subtitle">Aggiungi articoli e genera il tuo PDF professionale</p>
+                </div>
+                <button id="btnStartNewReview" type="button" class="btn btn-outline" onclick="startNewReview()" title="Archivia nello Storico e inizia una nuova rassegna da zero" style="display:inline-flex; align-items:center; gap:8px; font-weight:600; padding:0.6rem 1.1rem; border-radius:8px; border:1px solid var(--accent-primary); background:rgba(124,92,255,0.08); color:var(--accent-primary); cursor:pointer;">
+                    <i data-feather="plus-circle" style="width:16px;height:16px;"></i>
+                    <span>Crea Nuova Rassegna</span>
+                </button>
             </div>
 
             <!-- Collapsible Profilo e Branding (same as before) -->
@@ -380,7 +386,13 @@
             <section class="section glass-card main-feature-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
                     <h2 style="margin:0;"><i data-feather="file-text" style="width:22px;height:22px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> Nuova Rassegna Stampa</h2>
-                    <span style="font-size:0.85rem; color:var(--text-muted);"><span id="articleCountBadge">0</span> articoli inseriti</span>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);"><span id="articleCountBadge">0</span> articoli inseriti</span>
+                        <button id="btnNewReviewAction" class="btn btn-outline btn-sm" onclick="startNewReview()" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; border-radius:8px; font-size:0.8rem; padding:0.4rem 0.8rem;" title="Archivia nello Storico e azzera">
+                            <i data-feather="rotate-ccw" style="width:13px;height:13px;color:var(--accent-primary);"></i>
+                            <span>Nuova Rassegna</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- HERO: Inserimento Articolo (Fulcro Principale della Pagina) -->
@@ -483,6 +495,9 @@
                         </button>
                         <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
                             <i data-feather="link-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Copia Elenco Link</span><span class="show-mobile-inline">Copia Link</span>
+                        </button>
+                        <button id="btnResetAndNewReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="startNewReview()" title="Archivia la rassegna attuale nello Storico e inizia da zero">
+                            <i data-feather="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;color:var(--accent-primary);"></i> <span class="hide-mobile">Nuova Rassegna</span><span class="show-mobile-inline">Nuova</span>
                         </button>
                     </div>
                     <div id="generationLoading" class="generation-loading hidden">

@@ -416,6 +416,7 @@ function renderArticles() {
     const btnEditor = document.getElementById('btnOpenEditor');
     const btnArchive = document.getElementById('btnArchiveReview');
     const btnCopyLinks = document.getElementById('btnCopyAllLinks');
+    const btnResetAndNew = document.getElementById('btnResetAndNewReview');
     
     if (!list) return;
 
@@ -431,19 +432,21 @@ function renderArticles() {
     if (state.articles.length === 0) {
         sessionStorage.removeItem('rs_draft_articles');
         empty.classList.remove('hidden');
-        if (btnGenerate)  btnGenerate.classList.add('hidden');
-        if (btnEditor)    btnEditor.classList.add('hidden');
-        if (btnArchive)   btnArchive.classList.add('hidden');
-        if (btnCopyLinks) btnCopyLinks.classList.add('hidden');
+        if (btnGenerate)    btnGenerate.classList.add('hidden');
+        if (btnEditor)      btnEditor.classList.add('hidden');
+        if (btnArchive)     btnArchive.classList.add('hidden');
+        if (btnCopyLinks)   btnCopyLinks.classList.add('hidden');
+        if (btnResetAndNew) btnResetAndNew.classList.add('hidden');
         return;
     }
 
     sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
     empty.classList.add('hidden');
-    if (btnGenerate)  btnGenerate.classList.remove('hidden');
-    if (btnEditor)    btnEditor.classList.remove('hidden');
-    if (btnArchive)   btnArchive.classList.remove('hidden');
-    if (btnCopyLinks) btnCopyLinks.classList.remove('hidden');
+    if (btnGenerate)    btnGenerate.classList.remove('hidden');
+    if (btnEditor)      btnEditor.classList.remove('hidden');
+    if (btnArchive)     btnArchive.classList.remove('hidden');
+    if (btnCopyLinks)   btnCopyLinks.classList.remove('hidden');
+    if (btnResetAndNew) btnResetAndNew.classList.remove('hidden');
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
@@ -633,6 +636,133 @@ async function archiveReview() {
         }
     }
 }
+
+async function startNewReview() {
+    const count = (state.articles && Array.isArray(state.articles)) ? state.articles.length : 0;
+
+    if (count > 0) {
+        const confirmMsg = `Vuoi creare una nuova rassegna da zero?\n\nLa rassegna attuale (${count} articol${count === 1 ? 'o' : 'i'}) verrà archiviata automaticamente nel tuo Storico.`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+        const clientLogo = state.clientLogoBase64 || null;
+
+        const btn1 = document.getElementById('btnStartNewReview');
+        const btn2 = document.getElementById('btnNewReviewAction');
+        const btn3 = document.getElementById('btnResetAndNewReview');
+        const originalHtml1 = btn1 ? btn1.innerHTML : '';
+        const originalHtml2 = btn2 ? btn2.innerHTML : '';
+        const originalHtml3 = btn3 ? btn3.innerHTML : '';
+
+        try {
+            if (btn1) {
+                btn1.disabled = true;
+                btn1.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:16px;height:16px;margin-right:6px;"></i> <span>Archiviazione...</span>';
+            }
+            if (btn2) {
+                btn2.disabled = true;
+                btn2.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:13px;height:13px;margin-right:4px;"></i> <span>Salvataggio...</span>';
+            }
+            if (btn3) {
+                btn3.disabled = true;
+                btn3.innerHTML = '<i data-feather="loader" class="spinPulse" style="width:14px;height:14px;margin-right:4px;"></i> <span>Salvataggio...</span>';
+            }
+            if (window.feather) feather.replace();
+
+            await apiCall('POST', '/api/pdf/archive', {
+                articles: state.articles,
+                title,
+                clientName,
+                clientLogo
+            });
+
+            loadHistory();
+            showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
+        } catch (err) {
+            showToast('Errore durante l\'archiviazione nello Storico: ' + err.message, 'error');
+            return; // Non azzera gli articoli in caso di fallimento del salvataggio
+        } finally {
+            if (btn1) {
+                btn1.disabled = false;
+                btn1.innerHTML = originalHtml1;
+            }
+            if (btn2) {
+                btn2.disabled = false;
+                btn2.innerHTML = originalHtml2;
+            }
+            if (btn3) {
+                btn3.disabled = false;
+                btn3.innerHTML = originalHtml3;
+            }
+            if (window.feather) feather.replace();
+        }
+    }
+
+    // Reset stato rassegna in memoria e storage
+    state.articles = [];
+    sessionStorage.removeItem('rs_draft_articles');
+    localStorage.removeItem('rs_editor_state');
+
+    // Reset input rassegna
+    const urlInput = document.getElementById('articleUrl');
+    if (urlInput) urlInput.value = '';
+
+    const titleInput = document.getElementById('rassegnaTitle');
+    if (titleInput) titleInput.value = '';
+
+    const clientInput = document.getElementById('clientName');
+    const logoInput = document.getElementById('clientLogoInput');
+    if (logoInput) logoInput.value = '';
+    const logoPrev = document.getElementById('clientLogoPreview');
+    const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+
+    // Ripristina cliente attivo globale se presente, altrimenti azzera
+    const activeClientStr = localStorage.getItem('rs_active_client');
+    if (activeClientStr) {
+        try {
+            const client = JSON.parse(activeClientStr);
+            if (clientInput) clientInput.value = client.name || '';
+            if (client.logo_base64) {
+                state.clientLogoBase64 = client.logo_base64;
+                if (logoPrev) logoPrev.src = client.logo_base64;
+                if (logoPrevCont) logoPrevCont.style.display = 'flex';
+            } else {
+                state.clientLogoBase64 = null;
+                if (logoPrev) logoPrev.src = '';
+                if (logoPrevCont) logoPrevCont.style.display = 'none';
+            }
+        } catch (e) {
+            state.clientLogoBase64 = null;
+            if (clientInput) clientInput.value = '';
+            if (logoPrev) logoPrev.src = '';
+            if (logoPrevCont) logoPrevCont.style.display = 'none';
+        }
+    } else {
+        state.clientLogoBase64 = null;
+        if (clientInput) clientInput.value = '';
+        if (logoPrev) logoPrev.src = '';
+        if (logoPrevCont) logoPrevCont.style.display = 'none';
+    }
+
+    // Ridisegna lista articoli (mostra empty state)
+    renderArticles();
+
+    // Focus sull'omnibar per inserire il primo link della nuova rassegna
+    if (urlInput) {
+        urlInput.focus();
+        urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if (count === 0) {
+        showToast('Campi azzerati. Pronto per una nuova rassegna!', 'info');
+    } else {
+        showToast('Nuova rassegna avviata! La precedente è al sicuro nello Storico.', 'success');
+    }
+}
+window.startNewReview = startNewReview;
 
 // Client Logo Logic
 document.getElementById('clientLogoInput')?.addEventListener('change', function(e) {
