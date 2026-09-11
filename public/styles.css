@@ -142,10 +142,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Highlight Text Effect */
 .highlight-text {
-    background-color: var(--accent-secondary); /* Green highlight */
-    color: #121212;
-    padding: 0 0.2em;
-    display: inline-block;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: baseline !important;
 }
 
 /* Layout Elements */
@@ -3436,6 +3440,11 @@ html {
     background: linear-gradient(135deg, var(--accent-primary) 0%, #3b82f6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: baseline !important;
 }
 
 .hero-subtext {
@@ -3570,6 +3579,11 @@ html {
     background: linear-gradient(135deg, var(--accent-primary) 0%, #3b82f6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: baseline !important;
     font-weight: 700;
 }
 
