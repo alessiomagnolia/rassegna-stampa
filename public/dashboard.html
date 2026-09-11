@@ -20,33 +20,31 @@
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.25rem; height: 56px;">
-        <!-- LEFT: Sidebar toggle + Brand Title -->
+    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.25rem; height: 56px; position:relative;">
+        <!-- LEFT: Sidebar toggle + Company Name -->
         <div class="nav-left" style="display:flex; align-items:center; gap:0.75rem;">
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
                 <span></span><span></span><span></span>
             </button>
-            <a href="#" class="nav-brand hide-mobile" onclick="document.querySelector('[data-page=home]').click(); return false;" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer;">
+            <!-- Company Name -->
+            <div class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 10px; border-radius:8px; border:1px solid var(--border-color); cursor:pointer; font-weight:700; font-size:0.85rem; color:var(--text-primary); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                <i data-feather="user" style="width:14px;height:14px;color:var(--accent-primary);flex-shrink:0;"></i>
+                <span id="navCompanyHeader" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">La Tua Azienda</span>
+            </div>
+        </div>
+
+        <!-- CENTER: Platform Name (Home Button) -->
+        <div class="nav-center" style="position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; pointer-events:auto;">
+            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" title="Torna alla Home" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer; display:flex; align-items:center; gap:0.4rem; white-space:nowrap;">
                 Rassegna Stampa
             </a>
         </div>
 
-        <!-- RIGHT: Client Selector + Desktop Company & Upgrade -->
+        <!-- RIGHT: Client Selector + Desktop Upgrade -->
         <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
-            <!-- Desktop Only: Company Name -->
-            <div class="nav-company hide-mobile" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 10px; border-radius:8px; border:1px solid var(--border-color); cursor:pointer; font-weight:700; font-size:0.85rem; color:var(--text-primary);">
-                <i data-feather="user" style="width:14px;height:14px;color:var(--accent-primary);"></i>
-                <span id="navCompanyHeader">La Tua Azienda</span>
-            </div>
-
             <!-- Desktop Only: Upgrade Button -->
             <button id="btnUpgradePlanHeader" class="btn btn-gradient btn-sm hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="padding:4px 10px; font-size:0.75rem; font-weight:700; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase;">
                 <i data-feather="zap" style="width:13px;height:13px;"></i> Upgrade
-            </button>
-
-            <!-- Navbar Quick Theme Toggle Button -->
-            <button id="themeToggle" class="btn btn-outline btn-sm" title="Cambia Tema" aria-label="Cambia Tema" style="padding:4px 8px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; height:30px;">
-                <i data-feather="moon" style="width:14px;height:14px;"></i>
             </button>
 
             <!-- Client Selector Box -->
