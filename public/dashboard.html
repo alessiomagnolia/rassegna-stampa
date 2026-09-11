@@ -516,7 +516,7 @@
             </div>
 
             <!-- SEARCH FORM -->
-            <section class="glass-card news-search-card" style="padding:1rem; margin-bottom:1.5rem;">
+            <section class="glass-card news-search-card" style="padding:1.25rem; margin-bottom:1.5rem;">
                 <div class="news-search-form-layout" style="display:flex; flex-direction:column; gap:0.75rem;">
                     <!-- 1. KEYWORD INPUT -->
                     <div class="input-group" style="margin:0;">
@@ -538,18 +538,19 @@
                     </div>
 
                     <!-- 3. ACTION BUTTONS -->
-                    <div class="news-search-actions-row" style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:0.25rem;">
+                    <div class="news-search-actions-row" style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                        <label class="hide-mobile" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Azioni</label>
                         <button id="btnSearchNews" class="btn btn-gradient btn-search-submit" style="height:42px; width:100%; font-size:0.85rem; font-weight:700; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:6px;">
                             <i data-feather="search" style="width:15px;height:15px;"></i> Cerca Notizie
                         </button>
-                        <div style="display:flex; gap:8px; width:100%;">
-                            <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="flex:1; height:38px; font-size:0.8rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:4px;">
-                                <i data-feather="sliders" style="width:13px;height:13px;"></i>
+                        <div style="display:flex; gap:6px; width:100%;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="toggleQuickFiltersPanel(this)" style="flex:1; height:34px; font-size:0.78rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:4px; padding:0 6px;">
+                                <i data-feather="sliders" style="width:12px;height:12px;"></i>
                                 <span>Filtri Rapidi</span>
-                                <i data-feather="chevron-down" class="icon-toggle-filter" style="width:13px;height:13px; transition:transform 0.2s ease;"></i>
+                                <i data-feather="chevron-down" class="icon-toggle-filter" style="width:12px;height:12px; transition:transform 0.2s ease;"></i>
                             </button>
-                            <button id="btnResetSearchNews" class="btn btn-outline btn-sm" style="flex:1; height:38px; font-size:0.8rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; border-color: rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; gap:4px;">
-                                <i data-feather="refresh-cw" style="width:13px;height:13px;"></i> Nuova
+                            <button id="btnResetSearchNews" class="btn btn-outline btn-sm" style="flex:0 0 auto; min-width:68px; height:34px; font-size:0.78rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; border-color: rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; gap:4px; padding:0 8px;" title="Azzera campi e filtri">
+                                <i data-feather="rotate-ccw" style="width:12px;height:12px;"></i> Nuova
                             </button>
                         </div>
                     </div>
