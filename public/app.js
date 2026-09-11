@@ -6,7 +6,8 @@ const state = {
     history: [],
     isExtracting: false,
     isGenerating: false,
-    clientLogoBase64: null
+    clientLogoBase64: null,
+    currentReviewId: null
 };
 
 let logoArchive = [];
@@ -617,12 +618,18 @@ async function archiveReview() {
             feather.replace();
         }
 
-        await apiCall('POST', '/api/pdf/archive', {
+        const res = await apiCall('POST', '/api/pdf/archive', {
+            id: state.currentReviewId || undefined,
             articles: state.articles,
             title,
             clientName,
             clientLogo: state.clientLogoBase64
         });
+
+        if (res && res.id) {
+            state.currentReviewId = res.id;
+            sessionStorage.setItem('rs_draft_review_id', res.id);
+        }
 
         showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
         loadHistory();
@@ -673,6 +680,7 @@ async function startNewReview() {
             if (window.feather) feather.replace();
 
             await apiCall('POST', '/api/pdf/archive', {
+                id: state.currentReviewId || undefined,
                 articles: state.articles,
                 title,
                 clientName,
@@ -703,7 +711,9 @@ async function startNewReview() {
 
     // Reset stato rassegna in memoria e storage
     state.articles = [];
+    state.currentReviewId = null;
     sessionStorage.removeItem('rs_draft_articles');
+    sessionStorage.removeItem('rs_draft_review_id');
     localStorage.removeItem('rs_editor_state');
 
     // Reset input rassegna
@@ -790,6 +800,7 @@ function openEditor() {
     const clientName = document.getElementById('clientName')?.value.trim() || '';
     const editorState = {
         articles: state.articles,
+        currentReviewId: state.currentReviewId || null,
         options: { title, clientName, clientLogo: state.clientLogoBase64 || null, templateId: selectedTemplateId }
     };
     localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
@@ -817,6 +828,11 @@ async function generatePDF() {
             templateId: selectedTemplateId
         });
         
+        if (response && response.id) {
+            state.currentReviewId = response.id;
+            sessionStorage.setItem('rs_draft_review_id', response.id);
+        }
+
         showToast('PDF generato! Download in corso...', 'success');
         triggerDownload(response.downloadUrl, response.filename);
         
@@ -908,18 +924,44 @@ async function deleteHistory(id) {
 
 async function reopenFromHistory(reviewId) {
     try {
+        // Se l'utente ha articoli attualmente aperti e sta aprendo una rassegna DIVERSA
+        if (state.articles && state.articles.length > 0 && state.currentReviewId != reviewId) {
+            showToast('Salvataggio automatico della rassegna precedente nello Storico...', 'info');
+            const currentTitle = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+            const currentClientName = document.getElementById('clientName')?.value.trim() || '';
+            const currentClientLogo = state.clientLogoBase64 || null;
+
+            try {
+                await apiCall('POST', '/api/pdf/archive', {
+                    id: state.currentReviewId || undefined,
+                    articles: state.articles,
+                    title: currentTitle,
+                    clientName: currentClientName,
+                    clientLogo: currentClientLogo
+                });
+                showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
+            } catch (saveErr) {
+                console.warn('Auto-save error before reopen:', saveErr);
+                const proceed = confirm(`Non è stato possibile salvare automaticamente la rassegna attuale (${saveErr.message}).\n\nVuoi comunque procedere e caricare quella selezionata?`);
+                if (!proceed) {
+                    return; // Protegge il lavoro dell'utente da perdite
+                }
+            }
+        }
+
         showToast('Caricamento rassegna per modifica...', 'info');
         const data = await apiCall('GET', `/api/pdf/review/${reviewId}`);
         if (data.articles && data.articles.length > 0) {
+            state.currentReviewId = data.id;
+            sessionStorage.setItem('rs_draft_review_id', data.id);
             state.articles = data.articles;
-            if (data.title) {
-                const titleEl = document.getElementById('rassegnaTitle');
-                if (titleEl) titleEl.value = data.title;
-            }
-            if (data.clientName) {
-                const clientEl = document.getElementById('clientName');
-                if (clientEl) clientEl.value = data.clientName;
-            }
+            
+            const titleEl = document.getElementById('rassegnaTitle');
+            if (titleEl) titleEl.value = data.title || '';
+
+            const clientEl = document.getElementById('clientName');
+            if (clientEl) clientEl.value = data.clientName || '';
+
             if (data.clientLogo) {
                 state.clientLogoBase64 = data.clientLogo;
                 const logoPrev = document.getElementById('clientLogoPreview');
@@ -928,9 +970,16 @@ async function reopenFromHistory(reviewId) {
                     logoPrev.src = data.clientLogo;
                     logoPrevCont.style.display = 'flex';
                 }
+            } else {
+                state.clientLogoBase64 = null;
+                const logoPrev = document.getElementById('clientLogoPreview');
+                const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+                if (logoPrev) logoPrev.src = '';
+                if (logoPrevCont) logoPrevCont.style.display = 'none';
             }
 
             renderArticles();
+            loadHistory(); // Ricarica lo storico per mostrare la rassegna precedente appena auto-salvata
             const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
             if (rassegnaNav) rassegnaNav.click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1007,6 +1056,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const editorState = JSON.parse(savedEditorState);
                 if (editorState.articles && editorState.articles.length > 0) {
                     state.articles = editorState.articles;
+                    if (editorState.currentReviewId) {
+                        state.currentReviewId = editorState.currentReviewId;
+                        sessionStorage.setItem('rs_draft_review_id', editorState.currentReviewId);
+                    }
 
                     // Restore title
                     const titleInput = document.getElementById('rassegnaTitle');
@@ -1043,10 +1096,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const draft = JSON.parse(savedDraft);
                     if (Array.isArray(draft) && draft.length > 0) {
                         state.articles = draft;
+                        const savedReviewId = sessionStorage.getItem('rs_draft_review_id');
+                        if (savedReviewId) {
+                            state.currentReviewId = parseInt(savedReviewId, 10) || null;
+                        }
                         renderArticles();
                     }
                 } catch(e) {
                     sessionStorage.removeItem('rs_draft_articles');
+                    sessionStorage.removeItem('rs_draft_review_id');
                 }
             }
         }

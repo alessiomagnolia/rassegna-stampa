@@ -1284,6 +1284,7 @@ let articles = [];
 let options = { title: '', clientName: '', clientLogo: '' };
 let selectedIdx = 0; // currently previewed article index (0 = cover if title exists)
 let hasCover = false;
+let currentReviewId = null;
 const token = localStorage.getItem('rs_token');
 
 if (!token) { window.location.href = 'index.html'; }
@@ -1299,6 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const state = JSON.parse(raw);
         articles = state.articles || [];
         options = state.options || {};
+        currentReviewId = state.currentReviewId || null;
     } catch {
         alert('Errore caricamento dati. Torna alla dashboard.');
         window.location.href = 'dashboard.html';
@@ -1833,7 +1835,7 @@ function syncLivePreview() {
     _liveSyncDebounce = setTimeout(() => {
         pushUndoState();
         try {
-            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
         } catch(e) {}
     }, 500);
 }
@@ -1857,7 +1859,7 @@ function setDrawerImagePosition(val) {
     _liveSyncDebounce = setTimeout(() => {
         pushUndoState();
         try {
-            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
         } catch(e) {}
     }, 500);
 }
@@ -1907,7 +1909,7 @@ function closeEditPanel() {
     }
 
     try {
-        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
     } catch(e) {}
 
     editingIdx = -1;
@@ -2192,7 +2194,7 @@ function changeSelectedElementSize(delta) {
     _liveSyncDebounce = setTimeout(() => {
         pushUndoState();
         try {
-            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
         } catch(e) {}
     }, 500);
 }
@@ -2280,7 +2282,8 @@ async function generateAndDownload() {
         const finalTitle = title || options.title || '';
         options.title = finalTitle;
         hasCover = !!(finalTitle);
-        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+        if (data && data.id) currentReviewId = data.id;
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
         renderPagesList();
 
     } catch (err) {
@@ -2584,7 +2587,7 @@ function goBackToDashboard() {
     // so the dashboard can restore articles automatically.
     const currentTitle = document.getElementById('editorTitle').value.trim();
     options.title = currentTitle;
-    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
     localStorage.setItem('rs_open_page', 'rassegna');
     window.location.href = 'dashboard.html';
 }
@@ -2828,7 +2831,7 @@ function syncMobileTitle(val) {
 async function saveRassegnaToArchive() {
     const currentTitle = options.title || document.getElementById('editorTitle')?.value.trim() || document.getElementById('editorTitleMobile')?.value.trim() || 'Rassegna Stampa';
     options.title = currentTitle;
-    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options }));
+    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
 
     showToast('Archiviazione rassegna in corso...', 'info');
 
@@ -2841,6 +2844,7 @@ async function saveRassegnaToArchive() {
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
             body: JSON.stringify({
+                id: currentReviewId || undefined,
                 articles: articles,
                 title: currentTitle,
                 clientName: options.clientName || '',
@@ -2850,6 +2854,8 @@ async function saveRassegnaToArchive() {
 
         const data = await res.json();
         if (res.ok) {
+            if (data && data.id) currentReviewId = data.id;
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
             showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
         } else {
             showToast('Salvato in locale (Nota: ' + (data.error || 'Errore server') + ')', 'info');

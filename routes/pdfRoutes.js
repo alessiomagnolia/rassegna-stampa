@@ -125,7 +125,7 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
 // Save / archive review to history for future editing
 router.post('/archive', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo } = req.body;
+        const { id, articles, title, clientName, clientLogo } = req.body;
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per archiviare la rassegna.' });
         }
@@ -133,8 +133,26 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const reviewTitle = title || 'Rassegna Stampa Archiviata';
         const db = getDb();
         const articlesJsonStr = JSON.stringify(articles);
-        const placeholderFilename = `draft_${Date.now()}.pdf`;
 
+        if (id) {
+            const existing = db.prepare('SELECT id FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
+            if (existing) {
+                db.prepare(`
+                    UPDATE press_reviews 
+                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?
+                    WHERE id = ? AND user_id = ?
+                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', id, req.userId);
+
+                return res.json({
+                    id: existing.id,
+                    success: true,
+                    updated: true,
+                    message: 'Rassegna aggiornata con successo nello storico.'
+                });
+            }
+        }
+
+        const placeholderFilename = `draft_${Date.now()}.pdf`;
         const info = db.prepare(`
             INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -143,6 +161,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
         res.json({
             id: info.lastInsertRowid,
             success: true,
+            updated: false,
             message: 'Rassegna archiviata con successo nel tuo storico.'
         });
     } catch (error) {
