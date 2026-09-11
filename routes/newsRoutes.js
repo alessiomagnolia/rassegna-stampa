@@ -263,8 +263,8 @@ function parseRSS(xmlText, sourceNameDefault = '') {
         const title = clean(tag(item, 'title'));
         const pubDate = tag(item, 'pubDate').trim();
         const description = clean(tag(item, 'description'));
-        let sourceName = clean(tag(item, 'source')) || sourceNameDefault;
-        const sourceUrl = attr(item, 'source', 'url');
+        let sourceName = clean(tag(item, 'source')) || clean(tag(item, 'News:Source')) || clean(tag(item, 'news:source')) || sourceNameDefault;
+        const sourceUrl = attr(item, 'source', 'url') || attr(item, 'News:Source', 'url') || attr(item, 'news:source', 'url');
 
         if (!title || !url) continue;
 
@@ -276,7 +276,23 @@ function parseRSS(xmlText, sourceNameDefault = '') {
         }
 
         let domain = '';
-        try { domain = new URL(sourceUrl || url).hostname.replace(/^www\./, ''); } catch {}
+        try {
+            if (sourceUrl) {
+                const h = new URL(sourceUrl).hostname.toLowerCase().replace(/^www\./, '');
+                if (!h.includes('google.') && !h.includes('bing.')) {
+                    domain = h;
+                }
+            }
+        } catch {}
+
+        if (!domain) {
+            try {
+                const h = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+                if (!h.includes('google.') && !h.includes('bing.')) {
+                    domain = h;
+                }
+            } catch {}
+        }
 
         let dateStr = '';
         let timestamp = 0;
@@ -429,13 +445,14 @@ router.get('/search', authMiddleware, async (req, res) => {
         // --- PHASE 2: Multi-engine Vector RSS Search (Google News + Bing News) ---
         const fetchRssResults = async () => {
             const searchUrls = [];
-            expandedQueries.forEach(term => {
+            const queryTerms = [queryClean, ...expandedQueries.filter(q => q !== queryClean)].slice(0, 3);
+            queryTerms.forEach(term => {
                 const enc = encodeURIComponent(term.replace(/["']/g, '').trim());
                 searchUrls.push(`https://news.google.com/rss/search?q=${enc}&hl=it&gl=IT&ceid=IT:it`);
                 searchUrls.push(`https://www.bing.com/news/search?q=${enc}&format=rss&cc=IT`);
             });
 
-            const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u, 25000)));
+            const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u, 10000)));
 
             let rawResults = [];
             responses.forEach(r => {
@@ -449,33 +466,41 @@ router.get('/search', authMiddleware, async (req, res) => {
                 return item.timestamp >= fromTime && item.timestamp <= toTime;
             });
 
-            // Unwrap Bing & Google redirect links without cutting off
-            await Promise.all(rawResults.map(async (item) => {
+            // Fast synchronous URL unwrap (no network blocking calls)
+            rawResults.forEach((item) => {
                 if (item.url) {
                     item.url = cleanAndUnwrapArticleUrl(item.url);
+                    if (item.url.includes('news.google.com/rss/articles/')) {
+                        try {
+                            const parts = item.url.split('/articles/');
+                            let b64 = parts[1].split('?')[0];
+                            b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+                            while (b64.length % 4) b64 += '=';
+                            const decoded = Buffer.from(b64, 'base64').toString('latin1');
+                            const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
+                            if (match && !match[1].includes('google.com')) {
+                                item.url = match[1];
+                            }
+                        } catch (e) {}
+                    }
                 }
-                if (item.url && item.url.includes('news.google.com/rss/articles/')) {
-                    try {
-                        item.url = await resolveGoogleNewsUrl(item.url);
-                        item.url = cleanAndUnwrapArticleUrl(item.url);
-                    } catch (e) {}
-                }
-            }));
+            });
 
             const processed = [];
             for (const item of rawResults) {
                 if (!item.url) continue;
 
-                item.url = cleanAndUnwrapArticleUrl(item.url);
-
-                let realDomain = '';
-                try {
-                    const parsedUrl = new URL(item.url);
-                    const h = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
-                    if (!h.includes('google.') && !h.includes('bing.') && !h.includes('youtube.')) {
-                        realDomain = h;
-                    }
-                } catch (e) {}
+                // 1. Preserve domain already extracted in parseRSS (from sourceUrl or direct url)
+                let realDomain = item.domain || '';
+                if (!realDomain) {
+                    try {
+                        const parsedUrl = new URL(item.url);
+                        const h = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
+                        if (!h.includes('google.') && !h.includes('bing.') && !h.includes('youtube.')) {
+                            realDomain = h;
+                        }
+                    } catch (e) {}
+                }
 
                 let matchedSource = null;
 
@@ -498,7 +523,7 @@ router.get('/search', authMiddleware, async (req, res) => {
                     const srcLower = (item.source || '').toLowerCase().trim();
                     const titleLower = (item.title || '').toLowerCase().trim();
 
-                    if (srcLower && srcLower !== 'bing.com' && srcLower !== 'google.com' && srcLower !== 'web') {
+                    if (srcLower && srcLower !== 'bing.com' && srcLower !== 'google.com' && srcLower !== 'web' && srcLower !== 'fonte web') {
                         for (const source of PRIORITY_SOURCES) {
                             const sourceNameLower = source.name.toLowerCase().trim();
                             if (srcLower.includes(sourceNameLower) || sourceNameLower.includes(srcLower)) {
@@ -519,8 +544,6 @@ router.get('/search', authMiddleware, async (req, res) => {
                     }
                 }
 
-
-
                 if (matchedSource) {
                     realDomain = matchedSource.domain.toLowerCase().replace(/^www\./, '');
                     item.domain = realDomain;
@@ -530,12 +553,18 @@ router.get('/search', authMiddleware, async (req, res) => {
                     processed.push(item);
                 } else if (realDomain) {
                     item.domain = realDomain;
-                    item.source = realDomain;
+                    if (!item.source || item.source === 'Fonte Web') {
+                        item.source = realDomain;
+                    }
                     item.favicon = getFaviconForDomain(realDomain);
                     item._isPriority = false;
                     processed.push(item);
                 } else {
-                    continue;
+                    item.domain = item.domain || 'news.google.com';
+                    item.source = item.source || 'Fonte Web';
+                    item.favicon = getFaviconForDomain(item.domain);
+                    item._isPriority = false;
+                    processed.push(item);
                 }
             }
             return processed;

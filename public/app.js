@@ -1253,17 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchNews();
             }
         });
-        document.getElementById('btnResetSearchNews')?.addEventListener('click', () => {
-            document.getElementById('newsKeyword').value = '';
-            document.getElementById('newsDateFrom').value = '';
-            document.getElementById('newsDateTo').value = '';
-            currentNewsResults = [];
-            selectedNewsIndices.clear();
-            document.getElementById('newsEmptyState').classList.remove('hidden');
-            document.getElementById('newsResultsGrid').classList.add('hidden');
-            document.getElementById('newsResultsToolbar').classList.add('hidden');
-            updateNewsSelectionUI();
-        });
+        document.getElementById('btnResetSearchNews')?.addEventListener('click', resetNewsSearch);
         document.getElementById('btnSelectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(true));
         document.getElementById('btnDeselectAllNews')?.addEventListener('click', () => toggleAllNewsSelection(false));
         document.getElementById('btnSaveCollection')?.addEventListener('click', saveNewsCollection);
@@ -1572,22 +1562,51 @@ function toggleSocialFilter(btn) {
     feather.replace();
 }
 
+function resetNewsSearch() {
+    const kw = document.getElementById('newsKeyword');
+    if (kw) kw.value = '';
+    const df = document.getElementById('newsDateFrom');
+    if (df) df.value = '';
+    const dt = document.getElementById('newsDateTo');
+    if (dt) dt.value = '';
+    currentNewsResults = [];
+    selectedNewsIndices.clear();
+    const emptyState = document.getElementById('newsEmptyState');
+    if (emptyState) emptyState.classList.remove('hidden');
+    const grid = document.getElementById('newsResultsGrid');
+    if (grid) grid.classList.add('hidden');
+    const toolbar = document.getElementById('newsResultsToolbar');
+    if (toolbar) toolbar.classList.add('hidden');
+    updateNewsSelectionUI();
+}
+window.resetNewsSearch = resetNewsSearch;
+
 async function searchNews() {
-    const q = document.getElementById('newsKeyword').value.trim();
-    const from = document.getElementById('newsDateFrom').value;
-    const to = document.getElementById('newsDateTo').value;
+    const keywordInput = document.getElementById('newsKeyword');
+    const q = keywordInput ? keywordInput.value.trim() : '';
+    const fromInput = document.getElementById('newsDateFrom');
+    const from = fromInput ? fromInput.value : '';
+    const toInput = document.getElementById('newsDateTo');
+    const to = toInput ? toInput.value : '';
 
     if (!q) return showToast('Inserisci una parola chiave per la ricerca', 'warning');
 
     const btn = document.getElementById('btnSearchNews');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin-right:4px;"></div> Ricerca...';
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin-right:4px;"></div> Ricerca...';
+    }
 
-    document.getElementById('newsEmptyState').classList.add('hidden');
-    document.getElementById('newsResultsGrid').classList.add('hidden');
-    document.getElementById('newsResultsToolbar').classList.add('hidden');
-    document.getElementById('newsLoadingState').classList.remove('hidden');
+    const emptyState = document.getElementById('newsEmptyState');
+    const grid = document.getElementById('newsResultsGrid');
+    const toolbar = document.getElementById('newsResultsToolbar');
+    const loadingState = document.getElementById('newsLoadingState');
+
+    if (emptyState) emptyState.classList.add('hidden');
+    if (grid) grid.classList.add('hidden');
+    if (toolbar) toolbar.classList.add('hidden');
+    if (loadingState) loadingState.classList.remove('hidden');
 
     try {
         let url = `/api/news/search?q=${encodeURIComponent(q)}`;
@@ -1609,29 +1628,35 @@ async function searchNews() {
 
         selectedNewsIndices.clear();
         
-        document.getElementById('newsLoadingState').classList.add('hidden');
+        if (loadingState) loadingState.classList.add('hidden');
         
         if (currentNewsResults.length === 0) {
-            document.getElementById('newsEmptyState').classList.remove('hidden');
-            document.getElementById('newsEmptyState').innerHTML = '<div style="margin-bottom:1rem;"><i data-feather="search" style="width:48px;height:48px;color:var(--text-muted);"></i></div><p style="font-size:1.1rem; font-weight:600;">Nessun risultato trovato.</p><p style="font-size:0.9rem;">Prova con un\'altra parola chiave o allarga le date.</p>';
-            feather.replace();
+            if (emptyState) {
+                emptyState.classList.remove('hidden');
+                emptyState.innerHTML = '<div style="margin-bottom:1rem;"><i data-feather="search" style="width:48px;height:48px;color:var(--text-muted);"></i></div><p style="font-size:1.1rem; font-weight:600;">Nessun risultato trovato.</p><p style="font-size:0.9rem;">Prova con un\'altra parola chiave o allarga le date.</p>';
+                if (typeof feather !== 'undefined') feather.replace();
+            }
             return;
         } else {
-            document.getElementById('newsResultCount').textContent = `${currentNewsResults.length} risultati trovati`;
-            document.getElementById('newsResultsToolbar').classList.remove('hidden');
+            const countEl = document.getElementById('newsResultCount');
+            if (countEl) countEl.textContent = `${currentNewsResults.length} risultati trovati`;
+            if (toolbar) toolbar.classList.remove('hidden');
             renderNewsResults();
             updateNewsSelectionUI();
         }
     } catch (err) {
-        document.getElementById('newsLoadingState').classList.add('hidden');
-        document.getElementById('newsEmptyState').classList.remove('hidden');
+        if (loadingState) loadingState.classList.add('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
         showToast(err.message, 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        feather.replace();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        if (typeof feather !== 'undefined') feather.replace();
     }
 }
+window.searchNews = searchNews;
 
 function renderNewsResults() {
     const grid = document.getElementById('newsResultsGrid');

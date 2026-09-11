@@ -566,7 +566,7 @@
                     <!-- 1. KEYWORD INPUT -->
                     <div class="input-group" style="margin:0;">
                         <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Parola chiave</label>
-                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:42px; font-size:0.9rem;">
+                        <input type="text" id="newsKeyword" placeholder="es. Mattarella, clima, lavoro..." style="height:42px; font-size:0.9rem;" onkeydown="if (event.key === 'Enter') { event.preventDefault(); searchNews(); }">
                         <div id="newsKeywordSuggestions" class="hidden news-suggestions-box" style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"></div>
                     </div>
 
@@ -585,7 +585,7 @@
                     <!-- 3. ACTION BUTTONS -->
                     <div class="news-search-actions-row" style="display:flex; flex-direction:column; gap:6px; width:100%;">
                         <label class="hide-mobile" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:0.3rem; display:block;">Azioni</label>
-                        <button id="btnSearchNews" class="btn btn-gradient btn-search-submit" style="height:42px; width:100%; font-size:0.85rem; font-weight:700; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <button id="btnSearchNews" class="btn btn-gradient btn-search-submit" onclick="searchNews()" style="height:42px; width:100%; font-size:0.85rem; font-weight:700; text-transform:none; letter-spacing:0; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:6px;">
                             <i data-feather="search" style="width:15px;height:15px;"></i> Cerca Notizie
                         </button>
                         <div style="display:flex; gap:6px; width:100%;">
@@ -594,7 +594,7 @@
                                 <span>Filtri Rapidi</span>
                                 <i data-feather="chevron-down" class="icon-toggle-filter" style="width:12px;height:12px; transition:transform 0.2s ease;"></i>
                             </button>
-                            <button id="btnResetSearchNews" class="btn btn-outline btn-sm" style="flex:0 0 auto; min-width:68px; height:34px; font-size:0.78rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; border-color: rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; gap:4px; padding:0 8px;" title="Azzera campi e filtri">
+                            <button id="btnResetSearchNews" onclick="resetNewsSearch()" class="btn btn-outline btn-sm" style="flex:0 0 auto; min-width:68px; height:34px; font-size:0.78rem; font-weight:600; text-transform:none; letter-spacing:0; white-space:nowrap; border-color: rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; gap:4px; padding:0 8px;" title="Azzera campi e filtri">
                                 <i data-feather="rotate-ccw" style="width:12px;height:12px;"></i> Nuova
                             </button>
                         </div>
@@ -1802,7 +1802,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260911_01"></script>
+    <script src="app.js?v=20260911_02"></script>
     <script src="ui.js"></script>
 </body>
 </html>
