@@ -43,6 +43,7 @@ function initDatabase() {
     if (!existingCols.includes('articles_json')) db.prepare('ALTER TABLE press_reviews ADD COLUMN articles_json TEXT DEFAULT NULL').run();
     if (!existingCols.includes('client_name'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN client_name TEXT DEFAULT ''").run();
     if (!existingCols.includes('client_logo'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN client_logo TEXT DEFAULT ''").run();
+    if (!existingCols.includes('share_token'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN share_token TEXT DEFAULT NULL").run();
 
     // Create articles table (if we want to cache/store them later)
     db.prepare(`
@@ -133,6 +134,27 @@ function initDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `).run();
+
+    // Create media_contacts table for PR & Media CRM
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS media_contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            client_id INTEGER DEFAULT NULL,
+            name TEXT NOT NULL,
+            outlet TEXT NOT NULL,
+            role TEXT DEFAULT '',
+            beat TEXT DEFAULT 'generale',
+            email TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            notes TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
+        )
+    `).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_contacts_user ON media_contacts(user_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_contacts_beat ON media_contacts(beat)`).run();
 
     console.log('✅ Database SQLite inizializzato.');
     return db;

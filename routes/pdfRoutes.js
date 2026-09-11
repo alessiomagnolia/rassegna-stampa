@@ -33,7 +33,7 @@ function fetchImageAsBase64(url) {
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo, templateId } = req.body;
+        const { articles, title, clientName, clientLogo, templateId, includeAnalytics } = req.body;
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });
@@ -86,7 +86,8 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             clientName: clientName || null,
             clientLogo: clientLogo || null,
             userLogo: userLogoBase64,
-            templateId: templateId || 'classic'
+            templateId: templateId || 'classic',
+            includeAnalytics: !!includeAnalytics
         };
 
         console.log(`[PDF] Generazione in corso per ${resolvedArticles.length} articoli...`);
@@ -103,17 +104,22 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         
         fs.writeFileSync(outputPath, pdfBuffer);
 
+        // Generate unique share token
+        const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
+
         // Save to history (including full articles JSON for editor reopening)
         const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '');
+            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
             id: info.lastInsertRowid,
             filename,
-            downloadUrl: `/api/pdf/download/${filename}`
+            downloadUrl: `/api/pdf/download/${filename}`,
+            shareToken,
+            shareUrl: `/share/${shareToken}`
         });
 
     } catch (error) {
@@ -135,38 +141,148 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const articlesJsonStr = JSON.stringify(articles);
 
         if (id) {
-            const existing = db.prepare('SELECT id FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
+            const existing = db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
             if (existing) {
+                let token = existing.share_token;
+                if (!token) {
+                    token = uuidv4().replace(/-/g, '').slice(0, 16);
+                }
                 db.prepare(`
                     UPDATE press_reviews 
-                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?
+                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?
                     WHERE id = ? AND user_id = ?
-                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', id, req.userId);
+                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, id, req.userId);
 
                 return res.json({
                     id: existing.id,
                     success: true,
                     updated: true,
+                    shareToken: token,
+                    shareUrl: `/share/${token}`,
                     message: 'Rassegna aggiornata con successo nello storico.'
                 });
             }
         }
 
         const placeholderFilename = `draft_${Date.now()}.pdf`;
+        const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '');
+            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
             id: info.lastInsertRowid,
             success: true,
             updated: false,
+            shareToken,
+            shareUrl: `/share/${shareToken}`,
             message: 'Rassegna archiviata con successo nel tuo storico.'
         });
     } catch (error) {
         console.error('Archive review route error:', error);
         res.status(500).json({ error: 'Errore durante l\'archiviazione della rassegna.' });
+    }
+});
+
+/**
+ * POST /api/pdf/share/:id
+ * Generates or retrieves a shareable public token for a review
+ */
+router.post('/share/:id', authMiddleware, (req, res) => {
+    try {
+        const db = getDb();
+        const review = db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+        if (!review) return res.status(404).json({ error: 'Rassegna non trovata.' });
+
+        let token = review.share_token;
+        if (!token) {
+            token = uuidv4().replace(/-/g, '').slice(0, 16);
+            db.prepare('UPDATE press_reviews SET share_token = ? WHERE id = ?').run(token, review.id);
+        }
+
+        res.json({
+            success: true,
+            shareToken: token,
+            shareUrl: `/share/${token}`
+        });
+    } catch (error) {
+        console.error('Share review error:', error);
+        res.status(500).json({ error: 'Impossibile generare il link di condivisione.' });
+    }
+});
+
+/**
+ * GET /api/pdf/share-data/:token
+ * Public endpoint to fetch full review data for the interactive client reader
+ */
+router.get('/share-data/:token', (req, res) => {
+    try {
+        const db = getDb();
+        const review = db.prepare(`
+            SELECT p.*, u.company_name as agency_name, u.logo_path as agency_logo
+            FROM press_reviews p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.share_token = ?
+        `).get(req.params.token);
+
+        if (!review) {
+            return res.status(404).json({ error: 'Rassegna stampa non trovata o link non valido.' });
+        }
+
+        let articles = [];
+        try {
+            if (review.articles_json) {
+                articles = JSON.parse(review.articles_json);
+            }
+        } catch(e) {}
+
+        const { calculatePRAnalytics } = require('../services/analyticsService');
+        const analytics = calculatePRAnalytics(articles);
+
+        res.json({
+            success: true,
+            review: {
+                id: review.id,
+                title: review.title,
+                date: review.created_at,
+                clientName: review.client_name,
+                clientLogo: review.client_logo,
+                pdfFilename: review.pdf_filename,
+                articleCount: review.article_count,
+                shareToken: review.share_token
+            },
+            agency: {
+                name: review.agency_name || 'Ufficio Stampa',
+                logo: review.agency_logo ? `/uploads/${path.basename(review.agency_logo)}` : null
+            },
+            articles,
+            analytics
+        });
+    } catch (error) {
+        console.error('Error fetching share data:', error);
+        res.status(500).json({ error: 'Errore durante il caricamento della rassegna.' });
+    }
+});
+
+/**
+ * GET /api/pdf/public-download/:token
+ * Public download for client portal
+ */
+router.get('/public-download/:token', (req, res) => {
+    try {
+        const db = getDb();
+        const review = db.prepare('SELECT * FROM press_reviews WHERE share_token = ?').get(req.params.token);
+        if (!review) return res.status(404).send('Rassegna non trovata.');
+
+        const filePath = path.join(__dirname, '..', 'output', review.pdf_filename);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).send('File PDF non disponibile.');
+        }
+
+        res.download(filePath, `Rassegna_Stampa_${(review.title || 'Ufficiale').replace(/[^a-z0-9]/gi, '_')}.pdf`);
+    } catch (e) {
+        res.status(500).send('Errore download');
     }
 });
 

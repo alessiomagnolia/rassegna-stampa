@@ -33,6 +33,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const pressReleaseRoutes = require('./routes/pressReleaseRoutes');
 const clientRoutes = require('./routes/clientRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -41,6 +42,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/press', pressReleaseRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/contacts', contactRoutes);
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');
@@ -54,6 +56,11 @@ app.get('/api/proxy-image', (req, res) => {
         res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/png');
         imgRes.pipe(res);
     }).on('error', () => res.status(500).send('Error'));
+});
+
+// Interactive White-label Public Share Portal
+app.get('/share/:token', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'share.html'));
 });
 
 // Fallback to index.html for SPA if needed (currently using multiple HTML files though)

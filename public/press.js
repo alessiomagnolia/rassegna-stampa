@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSave = document.getElementById('btnSave');
     const btnDelete = document.getElementById('btnDelete');
     const btnCopy = document.getElementById('btnCopy');
+    const btnPitch = document.getElementById('btnPitch');
     const errorMsg = document.getElementById('errorMsg');
 
     let currentPrId = null;
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNew.addEventListener('click', resetForm);
     btnSave.addEventListener('click', savePressRelease);
     btnDelete.addEventListener('click', deletePressRelease);
+    if (btnPitch) btnPitch.addEventListener('click', openPitchModal);
     btnCopy.addEventListener('click', () => {
         navigator.clipboard.writeText(prContentTextarea.value);
         const originalText = btnCopy.textContent;
@@ -203,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSave.style.display = 'block';
             btnDelete.style.display = 'block';
             btnCopy.style.display = 'block';
+            if (btnPitch) btnPitch.style.display = 'block';
             errorMsg.style.display = 'none';
             
             // Highlight history
@@ -252,9 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
             prContentTextarea.value = cleanDoubleAsterisks(textContent);
             updateTitleBanner();
             
-            // Mostra tasto salva
+            // Mostra tasti azione
             btnSave.style.display = 'block';
             btnCopy.style.display = 'block';
+            if (btnPitch) btnPitch.style.display = 'block';
             
             // Ricarica clienti in caso ne abbiamo inserito uno nuovo o salvato un ref
             if (payload.manual_examples) {
@@ -327,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSave.style.display = 'none';
         btnDelete.style.display = 'none';
         btnCopy.style.display = 'none';
+        if (btnPitch) btnPitch.style.display = 'none';
         errorMsg.style.display = 'none';
 
         document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
@@ -342,4 +347,132 @@ document.addEventListener('DOMContentLoaded', () => {
         generateLoader.style.display = isLoading ? 'block' : 'none';
         generateText.style.display = isLoading ? 'none' : 'block';
     }
+
+    // --- PITCH ASSISTANT (EMAIL ADAPTATION FOR JOURNALISTS) ---
+    let currentPitchData = null;
+
+    function openPitchModal() {
+        const content = prContentTextarea.value.trim();
+        if (!content) {
+            showError('Genera o seleziona prima un comunicato stampa.');
+            return;
+        }
+
+        const modal = document.getElementById('pitchModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+    }
+
+    function closePitchModal() {
+        const modal = document.getElementById('pitchModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+    }
+    window.closePitchModal = closePitchModal;
+
+    async function generatePitch() {
+        const content = prContentTextarea.value.trim();
+        if (!content) {
+            alert('Nessun testo presente nel comunicato.');
+            return;
+        }
+
+        const targetBeat = document.getElementById('pitchTargetBeat')?.value || 'Economia & Finanza';
+        const journalist = document.getElementById('pitchJournalistName')?.value.trim() || '';
+        const clientName = clientNameInput.value.trim() || '';
+        const title = prTitleInput.value.trim() || '';
+
+        const loader = document.getElementById('pitchLoading');
+        const results = document.getElementById('pitchResultContainer');
+        const btnGen = document.getElementById('btnGeneratePitchAction');
+
+        if (loader) loader.classList.remove('hidden');
+        if (results) results.classList.add('hidden');
+        if (btnGen) btnGen.disabled = true;
+
+        try {
+            const data = await fetchAPI('/api/press/pitch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pressReleaseText: content,
+                    targetBeat,
+                    journalist,
+                    clientName,
+                    title
+                })
+            });
+
+            if (!data || !data.pitch) {
+                throw new Error('Impossibile generare il pitch.');
+            }
+
+            currentPitchData = data.pitch;
+            renderPitchResult(data.pitch);
+
+        } catch (err) {
+            alert('Errore generazione pitch: ' + err.message);
+        } finally {
+            if (loader) loader.classList.add('hidden');
+            if (btnGen) btnGen.disabled = false;
+        }
+    }
+    window.generatePitch = generatePitch;
+
+    function renderPitchResult(pitch) {
+        const results = document.getElementById('pitchResultContainer');
+        const subjectsDiv = document.getElementById('pitchSubjectList');
+        const textarea = document.getElementById('pitchFullEmailTextarea');
+
+        if (subjectsDiv && Array.isArray(pitch.subject_options)) {
+            subjectsDiv.innerHTML = pitch.subject_options.map((sub) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:6px; padding:7px 12px; font-size:0.83rem;">
+                    <span style="font-weight:600; color:var(--text-primary);">${escapeHtml(sub)}</span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copySubjectText(this)" data-sub="${escapeHtml(sub)}" style="padding:2px 8px; font-size:0.75rem;">Copia</button>
+                </div>
+            `).join('');
+        }
+
+        if (textarea) {
+            textarea.value = pitch.full_email_text || '';
+        }
+
+        if (results) results.classList.remove('hidden');
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.copySubjectText = function(btn) {
+        const text = btn.getAttribute('data-sub');
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = 'Copiato!';
+            setTimeout(() => btn.textContent = orig, 1500);
+        });
+    };
+
+    window.copyPitchEmail = function() {
+        const textarea = document.getElementById('pitchFullEmailTextarea');
+        if (!textarea || !textarea.value) return;
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            alert('Email completa del pitch copiata negli appunti!');
+        });
+    };
+
+    window.openPitchMailto = function() {
+        const textarea = document.getElementById('pitchFullEmailTextarea');
+        const firstSubject = currentPitchData?.subject_options?.[0] || 'Spunto per la redazione';
+        const body = textarea ? textarea.value : '';
+        window.location.href = `mailto:?subject=${encodeURIComponent(firstSubject)}&body=${encodeURIComponent(body)}`;
+    };
 });

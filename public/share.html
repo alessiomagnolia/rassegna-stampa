@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rassegna Stampa Interattiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        :root {
+            --bg-color: #0d0f17;
+            --card-bg: rgba(22, 26, 40, 0.85);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #7c5cff;
+            --accent-glow: rgba(124, 92, 255, 0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: fixed;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 800px; height: 350px;
+            background: radial-gradient(circle, rgba(124, 92, 255, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header Agency Bar */
+        .agency-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .agency-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .agency-brand strong {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+        .agency-logo-img {
+            max-height: 28px;
+            border-radius: 4px;
+        }
+
+        /* Review Hero Card */
+        .review-hero {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 2.2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .review-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+        .review-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+        .client-logo-box {
+            background: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-height: 56px;
+        }
+        .client-logo-box img {
+            max-height: 40px;
+            max-width: 140px;
+            object-fit: contain;
+        }
+
+        /* KPI Metrics Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--card-border);
+        }
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+        }
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .kpi-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Action Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 260px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+        }
+        .btn-download-pdf {
+            background: linear-gradient(135deg, #7c5cff, #9333ea);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+        }
+        .btn-download-pdf:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(124, 92, 255, 0.5);
+        }
+
+        /* Articles List */
+        .articles-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .article-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+        .article-card:hover {
+            border-color: rgba(124, 92, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .source-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .source-logo-img {
+            max-height: 26px;
+            max-width: 90px;
+            object-fit: contain;
+            background: #ffffff;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        .source-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #ffffff;
+        }
+        .article-date {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .sentiment-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        .sentiment-positivo { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .sentiment-neutro { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156, 163, 175, 0.3); }
+        .sentiment-critico { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .article-title {
+            font-size: 1.18rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            line-height: 1.4;
+            color: #f9fafb;
+        }
+        .article-excerpt {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .article-link {
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            transition: color 0.15s;
+        }
+        .article-link:hover {
+            color: #a78bfa;
+            text-decoration: underline;
+        }
+
+        /* Loading / Error States */
+        .state-container {
+            text-align: center;
+            padding: 5rem 1rem;
+        }
+        .spinner {
+            width: 42px; height: 42px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.5rem auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        .share-footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <div class="container">
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="state-container">
+            <div class="spinner"></div>
+            <p style="color:var(--text-muted);">Caricamento rassegna stampa interattiva in corso...</p>
+        </div>
+
+        <!-- ERROR STATE -->
+        <div id="errorState" class="state-container" style="display:none;">
+            <i data-feather="alert-triangle" style="width:48px;height:48px;color:var(--danger);margin-bottom:1rem;"></i>
+            <h2 id="errorTitle" style="margin-bottom:0.5rem;">Rassegna Non Trovata</h2>
+            <p id="errorMsg" style="color:var(--text-muted);">Il link di condivisione potrebbe essere scaduto o non valido.</p>
+        </div>
+
+        <!-- MAIN VIEW -->
+        <div id="mainView" style="display:none;">
+            <!-- Agency Topbar -->
+            <div class="agency-topbar">
+                <div class="agency-brand">
+                    <img id="agencyLogo" src="" alt="Agency Logo" class="agency-logo-img" style="display:none;">
+                    <span>Rassegna a cura di <strong id="agencyName">Ufficio Stampa</strong></span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">
+                    Portale Rassegna Stampa
+                </div>
+            </div>
+
+            <!-- Review Hero Card -->
+            <div class="review-hero">
+                <div class="hero-top">
+                    <div>
+                        <h1 id="reviewTitle" class="review-title">Rassegna Stampa</h1>
+                        <div class="review-meta">
+                            <span id="reviewDate"><i data-feather="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Data</span>
+                            <span id="reviewCount"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> 0 Articoli</span>
+                        </div>
+                    </div>
+                    <div id="clientLogoContainer" class="client-logo-box" style="display:none;">
+                        <img id="clientLogo" src="" alt="Client Logo">
+                    </div>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Uscite Monitorate</div>
+                        <div class="kpi-value" id="kpiTotal">0 <span class="kpi-sub">articoli</span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Testate Uniche</div>
+                        <div class="kpi-value" id="kpiSources">0 <span class="kpi-sub">fonti</span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Reach Stimata</div>
+                        <div class="kpi-value" id="kpiReach">0 <span class="kpi-sub">lettori</span></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Sentiment Generale</div>
+                        <div class="kpi-value" id="kpiSentiment" style="font-size:1.15rem; color:#34d399;">Neutro</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar (Search & PDF Download) -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <i data-feather="search" class="search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Cerca negli articoli o per testata...">
+                </div>
+                <a id="btnPdfDownload" href="#" class="btn-download-pdf" target="_blank">
+                    <i data-feather="download"></i> Scarica PDF Ufficiale
+                </a>
+            </div>
+
+            <!-- Articles List -->
+            <div id="articlesList" class="articles-grid"></div>
+
+            <!-- Footer -->
+            <div class="share-footer">
+                Documento generato e condiviso tramite la piattaforma di Media Intelligence & Rassegna Stampa.<br>
+                Tutti i diritti dei contenuti appartengono alle rispettive testate giornalistiche ed editori.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allArticles = [];
+        let shareToken = '';
+
+        async function initSharePortal() {
+            try {
+                // Extract token from /share/:token or ?token=
+                const pathParts = window.location.pathname.split('/share/');
+                if (pathParts.length > 1 && pathParts[1].trim()) {
+                    shareToken = pathParts[1].trim().replace(/\/$/, '');
+                } else {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    shareToken = urlParams.get('token') || '';
+                }
+
+                if (!shareToken) {
+                    showError('Link non valido', 'Nessun token di rassegna specificato nell\'URL.');
+                    return;
+                }
+
+                const res = await fetch(`/api/pdf/share-data/${shareToken}`);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showError('Rassegna non trovata', err.error || 'Il link di condivisione non è valido o è scaduto.');
+                    return;
+                }
+
+                const data = await res.json();
+                renderPortal(data);
+
+            } catch (error) {
+                console.error('Error loading share portal:', error);
+                showError('Errore di connessione', 'Impossibile caricare i dati della rassegna.');
+            }
+        }
+
+        function renderPortal(data) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('mainView').style.display = 'block';
+
+            const { review, agency, articles, analytics } = data;
+            allArticles = articles || [];
+
+            // Agency brand
+            if (agency.name) document.getElementById('agencyName').textContent = agency.name;
+            if (agency.logo) {
+                const logoEl = document.getElementById('agencyLogo');
+                logoEl.src = agency.logo;
+                logoEl.style.display = 'block';
+            }
+
+            // Review meta
+            document.getElementById('reviewTitle').textContent = review.title || 'Rassegna Stampa';
+            document.title = `${review.title || 'Rassegna Stampa'} | Web View`;
+
+            if (review.date) {
+                const d = new Date(review.date);
+                document.getElementById('reviewDate').innerHTML = `<i data-feather="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> ${d.toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' })}`;
+            }
+            document.getElementById('reviewCount').innerHTML = `<i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> ${allArticles.length} Articoli`;
+
+            if (review.clientLogo) {
+                const clientLogoEl = document.getElementById('clientLogo');
+                clientLogoEl.src = review.clientLogo;
+                document.getElementById('clientLogoContainer').style.display = 'flex';
+            }
+
+            // KPIs
+            if (analytics) {
+                document.getElementById('kpiTotal').innerHTML = `${analytics.totalArticles} <span class="kpi-sub">articoli</span>`;
+                document.getElementById('kpiSources').innerHTML = `${analytics.uniqueOutlets} <span class="kpi-sub">testate</span>`;
+                document.getElementById('kpiReach').innerHTML = `~${analytics.formattedReach} <span class="kpi-sub">lettori</span>`;
+                
+                const sentEl = document.getElementById('kpiSentiment');
+                sentEl.textContent = analytics.overallSentiment;
+                if (analytics.overallSentiment.includes('Critico') || analytics.overallSentiment.includes('Attenzione')) {
+                    sentEl.style.color = '#f87171';
+                } else if (analytics.overallSentiment.includes('Positivo') || analytics.overallSentiment.includes('Favorevole')) {
+                    sentEl.style.color = '#34d399';
+                } else {
+                    sentEl.style.color = '#d1d5db';
+                }
+            }
+
+            // PDF Download button
+            const pdfBtn = document.getElementById('btnPdfDownload');
+            pdfBtn.href = `/api/pdf/public-download/${shareToken}`;
+
+            renderArticles(allArticles);
+
+            // Search filter
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase().trim();
+                if (!q) {
+                    renderArticles(allArticles);
+                    return;
+                }
+                const filtered = allArticles.filter(a => 
+                    (a.title && a.title.toLowerCase().includes(q)) ||
+                    (a.source_name && a.source_name.toLowerCase().includes(q)) ||
+                    (a.excerpt && a.excerpt.toLowerCase().includes(q))
+                );
+                renderArticles(filtered);
+            });
+
+            feather.replace();
+        }
+
+        function renderArticles(list) {
+            const container = document.getElementById('articlesList');
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted); background:var(--card-bg); border-radius:var(--radius); border:1px solid var(--card-border);">
+                        Nessun articolo trovato con i criteri di ricerca.
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = list.map((a, idx) => {
+                const sentimentClass = a.sentiment ? `sentiment-${a.sentiment}` : 'sentiment-neutro';
+                const sentimentLabel = a.sentiment ? a.sentiment.toUpperCase() : 'NEUTRO';
+                
+                const logoHtml = a.logoBase64 
+                    ? `<img src="${a.logoBase64}" alt="${a.source_name || ''}" class="source-logo-img">` 
+                    : `<span class="source-name">${a.source_name || 'Articolo'}</span>`;
+
+                const cleanExcerpt = (a.excerpt || '').replace(/<[^>]*>/g, '').trim();
+
+                return `
+                <div class="article-card">
+                    <div class="card-header">
+                        <div class="source-meta">
+                            ${logoHtml}
+                            <span class="article-date">${a.published_date || ''}</span>
+                        </div>
+                        <span class="sentiment-badge ${sentimentClass}">${sentimentLabel}</span>
+                    </div>
+                    <h3 class="article-title">${a.title || 'Senza Titolo'}</h3>
+                    ${cleanExcerpt ? `<p class="article-excerpt">${cleanExcerpt}</p>` : ''}
+                    <div class="card-footer">
+                        <span style="color:var(--text-muted);">Ritagli #${idx + 1}</span>
+                        ${a.url ? `<a href="${a.url}" target="_blank" rel="noopener noreferrer" class="article-link">Leggi l'articolo originale <i data-feather="external-link" style="width:13px;height:13px;"></i></a>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+
+            feather.replace();
+        }
+
+        function showError(title, msg) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMsg').textContent = msg;
+            feather.replace();
+        }
+
+        document.addEventListener('DOMContentLoaded', initSharePortal);
+    </script>
+</body>
+</html>

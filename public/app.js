@@ -438,6 +438,7 @@ function renderArticles() {
         if (btnArchive)     btnArchive.classList.add('hidden');
         if (btnCopyLinks)   btnCopyLinks.classList.add('hidden');
         if (btnResetAndNew) btnResetAndNew.classList.add('hidden');
+        if (typeof updateLiveKpis === 'function') updateLiveKpis();
         return;
     }
 
@@ -448,6 +449,7 @@ function renderArticles() {
     if (btnArchive)     btnArchive.classList.remove('hidden');
     if (btnCopyLinks)   btnCopyLinks.classList.remove('hidden');
     if (btnResetAndNew) btnResetAndNew.classList.remove('hidden');
+    if (typeof updateLiveKpis === 'function') updateLiveKpis();
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
@@ -820,17 +822,23 @@ async function generatePDF() {
         btn.classList.add('hidden');
         loading.classList.remove('hidden');
         
+        const includeAnalytics = document.getElementById('includeAnalyticsPdf') ? document.getElementById('includeAnalyticsPdf').checked : true;
+        
         const response = await apiCall('POST', '/api/pdf/generate', { 
             articles: state.articles,
             title,
             clientName,
             clientLogo: state.clientLogoBase64,
-            templateId: selectedTemplateId
+            templateId: selectedTemplateId,
+            includeAnalytics
         });
         
         if (response && response.id) {
             state.currentReviewId = response.id;
             sessionStorage.setItem('rs_draft_review_id', response.id);
+        }
+        if (response && response.shareUrl) {
+            state.currentShareUrl = response.shareUrl;
         }
 
         showToast('PDF generato! Download in corso...', 'success');
@@ -896,9 +904,11 @@ async function loadHistory() {
                         ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${item.client_name}` : ''}
                     </span>
                 </div>
-                <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
                     <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
-                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Riapri ed Edita</button>` : ''}
+                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>` : ''}
+                    <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
+                    <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);"><i data-feather="zap" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Digest AI</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
@@ -2640,7 +2650,586 @@ document.addEventListener('DOMContentLoaded', () => {
     loadClients();
     loadCustomArchiveLogos();
     renderArchiveLogos();
+    if (window.location.hash === '#media-crm') {
+        loadMediaContacts();
+    }
 });
+
+// ==========================================================================
+// --- STRATEGIC PR TOOLS: LIVE KPIS, MORNING DIGEST, WEB SHARING & CRM ---
+// ==========================================================================
+
+// --- 1. LIVE KPIS & SENTIMENT IN NUOVA RASSEGNA ---
+function updateLiveKpis() {
+    const banner = document.getElementById('liveKpiBanner');
+    const countEl = document.getElementById('liveKpiCount');
+    const reachEl = document.getElementById('liveKpiReach');
+    const sentimentEl = document.getElementById('liveKpiSentiment');
+    const btnDigest = document.getElementById('btnOpenMorningDigestAction');
+    const btnShare = document.getElementById('btnShareReviewAction');
+    const btnLiveDigest = document.getElementById('btnLiveMorningDigest');
+
+    if (!banner) return;
+
+    if (!state.articles || state.articles.length === 0) {
+        banner.classList.add('hidden');
+        if (btnDigest) btnDigest.classList.add('hidden');
+        if (btnShare) btnShare.classList.add('hidden');
+        return;
+    }
+
+    banner.classList.remove('hidden');
+    if (btnDigest) btnDigest.classList.remove('hidden');
+    if (btnShare) btnShare.classList.remove('hidden');
+
+    if (btnLiveDigest && !btnLiveDigest.dataset.bound) {
+        btnLiveDigest.dataset.bound = 'true';
+        btnLiveDigest.addEventListener('click', () => openMorningDigestForCurrentArticles());
+    }
+
+    const count = state.articles.length;
+    if (countEl) countEl.textContent = `${count} ${count === 1 ? 'Articolo' : 'Articoli'}`;
+
+    let estReach = 0;
+    const tier1Outlets = ['corriere', 'repubblica', 'sole', 'ansa', 'stampa', 'messaggero', 'fatto', 'giornale', 'sky', 'tgcom', 'rai'];
+    let positiveCount = 0;
+    let criticalCount = 0;
+
+    const posWords = ['crescita', 'record', 'successo', 'positivo', 'premi', 'investimento', 'sviluppo', 'leadership', 'innova', 'utile', 'espansione', 'eccellenza', 'trionfo', 'accordo', 'partnership', 'vince'];
+    const negWords = ['crisi', 'crollo', 'calo', 'scandalo', 'arrest', 'truffa', 'perdita', 'chiusura', 'polemica', 'difficoltà', 'licenzia', 'denuncia', 'indagine', 'multa', 'fallimento', 'scontro'];
+
+    state.articles.forEach(art => {
+        const src = ((art.source_name || '') + ' ' + (art.url || '')).toLowerCase();
+        const type = art.source_type || 'Web';
+        const text = ((art.title || '') + ' ' + (art.excerpt || '')).toLowerCase();
+
+        if (tier1Outlets.some(o => src.includes(o)) || type === 'Quotidiano Nazionale' || type === 'Agenzia di Stampa') {
+            estReach += 750000;
+        } else if (type === 'Quotidiano Locale' || type === 'Periodico' || type === 'Radio/TV') {
+            estReach += 140000;
+        } else {
+            estReach += 35000;
+        }
+
+        let pos = 0;
+        let neg = 0;
+        posWords.forEach(w => { if (text.includes(w)) pos++; });
+        negWords.forEach(w => { if (text.includes(w)) neg++; });
+
+        if (pos > neg) positiveCount++;
+        else if (neg > pos) criticalCount++;
+    });
+
+    if (reachEl) {
+        if (estReach >= 1000000) {
+            reachEl.textContent = `~${(estReach / 1000000).toFixed(1)}M imp.`;
+        } else if (estReach >= 1000) {
+            reachEl.textContent = `~${Math.round(estReach / 1000)}K imp.`;
+        } else {
+            reachEl.textContent = `~${estReach} imp.`;
+        }
+    }
+
+    if (sentimentEl) {
+        if (positiveCount > criticalCount) {
+            sentimentEl.textContent = 'Positivo';
+            sentimentEl.style.color = '#10b981';
+            sentimentEl.style.background = 'rgba(16,185,129,0.15)';
+            sentimentEl.style.borderColor = 'rgba(16,185,129,0.3)';
+        } else if (criticalCount > positiveCount) {
+            sentimentEl.textContent = 'Critico';
+            sentimentEl.style.color = '#ef4444';
+            sentimentEl.style.background = 'rgba(239,68,68,0.15)';
+            sentimentEl.style.borderColor = 'rgba(239,68,68,0.3)';
+        } else {
+            sentimentEl.textContent = 'Neutro';
+            sentimentEl.style.color = '#f59e0b';
+            sentimentEl.style.background = 'rgba(245,158,11,0.15)';
+            sentimentEl.style.borderColor = 'rgba(245,158,11,0.3)';
+        }
+    }
+}
+window.updateLiveKpis = updateLiveKpis;
+
+// --- 2. MORNING EXECUTIVE DIGEST ---
+let currentDigestData = null;
+
+window.openMorningDigestForCurrentArticles = async function() {
+    if (!state.articles || state.articles.length === 0) {
+        showToast('Aggiungi almeno un articolo per generare il Morning Digest.', 'warning');
+        return;
+    }
+
+    const modal = document.getElementById('morningDigestModal');
+    const loading = document.getElementById('digestLoading');
+    const content = document.getElementById('digestContentView');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (loading) loading.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+
+    try {
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+
+        const data = await apiCall('POST', '/api/articles/digest', {
+            articles: state.articles,
+            clientName,
+            rassegnaTitle: title
+        });
+
+        if (!data || !data.digest) {
+            throw new Error('Impossibile elaborare il digest.');
+        }
+
+        currentDigestData = data.digest;
+        renderDigestModalContent(data.digest);
+
+    } catch (err) {
+        showToast('Errore generazione digest: ' + err.message, 'error');
+        closeMorningDigestModal();
+    }
+};
+
+window.openMorningDigestFromHistory = async function(reviewId) {
+    const modal = document.getElementById('morningDigestModal');
+    const loading = document.getElementById('digestLoading');
+    const content = document.getElementById('digestContentView');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (loading) loading.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+
+    try {
+        const reviewData = await apiCall('GET', `/api/pdf/review/${reviewId}`);
+        if (!reviewData.articles || reviewData.articles.length === 0) {
+            throw new Error('Nessun articolo trovato in questa rassegna.');
+        }
+
+        const data = await apiCall('POST', '/api/articles/digest', {
+            articles: reviewData.articles,
+            clientName: reviewData.clientName,
+            rassegnaTitle: reviewData.title
+        });
+
+        if (!data || !data.digest) {
+            throw new Error('Impossibile elaborare il digest.');
+        }
+
+        currentDigestData = data.digest;
+        renderDigestModalContent(data.digest);
+
+    } catch (err) {
+        showToast('Errore generazione digest: ' + err.message, 'error');
+        closeMorningDigestModal();
+    }
+};
+
+function renderDigestModalContent(digest) {
+    const loading = document.getElementById('digestLoading');
+    const content = document.getElementById('digestContentView');
+    const subjectEl = document.getElementById('digestSubject');
+    const previewEl = document.getElementById('digestPreviewHtml');
+
+    if (loading) loading.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+
+    if (subjectEl) subjectEl.textContent = digest.subject || 'Briefing Rassegna Stampa';
+    if (previewEl) {
+        let clipsHtml = '';
+        if (Array.isArray(digest.clips)) {
+            clipsHtml = digest.clips.map(c => `
+                <div style="margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:0.75rem; color:var(--accent-primary); font-weight:700;">${escapeHtml(c.source)} &bull; ${escapeHtml(c.sentiment || 'Neutro')}</div>
+                    <div style="font-weight:600; font-size:0.9rem; margin:2px 0;">${escapeHtml(c.title)}</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted);">${escapeHtml(c.one_liner || '')}</div>
+                </div>
+            `).join('');
+        }
+
+        let highlightsHtml = '';
+        if (Array.isArray(digest.highlights)) {
+            highlightsHtml = `<ul style="margin:0 0 1rem 0; padding-left:1.25rem; font-size:0.88rem; line-height:1.6;">
+                ${digest.highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}
+            </ul>`;
+        }
+
+        previewEl.innerHTML = `
+            <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Sintesi Esecutiva:</div>
+            ${highlightsHtml}
+            <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin:1rem 0 0.5rem 0;">Clip Stampa Principali:</div>
+            ${clipsHtml}
+            ${digest.mood_summary ? `<div style="margin-top:1rem; font-size:0.82rem; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--accent-primary);"><em>${escapeHtml(digest.mood_summary)}</em></div>` : ''}
+        `;
+    }
+    feather.replace();
+}
+
+window.closeMorningDigestModal = function() {
+    const modal = document.getElementById('morningDigestModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.copyDigestEmail = function() {
+    if (!currentDigestData) return;
+    const body = currentDigestData.emailText || '';
+    navigator.clipboard.writeText(`Oggetto: ${currentDigestData.subject}\n\n${body}`).then(() => {
+        showToast('Testo email del Morning Digest copiato negli appunti!', 'success');
+    }).catch(() => showToast('Errore durante la copia', 'error'));
+};
+
+window.copyDigestWhatsApp = function() {
+    if (!currentDigestData) return;
+    const text = currentDigestData.whatsappText || '';
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Briefing WhatsApp copiato negli appunti!', 'success');
+    }).catch(() => showToast('Errore durante la copia', 'error'));
+};
+
+window.openDigestMailto = function() {
+    if (!currentDigestData) return;
+    const subject = encodeURIComponent(currentDigestData.subject || 'Morning Briefing');
+    const body = encodeURIComponent(currentDigestData.emailText || '');
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+};
+
+// --- 3. WEB CLIENT PORTAL & SHARING ---
+window.openShareModal = async function(reviewId) {
+    try {
+        showToast('Generazione link condivisibile protetto...', 'info');
+        const res = await apiCall('POST', `/api/pdf/share/${reviewId}`);
+        if (res && res.shareUrl) {
+            const fullUrl = window.location.origin + res.shareUrl;
+            const input = document.getElementById('shareReviewUrlInput');
+            const portalBtn = document.getElementById('btnOpenSharePortalLink');
+            const waBtn = document.getElementById('btnShareWhatsAppLink');
+
+            if (input) input.value = fullUrl;
+            if (portalBtn) portalBtn.href = fullUrl;
+            if (waBtn) {
+                const waText = encodeURIComponent(`Ecco la rassegna stampa aggiornata: ${fullUrl}`);
+                waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
+            }
+
+            const modal = document.getElementById('shareReviewModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                feather.replace();
+            }
+        }
+    } catch (err) {
+        showToast('Errore durante la condivisione: ' + err.message, 'error');
+    }
+};
+
+window.openShareModalForCurrentReview = async function() {
+    if (!state.articles || state.articles.length === 0) {
+        showToast('Aggiungi almeno un articolo alla rassegna per condividerla.', 'warning');
+        return;
+    }
+
+    if (state.currentReviewId) {
+        return openShareModal(state.currentReviewId);
+    }
+
+    try {
+        showToast('Archiviazione e generazione link condivisibile...', 'info');
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+
+        const saveRes = await apiCall('POST', '/api/pdf/archive', {
+            articles: state.articles,
+            title,
+            clientName,
+            clientLogo: state.clientLogoBase64
+        });
+
+        if (saveRes && saveRes.id) {
+            state.currentReviewId = saveRes.id;
+            sessionStorage.setItem('rs_draft_review_id', saveRes.id);
+            loadHistory();
+            openShareModal(saveRes.id);
+        }
+    } catch (err) {
+        showToast('Errore: ' + err.message, 'error');
+    }
+};
+
+window.closeShareModal = function() {
+    const modal = document.getElementById('shareReviewModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.copyShareReviewUrl = function() {
+    const input = document.getElementById('shareReviewUrlInput');
+    if (!input || !input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('Link rassegna cliente copiato negli appunti!', 'success');
+    }).catch(() => showToast('Errore durante la copia', 'error'));
+};
+
+// --- 4. MEDIA CONTACTS CRM CONTROLLER ---
+let mediaContactsList = [];
+
+window.loadMediaContacts = async function(beat = '', search = '') {
+    const tbody = document.getElementById('crmContactsTableBody');
+    if (!tbody) return;
+
+    try {
+        let url = '/api/contacts';
+        const params = [];
+        if (beat && beat !== 'tutti') params.push(`beat=${encodeURIComponent(beat)}`);
+        if (search) params.push(`search=${encodeURIComponent(search)}`);
+        if (params.length > 0) url += `?${params.join('&')}`;
+
+        const res = await apiCall('GET', url);
+        mediaContactsList = res.contacts || [];
+
+        const totalEl = document.getElementById('crmTotalContacts');
+        const outletsEl = document.getElementById('crmTotalOutlets');
+        const beatsEl = document.getElementById('crmTotalBeats');
+
+        if (totalEl) totalEl.textContent = mediaContactsList.length;
+        if (outletsEl) {
+            const uniqueOutlets = new Set(mediaContactsList.map(c => (c.outlet || '').trim().toLowerCase()).filter(Boolean));
+            outletsEl.textContent = uniqueOutlets.size;
+        }
+        if (beatsEl) {
+            const uniqueBeats = new Set(mediaContactsList.map(c => (c.beat || '').trim().toLowerCase()).filter(Boolean));
+            beatsEl.textContent = uniqueBeats.size;
+        }
+
+        if (mediaContactsList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+                        <i data-feather="users" style="width:36px; height:36px; opacity:0.4; margin-bottom:0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
+                        Nessun contatto trovato. Clicca su "+ Nuovo Contatto" o "Importa CSV" per iniziare la tua rubrica stampa!
+                    </td>
+                </tr>
+            `;
+            feather.replace();
+            return;
+        }
+
+        const beatLabels = {
+            economia: 'Economia & Finanza',
+            tecnologia: 'Tecnologia & AI',
+            cronaca: 'Cronaca & Territorio',
+            politica: 'Politica & Istituzioni',
+            sanita: 'Sanità & Salute',
+            lifestyle: 'Lifestyle & Cultura',
+            generale: 'Generale'
+        };
+
+        tbody.innerHTML = mediaContactsList.map(c => {
+            const beatName = beatLabels[c.beat] || c.beat || 'Generale';
+            return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:12px 16px;">
+                        <strong style="color:var(--text-primary); font-size:0.92rem; display:block;">${escapeHtml(c.name)}</strong>
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <span style="font-weight:600; color:var(--accent-primary);">${escapeHtml(c.outlet)}</span>
+                        ${c.role ? `<span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(c.role)}</span>` : ''}
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <span class="badge" style="background:rgba(124,92,255,0.12); color:var(--accent-primary); border:1px solid rgba(124,92,255,0.25); font-size:0.72rem; padding:3px 8px; border-radius:12px; font-weight:600;">
+                            ${escapeHtml(beatName)}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <a href="mailto:${encodeURIComponent(c.email)}" style="color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:5px; font-size:0.83rem;" title="Invia Email">
+                            <i data-feather="mail" style="width:12px; height:12px; color:var(--text-muted);"></i> ${escapeHtml(c.email)}
+                        </a>
+                        ${c.phone ? `<a href="tel:${encodeURIComponent(c.phone)}" style="color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:5px; font-size:0.78rem; margin-top:3px;" title="Chiama">
+                            <i data-feather="phone" style="width:11px; height:11px;"></i> ${escapeHtml(c.phone)}
+                        </a>` : ''}
+                    </td>
+                    <td style="padding:12px 16px; max-width:180px; font-size:0.8rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(c.notes || '')}">
+                        ${escapeHtml(c.notes || '-')}
+                    </td>
+                    <td style="padding:12px 16px; text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="editMediaContact(${c.id})" style="padding:4px 8px; margin-right:4px;" title="Modifica">
+                            <i data-feather="edit-2" style="width:13px; height:13px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="deleteMediaContact(${c.id})" style="padding:4px 8px; color:var(--danger); border-color:rgba(239,68,68,0.3);" title="Elimina">
+                            <i data-feather="trash-2" style="width:13px; height:13px;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        feather.replace();
+
+    } catch (err) {
+        console.error('Errore loadMediaContacts:', err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--danger);">Errore nel caricamento della rubrica.</td></tr>`;
+    }
+};
+
+window.filterCrmContacts = function() {
+    const beat = document.getElementById('crmBeatFilter')?.value || '';
+    const search = document.getElementById('crmSearchInput')?.value || '';
+    loadMediaContacts(beat, search);
+};
+
+window.openAddContactModal = function() {
+    document.getElementById('contactEditId').value = '';
+    document.getElementById('contactModalTitle').innerHTML = '<i data-feather="user-plus" style="color:var(--accent-primary); width:18px; height:18px;"></i> <span>Nuovo Contatto Giornalista</span>';
+    document.getElementById('contactModalName').value = '';
+    document.getElementById('contactModalOutlet').value = '';
+    document.getElementById('contactModalRole').value = '';
+    document.getElementById('contactModalBeat').value = 'economia';
+    document.getElementById('contactModalEmail').value = '';
+    document.getElementById('contactModalPhone').value = '';
+    document.getElementById('contactModalNotes').value = '';
+
+    const modal = document.getElementById('addContactModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        feather.replace();
+    }
+};
+
+window.editMediaContact = function(id) {
+    const contact = mediaContactsList.find(c => c.id === id);
+    if (!contact) return;
+
+    document.getElementById('contactEditId').value = contact.id;
+    document.getElementById('contactModalTitle').innerHTML = '<i data-feather="edit-2" style="color:var(--accent-primary); width:18px; height:18px;"></i> <span>Modifica Contatto</span>';
+    document.getElementById('contactModalName').value = contact.name || '';
+    document.getElementById('contactModalOutlet').value = contact.outlet || '';
+    document.getElementById('contactModalRole').value = contact.role || '';
+    document.getElementById('contactModalBeat').value = contact.beat || 'generale';
+    document.getElementById('contactModalEmail').value = contact.email || '';
+    document.getElementById('contactModalPhone').value = contact.phone || '';
+    document.getElementById('contactModalNotes').value = contact.notes || '';
+
+    const modal = document.getElementById('addContactModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        feather.replace();
+    }
+};
+
+window.closeContactModal = function() {
+    const modal = document.getElementById('addContactModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.saveMediaContact = async function(e) {
+    if (e) e.preventDefault();
+    const id = document.getElementById('contactEditId').value;
+    const name = document.getElementById('contactModalName').value.trim();
+    const outlet = document.getElementById('contactModalOutlet').value.trim();
+    const role = document.getElementById('contactModalRole').value.trim();
+    const beat = document.getElementById('contactModalBeat').value;
+    const email = document.getElementById('contactModalEmail').value.trim();
+    const phone = document.getElementById('contactModalPhone').value.trim();
+    const notes = document.getElementById('contactModalNotes').value.trim();
+
+    if (!name || !outlet || !email) {
+        showToast('Nome, Testata ed Email sono campi obbligatori.', 'error');
+        return;
+    }
+
+    try {
+        if (id) {
+            await apiCall('PUT', `/api/contacts/${id}`, { name, outlet, role, beat, email, phone, notes });
+            showToast('Contatto aggiornato con successo!', 'success');
+        } else {
+            await apiCall('POST', '/api/contacts', { name, outlet, role, beat, email, phone, notes });
+            showToast('Nuovo contatto aggiunto alla rubrica!', 'success');
+        }
+        closeContactModal();
+        loadMediaContacts();
+    } catch (err) {
+        showToast('Errore: ' + err.message, 'error');
+    }
+};
+
+window.deleteMediaContact = async function(id) {
+    if (!confirm('Sei sicuro di voler rimuovere questo contatto dalla rubrica?')) return;
+    try {
+        await apiCall('DELETE', `/api/contacts/${id}`);
+        showToast('Contatto rimosso', 'success');
+        loadMediaContacts();
+    } catch (err) {
+        showToast('Errore: ' + err.message, 'error');
+    }
+};
+
+window.openImportContactsModal = function() {
+    const modal = document.getElementById('importContactsModal');
+    const textarea = document.getElementById('importContactsTextarea');
+    const countEl = document.getElementById('importContactsCount');
+    if (textarea) textarea.value = '';
+    if (countEl) countEl.textContent = '0 contatti rilevati';
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        feather.replace();
+    }
+};
+
+window.closeImportContactsModal = function() {
+    const modal = document.getElementById('importContactsModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.executeImportContacts = async function() {
+    const textarea = document.getElementById('importContactsTextarea');
+    const text = textarea ? textarea.value.trim() : '';
+    if (!text) {
+        showToast('Incolla almeno una riga di testo per importare.', 'warning');
+        return;
+    }
+
+    try {
+        const res = await apiCall('POST', '/api/contacts/import', { text });
+        showToast(`Importazione completata: ${res.count} contatti aggiunti!`, 'success');
+        closeImportContactsModal();
+        loadMediaContacts();
+    } catch (err) {
+        showToast('Errore importazione: ' + err.message, 'error');
+    }
+};
+
+// Hook into showDashboardPage to load Media CRM or History
+(function() {
+    const origShow = window.showDashboardPage;
+    window.showDashboardPage = function(page, updateHash) {
+        if (typeof origShow === 'function') {
+            origShow(page, updateHash);
+        }
+        if (page === 'media-crm') {
+            loadMediaContacts();
+        } else if (page === 'storico') {
+            loadHistory();
+        }
+    };
+})();
 
 
 

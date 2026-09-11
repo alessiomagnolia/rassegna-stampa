@@ -304,4 +304,121 @@ router.delete('/:id', authMiddleware, (req, res) => {
     }
 });
 
+/**
+ * POST /api/press/pitch
+ * Generates a tailored 1-to-1 Journalist Pitch Email from a press release
+ */
+router.post('/pitch', authMiddleware, async (req, res) => {
+    try {
+        const { title, content, client_name, beat, journalist_name, spokesperson_name } = req.body;
+
+        if (!title && !content) {
+            return res.status(400).json({ error: 'Fornisci almeno il titolo o il testo del comunicato.' });
+        }
+
+        const clientName = client_name || 'Azienda';
+        const targetBeat = (beat || 'generale').toLowerCase();
+        const journalist = (journalist_name || '').trim();
+        const spokesperson = (spokesperson_name || '').trim();
+
+        let pitchResult = null;
+
+        try {
+            const anthropic = getAnthropicClient();
+            if (anthropic) {
+                const prompt = `Sei un media strategist e senior PR specialist con 15 anni di esperienza nei rapporti con i giornalisti italiani.
+I giornalisti odiano i comunicati stampa chilometrici e impersonali; aprono solo email sintetiche, dritte al punto, con un angolo specifico per la loro rubrica.
+
+Compito: Trasforma il seguente comunicato stampa in un PITCH EMAIL ONE-TO-ONE altamente efficace per un giornalista del settore "${targetBeat.toUpperCase()}".
+
+DATI COMUNICATO:
+- Cliente/Soggetto: ${clientName}
+- Titolo Comunicato: ${title || 'Nuovo annuncio'}
+- Testo/Punti salienti: ${(content || '').slice(0, 1800)}
+${spokesperson ? `- Portavoce disponibile per interviste: ${spokesperson}` : ''}
+${journalist ? `- Nome giornalista destinatario: ${journalist}` : ''}
+
+Linee guida:
+- Il tono deve essere giornalistico, sobrio, autorevole e privo di aggettivi roboanti tipo "rivoluzionario", "leader indiscusso", "incredibile".
+- Fornisci 3 opzioni di OGGETTO email ad alto tasso di apertura (brevi, con gancio d'attualità).
+- Il corpo dell'email deve contenere:
+  1. Gancio iniziale personalizzato (perché questa notizia interessa la sua rubrica ${targetBeat}).
+  2. 3 bullet point con i dati/fatti salienti (chiari, verificabili).
+  3. Disponibilità del portavoce per intervista o invio di materiali multimediali/dati esclusivi.
+  4. Firma di contatto ufficio stampa.
+
+Rispondi ESCLUSIVAMENTE con un oggetto JSON valido strutturato così:
+{
+  "subject_options": [
+    "Opzione oggetto 1",
+    "Opzione oggetto 2",
+    "Opzione oggetto 3"
+  ],
+  "salutation": "Gentile Collega | Gentile ${journalist || 'Nome Giornalista'}",
+  "hook": "Testo introduttivo di 1-2 frasi mirato al settore ${targetBeat}...",
+  "bullet_points": [
+    "Dato o fatto saliente 1",
+    "Dato o fatto saliente 2",
+    "Dato o fatto saliente 3"
+  ],
+  "call_to_action": "Se desideri approfondire con un'intervista al portavoce o ricevere foto/dati completi, sono a disposizione.",
+  "full_email_text": "L'email completa formattata e pronta da copiare..."
+}`;
+
+                const response = await Promise.race([
+                    anthropic.messages.create({
+                        model: 'claude-3-5-haiku-20241022',
+                        max_tokens: 1200,
+                        messages: [{ role: 'user', content: prompt }]
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 25000))
+                ]);
+
+                const raw = response.content[0]?.text || '';
+                const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    pitchResult = JSON.parse(jsonMatch[0]);
+                }
+            }
+        } catch (aiErr) {
+            console.warn('[Pitch] Fallback generator due to AI error:', aiErr.message);
+        }
+
+        if (!pitchResult) {
+            const salutation = journalist ? `Gentile ${journalist},` : 'Gentile Collega,';
+            const subject1 = `[Spunto ${targetBeat}] ${title ? title.slice(0, 50) : clientName}: novità e dati`;
+            const subject2 = `${clientName}: aggiornamenti per la rubrica ${targetBeat}`;
+            const subject3 = `Notizia e dati: ${title ? title.slice(0, 45) : clientName}`;
+
+            const hook = `In merito ai temi seguiti dalla redazione, ti segnalo i dettagli sul recente annuncio di ${clientName}.`;
+            const bullets = [
+                title || 'Principale iniziativa in corso.',
+                `Focus strategico per il settore ${targetBeat}.`,
+                spokesperson ? `${spokesperson} è disponibile per commenti dedicati.` : 'Dati e dettagli a supporto disponibili su richiesta.'
+            ];
+            const cta = 'Resto a completa disposizione per chiarimenti, interviste o materiali grafici ad alta risoluzione.';
+
+            const fullEmail = `${salutation}\n\n${hook}\n\nI punti salienti della notizia:\n• ${bullets.join('\n• ')}\n\n${cta}\n\nUn cordiale saluto,\nUfficio Stampa — ${clientName}`;
+
+            pitchResult = {
+                subject_options: [subject1, subject2, subject3],
+                salutation,
+                hook,
+                bullet_points: bullets,
+                call_to_action: cta,
+                full_email_text: fullEmail
+            };
+        }
+
+        res.json({
+            success: true,
+            pitch: pitchResult
+        });
+
+    } catch (error) {
+        console.error('Errore generazione pitch:', error);
+        res.status(500).json({ error: 'Errore durante la generazione del pitch.' });
+    }
+});
+
 module.exports = router;

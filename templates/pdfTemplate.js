@@ -61,6 +61,119 @@ function buildPDFHTML(articles, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// PR ANALYTICS & SENTIMENT EXECUTIVE PAGE
+// ---------------------------------------------------------------------------
+function buildAnalyticsPageHTML(analytics, options = {}) {
+    const { title, clientName } = options;
+    const posPct = analytics.sentimentDistribution.positivePct;
+    const neuPct = analytics.sentimentDistribution.neutralPct;
+    const criPct = analytics.sentimentDistribution.criticalPct;
+
+    return `
+    <div class="page" style="padding: 16mm 18mm; display: flex; flex-direction: column; justify-content: space-between; background: #ffffff; page-break-after: always;">
+        <div>
+            <!-- Section Header -->
+            <div style="border-bottom: 2px solid #1a1a2e; padding-bottom: 4mm; margin-bottom: 7mm; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #7c5cff; margin-bottom: 1.5mm;">Executive Overview & PR Intelligence</div>
+                    <div style="font-size: 17pt; font-weight: 700; color: #1a1a2e; font-family: 'Helvetica Neue', Arial, sans-serif;">Rapporto di Impatto e Visibilità Media</div>
+                </div>
+                <div style="text-align: right; font-size: 8.5pt; color: #666;">
+                    ${clientName ? `<div>Cliente: <strong>${clientName}</strong></div>` : ''}
+                    <div>Uscite analizzate: <strong>${analytics.totalArticles}</strong></div>
+                </div>
+            </div>
+
+            <!-- Top 4 KPI Cards -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-bottom: 7mm;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
+                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Uscite Totali</div>
+                    <div style="font-size: 19pt; font-weight: 800; color: #1a1a2e;">${analytics.totalArticles}</div>
+                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">ritagli stampa</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
+                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Testate Monitorate</div>
+                    <div style="font-size: 19pt; font-weight: 800; color: #1a1a2e;">${analytics.uniqueOutlets}</div>
+                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">fonti uniche</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
+                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Reach Stimata</div>
+                    <div style="font-size: 19pt; font-weight: 800; color: #7c5cff;">~${analytics.formattedReach}</div>
+                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">lettori potenziali</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
+                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Sentiment Generale</div>
+                    <div style="font-size: 13pt; font-weight: 700; color: #059669; padding-top: 2mm;">${analytics.overallSentiment}</div>
+                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">tono prevalente</div>
+                </div>
+            </div>
+
+            <!-- Sentiment Distribution Section -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4.5mm; margin-bottom: 7mm;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3mm;">
+                    <div style="font-size: 8.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155;">Distribuzione Sentiment Copertura</div>
+                    <div style="font-size: 7.5pt; color: #64748b;">
+                        <span style="color: #059669; font-weight: 600;">● Positivo: ${posPct}%</span> &nbsp;|&nbsp; 
+                        <span style="color: #64748b; font-weight: 600;">● Neutro: ${neuPct}%</span> &nbsp;|&nbsp; 
+                        <span style="color: #dc2626; font-weight: 600;">● Critico: ${criPct}%</span>
+                    </div>
+                </div>
+                <!-- Visual Bar -->
+                <div style="display: flex; height: 8mm; border-radius: 3px; overflow: hidden; background: #e2e8f0;">
+                    ${posPct > 0 ? `<div style="width: ${posPct}%; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${posPct > 8 ? posPct + '%' : ''}</div>` : ''}
+                    ${neuPct > 0 ? `<div style="width: ${neuPct}%; background: #94a3b8; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${neuPct > 8 ? neuPct + '%' : ''}</div>` : ''}
+                    ${criPct > 0 ? `<div style="width: ${criPct}%; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${criPct > 8 ? criPct + '%' : ''}</div>` : ''}
+                </div>
+            </div>
+
+            <!-- Media Breakdown & Top Sources Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5mm;">
+                <!-- Media Tier Breakdown -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm;">
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 3mm; border-bottom: 1px solid #cbd5e1; padding-bottom: 2mm;">
+                        Ripartizione Autorevolezza Testate
+                    </div>
+                    <div style="font-size: 8pt; line-height: 1.9;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 1</strong> — Grandi Quotidiani & Network Nazionali:</span>
+                            <strong>${analytics.tierDistribution.tier1} articoli</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 2</strong> — Testate Regionali & Settoriali B2B:</span>
+                            <strong>${analytics.tierDistribution.tier2} articoli</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 3</strong> — Portali Digitali & Web Media:</span>
+                            <strong>${analytics.tierDistribution.tier3} articoli</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Outlets Table -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm;">
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 3mm; border-bottom: 1px solid #cbd5e1; padding-bottom: 2mm;">
+                        Principali Testate Rilevate
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
+                        ${(analytics.topOutlets || []).slice(0, 5).map((out, idx) => `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 1.2mm 0; color: #475569;">${idx + 1}. <strong>${out.name}</strong></td>
+                            <td style="padding: 1.2mm 0; text-align: right; font-weight: bold; color: #1e293b;">${out.count} ${out.count === 1 ? 'uscita' : 'uscite'}</td>
+                        </tr>`).join('')}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Notice -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 3mm; font-size: 7pt; color: #94a3b8; display: flex; justify-content: space-between;">
+            <span>Metriche generate automaticamente tramite analisi semantica e classificazione media.</span>
+            <span>Rassegna Stampa Intelligence</span>
+        </div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------------------
 // TEMPLATE 1: CLASSICO CORPORATE (INVARIATO)
 // ---------------------------------------------------------------------------
 function buildClassicHTML(articles, options) {
@@ -251,6 +364,13 @@ function buildClassicHTML(articles, options) {
         `;
     }
 
+    // Optional PR Analytics Executive Summary Page
+    if (options.includeAnalytics) {
+        const { calculatePRAnalytics } = require('../services/analyticsService');
+        const analytics = calculatePRAnalytics(articles);
+        html += buildAnalyticsPageHTML(analytics, options);
+    }
+
     // 2. Article Pages
     articles.forEach((article, index) => {
         // Manual dark header: class + data-dark=1 so Puppeteer auto-detection skips it
@@ -436,6 +556,8 @@ function buildModernHTML(articles, options) {
         </div>
     </div>` : ''}
 
+    ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
+
     ${articles.map((article, index) => {
         const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
         const clampLines = article.imageBase64 ? 13 : 26;
@@ -598,6 +720,8 @@ function buildMinimalHTML(articles, options) {
             ${userLogo ? `<img src="${userLogo}" style="max-height:20mm;" alt="Agency Logo">` : ''}
         </div>
     </div>` : ''}
+
+    ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
 
     ${articles.map((article, index) => {
         const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);

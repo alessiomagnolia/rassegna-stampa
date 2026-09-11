@@ -166,6 +166,14 @@
                 </a>
 
                 <div class="sidebar-divider"></div>
+                <div class="sidebar-section-label">Media & PR</div>
+
+                <a href="#" class="sidebar-item" data-page="media-crm">
+                    <span class="sidebar-icon"><i data-feather="users"></i></span>
+                    <span class="sidebar-label">Rubrica Media & PR</span>
+                </a>
+
+                <div class="sidebar-divider"></div>
                 <div class="sidebar-section-label">Gestione</div>
 
                 <a href="#" class="sidebar-item" data-page="profilo">
@@ -466,6 +474,12 @@
                                 <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="padding:2px 6px;">Rimuovi</button>
                             </div>
                         </div>
+                        <div style="grid-column: 1 / -1; display:flex; align-items:center; gap:8px; margin-top:0.4rem; padding-top:0.6rem; border-top:1px solid var(--border-color);">
+                            <input type="checkbox" id="includeAnalyticsPdf" checked style="width:16px;height:16px;accent-color:var(--accent-primary);cursor:pointer;">
+                            <label for="includeAnalyticsPdf" style="font-size:0.85rem; font-weight:600; cursor:pointer; margin:0; color:var(--text-primary);">
+                                Includi Pagina KPI & Sentiment nel PDF <span style="font-weight:400; color:var(--text-muted); font-size:0.75rem;">(Executive Report di impatto per il cliente)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -473,6 +487,31 @@
                 <div id="extractionLoading" class="loading-state hidden">
                     <div class="shimmer-card"></div>
                     <p>Estrazione e analisi dell'articolo in corso...</p>
+                </div>
+
+                <!-- Live KPI & Sentiment Preview Banner -->
+                <div id="liveKpiBanner" class="glass-card hidden" style="padding:0.9rem 1.25rem; margin-bottom:1.25rem; border-left:4px solid var(--accent-primary); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <div>
+                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Copertura</span>
+                            <strong id="liveKpiCount" style="font-size:1.05rem; color:var(--text-primary);">0 Articoli</strong>
+                        </div>
+                        <div style="height:24px; width:1px; background:var(--border-color);" class="hide-mobile"></div>
+                        <div>
+                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Reach Stimata</span>
+                            <strong id="liveKpiReach" style="font-size:1.05rem; color:var(--accent-primary);">~0</strong>
+                        </div>
+                        <div style="height:24px; width:1px; background:var(--border-color);" class="hide-mobile"></div>
+                        <div>
+                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Sentiment</span>
+                            <span id="liveKpiSentiment" class="badge" style="font-weight:700; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:2px 7px; border-radius:4px; font-size:0.75rem;">Neutro</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" id="btnLiveMorningDigest" class="btn btn-outline btn-sm" style="border-color:var(--accent-primary); color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px;">
+                            <i data-feather="zap" style="width:14px;height:14px;color:var(--accent-primary);"></i> Morning Digest AI
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Articles List -->
@@ -486,11 +525,17 @@
                     <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 500px;">
                         <i data-feather="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> <span class="hide-mobile">Anteprima ed Edita</span><span class="show-mobile-inline">Edita Rassegna</span>
                     </button>
-                    <div style="display: flex; gap: 10px; width: 100%; max-width: 500px; justify-content: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px; width: 100%; max-width: 550px; justify-content: center; flex-wrap: wrap;">
                         <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
                             <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Genera e Scarica</span><span class="show-mobile-inline">Genera PDF</span>
                         </button>
-                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <button id="btnOpenMorningDigestAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openMorningDigestForCurrentArticles()">
+                            <i data-feather="zap" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Morning Digest AI</span><span class="show-mobile-inline">Digest AI</span>
+                        </button>
+                        <button id="btnShareReviewAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openShareModalForCurrentReview()">
+                            <i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Condividi Link Web</span><span class="show-mobile-inline">Condividi</span>
+                        </button>
+                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-muted); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
                             <i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Archivia in Storico</span><span class="show-mobile-inline">Archivia</span>
                         </button>
                         <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
@@ -629,6 +674,90 @@
                     <button id="btnRefreshCollections" class="btn btn-outline btn-sm"><i data-feather="refresh-cw" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Aggiorna</button>
                 </div>
                 <div id="newsCollectionsList"></div>
+            </div>
+        </div>
+
+        <!-- PAGE: MEDIA CRM (RUBRICA MEDIA & PR) -->
+        <div id="page-media-crm" class="page-view">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="users" style="width:28px;height:28px;vertical-align:middle;"></i> Rubrica Media & PR</h1>
+                    <p class="page-subtitle">Gestisci i contatti dei giornalisti, le testate e i settori tematici per i tuoi comunicati e rassegne.</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-outline" onclick="openImportContactsModal()">
+                        <i data-feather="upload" style="width:15px;height:15px;margin-right:4px;"></i> Importa CSV
+                    </button>
+                    <button type="button" class="btn btn-gradient" onclick="openAddContactModal()">
+                        <i data-feather="user-plus" style="width:15px;height:15px;margin-right:4px;"></i> + Nuovo Contatto
+                    </button>
+                </div>
+            </div>
+
+            <!-- CRM Stats Row -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                <div class="glass-card" style="padding:1.2rem;">
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:4px;">Totale Contatti</div>
+                    <div id="crmTotalContacts" style="font-size:1.6rem; font-weight:800; color:var(--text-primary);">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">giornalisti registrati</div>
+                </div>
+                <div class="glass-card" style="padding:1.2rem;">
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:4px;">Testate Monitorate</div>
+                    <div id="crmTotalOutlets" style="font-size:1.6rem; font-weight:800; color:var(--accent-primary);">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">quotidiani, tv e web</div>
+                </div>
+                <div class="glass-card" style="padding:1.2rem;">
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:4px;">Settori Tematici</div>
+                    <div id="crmTotalBeats" style="font-size:1.6rem; font-weight:800; color:var(--success);">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">categorie attive</div>
+                </div>
+            </div>
+
+            <!-- Search & Filters Toolbar -->
+            <div class="glass-card" style="padding:1rem; margin-bottom:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div style="flex:1; min-width:260px; position:relative;">
+                        <input type="text" id="crmSearchInput" placeholder="Cerca per nome giornalista, testata, email..." style="width:100%; padding:9px 12px 9px 36px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;" oninput="filterCrmContacts()">
+                        <i data-feather="search" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-muted);"></i>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <select id="crmBeatFilter" style="padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;" onchange="filterCrmContacts()">
+                            <option value="tutti">Tutti i Settori</option>
+                            <option value="economia">Economia & Finanza</option>
+                            <option value="tecnologia">Tecnologia & AI</option>
+                            <option value="cronaca">Cronaca & Territorio</option>
+                            <option value="politica">Politica & Istituzioni</option>
+                            <option value="sanita">Sanità & Salute</option>
+                            <option value="lifestyle">Lifestyle & Cultura</option>
+                            <option value="generale">Generale</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Table -->
+            <div class="glass-card" style="padding:0; overflow:hidden;">
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+                        <thead>
+                            <tr style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border-color); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px;">
+                                <th style="padding:12px 16px;">Giornalista</th>
+                                <th style="padding:12px 16px;">Testata & Ruolo</th>
+                                <th style="padding:12px 16px;">Settore</th>
+                                <th style="padding:12px 16px;">Recapiti</th>
+                                <th style="padding:12px 16px;">Note</th>
+                                <th style="padding:12px 16px; text-align:right;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crmContactsTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                                    Caricamento contatti in corso...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1396,6 +1525,181 @@
         </div>
     </div>
 
+    <!-- Morning Executive Digest Modal -->
+    <div id="morningDigestModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="zap" style="color:var(--accent-primary); width:20px; height:20px;"></i>
+                    <span>Morning Executive Digest <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Briefing 8:00 AM)</span></span>
+                </h3>
+                <button class="btn-icon" onclick="closeMorningDigestModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="digestLoading" style="text-align:center; padding:3rem 1rem;">
+                <div class="spinner" style="width:36px; height:36px; margin: 0 auto 1rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Elaborazione del briefing esecutivo tramite AI in corso...</p>
+            </div>
+
+            <!-- Digest Content View -->
+            <div id="digestContentView" class="hidden">
+                <div style="background:rgba(124,92,255,0.06); border:1px solid rgba(124,92,255,0.25); border-radius:10px; padding:1rem; margin-bottom:1.25rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent-primary); font-weight:700; margin-bottom:4px;">Oggetto Email Suggerito:</div>
+                    <div id="digestSubject" style="font-weight:700; font-size:0.95rem; color:var(--text-primary);"></div>
+                </div>
+
+                <div style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; padding:1.25rem; margin-bottom:1.5rem; max-height:360px; overflow-y:auto;" id="digestPreviewHtml">
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border-color); padding-top:1rem;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-gradient btn-sm" onclick="copyDigestEmail()">
+                            <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Formato Email
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="copyDigestWhatsApp()">
+                            <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-subtle-alt btn-sm" onclick="openDigestMailto()">
+                        <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Web Review Modal -->
+    <div id="shareReviewModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 520px; width: 90%; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                <h3 style="margin:0; font-size: 1.2rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="share-2" style="color:var(--accent-primary); width:18px; height:18px;"></i>
+                    <span>Condividi Rassegna con il Cliente</span>
+                </h3>
+                <button class="btn-icon" onclick="closeShareModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.5;">
+                Questo link consente al cliente di consultare la rassegna online su smartphone o PC con grafica white-label personalizzata, filtri per testata e download PDF integrato.
+            </p>
+
+            <div class="field-group" style="margin-bottom:1.25rem;">
+                <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Link Pubblico Protetto</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="shareReviewUrlInput" readonly style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; font-family:monospace;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="copyShareReviewUrl()" style="white-space:nowrap;">
+                        <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia
+                    </button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                <a id="btnOpenSharePortalLink" href="#" target="_blank" class="btn btn-outline" style="flex:1; text-align:center; justify-content:center; text-decoration:none; font-size:0.85rem;">
+                    <i data-feather="external-link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Visualizza Portale
+                </a>
+                <a id="btnShareWhatsAppLink" href="#" target="_blank" class="btn btn-gradient" style="flex:1; text-align:center; justify-content:center; text-decoration:none; font-size:0.85rem; background:linear-gradient(135deg, #25D366, #128C7E);">
+                    <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Invia su WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Media Contact Modal -->
+    <div id="addContactModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 520px; width: 90%; max-height: 90vh; overflow-y:auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                <h3 id="contactModalTitle" style="margin:0; font-size: 1.2rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="user-plus" style="color:var(--accent-primary); width:18px; height:18px;"></i>
+                    <span>Nuovo Contatto Giornalista</span>
+                </h3>
+                <button class="btn-icon" onclick="closeContactModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <form id="mediaContactForm" onsubmit="saveMediaContact(event)">
+                <input type="hidden" id="contactEditId" value="">
+
+                <div class="field-group" style="margin-bottom:1rem;">
+                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Nome e Cognome Giornalista *</label>
+                    <input type="text" id="contactModalName" required placeholder="Es. Giuseppe Rossi" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+                    <div class="field-group">
+                        <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Testata / Network *</label>
+                        <input type="text" id="contactModalOutlet" required placeholder="Es. Il Sole 24 Ore" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    </div>
+                    <div class="field-group">
+                        <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Ruolo / Qualifica</label>
+                        <input type="text" id="contactModalRole" placeholder="Es. Caposervizio Finanza" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+                    <div class="field-group">
+                        <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Settore Tematico</label>
+                        <select id="contactModalBeat" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="economia">Economia & Finanza</option>
+                            <option value="tecnologia">Tecnologia & AI</option>
+                            <option value="cronaca">Cronaca & Territorio</option>
+                            <option value="politica">Politica & Istituzioni</option>
+                            <option value="sanita">Sanità & Salute</option>
+                            <option value="lifestyle">Lifestyle & Cultura</option>
+                            <option value="generale">Generale</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Email Redazione/Diretta *</label>
+                        <input type="email" id="contactModalEmail" required placeholder="g.rossi@quotidiano.it" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    </div>
+                </div>
+
+                <div class="field-group" style="margin-bottom:1rem;">
+                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Telefono / WhatsApp</label>
+                    <input type="tel" id="contactModalPhone" placeholder="+39 340 1234567" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                </div>
+
+                <div class="field-group" style="margin-bottom:1.5rem;">
+                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Note & Storico Pubblicazioni</label>
+                    <textarea id="contactModalNotes" rows="3" placeholder="Es. Segue temi di digital transformation, preferisce invio comunicati martedì mattina..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeContactModal()">Annulla</button>
+                    <button type="submit" class="btn btn-gradient btn-sm"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Salva Contatto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Contacts Modal -->
+    <div id="importContactsModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y:auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                <h3 style="margin:0; font-size: 1.2rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="upload" style="color:var(--accent-primary); width:18px; height:18px;"></i>
+                    <span>Importazione Massiva Contatti Stampa</span>
+                </h3>
+                <button class="btn-icon" onclick="closeImportContactsModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                Incolla le righe dei tuoi contatti (da Excel o CSV). Formato supportato:<br>
+                <code style="font-size:0.75rem; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">Nome, Testata, Ruolo, Settore, Email, Telefono</code>
+            </p>
+
+            <textarea id="importContactsTextarea" rows="8" placeholder="Mario Rossi, Corriere della Sera, Caposervizio, Economia, m.rossi@corriere.it, +393401234567&#10;Anna Bianchi, Ansa, Giornalista, Tecnologia, a.bianchi@ansa.it, +393489876543" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.82rem; font-family:monospace; line-height:1.6; margin-bottom:1rem;"></textarea>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                <span id="importContactsCount" style="font-size:0.8rem; color:var(--text-muted);">0 contatti rilevati</span>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeImportContactsModal()">Annulla</button>
+                    <button type="button" class="btn btn-gradient btn-sm" onclick="executeImportContacts()"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Importa Ora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
         // Auth check
@@ -1498,7 +1802,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260909_01"></script>
+    <script src="app.js?v=20260911_01"></script>
     <script src="ui.js"></script>
 </body>
 </html>
