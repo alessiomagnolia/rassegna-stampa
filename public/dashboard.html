@@ -20,41 +20,43 @@
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.25rem; height: 56px; position:relative;">
+    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.5rem; height: 64px; position:relative;">
         <!-- LEFT: Sidebar toggle + Company Name -->
-        <div class="nav-left" style="display:flex; align-items:center; gap:0.75rem;">
-            <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu">
-                <span></span><span></span><span></span>
+        <div class="nav-left" style="display:flex; align-items:center; gap:0.9rem;">
+            <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu" style="width:42px; height:42px; border-radius:10px; gap:5.5px;">
+                <span style="width:20px; height:2.5px;"></span>
+                <span style="width:20px; height:2.5px;"></span>
+                <span style="width:20px; height:2.5px;"></span>
             </button>
             <!-- Company Name -->
-            <div class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:4px 10px; border-radius:8px; border:1px solid var(--border-color); cursor:pointer; font-weight:700; font-size:0.85rem; color:var(--text-primary); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                <i data-feather="user" style="width:14px;height:14px;color:var(--accent-primary);flex-shrink:0;"></i>
+            <div class="nav-company" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="display:flex; align-items:center; gap:8px; background:var(--bg-secondary); padding:6px 13px; border-radius:10px; border:1px solid var(--border-color); cursor:pointer; font-weight:700; font-size:0.95rem; color:var(--text-primary); max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                <i data-feather="user" style="width:16px;height:16px;color:var(--accent-primary);flex-shrink:0;"></i>
                 <span id="navCompanyHeader" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">La Tua Azienda</span>
             </div>
         </div>
 
         <!-- CENTER: Platform Name (Home Button) -->
         <div class="nav-center" style="position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; pointer-events:auto;">
-            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" title="Torna alla Home" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer; display:flex; align-items:center; gap:0.4rem; white-space:nowrap;">
+            <a href="#" class="nav-brand" onclick="document.querySelector('[data-page=home]').click(); return false;" title="Torna alla Home" style="font-size:1.32rem; font-weight:800; color:var(--text-primary); text-decoration:none; cursor:pointer; display:flex; align-items:center; gap:0.45rem; white-space:nowrap; letter-spacing:-0.01em;">
                 Rassegna Stampa
             </a>
         </div>
 
         <!-- RIGHT: Client Selector + Desktop Upgrade -->
-        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:10px;">
             <!-- Desktop Only: Upgrade Button -->
-            <button id="btnUpgradePlanHeader" class="btn btn-gradient btn-sm hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="padding:4px 10px; font-size:0.75rem; font-weight:700; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase;">
-                <i data-feather="zap" style="width:13px;height:13px;"></i> Upgrade
+            <button id="btnUpgradePlanHeader" class="btn btn-gradient btn-sm hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="padding:6px 14px; font-size:0.82rem; font-weight:700; border-radius:10px; display:flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase;">
+                <i data-feather="zap" style="width:15px;height:15px;"></i> Upgrade
             </button>
 
             <!-- Client Selector Box -->
-            <div class="client-selector-box" style="display:flex; align-items:center; gap:4px; background:var(--bg-secondary); padding:3px 6px; border-radius:8px; border:1px solid var(--border-color);">
-                <i data-feather="user-check" style="width:14px;height:14px;color:var(--accent-primary);"></i>
-                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.8rem; cursor:pointer; max-width:140px;">
+            <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:5px 10px; border-radius:10px; border:1px solid var(--border-color);">
+                <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
+                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.88rem; cursor:pointer; max-width:160px; height:26px;">
                     <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
-                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:2px 4px; border:none; background:transparent; cursor:pointer;">
-                    <i data-feather="plus" style="width:14px;height:14px;"></i>
+                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:3px 6px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                    <i data-feather="plus" style="width:15px;height:15px;"></i>
                 </button>
             </div>
         </div>
