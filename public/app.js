@@ -454,37 +454,45 @@ function renderArticles() {
         const imgSrc = article.imageBase64 || article.screenshotBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
         
         card.innerHTML = `
-            <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
-            <img src="${imgSrc}" class="article-thumb" alt="Thumb">
+            <div class="article-card-left">
+                <span class="drag-handle" title="Trascina per riordinare"><i data-feather="move"></i></span>
+                <img src="${imgSrc}" class="article-thumb" alt="Thumb">
+            </div>
             <div class="article-content">
-                <div class="article-meta" style="align-items: center; padding-right: 36px;">
-                    ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" style="max-height: 24px; margin-right: 8px;">` : ''}
-                    <span>${article.source_name} &bull; ${article.published_date}</span>
+                <div class="article-card-header">
+                    <div class="article-source-meta">
+                        ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" alt="Logo">` : ''}
+                        <span class="article-source-name">${article.source_name || 'Fonte'}</span>
+                        <span class="article-meta-dot">&bull;</span>
+                        <span class="article-date">${article.published_date || ''}</span>
+                    </div>
+                    <div class="article-category-pill">
+                        <select onchange="changeArticleType(event, ${idx})" class="article-category-select" title="Cambia Categoria / Tipo Fonte">
+                            <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>🌐 Web</option>
+                            <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>📰 Quotidiano Nazionale</option>
+                            <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>🏙️ Quotidiano Locale</option>
+                            <option value="Agenzia di Stampa" ${article.source_type === 'Agenzia di Stampa' ? 'selected' : ''}>⚡ Agenzia di Stampa</option>
+                            <option value="Periodico" ${article.source_type === 'Periodico' ? 'selected' : ''}>📑 Periodico</option>
+                            <option value="Radio/TV" ${article.source_type === 'Radio/TV' ? 'selected' : ''}>📺 Radio/TV</option>
+                        </select>
+                    </div>
                 </div>
-                <div style="margin-top: 5px; margin-bottom: 5px;">
-                    <select onchange="changeArticleType(event, ${idx})" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary);">
-                        <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>Web</option>
-                        <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>Quotidiano Nazionale</option>
-                        <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>Quotidiano Locale</option>
-                        <option value="Agenzia di Stampa" ${article.source_type === 'Agenzia di Stampa' ? 'selected' : ''}>Agenzia di Stampa</option>
-                        <option value="Periodico" ${article.source_type === 'Periodico' ? 'selected' : ''}>Periodico</option>
-                        <option value="Radio/TV" ${article.source_type === 'Radio/TV' ? 'selected' : ''}>Radio/TV</option>
-                    </select>
-                </div>
-                <div class="article-title">${article.title}</div>
-                <div class="article-excerpt">${article.excerpt}</div>
-                <div style="margin-top: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-right: 36px;">
-                    <label for="uploadLogo_${idx}" class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 9px; font-size:0.75rem; font-weight:500; font-family:inherit; text-transform:none; letter-spacing:normal; border-radius:6px; border:1px solid rgba(255,255,255,0.28); color:rgba(255,255,255,0.85); background:transparent; white-space:nowrap; box-sizing:border-box; flex-shrink:0;">
-                        <i data-feather="image" style="width:12px;height:12px;flex-shrink:0;"></i> Cambia logo
-                    </label>
-                    <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="copyArticleLink(${idx})" title="Copia link originale" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 9px; font-size:0.75rem; font-weight:500; font-family:inherit; text-transform:none; letter-spacing:normal; border-radius:6px; border:1px solid rgba(255,255,255,0.28); color:rgba(255,255,255,0.85); background:transparent; white-space:nowrap; box-sizing:border-box; flex-shrink:0;">
-                        <i data-feather="copy" style="width:12px;height:12px;flex-shrink:0;"></i> Copia link
-                    </button>
+                <div class="article-title">${article.title || 'Senza titolo'}</div>
+                <div class="article-excerpt">${article.excerpt || 'Nessun estratto disponibile per questo articolo.'}</div>
+                <div class="article-card-footer">
+                    <div class="article-card-actions-left">
+                        <label for="uploadLogo_${idx}" class="btn-card-action" title="Cambia il logo della testata">
+                            <i data-feather="image"></i> <span>Cambia logo</span>
+                        </label>
+                        <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
+                        <button type="button" class="btn-card-action" onclick="copyArticleLink(${idx})" title="Copia link originale">
+                            <i data-feather="copy"></i> <span>Copia link</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <button type="button" class="btn-icon btn-article-delete" onclick="removeArticle(${idx})" title="Rimuovi" aria-label="Rimuovi">
-                <i data-feather="trash-2" style="width:18px;height:18px;color:var(--danger, #ff4d6a);"></i>
+            <button type="button" class="btn-article-delete" onclick="removeArticle(${idx})" title="Rimuovi notizia" aria-label="Rimuovi notizia">
+                <i data-feather="trash-2"></i>
             </button>
         `;
         list.appendChild(card);
@@ -583,6 +591,13 @@ function changeArticleLogo(event, idx) {
         reader.readAsDataURL(file);
     }
 }
+
+window.changeArticleType = function(event, idx) {
+    if (state.articles[idx]) {
+        state.articles[idx].source_type = event.target.value;
+        sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
+    }
+};
 
 // --- PDF GENERATION & ARCHIVING ---
 
