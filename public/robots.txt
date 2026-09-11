@@ -1,0 +1,20 @@
+﻿# robots.txt for Rassegna Stampa Generator
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /assets/
+Allow: /logos/
+
+# Protect private dashboard and editor views from crawling
+Disallow: /dashboard.html
+Disallow: /editor.html
+Disallow: /admin.html
+Disallow: /press.html
+Disallow: /linkedin.html
+
+# Protect backend API endpoints and uploads
+Disallow: /api/
+Disallow: /uploads/
+
+# Sitemap reference
+Sitemap: /sitemap.xml
