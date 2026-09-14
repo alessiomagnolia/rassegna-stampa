@@ -811,10 +811,11 @@ function openEditor() {
     if (state.articles.length === 0) return;
     const title    = document.getElementById('rassegnaTitle')?.value.trim() || '';
     const clientName = document.getElementById('clientName')?.value.trim() || '';
+    const includeAnalytics = document.getElementById('includeAnalyticsPdf') ? document.getElementById('includeAnalyticsPdf').checked : true;
     const editorState = {
         articles: state.articles,
         currentReviewId: state.currentReviewId || null,
-        options: { title, clientName, clientLogo: state.clientLogoBase64 || null, templateId: selectedTemplateId }
+        options: { title, clientName, clientLogo: state.clientLogoBase64 || null, templateId: selectedTemplateId, includeAnalytics }
     };
     localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
     window.location.href = 'editor.html';

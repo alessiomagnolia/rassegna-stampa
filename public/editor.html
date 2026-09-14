@@ -601,8 +601,21 @@
         .pdf-cover-decor { width: 12%; height: 3px; background: linear-gradient(90deg, #7c5cff, #00d4aa); margin: 3% auto 4%; border-radius: 2px; }
         .pdf-cover-subtitle { font-size: clamp(8px, 1.8vw, 18pt); color: #555; font-family: 'Times New Roman', Times, serif; font-style: italic; margin-bottom: 2%; }
         .pdf-cover-date { font-size: clamp(6px, 1.3vw, 14pt); color: #888; letter-spacing: 2px; text-transform: uppercase; }
-        .pdf-cover-bottom { height: 15%; display: flex; align-items: flex-end; justify-content: center; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
+
+        /* KPI page preview */
+        .pdf-kpi-preview {
+            width: 100%; aspect-ratio: 210/297;
+            background: white; color: #333;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            position: relative; overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            padding: 6% 6%;
+            box-sizing: border-box;
+        }
 
         /* ============ RIGHT-OPENING EDIT PANEL DRAWER (FIXED AT RIGHT: 0) ============ */
         .desktop-edit-backdrop {
@@ -791,6 +804,10 @@
             <option value="modern" style="color: black;">⚡ Modern Executive</option>
             <option value="minimal" style="color: black;">📰 Minimal Editorial</option>
         </select>
+        <label class="hide-mobile" style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; color:rgba(255,255,255,0.9); cursor:pointer; background:rgba(255,255,255,0.08); padding:5px 9px; border-radius:6px; border:1px solid rgba(255,255,255,0.18); user-select:none; margin:0 2px;" title="Includi la pagina Executive Overview &amp; Metriche di impatto (KPI) nel PDF">
+            <input type="checkbox" id="editorIncludeKpi" style="width:14px; height:14px; accent-color:var(--accent-primary); cursor:pointer;">
+            <span style="font-weight:600;">Report KPI</span>
+        </label>
         <button id="btnGeneratePDF" class="btn btn-gradient btn-sm" style="padding:6px 10px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:4px;">
             <i data-feather="download" style="width:15px;height:15px;"></i> <span class="hide-mobile">Genera PDF</span>
         </button>
@@ -1263,6 +1280,16 @@
             <span style="color:white; font-size:0.82rem; font-weight:600;">Attiva Fascia Scura per Loghi Bianchi</span>
         </div>
     </div>
+    <div class="field-group" style="margin-bottom:1.25rem;">
+        <label style="color:white; font-size:0.8rem; font-weight:600;">Report Metriche &amp; KPI</label>
+        <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.75rem; background:rgba(0,0,0,0.3); border-radius:8px; border:1px solid rgba(255,255,255,0.15);">
+            <label class="toggle-switch">
+                <input type="checkbox" id="mobileIncludeKpiToggle">
+                <span class="toggle-slider"></span>
+            </label>
+            <span style="color:white; font-size:0.82rem; font-weight:600;">Includi Pagina KPI &amp; Sentiment nel PDF</span>
+        </div>
+    </div>
     <button type="button" class="btn btn-primary" onclick="saveMobilePdfOptions(); closePdfSheets();" style="width:100%; height:44px; font-weight:700;">Salva Impostazioni</button>
 </div>
 
@@ -1323,6 +1350,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Initialize KPI option
+    if (options.includeAnalytics === undefined) {
+        options.includeAnalytics = true;
+    }
+    const kpiCheckbox = document.getElementById('editorIncludeKpi');
+    const mobileKpiCheckbox = document.getElementById('mobileIncludeKpiToggle');
+    if (kpiCheckbox) {
+        kpiCheckbox.checked = !!options.includeAnalytics;
+        kpiCheckbox.addEventListener('change', (e) => {
+            toggleKpiPage(e.target.checked);
+        });
+    }
+    if (mobileKpiCheckbox) {
+        mobileKpiCheckbox.checked = !!options.includeAnalytics;
+        mobileKpiCheckbox.addEventListener('change', (e) => {
+            toggleKpiPage(e.target.checked);
+        });
+    }
+
     updatePageCounters();
     renderPagesList();
     if (window.innerWidth > 900 && articles.length > 0) {
@@ -1338,8 +1384,35 @@ document.addEventListener('DOMContentLoaded', () => {
     pushUndoState();
 });
 
+function toggleKpiPage(enabled) {
+    options.includeAnalytics = !!enabled;
+    const kpiCheckbox = document.getElementById('editorIncludeKpi');
+    const mobileKpiCheckbox = document.getElementById('mobileIncludeKpiToggle');
+    if (kpiCheckbox) kpiCheckbox.checked = options.includeAnalytics;
+    if (mobileKpiCheckbox) mobileKpiCheckbox.checked = options.includeAnalytics;
+
+    try {
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    } catch(e) {}
+
+    updatePageCounters();
+    renderPagesList();
+
+    if (options.includeAnalytics) {
+        selectPage(-2);
+        showToast('Pagina Report KPI aggiunta al PDF', 'success');
+    } else {
+        if (selectedIdx === -2) {
+            selectPage(articles.length > 0 ? 0 : -1);
+        }
+        showToast('Pagina Report KPI esclusa dal PDF', 'info');
+    }
+    pushUndoState();
+}
+window.toggleKpiPage = toggleKpiPage;
+
 function updatePageCounters() {
-    const totalPages = articles.length + (hasCover ? 1 : 0);
+    const totalPages = articles.length + (hasCover ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
 
     const countEl = document.getElementById('editorArticleCount');
     if (countEl) {
@@ -1362,14 +1435,14 @@ function renderPagesList() {
     if (container) container.innerHTML = '';
     if (mobContainer) mobContainer.innerHTML = '';
 
-    // Cover page thumb (if title set)
+    // 1. Cover page thumb (if title set)
     if (hasCover) {
         const el = document.createElement('div');
         el.className = 'page-thumb' + (selectedIdx === -1 ? ' active' : '');
         el.dataset.coverPage = '1';
         el.innerHTML = `
             <div class="page-thumb-info">
-                <div class="page-thumb-num">COPERTINA</div>
+                <div class="page-thumb-num">PAG 1 &bull; COPERTINA</div>
                 <div class="page-thumb-title">${escHtml(options.title)}</div>
             </div>`;
         const mEl = el.cloneNode(true);
@@ -1379,7 +1452,27 @@ function renderPagesList() {
         if (mobContainer) mobContainer.appendChild(mEl);
     }
 
-    // Article page thumbs
+    // 2. KPI Report page thumb (if enabled)
+    if (options.includeAnalytics) {
+        const kpiPageNum = hasCover ? 2 : 1;
+        const el = document.createElement('div');
+        el.className = 'page-thumb' + (selectedIdx === -2 ? ' active' : '');
+        el.dataset.kpiPage = '1';
+        el.innerHTML = `
+            <div class="page-thumb-info">
+                <div class="page-thumb-num" style="color:var(--accent-primary); font-weight:800;">PAG ${kpiPageNum} &bull; KPI</div>
+                <div class="page-thumb-title">Executive Overview &amp; Metriche</div>
+                <div class="page-thumb-source" style="color:#10b981; font-weight:600;">Report di Impatto</div>
+            </div>`;
+        const mEl = el.cloneNode(true);
+        el.addEventListener('click', () => selectPage(-2));
+        mEl.addEventListener('click', () => { selectPage(-2); closePdfSheets(); });
+        if (container) container.appendChild(el);
+        if (mobContainer) mobContainer.appendChild(mEl);
+    }
+
+    // 3. Article page thumbs
+    const baseOffset = (hasCover ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
     articles.forEach((art, idx) => {
         const el = document.createElement('div');
         el.className = 'page-thumb' + (selectedIdx === idx ? ' active' : '');
@@ -1389,7 +1482,7 @@ function renderPagesList() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; opacity:0.75;"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
             </span>
             <div class="page-thumb-info">
-                <div class="page-thumb-num">PAG ${hasCover ? idx + 2 : idx + 1}</div>
+                <div class="page-thumb-num">PAG ${idx + 1 + baseOffset}</div>
                 <div class="page-thumb-title">${escHtml(art.title)}</div>
                 <div class="page-thumb-source">${escHtml(art.source_name || '')}</div>
             </div>`;
@@ -1425,6 +1518,8 @@ function selectPage(idx) {
     document.querySelectorAll('.page-thumb').forEach(el => el.classList.remove('active'));
     if (idx === -1) {
         document.querySelectorAll('[data-cover-page]').forEach(el => el.classList.add('active'));
+    } else if (idx === -2) {
+        document.querySelectorAll('[data-kpi-page]').forEach(el => el.classList.add('active'));
     } else {
         document.querySelectorAll(`[data-idx="${idx}"]`).forEach(el => el.classList.add('active'));
     }
@@ -1434,17 +1529,28 @@ function selectPage(idx) {
     const editBtn = document.getElementById('btnEditPage');
     
     const total = articles.length;
-    const pageNum = idx === -1 ? 1 : (hasCover ? idx + 2 : idx + 1);
-    const totalPages = hasCover ? total + 1 : total;
+    const baseOffset = (hasCover ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
+    const pageNum = idx === -1 ? 1 : (idx === -2 ? (hasCover ? 2 : 1) : idx + 1 + baseOffset);
+    const totalPages = total + baseOffset;
 
     const mobIndicator = document.getElementById('mobilePdfPageIndicator');
     if (mobIndicator) {
-        mobIndicator.textContent = idx === -1 ? `Copertina (${pageNum} di ${totalPages})` : `Pagina ${pageNum} di ${totalPages}`;
+        if (idx === -1) {
+            mobIndicator.textContent = `Copertina (${pageNum} di ${totalPages})`;
+        } else if (idx === -2) {
+            mobIndicator.textContent = `Report KPI (${pageNum} di ${totalPages})`;
+        } else {
+            mobIndicator.textContent = `Pagina ${pageNum} di ${totalPages}`;
+        }
     }
 
     if (idx === -1) {
         // Cover
         previewEl.innerHTML = renderCoverPreview();
+        if (editBtn) editBtn.style.display = 'none';
+    } else if (idx === -2) {
+        // KPI Report
+        previewEl.innerHTML = renderKpiPreview();
         if (editBtn) editBtn.style.display = 'none';
     } else {
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
@@ -1537,6 +1643,213 @@ function buildKeywordRegex(title, clientName) {
 function boldKeywords(text, regex) {
     if (!regex || !text) return text;
     return text.replace(regex, '<strong style="color:#1a1a2e;font-weight:700;">$1</strong>');
+}
+
+// ============================================================
+// KPI PAGE PREVIEW & ANALYTICS COMPUTATION
+// ============================================================
+function computeEditorAnalytics(articlesList) {
+    const arts = Array.isArray(articlesList) ? articlesList : [];
+    const count = arts.length;
+    const seenSources = new Set();
+    const sourceCounts = {};
+    let totalAudience = 0;
+    let totalReads = 0;
+    let posCount = 0;
+    let criCount = 0;
+    let neuCount = 0;
+    let tier1 = 0, tier2 = 0, tier3 = 0;
+
+    const posWords = ['crescita', 'record', 'successo', 'positivo', 'premi', 'investimento', 'sviluppo', 'leadership', 'innova', 'utile', 'espansione', 'eccellenza', 'trionfo', 'accordo', 'partnership', 'vince'];
+    const negWords = ['crisi', 'crollo', 'calo', 'scandalo', 'arrest', 'truffa', 'perdita', 'chiusura', 'polemica', 'difficoltà', 'licenzia', 'denuncia', 'indagine', 'multa', 'fallimento', 'scontro'];
+
+    arts.forEach(art => {
+        const src = ((art.source_name || '') + ' ' + (art.url || '')).toLowerCase();
+        const normKey = (art.source_name || 'media').trim();
+        const type = art.source_type || 'Web';
+        const text = ((art.title || '') + ' ' + (art.excerpt || '')).toLowerCase();
+
+        sourceCounts[normKey] = (sourceCounts[normKey] || 0) + 1;
+
+        let dayAudience = 25000;
+        let readRate = 0.035;
+        let tier = 3;
+
+        if (src.includes('corriere')) { dayAudience = 3500000; readRate = 0.012; tier = 1; }
+        else if (src.includes('repubblica')) { dayAudience = 3150000; readRate = 0.012; tier = 1; }
+        else if (src.includes('sole')) { dayAudience = 1350000; readRate = 0.018; tier = 1; }
+        else if (src.includes('ansa')) { dayAudience = 2600000; readRate = 0.013; tier = 1; }
+        else if (src.includes('stampa')) { dayAudience = 1150000; readRate = 0.014; tier = 1; }
+        else if (src.includes('messaggero')) { dayAudience = 1450000; readRate = 0.013; tier = 1; }
+        else if (src.includes('fanpage')) { dayAudience = 2200000; readRate = 0.014; tier = 1; }
+        else if (src.includes('tgcom')) { dayAudience = 1950000; readRate = 0.012; tier = 1; }
+        else if (src.includes('sky')) { dayAudience = 1400000; readRate = 0.013; tier = 1; }
+        else if (src.includes('fatto')) { dayAudience = 1250000; readRate = 0.014; tier = 1; }
+        else if (src.includes('giornale') || src.includes('libero')) { dayAudience = 800000; readRate = 0.014; tier = 2; }
+        else if (src.includes('finanza') || src.includes('forbes') || src.includes('italiaoggi')) { dayAudience = 320000; readRate = 0.022; tier = 2; }
+        else if (type === 'Quotidiano Nazionale' || type === 'Agenzia di Stampa') { dayAudience = 750000; readRate = 0.015; tier = 1; }
+        else if (type === 'Quotidiano Locale' || type === 'Periodico' || src.includes('carlino') || src.includes('nazione') || src.includes('giorno') || src.includes('mattino')) { dayAudience = 220000; readRate = 0.018; tier = 2; }
+
+        if (tier === 1) tier1++;
+        else if (tier === 2) tier2++;
+        else tier3++;
+
+        const normKeyLower = normKey.toLowerCase();
+        if (!seenSources.has(normKeyLower)) {
+            seenSources.add(normKeyLower);
+            totalAudience += dayAudience;
+        }
+
+        const occ = sourceCounts[normKey];
+        const mult = occ === 1 ? 1.0 : (occ === 2 ? 0.75 : 0.5);
+        totalReads += Math.max(10, Math.round(dayAudience * readRate * mult));
+
+        let p = 0, n = 0;
+        posWords.forEach(w => { if (text.includes(w)) p++; });
+        negWords.forEach(w => { if (text.includes(w)) n++; });
+        if (p > n) posCount++;
+        else if (n > p) criCount++;
+        else neuCount++;
+    });
+
+    function fmt(n) {
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return Math.round(n / 1000) + 'K';
+        return n.toString();
+    }
+
+    const posPct = count > 0 ? Math.round((posCount / count) * 100) : 0;
+    const criPct = count > 0 ? Math.round((criCount / count) * 100) : 0;
+    const neuPct = count > 0 ? 100 - posPct - criPct : 100;
+
+    let sentimentLabel = 'Neutro';
+    if (posCount > criCount) sentimentLabel = 'Positivo';
+    else if (criCount > posCount) sentimentLabel = 'Critico';
+
+    const topOutlets = Object.keys(sourceCounts)
+        .map(k => ({ name: k, count: sourceCounts[k] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+    return {
+        totalArticles: count,
+        uniqueOutlets: seenSources.size,
+        formattedAudience: fmt(totalAudience),
+        formattedReads: fmt(totalReads),
+        overallSentiment: sentimentLabel,
+        posPct, neuPct, criPct,
+        tier1, tier2, tier3,
+        topOutlets
+    };
+}
+
+function renderKpiPreview() {
+    const a = computeEditorAnalytics(articles);
+    const clientName = options.clientName || '';
+
+    return `
+    <div class="pdf-kpi-preview">
+        <div>
+            <!-- Header -->
+            <div style="border-bottom: 2px solid #1a1a2e; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #7c5cff; margin-bottom: 3px;">Executive Overview &amp; PR Intelligence</div>
+                    <div style="font-size: 16pt; font-weight: 700; color: #1a1a2e; font-family: 'Helvetica Neue', Arial, sans-serif;">Rapporto di Impatto e Visibilità Media</div>
+                </div>
+                <div style="text-align: right; font-size: 8pt; color: #666;">
+                    ${clientName ? `<div>Cliente: <strong>${escHtml(clientName)}</strong></div>` : ''}
+                    <div>Uscite analizzate: <strong>${a.totalArticles}</strong></div>
+                </div>
+            </div>
+
+            <!-- Top 5 KPI Cards -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 6px; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 4px;">Uscite Totali</div>
+                    <div style="font-size: 15pt; font-weight: 800; color: #1a1a2e;">${a.totalArticles}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 2px;">ritagli stampa</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 6px; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 4px;">Testate Monitorate</div>
+                    <div style="font-size: 15pt; font-weight: 800; color: #1a1a2e;">${a.uniqueOutlets}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 2px;">fonti uniche</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 6px; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 4px;">Audience Testate</div>
+                    <div style="font-size: 15pt; font-weight: 800; color: #7c5cff;">~${a.formattedAudience}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 2px;">bacino netto OTS</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 6px; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 4px;">Letture Stimate</div>
+                    <div style="font-size: 15pt; font-weight: 800; color: #0284c7;">~${a.formattedReads}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 2px;">modello AMEC</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 6px; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 4px;">Sentiment</div>
+                    <div style="font-size: 12pt; font-weight: 700; color: ${a.overallSentiment === 'Positivo' ? '#059669' : (a.overallSentiment === 'Critico' ? '#dc2626' : '#d97706')}; padding-top: 3px;">${a.overallSentiment}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 2px;">tono prevalente</div>
+                </div>
+            </div>
+
+            <!-- Sentiment Distribution Section -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155;">Distribuzione Sentiment Copertura</div>
+                    <div style="font-size: 7.5pt; color: #64748b;">
+                        <span style="color: #059669; font-weight: 700;">● Positivo: ${a.posPct}%</span> &nbsp;|&nbsp; 
+                        <span style="color: #64748b; font-weight: 700;">● Neutro: ${a.neuPct}%</span> &nbsp;|&nbsp; 
+                        <span style="color: #dc2626; font-weight: 700;">● Critico: ${a.criPct}%</span>
+                    </div>
+                </div>
+                <div style="display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: #e2e8f0;">
+                    ${a.posPct > 0 ? `<div style="width: ${a.posPct}%; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${a.posPct > 8 ? a.posPct + '%' : ''}</div>` : ''}
+                    ${a.neuPct > 0 ? `<div style="width: ${a.neuPct}%; background: #94a3b8; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${a.neuPct > 8 ? a.neuPct + '%' : ''}</div>` : ''}
+                    ${a.criPct > 0 ? `<div style="width: ${a.criPct}%; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-size: 7pt; font-weight: bold;">${a.criPct > 8 ? a.criPct + '%' : ''}</div>` : ''}
+                </div>
+            </div>
+
+            <!-- Media Breakdown & Top Sources Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">
+                        Ripartizione Autorevolezza Testate
+                    </div>
+                    <div style="font-size: 8pt; line-height: 2;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 1</strong> &mdash; Grandi Quotidiani &amp; Network:</span>
+                            <strong>${a.tier1} articoli</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 2</strong> &mdash; Testate Regionali &amp; Settoriali:</span>
+                            <strong>${a.tier2} articoli</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Tier 3</strong> &mdash; Portali Digitali &amp; Web Media:</span>
+                            <strong>${a.tier3} articoli</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                    <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">
+                        Principali Testate Rilevate
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+                        ${a.topOutlets.map((out, idx) => `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 4px 0; color: #475569;">${idx + 1}. <strong>${escHtml(out.name)}</strong></td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: bold; color: #1e293b;">${out.count} ${out.count === 1 ? 'uscita' : 'uscite'}</td>
+                        </tr>`).join('')}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Notice -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 7pt; color: #94a3b8; display: flex; justify-content: space-between;">
+            <span>Metodologia: Dati basati su benchmark giorno medio Audiweb/ADS con deduplicazione netta delle fonti e modello AMEC per le letture stimate.</span>
+        </div>
+    </div>`;
 }
 
 function renderCoverPreview() {
@@ -2255,7 +2568,8 @@ async function generateAndDownload() {
                 title: title || options.title || '',
                 clientName: options.clientName || '',
                 clientLogo: options.clientLogo || '',
-                templateId: options.templateId || 'classic'
+                templateId: options.templateId || 'classic',
+                includeAnalytics: !!options.includeAnalytics
             })
         });
         const data = await res.json();
@@ -2667,6 +2981,8 @@ function openPdfSheet(sheetId, btn) {
         if (cInput) cInput.value = options.clientName || '';
         if (uInput && art) uInput.value = art.url || '';
         if (dToggle && art) dToggle.checked = !!art.darkHeader;
+        const kToggle = document.getElementById('mobileIncludeKpiToggle');
+        if (kToggle) kToggle.checked = options.includeAnalytics !== false;
     }
 }
 
@@ -2676,16 +2992,21 @@ function closePdfSheets() {
     document.querySelectorAll('.canva-bottom-sheet').forEach(s => s.classList.remove('open'));
 }
 
+function getPageOrder() {
+    const list = [];
+    if (hasCover) list.push(-1);
+    if (options.includeAnalytics) list.push(-2);
+    for (let i = 0; i < articles.length; i++) list.push(i);
+    return list;
+}
+
 function navigatePdfPage(direction) {
-    const total = articles.length;
-    const maxIdx = total - 1;
-    const minIdx = hasCover ? -1 : 0;
-
-    let newIdx = selectedIdx + direction;
-    if (newIdx > maxIdx) newIdx = minIdx;
-    if (newIdx < minIdx) newIdx = maxIdx;
-
-    selectPage(newIdx);
+    const order = getPageOrder();
+    if (order.length === 0) return;
+    let currPos = order.indexOf(selectedIdx);
+    if (currPos === -1) currPos = 0;
+    let newPos = (currPos + direction + order.length) % order.length;
+    selectPage(order[newPos]);
 }
 
 // ============================================================
@@ -2773,6 +3094,12 @@ function saveMobilePdfOptions() {
 
     if (titleVal !== undefined) options.title = titleVal;
     if (clientVal !== undefined) options.clientName = clientVal;
+    const kpiVal = document.getElementById('mobileIncludeKpiToggle')?.checked;
+    if (kpiVal !== undefined) {
+        options.includeAnalytics = kpiVal;
+        const desktopKpi = document.getElementById('editorIncludeKpi');
+        if (desktopKpi) desktopKpi.checked = kpiVal;
+    }
 
     if (selectedIdx >= 0 && articles[selectedIdx]) {
         if (urlVal !== undefined) articles[selectedIdx].url = urlVal;
