@@ -575,20 +575,39 @@ window.copyAllLinksTextarea = function() {
 function initArticlesSortable() {
     if (typeof Sortable === 'undefined') return;
     const list = document.getElementById('articlesList');
-    if (!list || list._sortable) return; // avoid double init
+    if (!list) return;
+
+    // Distrugge eventuale istanza precedente per evitare riferimenti obsoleti o listener duplicati
+    if (list._sortable) {
+        try { list._sortable.destroy(); } catch (e) {}
+        list._sortable = null;
+    }
+
+    const cards = list.querySelectorAll('.article-card');
+    if (cards.length < 2) return;
+
     list._sortable = Sortable.create(list, {
         handle: '.drag-handle',
+        draggable: '.article-card',
         animation: 200,
         ghostClass: 'article-card--ghost',
         chosenClass: 'article-card--chosen',
-        filter: '#emptyArticles',
+        fallbackOnBody: true,
+        swapThreshold: 0.65,
         onEnd(evt) {
-            const oldIdx = evt.oldIndex;
-            const newIdx = evt.newIndex;
-            if (oldIdx === newIdx) return;
-            const [moved] = state.articles.splice(oldIdx, 1);
-            state.articles.splice(newIdx, 0, moved);
-            renderArticles(); // re-render to fix indices in onclick handlers
+            // Legge il nuovo ordine effettivo degli elementi nel DOM tramite i loro data-idx originali
+            const currentCards = Array.from(list.querySelectorAll('.article-card'));
+            if (!currentCards.length) return;
+
+            const newArticles = currentCards
+                .map(c => state.articles[parseInt(c.dataset.idx, 10)])
+                .filter(Boolean);
+
+            if (newArticles.length === state.articles.length) {
+                state.articles = newArticles;
+                sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
+                renderArticles();
+            }
         }
     });
 }
