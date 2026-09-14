@@ -305,11 +305,10 @@ function buildClassicHTML(articles, options) {
 
         .visual-zone {
             flex: 0 0 auto; margin: 0 5mm 10mm; text-align: center;
-            max-height: 70mm; overflow: hidden; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-height: 80mm; overflow: visible;
             display: flex; justify-content: center; align-items: center;
         }
-        .main-visual { width: 100%; height: auto; max-height: 70mm; object-fit: contain; object-position: top center; display: block; }
+        .main-visual { max-width: 100%; height: auto; max-height: 80mm; object-fit: contain; object-position: center; display: block; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
         .content-zone { flex: 1 1 auto; padding: 0 5mm; margin-bottom: 5mm; overflow: hidden; position: relative; }
         .content-text {
@@ -386,7 +385,7 @@ function buildClassicHTML(articles, options) {
         const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
         const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
         const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
-        const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160) ? article.customImageHeight : null;
+        const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260) ? article.customImageHeight : null;
         const visualZoneStyle = effectiveImgH ? `style="max-height: ${effectiveImgH}px; height: ${effectiveImgH}px;"` : '';
         const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
         const imgStyle = `style="object-position: center ${imgPosY}%; ${effectiveImgH ? `max-height:${effectiveImgH}px;` : ''}"`;

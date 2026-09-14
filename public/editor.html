@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_01">
+    <link rel="stylesheet" href="styles.css?v=20260914_02">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -543,8 +543,8 @@
         .pdf-title-zone { flex: 0 0 auto; padding: 0 1.9%; margin-bottom: 3%; border-left: 4px solid #7c5cff; }
         .pdf-source-label { font-size: clamp(5px, 0.9vw, 8pt); color: #888; font-weight: 600; text-transform: uppercase; margin-bottom: 0.75%; letter-spacing: 0.5px; }
         .pdf-article-title { font-size: clamp(9px, 2.2vw, 20pt); font-weight: 700; color: #1a1a2e; line-height: 1.3; }
-        .pdf-visual-zone { flex: 0 0 auto; margin: 0 1.9% 3.8%; height: 260px; max-height: 260px; overflow: hidden; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; background: #f8fafc; }
-        .pdf-main-visual { width: 100%; height: 100%; max-height: 100%; object-fit: cover !important; display: block; }
+        .pdf-visual-zone { flex: 0 0 auto; margin: 0 1.9% 3.8%; height: 320px; max-height: 320px; overflow: visible; display: flex; justify-content: center; align-items: center; background: transparent; }
+        .pdf-main-visual { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain !important; display: block; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .pdf-content-zone { flex: 1 1 auto; padding: 0 1.9%; margin-bottom: 1.9%; overflow: hidden; }
         .pdf-content-text { font-size: clamp(7px, 1.2vw, 11pt); line-height: 1.6; color: #333; text-align: justify; font-family: 'Times New Roman', Times, serif; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 20; }
         .pdf-footer {
@@ -948,11 +948,11 @@
                     <div class="slider-control-group">
                         <div class="slider-label-row">
                             <span>Altezza Riquadro Foto</span>
-                            <span id="editImgHeightBadge" class="val-badge">260px</span>
+                            <span id="editImgHeightBadge" class="val-badge">320px</span>
                         </div>
                         <div class="slider-inputs-row">
                             <button type="button" class="btn-step-sm" id="btnEditImgHeightMinus" title="Riduci altezza">−</button>
-                            <input type="range" class="range-slider-custom" id="editImgHeightSlider" min="100" max="420" step="5" value="260">
+                            <input type="range" class="range-slider-custom" id="editImgHeightSlider" min="100" max="450" step="5" value="320">
                             <button type="button" class="btn-step-sm" id="btnEditImgHeightPlus" title="Aumenta altezza">+</button>
                         </div>
                     </div>
@@ -1575,10 +1575,10 @@ function renderArticlePreview(art, pageNum, totalPages) {
     const logoHeight = art.customLogoHeight || 38;
     const logoStyle = `max-height:${logoHeight}px; height:${logoHeight}px; object-fit:contain;`;
     const sourceNameStyle = `${hdBg ? 'color:#fff;' : ''}${art.customSourceNameSize ? `font-size:${art.customSourceNameSize}px;` : ''}`;
-    const imgHeight = (art.customImageHeight && art.customImageHeight !== 160) ? art.customImageHeight : 260;
+    const imgHeight = (art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320;
     const imgPosY   = art.customImagePosY !== undefined ? art.customImagePosY : 50;
     const visualZoneStyle = `max-height:${imgHeight}px; height:${imgHeight}px;`;
-    const imgStyle = `object-position: center ${imgPosY}%; width:100%; height:100%; object-fit:cover !important; display:block;`;
+    const imgStyle = `max-height:${imgHeight}px; max-width:100%; width:auto; height:auto; object-fit:contain !important; display:block;`;
     const cleanExcerpt = (art.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
 
     return `
@@ -1718,7 +1718,7 @@ function fillEditForm(idx) {
         if (noImgNotice) noImgNotice.style.display = 'none';
         if (imgPrev) imgPrev.src = art.imageBase64;
 
-        const imgH = (art.customImageHeight && art.customImageHeight !== 160) ? art.customImageHeight : 260;
+        const imgH = (art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320;
         const imgHSlider = document.getElementById('editImgHeightSlider');
         const imgHBadge = document.getElementById('editImgHeightBadge');
         if (imgHSlider) imgHSlider.value = imgH;
@@ -2021,7 +2021,7 @@ function selectPreviewElement(el, scrollDrawer = true) {
         currentVal = (art.customSourceNameSize || 16) + 'px';
         if (imgTools) imgTools.style.display = 'none';
     } else if (type === 'image') {
-        currentVal = ((art.customImageHeight && art.customImageHeight !== 160) ? art.customImageHeight : 260) + 'px';
+        currentVal = ((art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320) + 'px';
         if (imgTools) imgTools.style.display = 'inline-flex';
     } else if (type === 'logo') {
         currentVal = (art.customLogoHeight || 38) + 'px';
@@ -2159,14 +2159,15 @@ function changeSelectedElementSize(delta) {
         const barVal = document.getElementById('selBarValue');
         if (barVal) barVal.textContent = val + 'px';
     } else if (type === 'image') {
-        let val = ((art.customImageHeight && art.customImageHeight !== 160) ? art.customImageHeight : 260) + (delta * 10);
-        val = Math.max(100, Math.min(420, Math.round(val)));
+        let val = ((art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320) + (delta * 10);
+        val = Math.max(100, Math.min(450, Math.round(val)));
         art.customImageHeight = val;
         const visualZone = selectedPreviewElem.closest('.pdf-visual-zone');
         if (visualZone) {
             visualZone.style.maxHeight = val + 'px';
             visualZone.style.height = val + 'px';
         }
+        selectedPreviewElem.style.maxHeight = val + 'px';
         const slider = document.getElementById('editImgHeightSlider');
         if (slider) slider.value = val;
         const badge = document.getElementById('editImgHeightBadge');
@@ -2417,7 +2418,7 @@ function initEvents() {
     document.getElementById('btnEditImgHeightPlus')?.addEventListener('click', () => {
         const slider = document.getElementById('editImgHeightSlider');
         if (!slider) return;
-        slider.value = Math.min(420, parseInt(slider.value) + 15);
+        slider.value = Math.min(450, parseInt(slider.value) + 15);
         document.getElementById('editImgHeightBadge').textContent = `${slider.value}px`;
         syncLivePreview();
     });
