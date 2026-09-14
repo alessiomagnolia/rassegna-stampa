@@ -36,13 +36,15 @@ const upload = multer({
     }
 });
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Register
 router.post('/register', async (req, res) => {
     try {
         const { email, password, company_name } = req.body;
 
-        if (!email || !password || password.length < 6) {
-            return res.status(400).json({ error: 'Dati mancanti o password troppo corta (minimo 6 caratteri).' });
+        if (!email || !EMAIL_REGEX.test(email.trim()) || !password || password.length < 6) {
+            return res.status(400).json({ error: 'Inserisci un indirizzo email valido e una password di almeno 6 caratteri.' });
         }
 
         const db = getDb();
@@ -79,8 +81,8 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Inserisci email e password.' });
+        if (!email || !EMAIL_REGEX.test(email.trim()) || !password) {
+            return res.status(400).json({ error: 'Inserisci un indirizzo email valido e la password.' });
         }
 
         const db = getDb();
@@ -145,7 +147,7 @@ router.put('/profile', authMiddleware, (req, res) => {
         
         db.prepare('UPDATE users SET company_name = ? WHERE id = ?').run(company_name, req.userId);
         
-        const user = db.prepare('SELECT id, email, company_name, logo_path FROM users WHERE id = ?').get(req.userId);
+        const user = db.prepare('SELECT id, email, company_name, logo_path, created_at FROM users WHERE id = ?').get(req.userId);
         res.json({ user });
     } catch (error) {
         console.error('Update profile error:', error);

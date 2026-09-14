@@ -197,8 +197,10 @@ function updateProfileUI() {
 
     if (user.logo_path) {
         const navLogo = document.getElementById('navLogo');
-        navLogo.src = user.logo_path;
-        navLogo.classList.remove('hidden');
+        if (navLogo) {
+            navLogo.src = user.logo_path;
+            navLogo.classList.remove('hidden');
+        }
     }
 
     // Profile Section
@@ -261,7 +263,7 @@ async function removeLogo() {
         await apiCall('DELETE', '/api/auth/logo');
         state.user.logo_path = '';
         updateProfileUI();
-        document.getElementById('navLogo').classList.add('hidden');
+        document.getElementById('navLogo')?.classList.add('hidden');
         showToast('Logo rimosso', 'success');
     } catch (error) {
         showToast(error.message, 'error');
@@ -334,15 +336,6 @@ async function addArticle() {
         loading.classList.add('hidden');
         urlInput.focus();
     }
-}
-
-async function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
 }
 
 async function saveManualArticle() {
@@ -498,10 +491,13 @@ function renderArticles() {
                 <div class="article-excerpt">${article.excerpt || 'Nessun estratto disponibile per questo articolo.'}</div>
                 <div class="article-card-footer">
                     <div class="article-card-actions-left">
-                        <label for="uploadLogo_${idx}" class="btn-card-action" title="Cambia il logo della testata">
-                            <i data-feather="image"></i> <span>Cambia logo</span>
+                        <label for="uploadLogo_${idx}" class="btn-card-action" title="Carica file logo dal tuo computer">
+                            <i data-feather="upload"></i> <span>Carica logo</span>
                         </label>
                         <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
+                        <button type="button" class="btn-card-action" onclick="openLogoArchive(${idx})" title="Scegli logo dall'archivio testate">
+                            <i data-feather="archive"></i> <span>Archivio loghi</span>
+                        </button>
                         <button type="button" class="btn-card-action" onclick="copyArticleLink(${idx})" title="Copia link originale">
                             <i data-feather="copy"></i> <span>Copia link</span>
                         </button>
@@ -1471,14 +1467,19 @@ async function selectLogoFromArchive(url) {
     if (currentEditingArticleIndex === -1) return;
     try {
         state.articles[currentEditingArticleIndex].logoBase64 = url;
+        state.articles[currentEditingArticleIndex].source_logo = url;
+        sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
         renderArticles();
         closeLogoArchive();
-        showToast('Logo testata aggiornato', 'success');
+        showToast('Logo testata aggiornato!', 'success');
     } catch (err) {
         console.error(err);
         showToast("Errore durante l'aggiornamento del logo", 'error');
     }
 }
+window.openLogoArchive = openLogoArchive;
+window.closeLogoArchive = closeLogoArchive;
+window.selectLogoFromArchive = selectLogoFromArchive;
 
 // ============================================================
 // NEWS SEARCH & COLLECTIONS
@@ -1689,11 +1690,42 @@ function renderNewsResults() {
 
     const filtered = currentNewsResults.filter((news) => {
         if (activeNewsSourceFilter === 'all') return true;
-        const src = (news.source || '').toLowerCase();
-        if (activeNewsSourceFilter === 'nazionale') return src.includes('repubblica') || src.includes('corriere') || src.includes('stampa') || src.includes('giornale') || src.includes('libero') || src.includes('sole') || src.includes('avvenire') || src.includes('fatto');
-        if (activeNewsSourceFilter === 'locale') return src.includes('lecco') || src.includes('sannio') || src.includes('benevento') || src.includes('mattino') || src.includes('messaggero') || src.includes('gazzetta') || src.includes('resto') || src.includes('secolo');
-        if (activeNewsSourceFilter === 'web') return src.includes('web') || src.includes('fanpage') || src.includes('open') || src.includes('diario') || src.includes('post') || src.includes('today') || src.includes('tpi');
-        if (activeNewsSourceFilter === 'agenzia') return src.includes('ansa') || src.includes('adnkronos') || src.includes('agi') || src.includes('askanews') || src.includes('dire') || src.includes('lapresse');
+        const src = `${news.source || ''} ${news.domain || ''}`.toLowerCase();
+        if (activeNewsSourceFilter === 'nazionale') {
+            return src.includes('repubblica') || src.includes('corriere') || src.includes('lastampa') || src.includes('stampa') || 
+                   src.includes('giornale') || src.includes('libero') || src.includes('sole24') || src.includes('sole') || 
+                   src.includes('avvenire') || src.includes('fattoquotidiano') || src.includes('fatto') || src.includes('messaggero') || 
+                   src.includes('iltempo') || src.includes('tempo') || src.includes('foglio') || src.includes('manifesto') || 
+                   src.includes('verita') || src.includes('quotidiano.net') || src.includes('lidentita');
+        }
+        if (activeNewsSourceFilter === 'locale') {
+            return src.includes('lecco') || src.includes('sannio') || src.includes('benevento') || src.includes('mattino') || 
+                   src.includes('gazzettino') || src.includes('gazzetta') || src.includes('resto') || src.includes('carlino') || 
+                   src.includes('nazione') || src.includes('giorno') || src.includes('secolo') || src.includes('tirreno') || 
+                   src.includes('arena') || src.includes('brescia') || src.includes('bergamo') || src.includes('adige') || 
+                   src.includes('trentino') || src.includes('padova') || src.includes('vicenza') || src.includes('treviso') || 
+                   src.includes('venezia') || src.includes('verona') || src.includes('friuli') || src.includes('piccolo') || 
+                   src.includes('unione sarda') || src.includes('nuova sardegna') || src.includes('sicilia') || src.includes('calabria') || 
+                   src.includes('puglia') || src.includes('bari') || src.includes('lecce') || src.includes('foggia') || 
+                   src.includes('taranto') || src.includes('lucania') || src.includes('basilicata') || src.includes('salerno') || 
+                   src.includes('caserta') || src.includes('campania') || src.includes('abruzzo') || src.includes('umbria') || 
+                   src.includes('marche') || src.includes('emilia') || src.includes('romagna') || src.includes('bologna') || 
+                   src.includes('parma') || src.includes('modena') || src.includes('reggio') || src.includes('torino') || 
+                   src.includes('cuneo') || src.includes('alessandria') || src.includes('genova') || src.includes('liguria') || 
+                   src.includes('milano') || src.includes('como') || src.includes('varese') || src.includes('monza') || 
+                   src.includes('lombardia') || src.includes('roma') || src.includes('latina') || src.includes('lazio');
+        }
+        if (activeNewsSourceFilter === 'web') {
+            return src.includes('web') || src.includes('fanpage') || src.includes('open.online') || src.includes('open') || 
+                   src.includes('diario') || src.includes('ilpost') || src.includes('post') || src.includes('today') || 
+                   src.includes('tpi') || src.includes('tgcom') || src.includes('huffington') || src.includes('wired') || 
+                   src.includes('linkiesta') || src.includes('sky') || src.includes('notizie');
+        }
+        if (activeNewsSourceFilter === 'agenzia') {
+            return src.includes('ansa') || src.includes('adnkronos') || src.includes('agi') || src.includes('askanews') || 
+                   src.includes('dire') || src.includes('lapresse') || src.includes('italpress') || src.includes('teleborsa') || 
+                   src.includes('agenzianova');
+        }
         return true;
     });
 
@@ -2829,8 +2861,22 @@ function updateLiveKpis() {
 
         let pos = 0;
         let neg = 0;
-        posWords.forEach(w => { if (text.includes(w)) pos++; });
-        negWords.forEach(w => { if (text.includes(w)) neg++; });
+        posWords.forEach(w => {
+            const re = new RegExp(`(\\b(?:non|nessun|nessuna|senza)\\s+(?:\\w+\\s+){0,2})?\\b${w}\\b`, 'i');
+            const m = text.match(re);
+            if (m) {
+                if (m[1]) neg += 0.6;
+                else pos += 1;
+            }
+        });
+        negWords.forEach(w => {
+            const re = new RegExp(`(\\b(?:non|nessun|nessuna|senza|smentisce|smentita|evita|evitato|superato)\\s+(?:\\w+\\s+){0,2})?\\b${w}\\b`, 'i');
+            const m = text.match(re);
+            if (m) {
+                if (m[1]) pos += 0.6;
+                else neg += 1;
+            }
+        });
 
         if (pos > neg) positiveCount++;
         else if (neg > pos) criticalCount++;
@@ -3560,6 +3606,27 @@ window.initBriefingPage = async function() {
         onKpiSourceChange();
     }
 
+    // Synchronize selectBriefing and selectKpi
+    if (selectBriefing && selectKpi) {
+        if (!selectBriefing.dataset.syncBound) {
+            selectBriefing.dataset.syncBound = 'true';
+            selectBriefing.addEventListener('change', () => {
+                if (selectKpi.value !== selectBriefing.value) {
+                    selectKpi.value = selectBriefing.value;
+                    if (typeof onKpiSourceChange === 'function') onKpiSourceChange();
+                }
+            });
+        }
+        if (!selectKpi.dataset.syncBound) {
+            selectKpi.dataset.syncBound = 'true';
+            selectKpi.addEventListener('change', () => {
+                if (selectBriefing.value !== selectKpi.value) {
+                    selectBriefing.value = selectKpi.value;
+                }
+            });
+        }
+    }
+
     if (window.feather) feather.replace();
 };
 
@@ -3879,8 +3946,22 @@ function computeBriefingKpiMetrics(articlesList) {
         totalReads += Math.max(10, Math.round(dayAudience * readRate * mult));
 
         let p = 0, n = 0;
-        posWords.forEach(w => { if (text.includes(w)) p++; });
-        negWords.forEach(w => { if (text.includes(w)) n++; });
+        posWords.forEach(w => {
+            const re = new RegExp(`(\\b(?:non|nessun|nessuna|senza)\\s+(?:\\w+\\s+){0,2})?\\b${w}\\b`, 'i');
+            const m = text.match(re);
+            if (m) {
+                if (m[1]) n += 0.6;
+                else p += 1;
+            }
+        });
+        negWords.forEach(w => {
+            const re = new RegExp(`(\\b(?:non|nessun|nessuna|senza|smentisce|smentita|evita|evitato|superato)\\s+(?:\\w+\\s+){0,2})?\\b${w}\\b`, 'i');
+            const m = text.match(re);
+            if (m) {
+                if (m[1]) p += 0.6;
+                else n += 1;
+            }
+        });
         if (p > n) posCount++;
         else if (n > p) criCount++;
         else neuCount++;
@@ -4370,14 +4451,18 @@ window.downloadCurrentDigestKpiPdf = async function(btnEl) {
     }
 };
 
-// Auto-init Briefing / KPI if currently on #briefing or page-briefing is active
+// Auto-init pages if currently on #briefing, #media-crm, or #storico
 setTimeout(() => {
     const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
     const saved = sessionStorage.getItem('rs_current_page') || localStorage.getItem('rs_current_page');
-    const briefingPage = document.getElementById('page-briefing');
-    const isBriefingActive = (briefingPage && briefingPage.classList.contains('active')) || hash === 'briefing' || saved === 'briefing';
-    if (isBriefingActive && typeof window.initBriefingPage === 'function') {
-        window.initBriefingPage();
+    const targetPage = hash || saved || '';
+
+    if (targetPage === 'briefing' || targetPage === 'page-briefing') {
+        if (typeof window.initBriefingPage === 'function') window.initBriefingPage();
+    } else if (targetPage === 'media-crm') {
+        if (typeof window.loadMediaContacts === 'function') window.loadMediaContacts();
+    } else if (targetPage === 'storico') {
+        if (typeof window.loadHistory === 'function') window.loadHistory();
     }
 }, 100);
 

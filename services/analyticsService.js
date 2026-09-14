@@ -478,15 +478,29 @@ function analyzeArticleSentiment(article) {
     let negScore = 0;
 
     POSITIVE_KEYWORDS.forEach(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        const matches = text.match(regex);
-        if (matches) posScore += matches.length;
+        const regex = new RegExp(`(\\b(?:non|nessun|nessuna|senza)\\s+(?:\\w+\\s+){0,2})?\\b${word}\\b`, 'gi');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            if (match[1]) {
+                // Negated positive: "non è un successo" -> lieve tono critico o neutro
+                negScore += 0.8;
+            } else {
+                posScore += 1;
+            }
+        }
     });
 
     NEGATIVE_KEYWORDS.forEach(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        const matches = text.match(regex);
-        if (matches) negScore += matches.length * 1.2;
+        const regex = new RegExp(`(\\b(?:non|nessun|nessuna|senza|smentisce|smentita|evita|evitato|evitata|superato|superata)\\s+(?:\\w+\\s+){0,2})?\\b${word}\\b`, 'gi');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            if (match[1]) {
+                // Negated negative: "non è in crisi", "evitato il fallimento" -> tono favorevole/risolto
+                posScore += 0.6;
+            } else {
+                negScore += match.length ? 1.2 : 1.2;
+            }
+        }
     });
 
     if (posScore > negScore && posScore >= 1) {
