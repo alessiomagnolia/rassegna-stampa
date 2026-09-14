@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_29">
+    <link rel="stylesheet" href="styles.css?v=20260914_30">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -206,6 +206,10 @@
                 <div class="sidebar-user-info">
                     <div id="sidebarCompany" class="sidebar-username" onclick="document.querySelector('.sidebar-item[data-page=profilo]')?.click(); return false;" title="Vai al Profilo" style="cursor:pointer;">—</div>
                     <div class="sidebar-plan">Piano Base</div>
+                </div>
+                <div style="padding: 6px 4px 2px 4px; font-size: 0.72rem; display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); margin-top: 8px; opacity: 0.75;">
+                    <a href="javascript:void(0)" onclick="openCookiePolicy()" class="footer-legal-link" style="font-size:0.72rem;" title="Informativa Privacy e Gestione Cookie">Privacy &amp; Cookie</a>
+                    <a href="javascript:void(0)" onclick="openCookieSettings()" class="footer-legal-link" style="font-size:0.72rem;" title="Gestisci le preferenze dei cookie">Preferenze</a>
                 </div>
             </div>
         </div>
@@ -2119,6 +2123,7 @@
 
         feather.replace();
     </script>
+    <script src="cookie-consent.js?v=20260914_01"></script>
     <script src="app.js?v=20260914_29"></script>
     <script src="ui.js?v=20260914_25"></script>
 </body>
