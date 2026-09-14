@@ -187,63 +187,80 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
             };
         }
 
-        // Formatta testo pronto per WhatsApp/Slack (Markdown con emoji)
+        // Formatta testo per chat executive / WhatsApp (senza emoji infantili, stile corporate pulito)
         const whatsappLines = [
-            `📰 *BRIEFING STAMPA — ${client.toUpperCase()}*`,
-            `🗓 *${todayStr}* | *${articles.length} uscite* | Reach st.: ~${analytics.formattedReach}`,
+            `*BRIEFING ESECUTIVO STAMPA — ${client.toUpperCase()}*`,
+            `_${todayStr} | ${articles.length} articoli | Reach st.: ~${analytics.formattedReach}_`,
             ``,
-            `🎯 *I FATTI CHIAVE DI OGGI:*`,
+            `*SINTESI ESECUTIVA:*`,
             ...digestData.highlights.map(h => `• ${h}`),
             ``,
-            `📋 *LE PRINCIPALI USCITE:*`,
-            ...digestData.clips.slice(0, 12).map(c => {
-                const badge = c.sentiment === 'positivo' ? '🟢' : c.sentiment === 'critico' ? '🔴' : '⚪';
-                return `${badge} *${c.source}*: ${c.title}\n   ↳ _${c.one_liner}_`;
-            }),
+            `*CLIP STAMPA PRINCIPALI:*`,
             ``,
-            `📊 *Sentiment:* ${digestData.mood_sentiment}`,
-            `Generato con Rassegna Stampa AI`
-        ];
+            ...digestData.clips.slice(0, 15).map(c => 
+                `*${c.source}* • _${c.sentiment}_\n*${c.title}*\n${c.one_liner}\n`
+            ),
+            digestData.mood_sentiment ? `*Clima Media:* ${digestData.mood_sentiment}` : ''
+        ].filter(Boolean);
 
-        // Formatta HTML pulito per Email/Outlook
+        // Formatta testo plain text pulito per email
+        const emailText = [
+            `BRIEFING ESECUTIVO STAMPA — ${client.toUpperCase()}`,
+            `Data: ${todayStr} | ${articles.length} articoli | Reach stimata: ~${analytics.formattedReach}`,
+            ``,
+            `SINTESI ESECUTIVA:`,
+            ...digestData.highlights.map(h => `• ${h}`),
+            ``,
+            `CLIP STAMPA PRINCIPALI:`,
+            ``,
+            ...digestData.clips.map(c => 
+                `${c.source} • ${c.sentiment}\n${c.title}\n${c.one_liner}\n`
+            ),
+            digestData.mood_sentiment ? `Clima Media: ${digestData.mood_sentiment}` : ''
+        ].filter(Boolean).join('\n');
+
+        // Formatta Rich HTML per Email / Outlook (stessa identica gerarchia grafica dell'anteprima)
         const emailHtml = `
-<div style="font-family: Arial, sans-serif; color: #222; max-width: 620px; line-height: 1.5;">
-    <div style="border-bottom: 2px solid #7c5cff; padding-bottom: 12px; margin-bottom: 16px;">
-        <h2 style="margin: 0 0 4px 0; color: #111; font-size: 18px;">Executive Morning Briefing — ${client}</h2>
-        <div style="color: #666; font-size: 13px;">Data: <strong>${todayStr}</strong> | <strong>${articles.length} articoli</strong> | Reach stimata: <strong>~${analytics.formattedReach}</strong></div>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; max-width: 650px; line-height: 1.5; background: #ffffff; padding: 10px 0;">
+    <div style="border-bottom: 2px solid #7c5cff; padding-bottom: 12px; margin-bottom: 20px;">
+        <h2 style="margin: 0 0 4px 0; color: #0f172a; font-size: 19px; font-weight: 700; letter-spacing: -0.2px;">Briefing Esecutivo Stampa &mdash; ${client}</h2>
+        <div style="color: #64748b; font-size: 13px;">Data: <strong>${todayStr}</strong> &bull; <strong>${articles.length} articoli</strong> &bull; Reach stimata: <strong>~${analytics.formattedReach}</strong></div>
     </div>
-    <div style="background: #f8f7fa; border-left: 4px solid #7c5cff; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">
-        <h3 style="margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #7c5cff;">Cosa c'è da sapere oggi</h3>
-        <ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #333;">
-            ${digestData.highlights.map(h => `<li style="margin-bottom: 4px;">${h}</li>`).join('')}
+
+    <div style="margin-bottom: 22px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 8px;">SINTESI ESECUTIVA:</div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #1e293b; line-height: 1.6;">
+            ${digestData.highlights.map(h => `<li style="margin-bottom: 5px;">${h}</li>`).join('')}
         </ul>
     </div>
-    <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; margin-bottom: 10px;">Riepilogo Uscite</h3>
-    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-        ${digestData.clips.map(c => {
-            const color = c.sentiment === 'positivo' ? '#10b981' : c.sentiment === 'critico' ? '#ef4444' : '#6b7280';
-            return `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 10px 8px; vertical-align: top; width: 130px; font-weight: bold; color: #111;">
-                    ${c.source}
-                    <div style="font-size: 10px; font-weight: normal; color: ${color}; text-transform: uppercase;">● ${c.sentiment}</div>
-                </td>
-                <td style="padding: 10px 8px; vertical-align: top;">
-                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 3px;">${c.title}</div>
-                    <div style="color: #6b7280; font-size: 12px;">${c.one_liner}</div>
-                </td>
-            </tr>`;
-        }).join('')}
-    </table>
-    <div style="margin-top: 20px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
-        <strong>Clima Media:</strong> ${digestData.mood_sentiment}
+
+    <div style="margin-bottom: 20px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 12px;">CLIP STAMPA PRINCIPALI:</div>
+        ${digestData.clips.map(c => `
+        <div style="margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: capitalize; margin-bottom: 2px;">
+                ${c.source} &bull; <span style="font-weight: 600; color: ${c.sentiment === 'positivo' ? '#16a34a' : (c.sentiment === 'critico' ? '#dc2626' : '#64748b')};">${c.sentiment}</span>
+            </div>
+            <div style="font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.35; margin-bottom: 4px;">
+                ${c.title}
+            </div>
+            <div style="font-size: 13px; color: #475569; line-height: 1.5;">
+                ${c.one_liner}
+            </div>
+        </div>`).join('')}
     </div>
+
+    ${digestData.mood_sentiment ? `
+    <div style="background: #f8fafc; border-left: 3px solid #7c5cff; padding: 10px 14px; border-radius: 4px; font-size: 12.5px; color: #475569;">
+        <strong>Clima Media:</strong> ${digestData.mood_sentiment}
+    </div>` : ''}
 </div>`;
 
         res.json({
             success: true,
             digest: digestData,
             whatsappText: whatsappLines.join('\n'),
+            emailText,
             emailHtml,
             analytics
         });

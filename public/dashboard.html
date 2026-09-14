@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_03">
+    <link rel="stylesheet" href="styles.css?v=20260914_04">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -508,8 +508,8 @@
                         </div>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button type="button" id="btnLiveMorningDigest" class="btn btn-outline btn-sm" style="border-color:var(--accent-primary); color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px;" onclick="openMorningDigestForCurrentArticles()">
-                            <i data-feather="zap" style="width:14px;height:14px;color:var(--accent-primary);"></i> Morning Digest AI
+                        <button type="button" id="btnLiveMorningDigest" class="btn btn-outline btn-sm" style="border-color:var(--accent-primary); color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px;" onclick="openMorningDigestForCurrentArticles()" title="Genera Briefing Esecutivo per email e WhatsApp">
+                            <i data-feather="file-text" style="width:14px;height:14px;color:var(--accent-primary);"></i> Briefing Esecutivo AI
                         </button>
                     </div>
                 </div>
@@ -529,8 +529,8 @@
                         <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
                             <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Genera e Scarica</span><span class="show-mobile-inline">Genera PDF</span>
                         </button>
-                        <button id="btnOpenMorningDigestAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openMorningDigestForCurrentArticles()">
-                            <i data-feather="zap" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Morning Digest AI</span><span class="show-mobile-inline">Digest AI</span>
+                        <button id="btnOpenMorningDigestAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openMorningDigestForCurrentArticles()" title="Genera Briefing Esecutivo per email e WhatsApp">
+                            <i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Briefing Esecutivo AI</span><span class="show-mobile-inline">Briefing AI</span>
                         </button>
                         <button id="btnShareReviewAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openShareModalForCurrentReview()">
                             <i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Condividi Link Web</span><span class="show-mobile-inline">Condividi</span>
@@ -1530,8 +1530,8 @@
         <div class="modal-content glass-card" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto; padding: 1.75rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
                 <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
-                    <i data-feather="zap" style="color:var(--accent-primary); width:20px; height:20px;"></i>
-                    <span>Morning Executive Digest <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Briefing 8:00 AM)</span></span>
+                    <i data-feather="file-text" style="color:var(--accent-primary); width:20px; height:20px;"></i>
+                    <span>Briefing Esecutivo Stampa <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Sintesi per email e chat)</span></span>
                 </h3>
                 <button class="btn-icon" onclick="closeMorningDigestModal()"><i data-feather="x"></i></button>
             </div>
@@ -1554,10 +1554,10 @@
 
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border-color); padding-top:1rem;">
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button type="button" class="btn btn-gradient btn-sm" onclick="copyDigestEmail()">
+                        <button type="button" id="btnCopyEmail" class="btn btn-gradient btn-sm" onclick="copyDigestEmail(this)">
                             <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Formato Email
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="copyDigestWhatsApp()">
+                        <button type="button" id="btnCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyDigestWhatsApp(this)">
                             <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                         </button>
                     </div>
@@ -1802,7 +1802,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260914_03"></script>
+    <script src="app.js?v=20260914_04"></script>
     <script src="ui.js"></script>
 </body>
 </html>

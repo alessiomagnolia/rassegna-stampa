@@ -919,7 +919,7 @@ async function loadHistory() {
                     <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
                     ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>` : ''}
                     <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
-                    <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);"><i data-feather="zap" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Digest AI</button>
+                    <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);" title="Genera Briefing Esecutivo per questa rassegna"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Briefing AI</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
                 </div>
             `;
@@ -2798,7 +2798,7 @@ window.openMorningDigestForCurrentArticles = async function() {
                 return openMorningDigestFromHistory(history[0].id);
             }
         } catch(e) {}
-        showToast('Aggiungi almeno un articolo in Nuova Rassegna per generare il Morning Digest.', 'warning');
+        showToast('Aggiungi almeno un articolo in Nuova Rassegna per generare il Briefing Esecutivo.', 'warning');
         return;
     }
 
@@ -2913,29 +2913,31 @@ function renderDigestModalContent(digest) {
         let clipsHtml = '';
         if (Array.isArray(digest.clips)) {
             clipsHtml = digest.clips.map(c => `
-                <div style="margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size:0.75rem; color:var(--accent-primary); font-weight:700;">${escapeHtml(c.source)} &bull; ${escapeHtml(c.sentiment || 'Neutro')}</div>
-                    <div style="font-weight:600; font-size:0.9rem; margin:2px 0;">${escapeHtml(c.title)}</div>
-                    <div style="font-size:0.82rem; color:var(--text-muted);">${escapeHtml(c.one_liner || '')}</div>
+                <div style="margin-bottom:0.9rem; padding-bottom:0.9rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:0.78rem; color:var(--accent-primary); font-weight:700; margin-bottom:2px; text-transform:capitalize;">
+                        ${escapeHtml(c.source)} &bull; <span style="font-weight:600; color:${c.sentiment === 'positivo' ? '#10b981' : (c.sentiment === 'critico' ? '#ef4444' : 'var(--text-muted)')};">${escapeHtml(c.sentiment || 'Neutro')}</span>
+                    </div>
+                    <div style="font-weight:700; font-size:0.96rem; margin:2px 0 4px; line-height:1.35; color:var(--text-primary);">${escapeHtml(c.title)}</div>
+                    <div style="font-size:0.84rem; color:var(--text-muted); line-height:1.5;">${escapeHtml(c.one_liner || '')}</div>
                 </div>
             `).join('');
         }
 
         let highlightsHtml = '';
         if (Array.isArray(digest.highlights)) {
-            highlightsHtml = `<ul style="margin:0 0 1rem 0; padding-left:1.25rem; font-size:0.88rem; line-height:1.6;">
-                ${digest.highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}
+            highlightsHtml = `<ul style="margin:0 0 1.25rem 0; padding-left:1.25rem; font-size:0.88rem; line-height:1.65; color:var(--text-primary);">
+                ${digest.highlights.map(h => `<li style="margin-bottom:4px;">${escapeHtml(h)}</li>`).join('')}
             </ul>`;
         }
 
         const mood = digest.mood_sentiment || digest.mood_summary || '';
 
         previewEl.innerHTML = `
-            <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Sintesi Esecutiva:</div>
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin-bottom:0.6rem;">SINTESI ESECUTIVA:</div>
             ${highlightsHtml}
-            <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin:1rem 0 0.5rem 0;">Clip Stampa Principali:</div>
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin:1.25rem 0 0.6rem 0;">CLIP STAMPA PRINCIPALI:</div>
             ${clipsHtml}
-            ${mood ? `<div style="margin-top:1rem; font-size:0.82rem; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--accent-primary);"><em>${escapeHtml(mood)}</em></div>` : ''}
+            ${mood ? `<div style="margin-top:1rem; font-size:0.82rem; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:6px; border-left:3px solid var(--accent-primary); color:var(--text-muted);"><strong>Clima Media:</strong> ${escapeHtml(mood)}</div>` : ''}
         `;
     }
     if (window.feather) feather.replace();
@@ -2949,26 +2951,87 @@ window.closeMorningDigestModal = function() {
     }
 };
 
-window.copyDigestEmail = function() {
+window.copyDigestEmail = async function(btnEl) {
     if (!currentDigestData) return;
-    const body = currentDigestData.emailText || currentDigestData.whatsappText || '';
-    const subject = currentDigestData.subject || 'Briefing Rassegna Stampa';
-    navigator.clipboard.writeText(`Oggetto: ${subject}\n\n${body}`).then(() => {
-        showToast('Testo email del Morning Digest copiato negli appunti!', 'success');
-    }).catch(() => showToast('Errore durante la copia', 'error'));
+    const btn = btnEl || document.getElementById('btnCopyEmail');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    const htmlContent = currentDigestData.emailHtml || '';
+    const textContent = currentDigestData.emailText || currentDigestData.whatsappText || '';
+
+    function showSuccessFeedback() {
+        if (btn) {
+            btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copiato!';
+            btn.style.background = '#10b981';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#ffffff';
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    if (window.feather) feather.replace();
+                }
+            }, 2200);
+        }
+        showToast('Briefing formattato copiato! Incollalo nella mail con formattazione originale.', 'success');
+    }
+
+    try {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+            showSuccessFeedback();
+        } else {
+            await navigator.clipboard.writeText(textContent);
+            showSuccessFeedback();
+        }
+    } catch(err) {
+        try {
+            await navigator.clipboard.writeText(textContent);
+            showSuccessFeedback();
+        } catch(e) {
+            showToast('Errore durante la copia: ' + err.message, 'error');
+        }
+    }
 };
 
-window.copyDigestWhatsApp = function() {
+window.copyDigestWhatsApp = async function(btnEl) {
     if (!currentDigestData) return;
-    const text = currentDigestData.whatsappText || '';
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Briefing WhatsApp copiato negli appunti!', 'success');
-    }).catch(() => showToast('Errore durante la copia', 'error'));
+    const btn = btnEl || document.getElementById('btnCopyWhatsApp');
+    const originalHtml = btn ? btn.innerHTML : null;
+    const text = currentDigestData.whatsappText || currentDigestData.emailText || '';
+
+    try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+            btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copiato!';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#10b981';
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    if (window.feather) feather.replace();
+                }
+            }, 2200);
+        }
+        showToast('Briefing WhatsApp / Chat copiato negli appunti!', 'success');
+    } catch(err) {
+        showToast('Errore durante la copia: ' + err.message, 'error');
+    }
 };
 
 window.openDigestMailto = function() {
     if (!currentDigestData) return;
-    const subject = encodeURIComponent(currentDigestData.subject || 'Morning Briefing');
+    const subject = encodeURIComponent(currentDigestData.subject || 'Briefing Esecutivo Stampa');
     const body = encodeURIComponent(currentDigestData.emailText || currentDigestData.whatsappText || '');
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
 };
