@@ -3926,3 +3926,26 @@ html {
     margin: 0;
 }
 
+/* Dashboard Home Hub Cards */
+.home-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.home-service-card {
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease !important;
+}
+
+.home-service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(124, 92, 255, 0.5) !important;
+}
+
+.home-service-card:active {
+    transform: translateY(-2px);
+}
+
+

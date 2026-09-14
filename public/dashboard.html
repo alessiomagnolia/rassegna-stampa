@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_04">
+    <link rel="stylesheet" href="styles.css?v=20260914_06">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -144,6 +144,10 @@
                     <span class="sidebar-icon"><i data-feather="file-plus"></i></span>
                     <span class="sidebar-label">Nuova Rassegna</span>
                 </a>
+                <a href="#" class="sidebar-item" data-page="briefing">
+                    <span class="sidebar-icon"><i data-feather="file-text" style="color:var(--accent-primary);"></i></span>
+                    <span class="sidebar-label">Briefing Esecutivo AI</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="storico">
                     <span class="sidebar-icon"><i data-feather="book"></i></span>
                     <span class="sidebar-label">Storico Rassegne</span>
@@ -214,46 +218,126 @@
     <main id="mainContent" class="main-content">
 
         <!-- PAGE: HOME (HUB) -->
-        <div id="page-home" class="page-view active" style="position: relative; min-height: 120vh; padding-top: 4rem;">
-
-            <!-- Content overlayed on top -->
-            <div style="position: relative; z-index: 10;">
-                <div class="content-header" style="text-align: center; margin-bottom: 4rem;">
-                    <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;">La tua Suite.</h2>
-                    <p class="text-muted" style="font-size: 1.2rem;">Scegli lo strumento perfetto per il tuo lavoro quotidiano.</p>
-                </div>
+        <div id="page-home" class="page-view active" style="position: relative; padding: 2.25rem 1rem 3.5rem;">
+            <div style="max-width: 1060px; margin: 0 auto;">
                 
-                <div class="services-stack" style="display: flex; flex-direction: column; gap: 3rem; max-width: 900px; margin: 0 auto;">
-                    <!-- Card Rassegna -->
-                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=\'rassegna\']').click()">
-                        <div class="h-card-icon"><i data-feather="file-text" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
-                        <div class="h-card-content">
-                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Rassegna Stampa</h3>
-                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Genera un impaginato PDF professionale e accattivante a partire da link o articoli di testo. Sistema automatizzato con ritaglio intelligente delle immagini.</p>
-                        </div>
-                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                <!-- Hero Header in Landing Page Style -->
+                <div style="text-align: center; margin-bottom: 2.75rem;">
+                    <div class="hero-pill-badge" style="margin-bottom: 0.9rem;">
+                        <i data-feather="zap"></i> Suite Integrata per Media &amp; PR
                     </div>
+                    <h1 class="hero-headline" style="font-size: clamp(2rem, 3.8vw, 2.75rem); margin-bottom: 0.85rem; font-weight: 800;">
+                        Tutto per i tuoi media: <span class="highlight-text">Rassegne</span>, Notizie e PR
+                    </h1>
+                    <p class="hero-subtext" style="font-size: 1.05rem; max-width: 660px; margin: 0 auto; color: var(--text-muted); line-height: 1.6;">
+                        Seleziona lo strumento ideale per il tuo lavoro quotidiano: dalla generazione del fascicolo PDF alla rassegna web, fino al briefing esecutivo pronto per la direzione.
+                    </p>
+                </div>
+
+                <!-- 4 Main Action Cards Grid -->
+                <div class="home-services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
                     
-                    <!-- Card Comunicati -->
-                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="window.location.href='press.html'">
-                        <div class="h-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-secondary);"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/><path d="M22 9a4 4 0 0 1 0 6"/></svg></div>
-                        <div class="h-card-content">
-                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Comunicati Stampa</h3>
-                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Affida all'Intelligenza Artificiale la stesura del tuo comunicato stampa aziendale. Genera testi ottimizzati per le redazioni in pochi secondi.</p>
+                    <!-- 1. Rassegna Stampa -->
+                    <div class="glass-card home-service-card" onclick="document.querySelector('[data-page=\'rassegna\']').click()" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; padding:1.75rem; border-radius:14px; transition:all 0.25s ease; border:1px solid var(--border-color); position:relative; overflow:hidden;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+                                <div style="width:48px; height:48px; border-radius:12px; background:rgba(124,92,255,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-primary);">
+                                    <i data-feather="file-text" style="width:24px; height:24px;"></i>
+                                </div>
+                                <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; padding:3px 8px; border-radius:6px; background:rgba(124,92,255,0.1); color:var(--accent-primary);">PDF A4</span>
+                            </div>
+                            <h3 style="font-size:1.35rem; font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">Rassegna Stampa</h3>
+                            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.55; margin-bottom:1.5rem;">
+                                Crea un fascicolo PDF professionale ed elegante da semplici link web, con loghi ufficiali italiani e impaginazione automatica.
+                            </p>
                         </div>
-                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:0.9rem; color:var(--accent-primary); border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+                            <span>Crea Rassegna</span>
+                            <i data-feather="arrow-right" style="width:16px; height:16px;"></i>
+                        </div>
                     </div>
-                    
-                    <!-- Card Ricerca Notizie -->
-                    <div class="glass-card horizontal-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=\'ricerca-notizie\']').click()">
-                        <div class="h-card-icon"><i data-feather="search" style="width:48px;height:48px;color:var(--accent-primary);"></i></div>
-                        <div class="h-card-content">
-                            <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Ricerca Notizie</h3>
-                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">Cerca le ultime news sul web e salvale per generare istantaneamente le rassegne stampa. Motore di ricerca integrato ad alte prestazioni.</p>
+
+                    <!-- 2. Briefing Esecutivo AI (Featured / Highlighted) -->
+                    <div class="glass-card home-service-card" onclick="document.querySelector('[data-page=\'briefing\']').click()" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; padding:1.75rem; border-radius:14px; transition:all 0.25s ease; border:2px solid var(--accent-primary); background:rgba(124,92,255,0.05); position:relative; overflow:hidden; box-shadow:0 8px 24px rgba(124,92,255,0.12);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+                                <div style="width:48px; height:48px; border-radius:12px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:#10b981;">
+                                    <i data-feather="zap" style="width:24px; height:24px;"></i>
+                                </div>
+                                <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; padding:3px 9px; border-radius:6px; background:linear-gradient(135deg, var(--accent-primary), #3b82f6); color:#ffffff;">✦ NOVITÀ</span>
+                            </div>
+                            <h3 style="font-size:1.35rem; font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">Briefing Esecutivo AI</h3>
+                            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.55; margin-bottom:1.5rem;">
+                                Sintesi mattutina per CEO e vertici aziendali con 3 punti chiave, clima media, audience certificata Audiweb/ADS e copia rapida per email e chat.
+                            </p>
                         </div>
-                        <div class="h-card-arrow"><i data-feather="arrow-right"></i></div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:0.9rem; color:#10b981; border-top:1px solid rgba(124,92,255,0.15); padding-top:1rem;">
+                            <span>Apri Briefing</span>
+                            <i data-feather="arrow-right" style="width:16px; height:16px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Ricerca Notizie Web -->
+                    <div class="glass-card home-service-card" onclick="document.querySelector('[data-page=\'ricerca-notizie\']').click()" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; padding:1.75rem; border-radius:14px; transition:all 0.25s ease; border:1px solid var(--border-color); position:relative; overflow:hidden;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+                                <div style="width:48px; height:48px; border-radius:12px; background:rgba(56,189,248,0.12); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                                    <i data-feather="search" style="width:24px; height:24px;"></i>
+                                </div>
+                                <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; padding:3px 8px; border-radius:6px; background:rgba(56,189,248,0.1); color:#38bdf8;">MONITORAGGIO</span>
+                            </div>
+                            <h3 style="font-size:1.35rem; font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">Ricerca Notizie</h3>
+                            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.55; margin-bottom:1.5rem;">
+                                Esplora e monitora le news in tempo reale per parole chiave e aggiungi gli articoli direttamente alla tua rassegna stampa con un semplice clic.
+                            </p>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:0.9rem; color:#38bdf8; border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+                            <span>Cerca Notizie</span>
+                            <i data-feather="arrow-right" style="width:16px; height:16px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- 4. Comunicati Stampa AI -->
+                    <div class="glass-card home-service-card" onclick="window.location.href='press.html'" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; padding:1.75rem; border-radius:14px; transition:all 0.25s ease; border:1px solid var(--border-color); position:relative; overflow:hidden;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+                                <div style="width:48px; height:48px; border-radius:12px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:#f59e0b;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/><path d="M22 9a4 4 0 0 1 0 6"/></svg>
+                                </div>
+                                <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; padding:3px 8px; border-radius:6px; background:rgba(245,158,11,0.1); color:#f59e0b;">PR WRITING</span>
+                            </div>
+                            <h3 style="font-size:1.35rem; font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">Comunicati Stampa</h3>
+                            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.55; margin-bottom:1.5rem;">
+                                Scrittura guidata di comunicati aziendali formattati per le redazioni, con generatore di pitch email 1-to-1 personalizzati per i giornalisti.
+                            </p>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:0.9rem; color:#f59e0b; border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+                            <span>Scrivi Comunicato</span>
+                            <i data-feather="arrow-right" style="width:16px; height:16px;"></i>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Compact Quick-Access Strip for Other Tools -->
+                <div class="glass-card" style="padding:1.15rem 1.5rem; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-color);">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i data-feather="layers" style="width:17px; height:17px; color:var(--accent-primary);"></i>
+                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Altri strumenti a portata di mano:</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.querySelector('[data-page=\'storico\']').click()" style="border-radius:20px; font-size:0.8rem; padding:0.3rem 0.85rem;">
+                            <i data-feather="book" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Storico Rassegne
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.querySelector('[data-page=\'media-crm\']').click()" style="border-radius:20px; font-size:0.8rem; padding:0.3rem 0.85rem;">
+                            <i data-feather="users" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Rubrica Media &amp; PR
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="window.location.href='linkedin.html'" style="border-radius:20px; font-size:0.8rem; padding:0.3rem 0.85rem;">
+                            <i data-feather="linkedin" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Post LinkedIn AI
+                        </button>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -527,28 +611,35 @@
                     </div>
                 </div>
 
-                <div class="generate-actions" style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-top: 2rem;">
-                    <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 500px;">
-                        <i data-feather="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> <span class="hide-mobile">Anteprima ed Edita</span><span class="show-mobile-inline">Edita Rassegna</span>
+                <div class="generate-actions" style="display: flex; flex-direction: column; align-items: center; gap: 0.85rem; margin-top: 2rem;">
+                    <!-- Primary Action -->
+                    <button id="btnOpenEditor" class="btn btn-primary btn-large btn-gradient hidden" style="width: 100%; max-width: 520px; padding: 0.9rem 1.5rem; font-size: 1.05rem;">
+                        <i data-feather="eye" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i> <span class="hide-mobile">Anteprima ed Edita Rassegna</span><span class="show-mobile-inline">Edita Rassegna</span>
                     </button>
-                    <div style="display: flex; gap: 10px; width: 100%; max-width: 550px; justify-content: center; flex-wrap: wrap;">
-                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px;">
-                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Genera e Scarica</span><span class="show-mobile-inline">Genera PDF</span>
-                        </button>
-                        <button id="btnOpenMorningDigestAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openMorningDigestForCurrentArticles()" title="Genera Briefing Esecutivo per email e WhatsApp">
+                    
+                    <!-- Strategic Delivery Actions (Briefing, Web Share, PDF Download) -->
+                    <div style="display: flex; gap: 8px; width: 100%; max-width: 520px; justify-content: center; flex-wrap: wrap;">
+                        <button id="btnOpenMorningDigestAction" class="btn btn-outline hidden" style="flex: 1; min-width: 145px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary); padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 600; font-size: 0.86rem;" onclick="openMorningDigestForCurrentArticles()" title="Genera Briefing Esecutivo per email e WhatsApp">
                             <i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Briefing Esecutivo AI</span><span class="show-mobile-inline">Briefing AI</span>
                         </button>
-                        <button id="btnShareReviewAction" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="openShareModalForCurrentReview()">
+                        <button id="btnShareReviewAction" class="btn btn-outline hidden" style="flex: 1; min-width: 145px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 600; font-size: 0.86rem;" onclick="openShareModalForCurrentReview()">
                             <i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Condividi Link Web</span><span class="show-mobile-inline">Condividi</span>
                         </button>
-                        <button id="btnArchiveReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-muted); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;">
-                            <i data-feather="bookmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Archivia in Storico</span><span class="show-mobile-inline">Archivia</span>
+                        <button id="btnGeneratePDF" class="btn btn-outline hidden" style="flex: 1; min-width: 130px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.86rem;">
+                            <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Scarica PDF</span><span class="show-mobile-inline">PDF</span>
                         </button>
-                        <button id="btnCopyAllLinks" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="copyAllArticleLinks()">
-                            <i data-feather="link-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span class="hide-mobile">Copia Elenco Link</span><span class="show-mobile-inline">Copia Link</span>
+                    </div>
+
+                    <!-- Subtle Utilities Toolbar -->
+                    <div style="display: flex; gap: 6px; width: 100%; max-width: 520px; justify-content: center; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                        <button id="btnCopyAllLinks" class="btn btn-outline btn-sm hidden" style="border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;" onclick="copyAllArticleLinks()" title="Copia l'elenco link negli appunti">
+                            <i data-feather="link-2" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i> Copia Link
                         </button>
-                        <button id="btnResetAndNewReview" class="btn btn-outline hidden" style="flex: 1; min-width: 120px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600;" onclick="startNewReview()" title="Archivia la rassegna attuale nello Storico e inizia da zero">
-                            <i data-feather="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;color:var(--accent-primary);"></i> <span class="hide-mobile">Nuova Rassegna</span><span class="show-mobile-inline">Nuova</span>
+                        <button id="btnArchiveReview" class="btn btn-outline btn-sm hidden" style="border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;" title="Archivia la rassegna attuale nello Storico">
+                            <i data-feather="bookmark" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i> Archivia
+                        </button>
+                        <button id="btnResetAndNewReview" class="btn btn-outline btn-sm hidden" style="border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;" onclick="startNewReview()" title="Inizia una nuova rassegna da zero">
+                            <i data-feather="rotate-ccw" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i> Nuova Rassegna
                         </button>
                     </div>
                     <div id="generationLoading" class="generation-loading hidden">
@@ -557,6 +648,120 @@
                     </div>
                 </div>
             </section>
+        </div>
+
+        <!-- PAGE: BRIEFING ESECUTIVO AI -->
+        <div id="page-briefing" class="page-view">
+            <div class="page-header" style="margin-bottom: 2rem;">
+                <div class="hero-pill-badge" style="margin-bottom: 0.75rem;">
+                    <i data-feather="file-text"></i> Media Intelligence &amp; Executive Reporting
+                </div>
+                <h1 class="page-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem;">Briefing Esecutivo AI</h1>
+                <p class="page-subtitle" style="font-size: 1rem; color: var(--text-muted);">
+                    Sintesi professionale delle uscite stampa pronta da inviare alla direzione o ai clienti alle prime ore del mattino.
+                </p>
+            </div>
+
+            <!-- Explanation Banner: Che cos'è & Cosa fa -->
+            <section class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2rem; border-left: 4px solid var(--accent-primary);">
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-feather="info" style="color:var(--accent-primary); width:18px; height:18px;"></i>
+                    <span>Come funziona il Briefing Esecutivo</span>
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem;">
+                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: var(--text-primary); display:flex; align-items:center; gap:6px;">
+                            <span style="color:var(--accent-primary); font-weight:800;">1.</span> Sintesi Chiave 8:00 AM
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin: 0;">
+                            L'AI legge tutti gli articoli della rassegna e ne estrae i 3 punti salienti della giornata, ideali per vertici aziendali e decision-maker.
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem;">
+                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: var(--text-primary); display:flex; align-items:center; gap:6px;">
+                            <span style="color:#10b981; font-weight:800;">2.</span> Metriche Certificate AMEC
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin: 0;">
+                            Calcola l'Audience Netta delle testate (dati Audiweb/ADS deduplicati per fonte) e le letture stimate dei singoli articoli con standard AMEC.
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem;">
+                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: var(--text-primary); display:flex; align-items:center; gap:6px;">
+                            <span style="color:#38bdf8; font-weight:800;">3.</span> Pronto per Email &amp; WhatsApp
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin: 0;">
+                            Zero emoji infantili e tipografia istituzionale: copi in Rich HTML e incolli su Outlook o Gmail mantenendo colori, grassetti e gerarchia.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Review Selector & Generator Bar -->
+            <section class="glass-card" style="padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 280px;">
+                        <label for="selectBriefingSource" style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">
+                            Seleziona la Rassegna da cui generare il briefing:
+                        </label>
+                        <select id="selectBriefingSource" class="input-control" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.92rem; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                            <option value="active">Rassegna attuale in lavorazione (Nuova Rassegna)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button" id="btnGenerateBriefingPage" class="btn btn-primary btn-gradient" onclick="generateBriefingFromPageSelector()" style="padding: 0.65rem 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-feather="zap" style="width:16px;height:16px;"></i> Genera Briefing
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Briefing Output Loading Spinner -->
+            <div id="pageBriefingLoading" class="glass-card hidden" style="text-align:center; padding: 4rem 1rem; border-radius:14px; margin-bottom: 2rem;">
+                <div class="spinner" style="width:40px; height:40px; margin: 0 auto 1.25rem auto;"></div>
+                <h3 style="font-size:1.15rem; margin-bottom:0.4rem;">Elaborazione AI del Briefing Esecutivo in corso...</h3>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Analisi semantica degli articoli e calcolo audience certificata in corso</p>
+            </div>
+
+            <!-- Briefing Output Result -->
+            <div id="pageBriefingResult" class="hidden">
+                <!-- Subject line -->
+                <div class="glass-card" style="padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-left: 4px solid var(--accent-primary);">
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent-primary); font-weight: 700; margin-bottom: 3px;">Oggetto Email Suggerito:</div>
+                        <div id="pageBriefingSubject" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);"></div>
+                    </div>
+                    <button type="button" id="btnCopyPageSubject" class="btn btn-outline btn-sm" onclick="copyBriefingSubject(this)">
+                        <i data-feather="copy" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Copia Oggetto
+                    </button>
+                </div>
+
+                <!-- Preview Box & Actions -->
+                <div class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Anteprima Briefing Esecutivo</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Pronto per copia e incolla immediato su mail e chat</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" id="btnPageCopyEmail" class="btn btn-gradient btn-sm" onclick="copyPageBriefingEmail(this)">
+                                <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Formato Email
+                            </button>
+                            <button type="button" id="btnPageCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyPageBriefingWhatsApp(this)">
+                                <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
+                            </button>
+                            <button type="button" class="btn btn-subtle-alt btn-sm" onclick="openPageBriefingMailto()">
+                                <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preview Content -->
+                    <div id="pageBriefingContentHtml" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; max-height: 550px; overflow-y: auto;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- PAGE: RICERCA NOTIZIE -->
@@ -1808,7 +2013,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260914_05"></script>
+    <script src="app.js?v=20260914_06"></script>
     <script src="ui.js"></script>
 </body>
 </html>

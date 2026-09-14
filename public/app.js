@@ -3380,7 +3380,7 @@ window.executeImportContacts = async function() {
     }
 };
 
-// Hook into showDashboardPage to load Media CRM or History
+// Hook into showDashboardPage to load Media CRM, History or Briefing
 (function() {
     const origShow = window.showDashboardPage;
     window.showDashboardPage = function(page, updateHash) {
@@ -3391,9 +3391,322 @@ window.executeImportContacts = async function() {
             loadMediaContacts();
         } else if (page === 'storico') {
             loadHistory();
+        } else if (page === 'briefing') {
+            initBriefingPage();
         }
     };
 })();
+
+// ==========================================================================
+// --- DEDICATED EXECUTIVE BRIEFING PAGE (#page-briefing) ---
+// ==========================================================================
+let currentPageDigestData = null;
+
+window.initBriefingPage = async function() {
+    const select = document.getElementById('selectBriefingSource');
+    if (!select) return;
+
+    const prevVal = select.value;
+    select.innerHTML = '';
+
+    // 1. Active working review
+    const activeOpt = document.createElement('option');
+    activeOpt.value = 'active';
+    const activeCount = (state.articles && state.articles.length) ? state.articles.length : 0;
+    if (activeCount > 0) {
+        activeOpt.textContent = `Rassegna attuale in lavorazione (${activeCount} ${activeCount === 1 ? 'articolo' : 'articoli'})`;
+    } else {
+        activeOpt.textContent = `Rassegna attuale in lavorazione (Nessun articolo caricato)`;
+    }
+    select.appendChild(activeOpt);
+
+    // 2. Historic reviews
+    try {
+        const history = await apiCall('GET', '/api/pdf/history');
+        if (Array.isArray(history) && history.length > 0) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = 'Storico Rassegne Salvate';
+            history.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = String(item.id);
+                const clientPart = item.client_name ? `${item.client_name} • ` : '';
+                const countPart = `${item.article_count || 0} articoli`;
+                const datePart = item.created_at ? ` • ${new Date(item.created_at).toLocaleDateString('it-IT')}` : '';
+                opt.textContent = `${item.title || 'Rassegna'} (${clientPart}${countPart}${datePart})`;
+                optGroup.appendChild(opt);
+            });
+            select.appendChild(optGroup);
+        }
+    } catch (err) {
+        console.warn('Errore caricamento storico per il briefing:', err);
+    }
+
+    // Restore selection or pick best default
+    if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+        select.value = prevVal;
+    } else if (activeCount > 0) {
+        select.value = 'active';
+    } else if (select.options.length > 1) {
+        select.selectedIndex = 1;
+    }
+
+    if (window.feather) feather.replace();
+};
+
+window.generateBriefingFromPageSelector = async function() {
+    const select = document.getElementById('selectBriefingSource');
+    const loading = document.getElementById('pageBriefingLoading');
+    const result = document.getElementById('pageBriefingResult');
+    const btn = document.getElementById('btnGenerateBriefingPage');
+    if (!select) return;
+
+    const sourceVal = select.value;
+    let articles = [];
+    let title = 'Rassegna Stampa';
+    let clientName = '';
+
+    if (sourceVal === 'active') {
+        if (!state.articles || state.articles.length === 0) {
+            showToast('Nessun articolo nella rassegna attuale. Seleziona una rassegna dallo storico o aggiungi link in Nuova Rassegna.', 'warning');
+            return;
+        }
+        articles = state.articles.map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            source_type: a.source_type,
+            published_date: a.published_date,
+            url: a.url,
+            excerpt: a.excerpt
+        }));
+        title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+        clientName = document.getElementById('clientName')?.value.trim() || '';
+    } else {
+        try {
+            if (btn) btn.disabled = true;
+            if (loading) loading.classList.remove('hidden');
+            if (result) result.classList.add('hidden');
+
+            const reviewData = await apiCall('GET', `/api/pdf/review/${sourceVal}`);
+            if (!reviewData.articles || reviewData.articles.length === 0) {
+                throw new Error('Nessun articolo trovato in questa rassegna.');
+            }
+            articles = reviewData.articles.map(a => ({
+                title: a.title,
+                source_name: a.source_name,
+                source_type: a.source_type,
+                published_date: a.published_date,
+                url: a.url,
+                excerpt: a.excerpt
+            }));
+            title = reviewData.title || 'Rassegna Stampa';
+            clientName = reviewData.clientName || '';
+        } catch (err) {
+            if (btn) btn.disabled = false;
+            if (loading) loading.classList.add('hidden');
+            showToast('Errore nel caricamento della rassegna dallo storico: ' + err.message, 'error');
+            return;
+        }
+    }
+
+    try {
+        if (btn) btn.disabled = true;
+        if (loading) loading.classList.remove('hidden');
+        if (result) result.classList.add('hidden');
+
+        const data = await apiCall('POST', '/api/articles/digest', {
+            articles,
+            clientName,
+            rassegnaTitle: title
+        });
+
+        if (!data || !data.digest) {
+            throw new Error('Impossibile elaborare il Briefing Esecutivo.');
+        }
+
+        currentPageDigestData = {
+            ...data.digest,
+            whatsappText: data.whatsappText || '',
+            emailHtml: data.emailHtml || '',
+            emailText: data.whatsappText || ''
+        };
+
+        // Render Subject
+        const subjectEl = document.getElementById('pageBriefingSubject');
+        if (subjectEl) {
+            subjectEl.textContent = data.digest.subject || 'Briefing Rassegna Stampa';
+        }
+
+        // Render Formatted HTML Preview
+        const previewEl = document.getElementById('pageBriefingContentHtml');
+        if (previewEl) {
+            let clipsHtml = '';
+            if (Array.isArray(data.digest.clips)) {
+                clipsHtml = data.digest.clips.map(c => `
+                    <div style="margin-bottom:1.1rem; padding-bottom:1.1rem; border-bottom:1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size:0.8rem; color:var(--accent-primary); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">
+                            ${escapeHtml(c.source)} &bull; <span style="font-weight:600; color:${c.sentiment === 'positivo' ? '#10b981' : (c.sentiment === 'critico' ? '#ef4444' : 'var(--text-muted)')};">${escapeHtml(c.sentiment || 'Neutro')}</span>
+                        </div>
+                        <div style="font-weight:700; font-size:1.02rem; margin:2px 0 6px; line-height:1.4; color:var(--text-primary);">${escapeHtml(c.title)}</div>
+                        <div style="font-size:0.88rem; color:var(--text-muted); line-height:1.55;">${escapeHtml(c.one_liner || '')}</div>
+                    </div>
+                `).join('');
+            }
+
+            let highlightsHtml = '';
+            if (Array.isArray(data.digest.highlights)) {
+                highlightsHtml = `<ul style="margin:0 0 1.5rem 0; padding-left:1.3rem; font-size:0.92rem; line-height:1.7; color:var(--text-primary);">
+                    ${data.digest.highlights.map(h => `<li style="margin-bottom:6px;">${escapeHtml(h)}</li>`).join('')}
+                </ul>`;
+            }
+
+            const mood = data.digest.mood_sentiment || data.digest.mood_summary || '';
+
+            previewEl.innerHTML = `
+                <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent-primary); font-weight:800; margin-bottom:0.75rem;">
+                    ✦ Punti Salienti della Rassegna:
+                </div>
+                ${highlightsHtml}
+                <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent-primary); font-weight:800; margin:1.5rem 0 0.75rem 0;">
+                    ✦ Rilevanza &amp; Articoli Chiave:
+                </div>
+                ${clipsHtml}
+                ${mood ? `
+                <div style="margin-top:1.25rem; font-size:0.88rem; background:rgba(255,255,255,0.03); padding:12px 16px; border-radius:8px; border-left:3px solid var(--accent-primary); color:var(--text-muted);">
+                    <strong style="color:var(--text-primary);">Clima Media Complessivo:</strong> ${escapeHtml(mood)}
+                </div>` : ''}
+            `;
+        }
+
+        if (loading) loading.classList.add('hidden');
+        if (result) result.classList.remove('hidden');
+        showToast('Briefing Esecutivo elaborato con successo!', 'success');
+
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+        if (loading) loading.classList.add('hidden');
+        showToast('Errore durante la generazione del Briefing: ' + err.message, 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+        if (window.feather) feather.replace();
+    }
+};
+
+window.copyBriefingSubject = async function(btnEl) {
+    if (!currentPageDigestData || !currentPageDigestData.subject) return;
+    const btn = btnEl || document.getElementById('btnCopyPageSubject');
+    const originalHtml = btn ? btn.innerHTML : null;
+    const text = currentPageDigestData.subject;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+            btn.innerHTML = '<i data-feather="check" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Copiato!';
+            btn.style.background = '#10b981';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#ffffff';
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    if (window.feather) feather.replace();
+                }
+            }, 2200);
+        }
+        showToast('Oggetto email copiato negli appunti!', 'success');
+    } catch (err) {
+        showToast('Errore durante la copia: ' + err.message, 'error');
+    }
+};
+
+window.copyPageBriefingEmail = async function(btnEl) {
+    if (!currentPageDigestData) return;
+    const btn = btnEl || document.getElementById('btnPageCopyEmail');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    const htmlContent = currentPageDigestData.emailHtml || '';
+    const textContent = currentPageDigestData.emailText || currentPageDigestData.whatsappText || '';
+
+    function showSuccessFeedback() {
+        if (btn) {
+            btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copiato!';
+            btn.style.background = '#10b981';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#ffffff';
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    if (window.feather) feather.replace();
+                }
+            }, 2200);
+        }
+        showToast('Briefing HTML copiato! Incollalo nella tua email su Outlook o Gmail.', 'success');
+    }
+
+    try {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+            showSuccessFeedback();
+        } else {
+            await navigator.clipboard.writeText(textContent);
+            showSuccessFeedback();
+        }
+    } catch (err) {
+        try {
+            await navigator.clipboard.writeText(textContent);
+            showSuccessFeedback();
+        } catch (e) {
+            showToast('Errore durante la copia: ' + err.message, 'error');
+        }
+    }
+};
+
+window.copyPageBriefingWhatsApp = async function(btnEl) {
+    if (!currentPageDigestData) return;
+    const btn = btnEl || document.getElementById('btnPageCopyWhatsApp');
+    const originalHtml = btn ? btn.innerHTML : null;
+    const text = currentPageDigestData.whatsappText || currentPageDigestData.emailText || '';
+
+    try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+            btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copiato!';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#10b981';
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    if (window.feather) feather.replace();
+                }
+            }, 2200);
+        }
+        showToast('Briefing WhatsApp / Chat copiato negli appunti!', 'success');
+    } catch (err) {
+        showToast('Errore durante la copia: ' + err.message, 'error');
+    }
+};
+
+window.openPageBriefingMailto = function() {
+    if (!currentPageDigestData) return;
+    const subject = encodeURIComponent(currentPageDigestData.subject || 'Briefing Esecutivo Stampa');
+    const body = encodeURIComponent(currentPageDigestData.emailText || currentPageDigestData.whatsappText || '');
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+};
+
 
 
 
