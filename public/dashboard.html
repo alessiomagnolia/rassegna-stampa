@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260909_01">
+    <link rel="stylesheet" href="styles.css?v=20260914_03">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -508,7 +508,7 @@
                         </div>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button type="button" id="btnLiveMorningDigest" class="btn btn-outline btn-sm" style="border-color:var(--accent-primary); color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <button type="button" id="btnLiveMorningDigest" class="btn btn-outline btn-sm" style="border-color:var(--accent-primary); color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:6px;" onclick="openMorningDigestForCurrentArticles()">
                             <i data-feather="zap" style="width:14px;height:14px;color:var(--accent-primary);"></i> Morning Digest AI
                         </button>
                     </div>
@@ -1802,7 +1802,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260911_02"></script>
+    <script src="app.js?v=20260914_03"></script>
     <script src="ui.js"></script>
 </body>
 </html>

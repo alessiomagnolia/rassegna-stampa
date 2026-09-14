@@ -54,6 +54,17 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+window.escapeHtml = escapeHtml;
+
 async function apiCall(method, endpoint, body = null, isFormData = false) {
     const headers = {};
     
@@ -2781,7 +2792,13 @@ let currentDigestData = null;
 
 window.openMorningDigestForCurrentArticles = async function() {
     if (!state.articles || state.articles.length === 0) {
-        showToast('Aggiungi almeno un articolo per generare il Morning Digest.', 'warning');
+        try {
+            const history = await apiCall('GET', '/api/pdf/history');
+            if (history && history.length > 0) {
+                return openMorningDigestFromHistory(history[0].id);
+            }
+        } catch(e) {}
+        showToast('Aggiungi almeno un articolo in Nuova Rassegna per generare il Morning Digest.', 'warning');
         return;
     }
 
@@ -2799,8 +2816,17 @@ window.openMorningDigestForCurrentArticles = async function() {
         const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
         const clientName = document.getElementById('clientName')?.value.trim() || '';
 
+        const cleanArticles = state.articles.map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            source_type: a.source_type,
+            published_date: a.published_date,
+            url: a.url,
+            excerpt: a.excerpt
+        }));
+
         const data = await apiCall('POST', '/api/articles/digest', {
-            articles: state.articles,
+            articles: cleanArticles,
             clientName,
             rassegnaTitle: title
         });
@@ -2809,7 +2835,12 @@ window.openMorningDigestForCurrentArticles = async function() {
             throw new Error('Impossibile elaborare il digest.');
         }
 
-        currentDigestData = data.digest;
+        currentDigestData = {
+            ...data.digest,
+            whatsappText: data.whatsappText || '',
+            emailHtml: data.emailHtml || '',
+            emailText: data.whatsappText || ''
+        };
         renderDigestModalContent(data.digest);
 
     } catch (err) {
@@ -2835,8 +2866,17 @@ window.openMorningDigestFromHistory = async function(reviewId) {
             throw new Error('Nessun articolo trovato in questa rassegna.');
         }
 
+        const cleanArticles = reviewData.articles.map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            source_type: a.source_type,
+            published_date: a.published_date,
+            url: a.url,
+            excerpt: a.excerpt
+        }));
+
         const data = await apiCall('POST', '/api/articles/digest', {
-            articles: reviewData.articles,
+            articles: cleanArticles,
             clientName: reviewData.clientName,
             rassegnaTitle: reviewData.title
         });
@@ -2845,7 +2885,12 @@ window.openMorningDigestFromHistory = async function(reviewId) {
             throw new Error('Impossibile elaborare il digest.');
         }
 
-        currentDigestData = data.digest;
+        currentDigestData = {
+            ...data.digest,
+            whatsappText: data.whatsappText || '',
+            emailHtml: data.emailHtml || '',
+            emailText: data.whatsappText || ''
+        };
         renderDigestModalContent(data.digest);
 
     } catch (err) {
@@ -2883,15 +2928,17 @@ function renderDigestModalContent(digest) {
             </ul>`;
         }
 
+        const mood = digest.mood_sentiment || digest.mood_summary || '';
+
         previewEl.innerHTML = `
             <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Sintesi Esecutiva:</div>
             ${highlightsHtml}
             <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; margin:1rem 0 0.5rem 0;">Clip Stampa Principali:</div>
             ${clipsHtml}
-            ${digest.mood_summary ? `<div style="margin-top:1rem; font-size:0.82rem; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--accent-primary);"><em>${escapeHtml(digest.mood_summary)}</em></div>` : ''}
+            ${mood ? `<div style="margin-top:1rem; font-size:0.82rem; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--accent-primary);"><em>${escapeHtml(mood)}</em></div>` : ''}
         `;
     }
-    feather.replace();
+    if (window.feather) feather.replace();
 }
 
 window.closeMorningDigestModal = function() {
@@ -2904,8 +2951,9 @@ window.closeMorningDigestModal = function() {
 
 window.copyDigestEmail = function() {
     if (!currentDigestData) return;
-    const body = currentDigestData.emailText || '';
-    navigator.clipboard.writeText(`Oggetto: ${currentDigestData.subject}\n\n${body}`).then(() => {
+    const body = currentDigestData.emailText || currentDigestData.whatsappText || '';
+    const subject = currentDigestData.subject || 'Briefing Rassegna Stampa';
+    navigator.clipboard.writeText(`Oggetto: ${subject}\n\n${body}`).then(() => {
         showToast('Testo email del Morning Digest copiato negli appunti!', 'success');
     }).catch(() => showToast('Errore durante la copia', 'error'));
 };
@@ -2921,7 +2969,7 @@ window.copyDigestWhatsApp = function() {
 window.openDigestMailto = function() {
     if (!currentDigestData) return;
     const subject = encodeURIComponent(currentDigestData.subject || 'Morning Briefing');
-    const body = encodeURIComponent(currentDigestData.emailText || '');
+    const body = encodeURIComponent(currentDigestData.emailText || currentDigestData.whatsappText || '');
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
 };
 
