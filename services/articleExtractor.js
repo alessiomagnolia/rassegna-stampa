@@ -342,8 +342,8 @@ async function extractWithPuppeteer(url) {
 function cleanText(html, wordLimit = 500) {
     if (!html) return '';
     
-    // Strip all tags EXCEPT <b> and <strong>
-    let text = html.replace(/<\/?(?!(?:b|strong)\b)[a-z0-9]+(?:[^>]+)?>/gmi, ' ');
+    // Strip all HTML tags cleanly
+    let text = html.replace(/<[^>]+>/g, ' ');
     
     const junkPatterns = [
         /00:00\s*00:00/g,
@@ -362,9 +362,6 @@ function cleanText(html, wordLimit = 500) {
     const words = text.split(' ');
     if (words.length > wordLimit) {
         text = words.slice(0, wordLimit).join(' ') + '...';
-        // Fix unclosed tags
-        if ((text.match(/<b>/gi) || []).length > (text.match(/<\/b>/gi) || []).length) text += '</b>';
-        if ((text.match(/<strong>/gi) || []).length > (text.match(/<\/strong>/gi) || []).length) text += '</strong>';
         return text;
     }
     return text;

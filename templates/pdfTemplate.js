@@ -377,17 +377,19 @@ function buildClassicHTML(articles, options) {
         const darkClass = article.darkHeader ? 'dark-header' : '';
         const skipAttr  = article.darkHeader ? 'data-dark="1"' : '';
 
-        // Bold keywords in the excerpt (plain text in, HTML out)
-        const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
+        // Strip raw HTML tags from excerpt, then bold keywords
+        const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
+        const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
         const clampLines = article.imageBase64 ? 14 : 28;
 
         const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
         const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
         const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
         const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
-        const visualZoneStyle = article.customImageHeight ? `style="max-height: ${article.customImageHeight}px; height: ${article.customImageHeight}px;"` : '';
+        const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160) ? article.customImageHeight : null;
+        const visualZoneStyle = effectiveImgH ? `style="max-height: ${effectiveImgH}px; height: ${effectiveImgH}px;"` : '';
         const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
-        const imgStyle = `style="object-position: center ${imgPosY}%; ${article.customImageHeight ? `max-height:${article.customImageHeight}px;` : ''}"`;
+        const imgStyle = `style="object-position: center ${imgPosY}%; ${effectiveImgH ? `max-height:${effectiveImgH}px;` : ''}"`;
 
         html += `
     <div class="page">
