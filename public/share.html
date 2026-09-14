@@ -398,14 +398,28 @@
                         <div class="kpi-label">Testate Uniche</div>
                         <div class="kpi-value" id="kpiSources">0 <span class="kpi-sub">fonti</span></div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">Reach Stimata</div>
-                        <div class="kpi-value" id="kpiReach">0 <span class="kpi-sub">lettori</span></div>
+                    <div class="kpi-card" title="Opportunity To See: bacino unico netto delle testate coperte (dati Audiweb / ADS con deduplicazione)">
+                        <div class="kpi-label" style="display:flex; align-items:center; justify-content:space-between;">
+                            <span>Audience Testate</span>
+                            <span style="font-size:0.62rem; padding:1px 5px; border-radius:3px; background:rgba(124,92,255,0.2); color:var(--accent); font-weight:700;">OTS NETTO</span>
+                        </div>
+                        <div class="kpi-value" id="kpiAudienceOTS" style="color:#c084fc;">~0 <span class="kpi-sub">bacino media</span></div>
+                    </div>
+                    <div class="kpi-card" title="Stima realistica dei lettori effettivi che hanno aperto e visualizzato questi specifici articoli (algoritmo AMEC / CoverageBook)">
+                        <div class="kpi-label" style="display:flex; align-items:center; justify-content:space-between;">
+                            <span>Letture Stimate</span>
+                            <span style="font-size:0.62rem; padding:1px 5px; border-radius:3px; background:rgba(14,165,233,0.2); color:#38bdf8; font-weight:700;">AMEC</span>
+                        </div>
+                        <div class="kpi-value" id="kpiEstimatedReads" style="color:#38bdf8;">~0 <span class="kpi-sub">visite stimate</span></div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-label">Sentiment Generale</div>
                         <div class="kpi-value" id="kpiSentiment" style="font-size:1.15rem; color:#34d399;">Neutro</div>
                     </div>
+                </div>
+                <div style="margin-top:0.75rem; font-size:0.72rem; color:var(--text-muted); display:flex; align-items:center; justify-content:flex-end; gap:5px;">
+                    <i data-feather="info" style="width:12px;height:12px;opacity:0.7;"></i>
+                    <span>Metodologia: Dati basati su benchmark giorno medio Audiweb/ADS con deduplicazione netta delle fonti e modello AMEC per le letture stimate.</span>
                 </div>
             </div>
 
@@ -502,7 +516,18 @@
             if (analytics) {
                 document.getElementById('kpiTotal').innerHTML = `${analytics.totalArticles} <span class="kpi-sub">articoli</span>`;
                 document.getElementById('kpiSources').innerHTML = `${analytics.uniqueOutlets} <span class="kpi-sub">testate</span>`;
-                document.getElementById('kpiReach').innerHTML = `~${analytics.formattedReach} <span class="kpi-sub">lettori</span>`;
+                
+                const audOTS = analytics.formattedAudienceOTS || analytics.formattedReach || '0';
+                const estReads = analytics.formattedEstimatedReads || '0';
+
+                const elAudience = document.getElementById('kpiAudienceOTS');
+                if (elAudience) elAudience.innerHTML = `~${audOTS} <span class="kpi-sub">bacino media</span>`;
+
+                const elReads = document.getElementById('kpiEstimatedReads');
+                if (elReads) elReads.innerHTML = `~${estReads} <span class="kpi-sub">visite stimate</span>`;
+
+                const elLegacyReach = document.getElementById('kpiReach');
+                if (elLegacyReach) elLegacyReach.innerHTML = `~${audOTS} <span class="kpi-sub">lettori</span>`;
                 
                 const sentEl = document.getElementById('kpiSentiment');
                 sentEl.textContent = analytics.overallSentiment;

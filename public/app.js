@@ -2700,6 +2700,8 @@ function updateLiveKpis() {
     const banner = document.getElementById('liveKpiBanner');
     const countEl = document.getElementById('liveKpiCount');
     const reachEl = document.getElementById('liveKpiReach');
+    const audienceEl = document.getElementById('liveKpiAudience');
+    const readsEl = document.getElementById('liveKpiReads');
     const sentimentEl = document.getElementById('liveKpiSentiment');
     const btnDigest = document.getElementById('btnOpenMorningDigestAction');
     const btnShare = document.getElementById('btnShareReviewAction');
@@ -2726,8 +2728,10 @@ function updateLiveKpis() {
     const count = state.articles.length;
     if (countEl) countEl.textContent = `${count} ${count === 1 ? 'Articolo' : 'Articoli'}`;
 
-    let estReach = 0;
-    const tier1Outlets = ['corriere', 'repubblica', 'sole', 'ansa', 'stampa', 'messaggero', 'fatto', 'giornale', 'sky', 'tgcom', 'rai'];
+    const seenSources = new Set();
+    const sourceArticleCounts = {};
+    let totalAudienceOTS = 0;
+    let totalEstimatedReads = 0;
     let positiveCount = 0;
     let criticalCount = 0;
 
@@ -2738,14 +2742,38 @@ function updateLiveKpis() {
         const src = ((art.source_name || '') + ' ' + (art.url || '')).toLowerCase();
         const type = art.source_type || 'Web';
         const text = ((art.title || '') + ' ' + (art.excerpt || '')).toLowerCase();
+        const normKey = (art.source_name || 'media').toLowerCase().trim();
 
-        if (tier1Outlets.some(o => src.includes(o)) || type === 'Quotidiano Nazionale' || type === 'Agenzia di Stampa') {
-            estReach += 750000;
-        } else if (type === 'Quotidiano Locale' || type === 'Periodico' || type === 'Radio/TV') {
-            estReach += 140000;
-        } else {
-            estReach += 35000;
+        sourceArticleCounts[normKey] = (sourceArticleCounts[normKey] || 0) + 1;
+
+        let dayAudience = 25000;
+        let readRate = 0.035;
+
+        if (src.includes('corriere')) { dayAudience = 3500000; readRate = 0.012; }
+        else if (src.includes('repubblica')) { dayAudience = 3150000; readRate = 0.012; }
+        else if (src.includes('sole')) { dayAudience = 1350000; readRate = 0.018; }
+        else if (src.includes('ansa')) { dayAudience = 2600000; readRate = 0.013; }
+        else if (src.includes('stampa')) { dayAudience = 1150000; readRate = 0.014; }
+        else if (src.includes('messaggero')) { dayAudience = 1450000; readRate = 0.013; }
+        else if (src.includes('fanpage')) { dayAudience = 2200000; readRate = 0.014; }
+        else if (src.includes('tgcom')) { dayAudience = 1950000; readRate = 0.012; }
+        else if (src.includes('sky')) { dayAudience = 1400000; readRate = 0.013; }
+        else if (src.includes('fatto')) { dayAudience = 1250000; readRate = 0.014; }
+        else if (src.includes('giornale') || src.includes('libero')) { dayAudience = 800000; readRate = 0.014; }
+        else if (src.includes('finanza') || src.includes('forbes') || src.includes('italiaoggi')) { dayAudience = 320000; readRate = 0.022; }
+        else if (type === 'Quotidiano Nazionale' || type === 'Agenzia di Stampa') { dayAudience = 750000; readRate = 0.015; }
+        else if (type === 'Quotidiano Locale' || type === 'Periodico' || src.includes('carlino') || src.includes('nazione') || src.includes('giorno') || src.includes('mattino')) { dayAudience = 220000; readRate = 0.018; }
+
+        // Deduplicated Audience: count outlet only once
+        if (!seenSources.has(normKey)) {
+            seenSources.add(normKey);
+            totalAudienceOTS += dayAudience;
         }
+
+        // Estimated reads for this article
+        const occ = sourceArticleCounts[normKey];
+        const mult = occ === 1 ? 1.0 : (occ === 2 ? 0.75 : 0.5);
+        totalEstimatedReads += Math.max(10, Math.round(dayAudience * readRate * mult));
 
         let pos = 0;
         let neg = 0;
@@ -2756,15 +2784,15 @@ function updateLiveKpis() {
         else if (neg > pos) criticalCount++;
     });
 
-    if (reachEl) {
-        if (estReach >= 1000000) {
-            reachEl.textContent = `~${(estReach / 1000000).toFixed(1)}M imp.`;
-        } else if (estReach >= 1000) {
-            reachEl.textContent = `~${Math.round(estReach / 1000)}K imp.`;
-        } else {
-            reachEl.textContent = `~${estReach} imp.`;
-        }
+    function fmt(n) {
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return Math.round(n / 1000) + 'K';
+        return n.toString();
     }
+
+    if (audienceEl) audienceEl.textContent = `~${fmt(totalAudienceOTS)} netta`;
+    if (readsEl) readsEl.textContent = `~${fmt(totalEstimatedReads)} visite`;
+    if (reachEl) reachEl.textContent = `~${fmt(totalAudienceOTS)}`;
 
     if (sentimentEl) {
         if (positiveCount > criticalCount) {

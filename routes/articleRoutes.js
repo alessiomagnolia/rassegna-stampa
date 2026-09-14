@@ -174,7 +174,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
                 subject: `[Briefing Stampa] ${client} - ${todayStr}`,
                 highlights: [
                     `Rassegna odierna con ${articles.length} uscite monitorate su ${analytics.uniqueOutlets} testate.`,
-                    `Esposizione stimata complessiva: circa ${analytics.formattedReach} lettori potenziali.`,
+                    `Esposizione netta stimata: circa ${analytics.formattedAudienceOTS} lettori potenziali (~${analytics.formattedEstimatedReads} letture stimate articoli).`,
                     `Clima mediatico prevalente: ${analytics.overallSentiment}.`
                 ],
                 clips: analytics.annotatedArticles.map(a => ({
@@ -190,7 +190,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
         // Formatta testo per chat executive / WhatsApp (senza emoji infantili, stile corporate pulito)
         const whatsappLines = [
             `*BRIEFING ESECUTIVO STAMPA — ${client.toUpperCase()}*`,
-            `_${todayStr} | ${articles.length} articoli | Reach st.: ~${analytics.formattedReach}_`,
+            `_${todayStr} | ${articles.length} articoli | Audience netta: ~${analytics.formattedAudienceOTS} | Letture st.: ~${analytics.formattedEstimatedReads}_`,
             ``,
             `*SINTESI ESECUTIVA:*`,
             ...digestData.highlights.map(h => `• ${h}`),
@@ -206,7 +206,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
         // Formatta testo plain text pulito per email
         const emailText = [
             `BRIEFING ESECUTIVO STAMPA — ${client.toUpperCase()}`,
-            `Data: ${todayStr} | ${articles.length} articoli | Reach stimata: ~${analytics.formattedReach}`,
+            `Data: ${todayStr} | ${articles.length} articoli | Audience netta: ~${analytics.formattedAudienceOTS} | Letture stimate: ~${analytics.formattedEstimatedReads}`,
             ``,
             `SINTESI ESECUTIVA:`,
             ...digestData.highlights.map(h => `• ${h}`),
@@ -224,7 +224,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; max-width: 650px; line-height: 1.5; background: #ffffff; padding: 10px 0;">
     <div style="border-bottom: 2px solid #7c5cff; padding-bottom: 12px; margin-bottom: 20px;">
         <h2 style="margin: 0 0 4px 0; color: #0f172a; font-size: 19px; font-weight: 700; letter-spacing: -0.2px;">Briefing Esecutivo Stampa &mdash; ${client}</h2>
-        <div style="color: #64748b; font-size: 13px;">Data: <strong>${todayStr}</strong> &bull; <strong>${articles.length} articoli</strong> &bull; Reach stimata: <strong>~${analytics.formattedReach}</strong></div>
+        <div style="color: #64748b; font-size: 13px;">Data: <strong>${todayStr}</strong> &bull; <strong>${articles.length} articoli</strong> &bull; Audience netta: <strong>~${analytics.formattedAudienceOTS}</strong> &bull; Letture stimate: <strong>~${analytics.formattedEstimatedReads}</strong></div>
     </div>
 
     <div style="margin-bottom: 22px;">

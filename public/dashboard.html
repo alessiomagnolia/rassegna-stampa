@@ -497,9 +497,15 @@
                             <strong id="liveKpiCount" style="font-size:1.05rem; color:var(--text-primary);">0 Articoli</strong>
                         </div>
                         <div style="height:24px; width:1px; background:var(--border-color);" class="hide-mobile"></div>
-                        <div>
-                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Reach Stimata</span>
-                            <strong id="liveKpiReach" style="font-size:1.05rem; color:var(--accent-primary);">~0</strong>
+                        <div title="Bacino potenziale unico giornaliero delle testate coperte (dati Audiweb / ADS deduplicati)">
+                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Audience Testate</span>
+                            <strong id="liveKpiAudience" style="font-size:1.05rem; color:#c084fc;">~0 netta</strong>
+                            <strong id="liveKpiReach" class="hidden">~0</strong>
+                        </div>
+                        <div style="height:24px; width:1px; background:var(--border-color);" class="hide-mobile"></div>
+                        <div title="Stima lettori effettivi singoli articoli (modello AMEC)">
+                            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); display:block;">Letture Stimate</span>
+                            <strong id="liveKpiReads" style="font-size:1.05rem; color:#38bdf8;">~0 visite</strong>
                         </div>
                         <div style="height:24px; width:1px; background:var(--border-color);" class="hide-mobile"></div>
                         <div>
@@ -1802,7 +1808,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260914_04"></script>
+    <script src="app.js?v=20260914_05"></script>
     <script src="ui.js"></script>
 </body>
 </html>

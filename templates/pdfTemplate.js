@@ -84,27 +84,32 @@ function buildAnalyticsPageHTML(analytics, options = {}) {
                 </div>
             </div>
 
-            <!-- Top 4 KPI Cards -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-bottom: 7mm;">
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
-                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Uscite Totali</div>
-                    <div style="font-size: 19pt; font-weight: 800; color: #1a1a2e;">${analytics.totalArticles}</div>
-                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">ritagli stampa</div>
+            <!-- Top 5 KPI Cards -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3.5mm; margin-bottom: 7mm;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3.5mm; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Uscite Totali</div>
+                    <div style="font-size: 16pt; font-weight: 800; color: #1a1a2e;">${analytics.totalArticles}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 1mm;">ritagli stampa</div>
                 </div>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
-                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Testate Monitorate</div>
-                    <div style="font-size: 19pt; font-weight: 800; color: #1a1a2e;">${analytics.uniqueOutlets}</div>
-                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">fonti uniche</div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3.5mm; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Testate Monitorate</div>
+                    <div style="font-size: 16pt; font-weight: 800; color: #1a1a2e;">${analytics.uniqueOutlets}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 1mm;">fonti uniche</div>
                 </div>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
-                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Reach Stimata</div>
-                    <div style="font-size: 19pt; font-weight: 800; color: #7c5cff;">~${analytics.formattedReach}</div>
-                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">lettori potenziali</div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3.5mm; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Audience Testate</div>
+                    <div style="font-size: 16pt; font-weight: 800; color: #7c5cff;">~${analytics.formattedAudienceOTS || analytics.formattedReach}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 1mm;">bacino netto (OTS)</div>
                 </div>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4mm; text-align: center;">
-                    <div style="font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Sentiment Generale</div>
-                    <div style="font-size: 13pt; font-weight: 700; color: #059669; padding-top: 2mm;">${analytics.overallSentiment}</div>
-                    <div style="font-size: 7pt; color: #94a3b8; margin-top: 1mm;">tono prevalente</div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3.5mm; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Letture Stimate</div>
+                    <div style="font-size: 16pt; font-weight: 800; color: #0284c7;">~${analytics.formattedEstimatedReads || '0'}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 1mm;">modello AMEC</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3.5mm; text-align: center;">
+                    <div style="font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 1.5mm;">Sentiment Generale</div>
+                    <div style="font-size: 11pt; font-weight: 700; color: #059669; padding-top: 2.5mm;">${analytics.overallSentiment}</div>
+                    <div style="font-size: 6.5pt; color: #94a3b8; margin-top: 1mm;">tono prevalente</div>
                 </div>
             </div>
 
@@ -167,7 +172,7 @@ function buildAnalyticsPageHTML(analytics, options = {}) {
 
         <!-- Footer Notice -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 3mm; font-size: 7pt; color: #94a3b8; display: flex; justify-content: space-between;">
-            <span>Metriche generate automaticamente tramite analisi semantica e classificazione media.</span>
+            <span>Metodologia: Dati basati su benchmark giorno medio Audiweb/ADS con deduplicazione netta delle fonti e modello AMEC per le letture stimate.</span>
             <span>Rassegna Stampa Intelligence</span>
         </div>
     </div>`;
