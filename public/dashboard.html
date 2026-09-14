@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_06">
+    <link rel="stylesheet" href="styles.css?v=20260914_10">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -799,11 +799,6 @@
                             Documento analitico istituzionale in singola pagina A4 con metriche certificate AMEC, bacino netto OTS deduplicato, ripartizione sentiment e testate top. Visualizza l'anteprima e scarica il PDF pronto da inviare.
                         </p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <button type="button" id="btnDownloadKpiTop" class="btn btn-primary btn-gradient" onclick="downloadStandaloneKpiPdf(this)" style="padding: 0.65rem 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                            <i data-feather="download" style="width:16px;height:16px;"></i> <span>Scarica Report KPI (PDF A4)</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Review Selector for KPI Section -->
@@ -816,9 +811,12 @@
                             <option value="active">Rassegna attuale in lavorazione (Nuova Rassegna)</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="onKpiSourceChange()" style="padding: 0.65rem 1rem; display: flex; align-items: center; gap: 6px;">
                             <i data-feather="refresh-cw" style="width:14px;height:14px;"></i> <span>Aggiorna Anteprima</span>
+                        </button>
+                        <button type="button" id="btnDownloadKpi" class="btn btn-primary btn-gradient" onclick="downloadStandaloneKpiPdf(this)" style="padding: 0.65rem 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(124,92,255,0.3);">
+                            <i data-feather="download" style="width:16px;height:16px;"></i> <span>Scarica Report KPI (PDF A4)</span>
                         </button>
                     </div>
                 </div>
@@ -836,13 +834,6 @@
                     <div id="kpiA4PreviewContainer" style="width: 100%; max-width: 820px;">
                         <!-- Rendered dynamically -->
                     </div>
-                </div>
-
-                <!-- Bottom Download Action -->
-                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 12px; width: 100%;">
-                    <button type="button" id="btnDownloadKpiBottom" class="btn btn-primary btn-gradient" onclick="downloadStandaloneKpiPdf(this)" style="padding: 0.75rem 2rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(124,92,255,0.35);">
-                        <i data-feather="download" style="width:16px;height:16px;"></i> <span>Scarica Report KPI Singolo (PDF A4)</span>
-                    </button>
                 </div>
             </section>
         </div>
@@ -2062,6 +2053,27 @@
 
             // Auto-close sidebar after selecting a page
             closeSidebar();
+
+            // Direct page dispatch
+            if (page === 'briefing') {
+                if (typeof window.initBriefingPage === 'function') {
+                    window.initBriefingPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.initBriefingPage === 'function') {
+                            window.initBriefingPage();
+                        }
+                    }, 200);
+                }
+            } else if (page === 'storico') {
+                if (typeof window.loadHistory === 'function') {
+                    window.loadHistory();
+                }
+            } else if (page === 'media-crm') {
+                if (typeof window.loadMediaContacts === 'function') {
+                    window.loadMediaContacts();
+                }
+            }
         }
         window.showDashboardPage = showDashboardPage;
 
@@ -2099,7 +2111,7 @@
 
         feather.replace();
     </script>
-    <script src="app.js?v=20260914_07"></script>
-    <script src="ui.js"></script>
+    <script src="app.js?v=20260914_10"></script>
+    <script src="ui.js?v=20260914_10"></script>
 </body>
 </html>

@@ -387,7 +387,7 @@ router.get('/download/:filename', authMiddleware, (req, res) => {
         
         if (!review) {
             // Check if it is a generated KPI report or ephemeral export created in output directory
-            if (safeFilename.startsWith('Report_KPI_') || safeFilename.startsWith('draft_')) {
+            if (safeFilename.startsWith('Report_KPI') || safeFilename.startsWith('draft_')) {
                 return res.download(filePath, safeFilename);
             }
             return res.status(404).json({ error: 'PDF non trovato o non autorizzato.' });

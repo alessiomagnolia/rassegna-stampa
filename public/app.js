@@ -3419,6 +3419,21 @@ window.initBriefingPage = async function() {
     const selectKpi = document.getElementById('selectKpiSource');
     if (!selectBriefing && !selectKpi) return;
 
+    // Restore state.articles if empty from localStorage or sessionStorage
+    if (!state.articles || state.articles.length === 0) {
+        try {
+            const editorState = JSON.parse(localStorage.getItem('rs_editor_state') || '{}');
+            if (editorState && Array.isArray(editorState.articles) && editorState.articles.length > 0) {
+                state.articles = editorState.articles;
+            } else {
+                const draft = JSON.parse(sessionStorage.getItem('rs_draft_articles') || '[]');
+                if (Array.isArray(draft) && draft.length > 0) {
+                    state.articles = draft;
+                }
+            }
+        } catch(e) {}
+    }
+
     const prevBriefingVal = selectBriefing ? selectBriefing.value : null;
     const prevKpiVal = selectKpi ? selectKpi.value : null;
 
@@ -3429,7 +3444,7 @@ window.initBriefingPage = async function() {
     const activeCount = (state.articles && state.articles.length) ? state.articles.length : 0;
     const activeLabel = activeCount > 0 
         ? `Rassegna attuale in lavorazione (${activeCount} ${activeCount === 1 ? 'articolo' : 'articoli'})`
-        : `Rassegna attuale in lavorazione (Nessun articolo caricato)`;
+        : `Rassegna attuale in lavorazione (Nessun articolo attivo)`;
 
     if (selectBriefing) {
         const activeOpt = document.createElement('option');
@@ -3445,9 +3460,11 @@ window.initBriefingPage = async function() {
     }
 
     // 2. Historic reviews
+    let historyCount = 0;
     try {
         const history = await apiCall('GET', '/api/pdf/history');
         if (Array.isArray(history) && history.length > 0) {
+            historyCount = history.length;
             const optGroupBriefing = document.createElement('optgroup');
             optGroupBriefing.label = 'Storico Rassegne Salvate';
             const optGroupKpi = document.createElement('optgroup');
@@ -3499,7 +3516,7 @@ window.initBriefingPage = async function() {
         } else if (selectKpi.options.length > 1) {
             selectKpi.selectedIndex = 1;
         }
-        // Automatically render KPI A4 preview
+        // Automatically render KPI A4 preview immediately
         onKpiSourceChange();
     }
 
@@ -3998,6 +4015,59 @@ function renderKpiA4PreviewHtml(articles, options = {}) {
     `;
 }
 
+const SAMPLE_KPI_ARTICLES = [
+    {
+        title: "Innovazione e Sostenibilità Digitale: il nuovo piano industriale",
+        source_name: "Corriere della Sera",
+        source_type: "Quotidiano Nazionale",
+        published_date: new Date().toISOString().split('T')[0],
+        sentiment: "Positivo",
+        sentiment_score: 0.85,
+        url: "https://www.corriere.it/economia/innovazione-sostenibilita.shtml",
+        excerpt: "Presentato il nuovo piano strategico di crescita con focus su transizione ecologica e digitalizzazione dei processi produttivi."
+    },
+    {
+        title: "Transizione tecnologica e investimenti industriali: scenari di crescita",
+        source_name: "Il Sole 24 Ore",
+        source_type: "Stampa Economica",
+        published_date: new Date().toISOString().split('T')[0],
+        sentiment: "Positivo",
+        sentiment_score: 0.90,
+        url: "https://www.ilsole24ore.com/art/transizione-tecnologica-investimenti",
+        excerpt: "I dati evidenziano un incremento significativo degli investimenti in innovazione e intelligenza artificiale applicata."
+    },
+    {
+        title: "Sviluppo dei servizi cloud e infrastrutture avanzate nel mercato italiano",
+        source_name: "La Repubblica",
+        source_type: "Quotidiano Nazionale",
+        published_date: new Date().toISOString().split('T')[0],
+        sentiment: "Neutro",
+        sentiment_score: 0.50,
+        url: "https://www.repubblica.it/economia/servizi-cloud-infrastrutture",
+        excerpt: "Analisi di settore sui trend tecnologici emergenti e sulle prospettive di modernizzazione dei servizi alle imprese."
+    },
+    {
+        title: "Accordo strategico per la modernizzazione digitale delle filiere",
+        source_name: "ANSA",
+        source_type: "Agenzia di Stampa",
+        published_date: new Date().toISOString().split('T')[0],
+        sentiment: "Positivo",
+        sentiment_score: 0.80,
+        url: "https://www.ansa.it/canale_economia/notizie/accordo-strategico-filiere.html",
+        excerpt: "Siglata una nuova intesa per accelerare la transizione delle imprese verso processi integrati e sostenibili."
+    },
+    {
+        title: "Competitività e scenari normativi: il bilancio dei leader di mercato",
+        source_name: "Milano Finanza",
+        source_type: "Stampa Economica",
+        published_date: new Date().toISOString().split('T')[0],
+        sentiment: "Neutro",
+        sentiment_score: 0.45,
+        url: "https://www.milanofinanza.it/news/competitivita-scenari-normativi",
+        excerpt: "Dalla tavola rotonda emergono indicazioni chiare sulla gestione dell'impatto economico e dell'evoluzione regolatoria."
+    }
+];
+
 window.loadAndRenderKpiPreview = async function(sourceVal) {
     const previewContainer = document.getElementById('kpiA4PreviewContainer');
     const metaBadge = document.getElementById('kpiPreviewMetaBadge');
@@ -4016,6 +4086,7 @@ window.loadAndRenderKpiPreview = async function(sourceVal) {
     let clientName = '';
     let clientLogo = null;
     let reviewId = null;
+    let isDemo = false;
 
     if (!sourceVal || sourceVal === 'active') {
         if (state.articles && state.articles.length > 0) {
@@ -4039,18 +4110,31 @@ window.loadAndRenderKpiPreview = async function(sourceVal) {
         title = document.getElementById('rassegnaTitle')?.value.trim() || title || 'Rassegna Stampa';
         clientName = document.getElementById('clientName')?.value.trim() || clientName || '';
         clientLogo = state.clientLogoBase64 || null;
+
+        if (!articles || articles.length === 0) {
+            isDemo = true;
+            articles = SAMPLE_KPI_ARTICLES;
+            title = 'Report di Impatto e Visibilità Media';
+            clientName = clientName || 'Azienda Demo';
+        }
     } else {
         reviewId = sourceVal;
         try {
             const data = await apiCall('GET', `/api/pdf/review/${sourceVal}`);
-            if (data && Array.isArray(data.articles)) {
+            if (data && Array.isArray(data.articles) && data.articles.length > 0) {
                 articles = data.articles;
                 title = data.title || 'Rassegna Stampa';
                 clientName = data.clientName || '';
                 clientLogo = data.clientLogo || null;
+            } else {
+                isDemo = true;
+                articles = SAMPLE_KPI_ARTICLES;
+                title = data?.title || 'Rassegna Stampa (Dati Simulati)';
             }
         } catch (err) {
             console.warn('Errore caricamento rassegna per preview KPI:', err);
+            isDemo = true;
+            articles = SAMPLE_KPI_ARTICLES;
         }
     }
 
@@ -4059,33 +4143,33 @@ window.loadAndRenderKpiPreview = async function(sourceVal) {
         title,
         clientName,
         clientLogo,
-        reviewId
+        reviewId,
+        isDemo
     };
 
-    if (!articles || articles.length === 0) {
-        if (metaBadge) metaBadge.textContent = '0 articoli disponibili';
-        previewContainer.innerHTML = `
-            <div style="padding: 3.5rem 2rem; text-align: center; color: var(--text-muted); background: var(--bg-primary); border-radius: 8px; border: 1px dashed var(--border-color);">
-                <div style="width: 48px; height: 48px; margin: 0 auto 1rem auto; border-radius: 50%; background: rgba(124,92,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
-                    <i data-feather="file-text" style="width: 24px; height: 24px;"></i>
+    if (isDemo) {
+        if (metaBadge) {
+            metaBadge.innerHTML = '<span style="color:#fbbf24; font-weight:700;">● Simulazione Demo (Dati di Esempio)</span>';
+        }
+        const demoBanner = `
+            <div style="background: rgba(124, 92, 255, 0.12); border: 1px solid rgba(124, 92, 255, 0.35); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #c4b5fd;">
+                    <i data-feather="info" style="width: 18px; height: 18px; flex-shrink: 0; color: #a78bfa;"></i>
+                    <span><strong>Anteprima Dimostrativa:</strong> Non ci sono ancora articoli nella rassegna attuale. Di seguito visualizzi la simulazione grafica reale del report A4 scaricabile. Puoi testare il download premendo il tasto in alto.</span>
                 </div>
-                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem;">Nessun articolo per l'anteprima KPI</h3>
-                <p style="font-size: 0.85rem; max-width: 420px; margin: 0 auto 1.25rem auto; line-height: 1.5; color: var(--text-muted);">
-                    Seleziona una rassegna con articoli salvati dallo storico oppure aggiungi link in "Nuova Rassegna" per visualizzare e scaricare il report.
-                </p>
-                <button type="button" class="btn btn-outline btn-sm" onclick="showPage('rassegna')">
-                    <i data-feather="plus" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Aggiungi Articoli in Nuova Rassegna
+                <button type="button" class="btn btn-outline btn-sm" onclick="showDashboardPage('rassegna', true)" style="padding: 4px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; white-space: nowrap;">
+                    <i data-feather="plus" style="width:12px;height:12px;"></i> Nuova Rassegna
                 </button>
             </div>
         `;
-        if (window.feather) feather.replace();
-        return;
+        previewContainer.innerHTML = demoBanner + renderKpiA4PreviewHtml(articles, { title, clientName, clientLogo });
+    } else {
+        if (metaBadge) {
+            metaBadge.textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'} • Anteprima pronta`;
+        }
+        previewContainer.innerHTML = renderKpiA4PreviewHtml(articles, { title, clientName, clientLogo });
     }
 
-    if (metaBadge) {
-        metaBadge.textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'} • Anteprima pronta`;
-    }
-    previewContainer.innerHTML = renderKpiA4PreviewHtml(articles, { title, clientName, clientLogo });
     if (window.feather) feather.replace();
 };
 
@@ -4096,19 +4180,63 @@ window.onKpiSourceChange = function() {
 };
 
 window.downloadStandaloneKpiPdf = async function(btnEl) {
-    const data = window.currentKpiData;
-    if (!data || !data.articles || data.articles.length === 0) {
-        showToast('Nessun articolo disponibile per generare il Report KPI. Seleziona una rassegna valida dallo storico o crea una rassegna.', 'warning');
-        return;
-    }
-
-    const btn = btnEl || document.getElementById('btnDownloadKpiTop') || document.getElementById('btnDownloadKpiBottom');
+    const btn = btnEl || document.getElementById('btnDownloadKpi') || document.getElementById('btnDownloadKpiTop') || document.getElementById('btnDownloadKpiBottom');
     const originalHtml = btn ? btn.innerHTML : null;
 
     try {
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Generazione PDF...';
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;border-color:#ffffff;border-top-color:transparent;"></span> Preparazione...';
+        }
+
+        let data = window.currentKpiData;
+        const select = document.getElementById('selectKpiSource');
+        const selectedSource = select ? select.value : 'active';
+
+        // If not loaded or empty, resolve dynamically
+        if (!data || !data.articles || data.articles.length === 0) {
+            if (selectedSource && selectedSource !== 'active') {
+                try {
+                    const revData = await apiCall('GET', `/api/pdf/review/${selectedSource}`);
+                    if (revData && Array.isArray(revData.articles) && revData.articles.length > 0) {
+                        data = {
+                            articles: revData.articles,
+                            title: revData.title || 'Rassegna Stampa',
+                            clientName: revData.clientName || '',
+                            clientLogo: revData.clientLogo || null,
+                            reviewId: selectedSource
+                        };
+                        window.currentKpiData = data;
+                    }
+                } catch (e) {
+                    console.warn('Errore fetch rassegna al download:', e);
+                }
+            } else {
+                if (state.articles && state.articles.length > 0) {
+                    data = {
+                        articles: state.articles,
+                        title: document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa',
+                        clientName: document.getElementById('clientName')?.value.trim() || '',
+                        clientLogo: state.clientLogoBase64 || null,
+                        reviewId: undefined
+                    };
+                    window.currentKpiData = data;
+                }
+            }
+        }
+
+        if (!data || !data.articles || data.articles.length === 0) {
+            data = {
+                articles: SAMPLE_KPI_ARTICLES,
+                title: 'Report KPI Dimostrativo',
+                clientName: 'Azienda Esempio',
+                clientLogo: null,
+                isDemo: true
+            };
+        }
+
+        if (btn) {
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;border-color:#ffffff;border-top-color:transparent;"></span> Generazione PDF A4...';
         }
         showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
 
@@ -4165,7 +4293,7 @@ window.downloadCurrentDigestKpiPdf = async function(btnEl) {
     try {
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Elaborazione...';
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;border-color:#ffffff;border-top-color:transparent;"></span> Elaborazione...';
         }
         showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
 
@@ -4201,6 +4329,17 @@ window.downloadCurrentDigestKpiPdf = async function(btnEl) {
         }
     }
 };
+
+// Auto-init Briefing / KPI if currently on #briefing or page-briefing is active
+setTimeout(() => {
+    const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+    const saved = sessionStorage.getItem('rs_current_page') || localStorage.getItem('rs_current_page');
+    const briefingPage = document.getElementById('page-briefing');
+    const isBriefingActive = (briefingPage && briefingPage.classList.contains('active')) || hash === 'briefing' || saved === 'briefing';
+    if (isBriefingActive && typeof window.initBriefingPage === 'function') {
+        window.initBriefingPage();
+    }
+}, 100);
 
 
 
