@@ -113,34 +113,112 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function loadHistory() {
-        try {
-            const history = await fetchAPI('/api/press/history');
-            historyList.innerHTML = '';
+    function renderHistoryItems(history) {
+        historyList.innerHTML = '';
+        
+        if (!history || history.length === 0) {
+            historyList.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:1.5rem 1rem; text-align:center; line-height:1.5;">Nessun comunicato in archivio.<br><small style="opacity:0.7;">I comunicati generati o salvati appariranno qui automaticamente.</small></div>';
+            return;
+        }
+
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `history-item ${item.id === currentPrId ? 'active' : ''}`;
+            div.onclick = () => loadPressRelease(item.id);
+
+            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' }) : 'Recente';
             
-            if (history.length === 0) {
-                historyList.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:1rem; text-align:center;">Nessun comunicato in archivio</div>';
-                return;
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+                    <div class="h-title" style="flex:1;">${item.title || 'Comunicato senza titolo'}</div>
+                    <button class="btn-del-pr-item" title="Elimina comunicato" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem; padding:0 4px; line-height:1; border-radius:4px; opacity:0.5; transition:opacity 0.2s;">✕</button>
+                </div>
+                <div class="h-client">${item.client_name || 'Nessun cliente'} 
+                    ${item.is_reference ? '<span class="h-badge">Esempio</span>' : ''}
+                </div>
+                <div class="h-date">${dateStr}</div>
+            `;
+
+            const delBtn = div.querySelector('.btn-del-pr-item');
+            if (delBtn) {
+                delBtn.onmouseover = () => { delBtn.style.opacity = '1'; delBtn.style.color = '#ff4d4d'; };
+                delBtn.onmouseout = () => { delBtn.style.opacity = '0.5'; delBtn.style.color = 'var(--text-muted)'; };
+                delBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Eliminare "${item.title}" dalla cronologia?`)) return;
+                    try {
+                        await fetchAPI(`/api/press/${item.id}`, { method: 'DELETE' });
+                        let cached = JSON.parse(localStorage.getItem('rs_press_history') || '[]');
+                        cached = cached.filter(x => x.id !== item.id);
+                        localStorage.setItem('rs_press_history', JSON.stringify(cached));
+                        if (currentPrId === item.id) resetForm();
+                        loadHistory();
+                    } catch(err) {
+                        showError(err.message);
+                    }
+                };
             }
 
-            history.forEach(item => {
-                const div = document.createElement('div');
-                div.className = `history-item ${item.id === currentPrId ? 'active' : ''}`;
-                div.onclick = () => loadPressRelease(item.id);
+            historyList.appendChild(div);
+        });
+    }
 
-                const dateStr = new Date(item.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
-                
-                div.innerHTML = `
-                    <div class="h-title">${item.title}</div>
-                    <div class="h-client">${item.client_name || 'Nessun cliente'} 
-                        ${item.is_reference ? '<span class="h-badge">Esempio</span>' : ''}
-                    </div>
-                    <div class="h-date">${dateStr}</div>
-                `;
-                historyList.appendChild(div);
-            });
+    async function loadHistory() {
+        const localCached = localStorage.getItem('rs_press_history');
+        if (localCached) {
+            try {
+                const parsed = JSON.parse(localCached);
+                if (Array.isArray(parsed) && parsed.length > 0 && historyList.children.length === 0) {
+                    renderHistoryItems(parsed);
+                }
+            } catch(e){}
+        }
+
+        try {
+            const history = await fetchAPI('/api/press/history');
+            
+            if (Array.isArray(history) && history.length > 0) {
+                localStorage.setItem('rs_press_history', JSON.stringify(history));
+                renderHistoryItems(history);
+            } else if (localCached) {
+                // Auto re-sync cached items if server DB was reset by Render restart
+                try {
+                    const parsed = JSON.parse(localCached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        for (const item of parsed) {
+                            await fetchAPI('/api/press/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    title: item.title,
+                                    client_name: item.client_name,
+                                    content: item.content || item.title
+                                })
+                            });
+                        }
+                        const refreshed = await fetchAPI('/api/press/history');
+                        localStorage.setItem('rs_press_history', JSON.stringify(refreshed));
+                        renderHistoryItems(refreshed);
+                        return;
+                    }
+                } catch(reSyncErr) {
+                    console.warn('[Press] Re-sync error:', reSyncErr);
+                }
+                renderHistoryItems([]);
+            } else {
+                renderHistoryItems([]);
+            }
         } catch (error) {
             console.error('Failed to load history', error);
+            if (localCached) {
+                try {
+                    renderHistoryItems(JSON.parse(localCached));
+                } catch(e) {
+                    renderHistoryItems([]);
+                }
+            } else {
+                renderHistoryItems([]);
+            }
         }
     }
 
@@ -193,6 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadPressRelease(id) {
         try {
+            // Chiude il menu laterale su mobile quando si seleziona un comunicato
+            if (sidebar) sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('visible');
+
             const pr = await fetchAPI(`/api/press/${id}`);
             
             currentPrId = pr.id;
@@ -210,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Highlight history
             document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
-            const activeEl = Array.from(historyList.children).find(el => el.onclick.toString().includes(id));
+            const activeEl = Array.from(historyList.children).find(el => el.onclick && el.onclick.toString().includes(id));
             if (activeEl) activeEl.classList.add('active');
 
         } catch (error) {
@@ -254,16 +336,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             prContentTextarea.value = cleanDoubleAsterisks(textContent);
             updateTitleBanner();
+
+            currentPrId = res.id || null;
             
             // Mostra tasti azione
             btnSave.style.display = 'block';
             btnCopy.style.display = 'block';
+            if (currentPrId) btnDelete.style.display = 'block';
             if (btnPitch) btnPitch.style.display = 'block';
             
-            // Ricarica clienti in caso ne abbiamo inserito uno nuovo o salvato un ref
-            if (payload.manual_examples) {
-                loadHistory(); // Ricarica history per mostrare il reference salvato
+            // Salva nel cache locale per persistenza immediata
+            if (currentPrId) {
+                let cached = JSON.parse(localStorage.getItem('rs_press_history') || '[]');
+                cached = cached.filter(x => x.id !== currentPrId);
+                cached.unshift({
+                    id: currentPrId,
+                    title: payload.title,
+                    client_name: payload.client_name,
+                    content: prContentTextarea.value,
+                    created_at: new Date().toISOString()
+                });
+                localStorage.setItem('rs_press_history', JSON.stringify(cached));
             }
+
+            // Ricarica la cronologia e clienti subito
+            await loadHistory();
             loadClients();
 
         } catch (error) {
@@ -280,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const payload = {
+            id: currentPrId,
             title: prTitleInput.value,
             client_name: clientNameInput.value,
             content: prContentTextarea.value
@@ -296,7 +394,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             currentPrId = res.id;
-            loadHistory();
+            btnDelete.style.display = 'block';
+
+            // Aggiorna cache locale
+            let cached = JSON.parse(localStorage.getItem('rs_press_history') || '[]');
+            cached = cached.filter(x => x.id !== currentPrId);
+            cached.unshift({
+                id: currentPrId,
+                title: payload.title,
+                client_name: payload.client_name,
+                content: payload.content,
+                created_at: new Date().toISOString()
+            });
+            localStorage.setItem('rs_press_history', JSON.stringify(cached));
+
+            await loadHistory();
             btnSave.textContent = 'Salvato!';
             setTimeout(() => btnSave.textContent = originalText, 2000);
             
@@ -312,6 +424,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await fetchAPI(`/api/press/${currentPrId}`, { method: 'DELETE' });
+            let cached = JSON.parse(localStorage.getItem('rs_press_history') || '[]');
+            cached = cached.filter(x => x.id !== currentPrId);
+            localStorage.setItem('rs_press_history', JSON.stringify(cached));
             resetForm();
             loadHistory();
         } catch (error) {

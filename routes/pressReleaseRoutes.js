@@ -221,7 +221,19 @@ IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire
             generatedText = cleaned.trim();
         }
 
-        res.json({ content: generatedText });
+        let saveId = null;
+        try {
+            const insertStmt = db.prepare(`
+                INSERT INTO press_releases (user_id, client_name, title, content, is_reference)
+                VALUES (?, ?, ?, ?, 0)
+            `);
+            const saveRes = insertStmt.run(req.userId, (client_name || '').trim(), title.trim(), generatedText);
+            saveId = saveRes.lastInsertRowid;
+        } catch (dbErr) {
+            console.error('[Press] Auto-save error:', dbErr.message);
+        }
+
+        res.json({ content: generatedText, id: saveId });
 
     } catch (error) {
         console.error('[Press Generation] Error:', error);
@@ -258,7 +270,7 @@ IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire
  * Salva un comunicato appena generato o modificato
  */
 router.post('/save', authMiddleware, (req, res) => {
-    const { title, client_name, content } = req.body;
+    const { id, title, client_name, content } = req.body;
 
     if (!title || !content) {
         return res.status(400).json({ error: 'Titolo e contenuto sono obbligatori' });
@@ -266,6 +278,18 @@ router.post('/save', authMiddleware, (req, res) => {
 
     try {
         const db = getDb();
+        if (id) {
+            const existing = db.prepare('SELECT id FROM press_releases WHERE id = ? AND user_id = ?').get(id, req.userId);
+            if (existing) {
+                db.prepare(`
+                    UPDATE press_releases 
+                    SET client_name = ?, title = ?, content = ?
+                    WHERE id = ? AND user_id = ?
+                `).run((client_name || '').trim(), title.trim(), content, id, req.userId);
+                return res.json({ success: true, id: Number(id) });
+            }
+        }
+
         const result = db.prepare(`
             INSERT INTO press_releases (user_id, client_name, title, content, is_reference)
             VALUES (?, ?, ?, ?, 0)
