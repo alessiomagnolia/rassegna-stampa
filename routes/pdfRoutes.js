@@ -128,6 +128,75 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
     }
 });
 
+// Standalone Single-Page Executive KPI Report (PDF A4)
+router.post('/generate-kpi', authMiddleware, async (req, res) => {
+    try {
+        const { articles, title, clientName, clientLogo, reviewId } = req.body;
+        let resolvedArticles = articles;
+
+        // If reviewId is passed instead of articles, load from DB
+        if ((!resolvedArticles || resolvedArticles.length === 0) && reviewId) {
+            const db = getDb();
+            const review = db.prepare('SELECT * FROM press_reviews WHERE id = ? AND user_id = ?').get(reviewId, req.userId);
+            if (review && review.articles_json) {
+                resolvedArticles = JSON.parse(review.articles_json);
+            }
+        }
+
+        if (!resolvedArticles || !Array.isArray(resolvedArticles) || resolvedArticles.length === 0) {
+            return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il Report KPI.' });
+        }
+
+        const reviewTitle = title || 'Rassegna Stampa';
+        const db = getDb();
+        const user = db.prepare('SELECT company_name, logo_path FROM users WHERE id = ?').get(req.userId);
+        
+        let userLogoBase64 = null;
+        if (user && user.logo_path) {
+            const logoFilePath = path.join(__dirname, '..', user.logo_path);
+            if (fs.existsSync(logoFilePath)) {
+                const ext = path.extname(logoFilePath).substring(1);
+                const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
+                const fileData = fs.readFileSync(logoFilePath, { encoding: 'base64' });
+                userLogoBase64 = `data:image/${format};base64,${fileData}`;
+            }
+        }
+
+        const options = {
+            title: reviewTitle,
+            userName: user?.company_name || 'Utente',
+            clientName: clientName || null,
+            clientLogo: clientLogo || null,
+            userLogo: userLogoBase64,
+            templateId: 'classic',
+            includeAnalytics: true,
+            analyticsOnly: true
+        };
+
+        const date = new Date().toISOString().split('T')[0];
+        let baseFilename = 'Report_KPI';
+        if (reviewTitle && reviewTitle.trim().length > 0) {
+            baseFilename = 'Report_KPI_' + reviewTitle.trim().replace(/[^a-z0-9]/gi, '_');
+        }
+        const filename = `${baseFilename}_${date}.pdf`;
+        const outputPath = path.join(__dirname, '..', 'output', filename);
+
+        console.log(`[PDF] Generazione Report KPI singolo in: ${outputPath}`);
+        const pdfBuffer = await generatePDF(resolvedArticles, options);
+        fs.writeFileSync(outputPath, pdfBuffer);
+
+        res.json({
+            success: true,
+            filename,
+            downloadUrl: `/api/pdf/download/${filename}`
+        });
+
+    } catch (error) {
+        console.error('Errore generazione Report KPI singolo:', error);
+        res.status(500).json({ error: 'Errore durante la generazione del Report KPI singolo.' });
+    }
+});
+
 // Save / archive review to history for future editing
 router.post('/archive', authMiddleware, async (req, res) => {
     try {

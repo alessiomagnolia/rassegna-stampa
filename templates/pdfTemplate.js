@@ -51,6 +51,9 @@ function formatLinkUrl(url) {
 // MAIN BUILDER SWITCH
 // ---------------------------------------------------------------------------
 function buildPDFHTML(articles, options = {}) {
+    if (options.analyticsOnly) {
+        return buildAnalyticsOnlyHTML(articles, options);
+    }
     const templateId = options.templateId || 'classic';
     if (templateId === 'modern') {
         return buildModernHTML(articles, options);
@@ -61,10 +64,51 @@ function buildPDFHTML(articles, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// STANDALONE 1-PAGE EXECUTIVE KPI REPORT BUILDER
+// ---------------------------------------------------------------------------
+function buildAnalyticsOnlyHTML(articles, options = {}) {
+    const { calculatePRAnalytics } = require('../services/analyticsService');
+    const analytics = calculatePRAnalytics(articles);
+    const analyticsContent = buildAnalyticsPageHTML(analytics, options);
+
+    return `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Report KPI &amp; Metriche - ${options.title || 'Executive Overview'}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+        }
+        .page {
+            width: 210mm;
+            height: 297mm;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    ${analyticsContent.replace('page-break-after: always;', '')}
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------------------
 // PR ANALYTICS & SENTIMENT EXECUTIVE PAGE
 // ---------------------------------------------------------------------------
 function buildAnalyticsPageHTML(analytics, options = {}) {
-    const { title, clientName } = options;
+    const { title, clientName, clientLogo } = options;
     const posPct = analytics.sentimentDistribution.positivePct;
     const neuPct = analytics.sentimentDistribution.neutralPct;
     const criPct = analytics.sentimentDistribution.criticalPct;
@@ -79,6 +123,7 @@ function buildAnalyticsPageHTML(analytics, options = {}) {
                     <div style="font-size: 17pt; font-weight: 700; color: #1a1a2e; font-family: 'Helvetica Neue', Arial, sans-serif;">Rapporto di Impatto e Visibilità Media</div>
                 </div>
                 <div style="text-align: right; font-size: 8.5pt; color: #666;">
+                    ${clientLogo ? `<img src="${clientLogo}" style="max-height: 22px; max-width: 120px; object-fit: contain; margin-bottom: 1.5mm; display: block; margin-left: auto;">` : ''}
                     ${clientName ? `<div>Cliente: <strong>${clientName}</strong></div>` : ''}
                     <div>Uscite analizzate: <strong>${analytics.totalArticles}</strong></div>
                 </div>

@@ -888,6 +888,7 @@ async function triggerDownload(url, filename) {
         showToast('Errore durante il download del PDF.', 'error');
     }
 }
+window.triggerDownload = triggerDownload;
 
 // --- HISTORY ---
 
@@ -3706,6 +3707,120 @@ window.openPageBriefingMailto = function() {
     const subject = encodeURIComponent(currentPageDigestData.subject || 'Briefing Esecutivo Stampa');
     const body = encodeURIComponent(currentPageDigestData.emailText || currentPageDigestData.whatsappText || '');
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+};
+
+// ==========================================================================
+// --- STANDALONE 1-PAGE EXECUTIVE KPI REPORT PDF DOWNLOAD ---
+// ==========================================================================
+window.downloadBriefingKpiPdf = async function(btnEl) {
+    const select = document.getElementById('selectBriefingSource');
+    const sourceVal = select ? select.value : 'active';
+    const btn = btnEl || document.getElementById('btnDownloadBriefingKpiPdf') || document.getElementById('btnPageDownloadKpiPdf');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    let payload = {};
+
+    if (sourceVal === 'active') {
+        if (!state.articles || state.articles.length === 0) {
+            showToast('Nessun articolo nella rassegna attuale. Aggiungi link in Nuova Rassegna o seleziona una rassegna dallo storico.', 'warning');
+            return;
+        }
+        const cleanArticles = state.articles.map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            source_type: a.source_type,
+            published_date: a.published_date,
+            url: a.url,
+            excerpt: a.excerpt
+        }));
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+        payload = {
+            articles: cleanArticles,
+            title,
+            clientName,
+            clientLogo: state.clientLogoBase64 || null
+        };
+    } else {
+        payload = {
+            reviewId: sourceVal
+        };
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Elaborazione PDF...';
+        }
+        showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
+
+        const res = await apiCall('POST', '/api/pdf/generate-kpi', payload);
+
+        if (!res || !res.downloadUrl) {
+            throw new Error('Risposta non valida dal server.');
+        }
+
+        await triggerDownload(res.downloadUrl, res.filename || 'Report_KPI.pdf');
+        showToast('Report KPI singolo scaricato con successo! Pronto per l\'invio.', 'success');
+
+    } catch (err) {
+        showToast('Errore durante il download del Report KPI: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            if (window.feather) feather.replace();
+        }
+    }
+};
+
+window.downloadCurrentDigestKpiPdf = async function(btnEl) {
+    const btn = btnEl || document.getElementById('btnDigestDownloadKpiPdf');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    if (!state.articles || state.articles.length === 0) {
+        showToast('Nessun articolo trovato per generare il Report KPI.', 'warning');
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Elaborazione...';
+        }
+        showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
+
+        const cleanArticles = state.articles.map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            source_type: a.source_type,
+            published_date: a.published_date,
+            url: a.url,
+            excerpt: a.excerpt
+        }));
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+
+        const res = await apiCall('POST', '/api/pdf/generate-kpi', {
+            articles: cleanArticles,
+            title,
+            clientName,
+            clientLogo: state.clientLogoBase64 || null
+        });
+
+        if (!res || !res.downloadUrl) throw new Error('Download non disponibile');
+        await triggerDownload(res.downloadUrl, res.filename || 'Report_KPI.pdf');
+        showToast('Report KPI singolo scaricato con successo!', 'success');
+
+    } catch (err) {
+        showToast('Errore: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            if (window.feather) feather.replace();
+        }
+    }
 };
 
 
