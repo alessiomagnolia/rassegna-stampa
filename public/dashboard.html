@@ -699,23 +699,36 @@
                 </div>
             </section>
 
-            <!-- Review Selector & Generator Bar -->
-            <section class="glass-card" style="padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+            <!-- ============================================================ -->
+            <!-- SEZIONE 1: BRIEFING TESTUALE AI (Email & WhatsApp)          -->
+            <!-- ============================================================ -->
+            <section class="glass-card" style="padding: 1.5rem; border-radius: 14px; margin-bottom: 2rem; border-left: 4px solid #10b981;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: #10b981; font-weight: 700; margin-bottom: 2px;">
+                            Modulo 1 &bull; Sintesi Mattutina
+                        </div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">
+                            Briefing Esecutivo Testuale
+                        </h3>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">
+                        Pronto per invio immediato su Email &amp; WhatsApp
+                    </span>
+                </div>
+
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
                     <div style="flex: 1; min-width: 280px;">
                         <label for="selectBriefingSource" style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">
-                            Seleziona la Rassegna da cui generare il briefing:
+                            Seleziona la Rassegna da cui generare il briefing testuale:
                         </label>
                         <select id="selectBriefingSource" class="input-control" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.92rem; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">
                             <option value="active">Rassegna attuale in lavorazione (Nuova Rassegna)</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" id="btnGenerateBriefingPage" class="btn btn-primary btn-gradient" onclick="generateBriefingFromPageSelector()" style="padding: 0.65rem 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <div>
+                        <button type="button" id="btnGenerateBriefingPage" class="btn btn-primary btn-gradient" onclick="generateBriefingFromPageSelector()" style="padding: 0.65rem 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
                             <i data-feather="zap" style="width:16px;height:16px;"></i> <span>Genera Briefing Testuale</span>
-                        </button>
-                        <button type="button" id="btnDownloadBriefingKpiPdf" class="btn btn-outline" onclick="downloadBriefingKpiPdf(this)" style="padding: 0.65rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; border: 1px solid var(--accent-primary); background: rgba(124,92,255,0.08); color: var(--accent-primary);" title="Scarica solo il Report KPI &amp; Metriche come PDF singolo A4 pronto per l'invio">
-                            <i data-feather="file-text" style="width:16px;height:16px;"></i> <span>Scarica Report KPI Singolo (PDF)</span>
                         </button>
                     </div>
                 </div>
@@ -742,7 +755,7 @@
                 </div>
 
                 <!-- Preview Box & Actions -->
-                <div class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2rem;">
+                <div class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 12px;">
                         <div>
                             <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Anteprima Briefing Esecutivo</h3>
@@ -755,8 +768,8 @@
                             <button type="button" id="btnPageCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyPageBriefingWhatsApp(this)">
                                 <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                             </button>
-                            <button type="button" id="btnPageDownloadKpiPdf" class="btn btn-outline btn-sm" onclick="downloadBriefingKpiPdf(this)" style="border-color: #7c5cff; color: #7c5cff;" title="Scarica solo il Report KPI &amp; Metriche in PDF da allegare alla mail">
-                                <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica KPI (PDF)
+                            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('section-kpi-report').scrollIntoView({behavior:'smooth'})" style="border-color: #7c5cff; color: #7c5cff;" title="Vai alla sezione del Report KPI A4">
+                                <i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Vedi Report KPI A4 &darr;
                             </button>
                             <button type="button" class="btn btn-subtle-alt btn-sm" onclick="openPageBriefingMailto()">
                                 <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
@@ -768,6 +781,70 @@
                     <div id="pageBriefingContentHtml" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; max-height: 550px; overflow-y: auto;"></div>
                 </div>
             </div>
+
+            <!-- ============================================================ -->
+            <!-- SEZIONE 2: REPORT DI IMPATTO & KPI (EXECUTIVE ONE-PAGER A4) -->
+            <!-- ============================================================ -->
+            <section id="section-kpi-report" class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2.5rem; border-left: 4px solid var(--accent-primary); background: linear-gradient(180deg, rgba(26, 26, 46, 0.4) 0%, rgba(15, 16, 35, 0.6) 100%);">
+                <!-- Section Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div>
+                        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 20px; background: rgba(124, 92, 255, 0.15); border: 1px solid rgba(124, 92, 255, 0.35); font-size: 0.72rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">
+                            <i data-feather="file-text" style="width: 12px; height: 12px;"></i> Executive One-Pager (PDF A4)
+                        </div>
+                        <h2 style="margin: 0 0 4px 0; font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">
+                            Report di Impatto &amp; KPI Singolo
+                        </h2>
+                        <p style="margin: 0; font-size: 0.86rem; color: var(--text-muted); max-width: 650px; line-height: 1.5;">
+                            Documento analitico istituzionale in singola pagina A4 con metriche certificate AMEC, bacino netto OTS deduplicato, ripartizione sentiment e testate top. Visualizza l'anteprima e scarica il PDF pronto da inviare.
+                        </p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="btnDownloadKpiTop" class="btn btn-primary btn-gradient" onclick="downloadStandaloneKpiPdf(this)" style="padding: 0.65rem 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-feather="download" style="width:16px;height:16px;"></i> <span>Scarica Report KPI (PDF A4)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Review Selector for KPI Section -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 280px;">
+                        <label for="selectKpiSource" style="display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">
+                            Seleziona la Rassegna per l'anteprima del Report KPI:
+                        </label>
+                        <select id="selectKpiSource" class="input-control" onchange="onKpiSourceChange()" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.92rem; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                            <option value="active">Rassegna attuale in lavorazione (Nuova Rassegna)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="onKpiSourceChange()" style="padding: 0.65rem 1rem; display: flex; align-items: center; gap: 6px;">
+                            <i data-feather="refresh-cw" style="width:14px;height:14px;"></i> <span>Aggiorna Anteprima</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Header Bar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 4px;">
+                    <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                        <i data-feather="eye" style="width:14px;height:14px;color:var(--accent-primary);"></i> Anteprima di Stampa A4 (Sola Lettura)
+                    </span>
+                    <span id="kpiPreviewMetaBadge" style="font-size: 0.78rem; color: #a78bfa; font-weight: 600;"></span>
+                </div>
+
+                <!-- Preview Paper Container (A4 layout) -->
+                <div id="kpiA4PreviewOuter" style="width: 100%; display: flex; justify-content: center; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 1.5rem 1rem; border: 1px solid var(--border-color); overflow-x: auto;">
+                    <div id="kpiA4PreviewContainer" style="width: 100%; max-width: 820px;">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Bottom Download Action -->
+                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 12px; width: 100%;">
+                    <button type="button" id="btnDownloadKpiBottom" class="btn btn-primary btn-gradient" onclick="downloadStandaloneKpiPdf(this)" style="padding: 0.75rem 2rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(124,92,255,0.35);">
+                        <i data-feather="download" style="width:16px;height:16px;"></i> <span>Scarica Report KPI Singolo (PDF A4)</span>
+                    </button>
+                </div>
+            </section>
         </div>
 
         <!-- PAGE: RICERCA NOTIZIE -->

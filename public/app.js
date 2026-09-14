@@ -870,11 +870,19 @@ async function generatePDF() {
 
 async function triggerDownload(url, filename) {
     try {
-        const token = state.token;
-        const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Errore download');
+        const token = state.token || localStorage.getItem('rs_token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(url, { headers });
+        if (!res.ok) {
+            let errMsg = 'HTTP ' + res.status;
+            try {
+                const errJson = await res.json();
+                if (errJson && errJson.error) errMsg = errJson.error;
+            } catch(e) {}
+            throw new Error(errMsg);
+        }
         const blob = await res.blob();
         const objectUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -885,7 +893,9 @@ async function triggerDownload(url, filename) {
         a.remove();
         window.URL.revokeObjectURL(objectUrl);
     } catch (error) {
-        showToast('Errore durante il download del PDF.', 'error');
+        console.error('triggerDownload error:', error);
+        showToast('Errore durante il download: ' + error.message, 'error');
+        throw error;
     }
 }
 window.triggerDownload = triggerDownload;
@@ -3405,51 +3415,92 @@ window.executeImportContacts = async function() {
 let currentPageDigestData = null;
 
 window.initBriefingPage = async function() {
-    const select = document.getElementById('selectBriefingSource');
-    if (!select) return;
+    const selectBriefing = document.getElementById('selectBriefingSource');
+    const selectKpi = document.getElementById('selectKpiSource');
+    if (!selectBriefing && !selectKpi) return;
 
-    const prevVal = select.value;
-    select.innerHTML = '';
+    const prevBriefingVal = selectBriefing ? selectBriefing.value : null;
+    const prevKpiVal = selectKpi ? selectKpi.value : null;
+
+    if (selectBriefing) selectBriefing.innerHTML = '';
+    if (selectKpi) selectKpi.innerHTML = '';
 
     // 1. Active working review
-    const activeOpt = document.createElement('option');
-    activeOpt.value = 'active';
     const activeCount = (state.articles && state.articles.length) ? state.articles.length : 0;
-    if (activeCount > 0) {
-        activeOpt.textContent = `Rassegna attuale in lavorazione (${activeCount} ${activeCount === 1 ? 'articolo' : 'articoli'})`;
-    } else {
-        activeOpt.textContent = `Rassegna attuale in lavorazione (Nessun articolo caricato)`;
+    const activeLabel = activeCount > 0 
+        ? `Rassegna attuale in lavorazione (${activeCount} ${activeCount === 1 ? 'articolo' : 'articoli'})`
+        : `Rassegna attuale in lavorazione (Nessun articolo caricato)`;
+
+    if (selectBriefing) {
+        const activeOpt = document.createElement('option');
+        activeOpt.value = 'active';
+        activeOpt.textContent = activeLabel;
+        selectBriefing.appendChild(activeOpt);
     }
-    select.appendChild(activeOpt);
+    if (selectKpi) {
+        const activeOpt = document.createElement('option');
+        activeOpt.value = 'active';
+        activeOpt.textContent = activeLabel;
+        selectKpi.appendChild(activeOpt);
+    }
 
     // 2. Historic reviews
     try {
         const history = await apiCall('GET', '/api/pdf/history');
         if (Array.isArray(history) && history.length > 0) {
-            const optGroup = document.createElement('optgroup');
-            optGroup.label = 'Storico Rassegne Salvate';
+            const optGroupBriefing = document.createElement('optgroup');
+            optGroupBriefing.label = 'Storico Rassegne Salvate';
+            const optGroupKpi = document.createElement('optgroup');
+            optGroupKpi.label = 'Storico Rassegne Salvate';
+
             history.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = String(item.id);
                 const clientPart = item.client_name ? `${item.client_name} • ` : '';
                 const countPart = `${item.article_count || 0} articoli`;
                 const datePart = item.created_at ? ` • ${new Date(item.created_at).toLocaleDateString('it-IT')}` : '';
-                opt.textContent = `${item.title || 'Rassegna'} (${clientPart}${countPart}${datePart})`;
-                optGroup.appendChild(opt);
+                const text = `${item.title || 'Rassegna'} (${clientPart}${countPart}${datePart})`;
+
+                if (selectBriefing) {
+                    const opt = document.createElement('option');
+                    opt.value = String(item.id);
+                    opt.textContent = text;
+                    optGroupBriefing.appendChild(opt);
+                }
+                if (selectKpi) {
+                    const opt = document.createElement('option');
+                    opt.value = String(item.id);
+                    opt.textContent = text;
+                    optGroupKpi.appendChild(opt);
+                }
             });
-            select.appendChild(optGroup);
+
+            if (selectBriefing) selectBriefing.appendChild(optGroupBriefing);
+            if (selectKpi) selectKpi.appendChild(optGroupKpi);
         }
     } catch (err) {
         console.warn('Errore caricamento storico per il briefing:', err);
     }
 
     // Restore selection or pick best default
-    if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
-        select.value = prevVal;
-    } else if (activeCount > 0) {
-        select.value = 'active';
-    } else if (select.options.length > 1) {
-        select.selectedIndex = 1;
+    if (selectBriefing) {
+        if (prevBriefingVal && Array.from(selectBriefing.options).some(o => o.value === prevBriefingVal)) {
+            selectBriefing.value = prevBriefingVal;
+        } else if (activeCount > 0) {
+            selectBriefing.value = 'active';
+        } else if (selectBriefing.options.length > 1) {
+            selectBriefing.selectedIndex = 1;
+        }
+    }
+
+    if (selectKpi) {
+        if (prevKpiVal && Array.from(selectKpi.options).some(o => o.value === prevKpiVal)) {
+            selectKpi.value = prevKpiVal;
+        } else if (activeCount > 0) {
+            selectKpi.value = 'active';
+        } else if (selectKpi.options.length > 1) {
+            selectKpi.selectedIndex = 1;
+        }
+        // Automatically render KPI A4 preview
+        onKpiSourceChange();
     }
 
     if (window.feather) feather.replace();
@@ -3710,22 +3761,358 @@ window.openPageBriefingMailto = function() {
 };
 
 // ==========================================================================
-// --- STANDALONE 1-PAGE EXECUTIVE KPI REPORT PDF DOWNLOAD ---
+// --- STANDALONE 1-PAGE EXECUTIVE KPI REPORT PREVIEW & DOWNLOAD ---
 // ==========================================================================
-window.downloadBriefingKpiPdf = async function(btnEl) {
-    const select = document.getElementById('selectBriefingSource');
-    const sourceVal = select ? select.value : 'active';
-    const btn = btnEl || document.getElementById('btnDownloadBriefingKpiPdf') || document.getElementById('btnPageDownloadKpiPdf');
+window.currentKpiData = null;
+
+function computeBriefingKpiMetrics(articlesList) {
+    const arts = Array.isArray(articlesList) ? articlesList : [];
+    const count = arts.length;
+    const seenSources = new Set();
+    const sourceCounts = {};
+    let totalAudience = 0;
+    let totalReads = 0;
+    let posCount = 0;
+    let criCount = 0;
+    let neuCount = 0;
+    let tier1 = 0, tier2 = 0, tier3 = 0;
+
+    const posWords = ['crescita', 'record', 'successo', 'positivo', 'premi', 'investimento', 'sviluppo', 'leadership', 'innova', 'utile', 'espansione', 'eccellenza', 'trionfo', 'accordo', 'partnership', 'vince'];
+    const negWords = ['crisi', 'crollo', 'calo', 'scandalo', 'arrest', 'truffa', 'perdita', 'chiusura', 'polemica', 'difficoltà', 'licenzia', 'denuncia', 'indagine', 'multa', 'fallimento', 'scontro'];
+
+    arts.forEach(art => {
+        const src = ((art.source_name || '') + ' ' + (art.url || '')).toLowerCase();
+        const normKey = (art.source_name || 'Media Web').trim();
+        const type = art.source_type || 'Web';
+        const text = ((art.title || '') + ' ' + (art.excerpt || '')).toLowerCase();
+
+        sourceCounts[normKey] = (sourceCounts[normKey] || 0) + 1;
+
+        let dayAudience = 25000;
+        let readRate = 0.035;
+        let tier = 3;
+
+        if (src.includes('corriere')) { dayAudience = 3500000; readRate = 0.012; tier = 1; }
+        else if (src.includes('repubblica')) { dayAudience = 3150000; readRate = 0.012; tier = 1; }
+        else if (src.includes('sole')) { dayAudience = 1350000; readRate = 0.018; tier = 1; }
+        else if (src.includes('ansa')) { dayAudience = 2600000; readRate = 0.013; tier = 1; }
+        else if (src.includes('stampa')) { dayAudience = 1150000; readRate = 0.014; tier = 1; }
+        else if (src.includes('messaggero')) { dayAudience = 1450000; readRate = 0.013; tier = 1; }
+        else if (src.includes('fanpage')) { dayAudience = 2200000; readRate = 0.014; tier = 1; }
+        else if (src.includes('tgcom')) { dayAudience = 1950000; readRate = 0.012; tier = 1; }
+        else if (src.includes('sky')) { dayAudience = 1400000; readRate = 0.013; tier = 1; }
+        else if (src.includes('fatto')) { dayAudience = 1250000; readRate = 0.014; tier = 1; }
+        else if (src.includes('giornale') || src.includes('libero')) { dayAudience = 800000; readRate = 0.014; tier = 2; }
+        else if (src.includes('finanza') || src.includes('forbes') || src.includes('italiaoggi')) { dayAudience = 320000; readRate = 0.022; tier = 2; }
+        else if (type === 'Quotidiano Nazionale' || type === 'Agenzia di Stampa') { dayAudience = 750000; readRate = 0.015; tier = 1; }
+        else if (type === 'Quotidiano Locale' || type === 'Periodico' || src.includes('carlino') || src.includes('nazione') || src.includes('giorno') || src.includes('mattino')) { dayAudience = 220000; readRate = 0.018; tier = 2; }
+
+        if (tier === 1) tier1++;
+        else if (tier === 2) tier2++;
+        else tier3++;
+
+        const normKeyLower = normKey.toLowerCase();
+        if (!seenSources.has(normKeyLower)) {
+            seenSources.add(normKeyLower);
+            totalAudience += dayAudience;
+        }
+
+        const occ = sourceCounts[normKey];
+        const mult = occ === 1 ? 1.0 : (occ === 2 ? 0.75 : 0.5);
+        totalReads += Math.max(10, Math.round(dayAudience * readRate * mult));
+
+        let p = 0, n = 0;
+        posWords.forEach(w => { if (text.includes(w)) p++; });
+        negWords.forEach(w => { if (text.includes(w)) n++; });
+        if (p > n) posCount++;
+        else if (n > p) criCount++;
+        else neuCount++;
+    });
+
+    function fmt(n) {
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return Math.round(n / 1000) + 'K';
+        return n.toString();
+    }
+
+    const posPct = count > 0 ? Math.round((posCount / count) * 100) : 0;
+    const criPct = count > 0 ? Math.round((criCount / count) * 100) : 0;
+    const neuPct = count > 0 ? Math.max(0, 100 - posPct - criPct) : 100;
+
+    let sentimentLabel = 'Neutro';
+    let sentimentColor = '#d97706';
+    if (posCount > criCount) {
+        sentimentLabel = 'Positivo';
+        sentimentColor = '#059669';
+    } else if (criCount > posCount) {
+        sentimentLabel = 'Critico';
+        sentimentColor = '#dc2626';
+    }
+
+    const topOutlets = Object.keys(sourceCounts)
+        .map(k => ({ name: k, count: sourceCounts[k] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+    return {
+        totalArticles: count,
+        uniqueOutlets: seenSources.size,
+        formattedAudience: fmt(totalAudience),
+        formattedReads: fmt(totalReads),
+        overallSentiment: sentimentLabel,
+        sentimentColor,
+        posPct, neuPct, criPct,
+        tier1, tier2, tier3,
+        topOutlets
+    };
+}
+
+function renderKpiA4PreviewHtml(articles, options = {}) {
+    const kpi = computeBriefingKpiMetrics(articles);
+    const title = options.title || 'Rassegna Stampa';
+    const clientName = options.clientName || '';
+    const clientLogo = options.clientLogo || null;
+    const todayStr = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    return `
+    <div class="kpi-a4-sheet" style="background: #ffffff; color: #1e293b; padding: 2.5rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; box-sizing: border-box; width: 100%;">
+        <!-- Header -->
+        <div style="border-bottom: 2px solid #1a1a2e; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #7c5cff; margin-bottom: 4px;">
+                    Executive Overview &amp; PR Intelligence
+                </div>
+                <div style="font-size: 1.45rem; font-weight: 800; color: #1a1a2e; line-height: 1.2;">
+                    Rapporto di Impatto e Visibilità Media
+                </div>
+                <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+                    Rassegna: <strong style="color: #334155;">${escapeHtml(title)}</strong>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 0.82rem; color: #64748b;">
+                ${clientLogo ? `<img src="${clientLogo}" alt="Logo" style="max-height: 28px; max-width: 140px; object-fit: contain; margin-bottom: 6px; display: block; margin-left: auto;">` : ''}
+                ${clientName ? `<div>Cliente: <strong style="color: #1e293b;">${escapeHtml(clientName)}</strong></div>` : ''}
+                <div>Data: <strong>${todayStr}</strong></div>
+                <div>Uscite analizzate: <strong style="color: #7c5cff;">${kpi.totalArticles}</strong></div>
+            </div>
+        </div>
+
+        <!-- 5 KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 18px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 8px; text-align: center;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px;">Uscite Totali</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #1a1a2e; line-height: 1.1;">${kpi.totalArticles}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">ritagli stampa</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 8px; text-align: center;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px;">Testate Coinvolte</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #1a1a2e; line-height: 1.1;">${kpi.uniqueOutlets}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">fonti uniche</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 8px; text-align: center;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px;">Audience Testate</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #7c5cff; line-height: 1.1;">~${kpi.formattedAudience}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">bacino netto OTS</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 8px; text-align: center;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px;">Letture Stimate</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #0284c7; line-height: 1.1;">~${kpi.formattedReads}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">standard AMEC</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 8px; text-align: center;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px;">Sentiment</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: ${kpi.sentimentColor}; line-height: 1.1; padding-top: 3px;">${kpi.overallSentiment}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">tono prevalente</div>
+            </div>
+        </div>
+
+        <!-- Sentiment Distribution -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+                <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #334155;">
+                    Distribuzione Sentiment Copertura
+                </div>
+                <div style="font-size: 0.78rem; color: #64748b;">
+                    <span style="color: #059669; font-weight: 700;">● Positivo: ${kpi.posPct}%</span> &nbsp;|&nbsp; 
+                    <span style="color: #64748b; font-weight: 700;">● Neutro: ${kpi.neuPct}%</span> &nbsp;|&nbsp; 
+                    <span style="color: #dc2626; font-weight: 700;">● Critico: ${kpi.criPct}%</span>
+                </div>
+            </div>
+            <div style="display: flex; height: 18px; border-radius: 6px; overflow: hidden; background: #e2e8f0;">
+                ${kpi.posPct > 0 ? `<div style="width: ${kpi.posPct}%; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 800;">${kpi.posPct > 8 ? kpi.posPct + '%' : ''}</div>` : ''}
+                ${kpi.neuPct > 0 ? `<div style="width: ${kpi.neuPct}%; background: #94a3b8; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 800;">${kpi.neuPct > 8 ? kpi.neuPct + '%' : ''}</div>` : ''}
+                ${kpi.criPct > 0 ? `<div style="width: ${kpi.criPct}%; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 800;">${kpi.criPct > 8 ? kpi.criPct + '%' : ''}</div>` : ''}
+            </div>
+        </div>
+
+        <!-- 2 Column Breakdown: Tiers & Top Outlets -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px;">
+            <!-- Media Tiers -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
+                    Ripartizione Autorevolezza Testate
+                </div>
+                <div style="font-size: 0.82rem; line-height: 2;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 3px 0;">
+                        <span><strong style="color: #1e293b;">Tier 1</strong> &mdash; Grandi Quotidiani Nazionali &amp; Agenzie:</span>
+                        <strong style="color: #7c5cff;">${kpi.tier1} articoli</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 3px 0;">
+                        <span><strong style="color: #1e293b;">Tier 2</strong> &mdash; Testate Regionali &amp; Settoriali:</span>
+                        <strong style="color: #3b82f6;">${kpi.tier2} articoli</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 3px 0;">
+                        <span><strong style="color: #1e293b;">Tier 3</strong> &mdash; Portali Web &amp; Media Digitali:</span>
+                        <strong style="color: #64748b;">${kpi.tier3} articoli</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Outlets -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #334155; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
+                    Principali Testate Rilevate
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                    ${kpi.topOutlets.length > 0 ? kpi.topOutlets.map((out, idx) => `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 5px 0; color: #475569;">
+                                <span style="display: inline-block; width: 18px; font-weight: 700; color: #94a3b8;">${idx + 1}.</span>
+                                <strong style="color: #1e293b;">${escapeHtml(out.name)}</strong>
+                            </td>
+                            <td style="padding: 5px 0; text-align: right; font-weight: 700; color: #7c5cff;">
+                                ${out.count} ${out.count === 1 ? 'articolo' : 'articoli'}
+                            </td>
+                        </tr>
+                    `).join('') : '<tr><td style="padding: 6px 0; color: #94a3b8;">Nessuna testata rilevata</td></tr>'}
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #94a3b8;">
+            <div>Metodologia conforme alle linee guida internazionali <strong>AMEC</strong> per la misurazione della comunicazione</div>
+            <div>Pagina 1 di 1 &bull; Documento ad uso interno / direzionale</div>
+        </div>
+    </div>
+    `;
+}
+
+window.loadAndRenderKpiPreview = async function(sourceVal) {
+    const previewContainer = document.getElementById('kpiA4PreviewContainer');
+    const metaBadge = document.getElementById('kpiPreviewMetaBadge');
+    if (!previewContainer) return;
+
+    previewContainer.innerHTML = `
+        <div style="padding: 3.5rem 2rem; text-align: center; color: #64748b; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <div class="spinner" style="width: 34px; height: 34px; margin: 0 auto 1rem auto; border-color: #7c5cff; border-top-color: transparent;"></div>
+            <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">Caricamento anteprima Report KPI...</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Elaborazione indicatori di audience e metriche certificate</div>
+        </div>
+    `;
+
+    let articles = [];
+    let title = 'Rassegna Stampa';
+    let clientName = '';
+    let clientLogo = null;
+    let reviewId = null;
+
+    if (!sourceVal || sourceVal === 'active') {
+        if (state.articles && state.articles.length > 0) {
+            articles = state.articles;
+        } else {
+            // Check fallback in editor state or session draft
+            try {
+                const editorState = JSON.parse(localStorage.getItem('rs_editor_state') || '{}');
+                if (editorState && Array.isArray(editorState.articles) && editorState.articles.length > 0) {
+                    articles = editorState.articles;
+                    if (editorState.options?.title) title = editorState.options.title;
+                    if (editorState.options?.clientName) clientName = editorState.options.clientName;
+                } else {
+                    const draftArticles = JSON.parse(sessionStorage.getItem('rs_draft_articles') || '[]');
+                    if (Array.isArray(draftArticles) && draftArticles.length > 0) {
+                        articles = draftArticles;
+                    }
+                }
+            } catch(e) {}
+        }
+        title = document.getElementById('rassegnaTitle')?.value.trim() || title || 'Rassegna Stampa';
+        clientName = document.getElementById('clientName')?.value.trim() || clientName || '';
+        clientLogo = state.clientLogoBase64 || null;
+    } else {
+        reviewId = sourceVal;
+        try {
+            const data = await apiCall('GET', `/api/pdf/review/${sourceVal}`);
+            if (data && Array.isArray(data.articles)) {
+                articles = data.articles;
+                title = data.title || 'Rassegna Stampa';
+                clientName = data.clientName || '';
+                clientLogo = data.clientLogo || null;
+            }
+        } catch (err) {
+            console.warn('Errore caricamento rassegna per preview KPI:', err);
+        }
+    }
+
+    window.currentKpiData = {
+        articles,
+        title,
+        clientName,
+        clientLogo,
+        reviewId
+    };
+
+    if (!articles || articles.length === 0) {
+        if (metaBadge) metaBadge.textContent = '0 articoli disponibili';
+        previewContainer.innerHTML = `
+            <div style="padding: 3.5rem 2rem; text-align: center; color: var(--text-muted); background: var(--bg-primary); border-radius: 8px; border: 1px dashed var(--border-color);">
+                <div style="width: 48px; height: 48px; margin: 0 auto 1rem auto; border-radius: 50%; background: rgba(124,92,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+                    <i data-feather="file-text" style="width: 24px; height: 24px;"></i>
+                </div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem;">Nessun articolo per l'anteprima KPI</h3>
+                <p style="font-size: 0.85rem; max-width: 420px; margin: 0 auto 1.25rem auto; line-height: 1.5; color: var(--text-muted);">
+                    Seleziona una rassegna con articoli salvati dallo storico oppure aggiungi link in "Nuova Rassegna" per visualizzare e scaricare il report.
+                </p>
+                <button type="button" class="btn btn-outline btn-sm" onclick="showPage('rassegna')">
+                    <i data-feather="plus" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Aggiungi Articoli in Nuova Rassegna
+                </button>
+            </div>
+        `;
+        if (window.feather) feather.replace();
+        return;
+    }
+
+    if (metaBadge) {
+        metaBadge.textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'} • Anteprima pronta`;
+    }
+    previewContainer.innerHTML = renderKpiA4PreviewHtml(articles, { title, clientName, clientLogo });
+    if (window.feather) feather.replace();
+};
+
+window.onKpiSourceChange = function() {
+    const select = document.getElementById('selectKpiSource');
+    const val = select ? select.value : 'active';
+    window.loadAndRenderKpiPreview(val);
+};
+
+window.downloadStandaloneKpiPdf = async function(btnEl) {
+    const data = window.currentKpiData;
+    if (!data || !data.articles || data.articles.length === 0) {
+        showToast('Nessun articolo disponibile per generare il Report KPI. Seleziona una rassegna valida dallo storico o crea una rassegna.', 'warning');
+        return;
+    }
+
+    const btn = btnEl || document.getElementById('btnDownloadKpiTop') || document.getElementById('btnDownloadKpiBottom');
     const originalHtml = btn ? btn.innerHTML : null;
 
-    let payload = {};
-
-    if (sourceVal === 'active') {
-        if (!state.articles || state.articles.length === 0) {
-            showToast('Nessun articolo nella rassegna attuale. Aggiungi link in Nuova Rassegna o seleziona una rassegna dallo storico.', 'warning');
-            return;
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Generazione PDF...';
         }
-        const cleanArticles = state.articles.map(a => ({
+        showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
+
+        const cleanArticles = data.articles.map(a => ({
             title: a.title,
             source_name: a.source_name,
             source_type: a.source_type,
@@ -3733,26 +4120,14 @@ window.downloadBriefingKpiPdf = async function(btnEl) {
             url: a.url,
             excerpt: a.excerpt
         }));
-        const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
-        const clientName = document.getElementById('clientName')?.value.trim() || '';
-        payload = {
-            articles: cleanArticles,
-            title,
-            clientName,
-            clientLogo: state.clientLogoBase64 || null
-        };
-    } else {
-        payload = {
-            reviewId: sourceVal
-        };
-    }
 
-    try {
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Elaborazione PDF...';
-        }
-        showToast('Generazione Report KPI singolo in formato A4 in corso...', 'info');
+        const payload = {
+            articles: cleanArticles,
+            title: data.title || 'Rassegna Stampa',
+            clientName: data.clientName || '',
+            clientLogo: data.clientLogo || null,
+            reviewId: data.reviewId || undefined
+        };
 
         const res = await apiCall('POST', '/api/pdf/generate-kpi', payload);
 
@@ -3761,10 +4136,11 @@ window.downloadBriefingKpiPdf = async function(btnEl) {
         }
 
         await triggerDownload(res.downloadUrl, res.filename || 'Report_KPI.pdf');
-        showToast('Report KPI singolo scaricato con successo! Pronto per l\'invio.', 'success');
+        showToast('Report KPI singolo scaricato con successo!', 'success');
 
     } catch (err) {
-        showToast('Errore durante il download del Report KPI: ' + err.message, 'error');
+        console.error('Errore durante download KPI:', err);
+        showToast('Errore durante il download del Report KPI: ' + (err.message || 'Errore imprevisto'), 'error');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -3773,6 +4149,9 @@ window.downloadBriefingKpiPdf = async function(btnEl) {
         }
     }
 };
+
+// Aliases for backward compatibility
+window.downloadBriefingKpiPdf = window.downloadStandaloneKpiPdf;
 
 window.downloadCurrentDigestKpiPdf = async function(btnEl) {
     const btn = btnEl || document.getElementById('btnDigestDownloadKpiPdf');

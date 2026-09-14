@@ -133,13 +133,23 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
     try {
         const { articles, title, clientName, clientLogo, reviewId } = req.body;
         let resolvedArticles = articles;
+        let resolvedTitle = title;
+        let resolvedClientName = clientName;
+        let resolvedClientLogo = clientLogo;
 
-        // If reviewId is passed instead of articles, load from DB
-        if ((!resolvedArticles || resolvedArticles.length === 0) && reviewId) {
+        // If reviewId is passed, load from DB if needed
+        if (reviewId) {
             const db = getDb();
             const review = db.prepare('SELECT * FROM press_reviews WHERE id = ? AND user_id = ?').get(reviewId, req.userId);
-            if (review && review.articles_json) {
-                resolvedArticles = JSON.parse(review.articles_json);
+            if (review) {
+                if (!resolvedArticles || !Array.isArray(resolvedArticles) || resolvedArticles.length === 0) {
+                    if (review.articles_json) {
+                        try { resolvedArticles = JSON.parse(review.articles_json); } catch(e) {}
+                    }
+                }
+                if (!resolvedTitle) resolvedTitle = review.title;
+                if (!resolvedClientName) resolvedClientName = review.client_name;
+                if (!resolvedClientLogo) resolvedClientLogo = review.client_logo;
             }
         }
 
@@ -147,7 +157,9 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il Report KPI.' });
         }
 
-        const reviewTitle = title || 'Rassegna Stampa';
+        const reviewTitle = resolvedTitle || 'Rassegna Stampa';
+        const clientNameFinal = resolvedClientName || null;
+        const clientLogoFinal = resolvedClientLogo || null;
         const db = getDb();
         const user = db.prepare('SELECT company_name, logo_path FROM users WHERE id = ?').get(req.userId);
         
@@ -165,8 +177,8 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
         const options = {
             title: reviewTitle,
             userName: user?.company_name || 'Utente',
-            clientName: clientName || null,
-            clientLogo: clientLogo || null,
+            clientName: clientNameFinal,
+            clientLogo: clientLogoFinal,
             userLogo: userLogoBase64,
             templateId: 'classic',
             includeAnalytics: true,
@@ -358,18 +370,27 @@ router.get('/public-download/:token', (req, res) => {
 router.get('/download/:filename', authMiddleware, (req, res) => {
     try {
         const { filename } = req.params;
+        const safeFilename = path.basename(filename);
+        if (safeFilename !== filename) {
+            return res.status(400).json({ error: 'Nome file non valido.' });
+        }
+
+        const filePath = path.join(__dirname, '..', 'output', safeFilename);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Il file PDF non è più disponibile sul server.' });
+        }
+
         const db = getDb();
         
         // Verify ownership
-        const review = db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(filename, req.userId);
+        const review = db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(safeFilename, req.userId);
         
         if (!review) {
+            // Check if it is a generated KPI report or ephemeral export created in output directory
+            if (safeFilename.startsWith('Report_KPI_') || safeFilename.startsWith('draft_')) {
+                return res.download(filePath, safeFilename);
+            }
             return res.status(404).json({ error: 'PDF non trovato o non autorizzato.' });
-        }
-
-        const filePath = path.join(__dirname, '..', 'output', filename);
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'Il file PDF non è più disponibile sul server.' });
         }
 
         res.download(filePath, `Rassegna_Stampa_${review.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
