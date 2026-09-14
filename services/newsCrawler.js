@@ -91,6 +91,19 @@ function parseRSSFeed(xmlText, sourceMeta) {
         if (domain.includes('corriere.it')) favicon = '/logos/corriere.png';
         if (domain.includes('repubblica.it')) favicon = '/logos/repubblica.png';
         if (domain.includes('ilsole24ore.com')) favicon = '/logos/ilsole24ore.png';
+        if (domain.includes('lastampa.it')) favicon = '/logos/lastampa.png';
+        if (domain.includes('ilmessaggero.it')) favicon = '/logos/ilmessaggero.svg';
+        if (domain.includes('ilfattoquotidiano.it')) favicon = '/logos/ilfattoquotidiano.svg';
+        if (domain.includes('gazzetta.it')) favicon = '/logos/gazzetta.svg';
+        if (domain.includes('tg24.sky.it') || domain.includes('sky.it')) favicon = '/logos/skytg24.svg';
+        if (domain.includes('ilgiornale.it')) favicon = '/logos/ilgiornale.svg';
+        if (domain.includes('liberoquotidiano.it')) favicon = '/logos/libero.svg';
+        if (domain.includes('adnkronos.com')) favicon = '/logos/adnkronos.svg';
+        if (domain.includes('agi.it')) favicon = '/logos/agi.png';
+        if (domain.includes('ilmattino.it')) favicon = '/logos/ilmattino.png';
+        if (domain.includes('dire.it')) favicon = '/logos/dire.jpg';
+        if (domain.includes('fanpage.it')) favicon = '/logos/fanpage.svg';
+        if (domain.includes('askanews.it')) favicon = '/logos/Askanews.png';
 
         results.push({
             url,

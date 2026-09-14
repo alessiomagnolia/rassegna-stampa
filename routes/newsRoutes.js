@@ -172,9 +172,22 @@ function getFaviconForDomain(domain) {
     if (cleanDomain.includes('corriere.it')) return '/logos/corriere.png';
     if (cleanDomain.includes('repubblica.it')) return '/logos/repubblica.png';
     if (cleanDomain.includes('ilsole24ore.com')) return '/logos/ilsole24ore.png';
+    if (cleanDomain.includes('lastampa.it')) return '/logos/lastampa.png';
+    if (cleanDomain.includes('ilmessaggero.it')) return '/logos/ilmessaggero.svg';
+    if (cleanDomain.includes('ilfattoquotidiano.it')) return '/logos/ilfattoquotidiano.svg';
+    if (cleanDomain.includes('gazzetta.it')) return '/logos/gazzetta.svg';
+    if (cleanDomain.includes('tg24.sky.it') || cleanDomain.includes('sky.it')) return '/logos/skytg24.svg';
+    if (cleanDomain.includes('ilgiornale.it')) return '/logos/ilgiornale.svg';
+    if (cleanDomain.includes('liberoquotidiano.it')) return '/logos/libero.svg';
+    if (cleanDomain.includes('adnkronos.com')) return '/logos/adnkronos.svg';
+    if (cleanDomain.includes('agi.it')) return '/logos/agi.png';
     if (cleanDomain.includes('ilmattino.it')) return '/logos/ilmattino.png';
     if (cleanDomain.includes('ilgiornaleditalia.it')) return '/logos/ilgiornaleditalia.png';
     if (cleanDomain.includes('agenzianova.com')) return '/logos/agenzianova.jpg';
+    if (cleanDomain.includes('dire.it')) return '/logos/dire.jpg';
+    if (cleanDomain.includes('fanpage.it')) return '/logos/fanpage.svg';
+    if (cleanDomain.includes('askanews.it')) return '/logos/Askanews.png';
+    if (cleanDomain.includes('ildiariodellavoro.it')) return '/logos/ildiariodellavoro.png';
 
     return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
 }

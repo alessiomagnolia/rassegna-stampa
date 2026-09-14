@@ -1,66 +1,132 @@
 [
     {
         "name": "Corriere della Sera",
-        "url": "https://logo.clearbit.com/corriere.it"
+        "url": "/logos/corriere.png",
+        "category": "nazionale"
     },
     {
         "name": "La Repubblica",
-        "url": "https://logo.clearbit.com/repubblica.it"
+        "url": "/logos/repubblica.png",
+        "category": "nazionale"
     },
     {
         "name": "Il Sole 24 Ore",
-        "url": "https://logo.clearbit.com/ilsole24ore.com"
+        "url": "/logos/ilsole24ore.png",
+        "category": "economico"
     },
     {
         "name": "La Stampa",
-        "url": "https://logo.clearbit.com/lastampa.it"
+        "url": "/logos/lastampa.png",
+        "category": "nazionale"
     },
     {
         "name": "Il Messaggero",
-        "url": "https://logo.clearbit.com/ilmessaggero.it"
+        "url": "/logos/ilmessaggero.svg",
+        "category": "nazionale"
     },
     {
         "name": "ANSA",
-        "url": "https://logo.clearbit.com/ansa.it"
+        "url": "/logos/ansa.png",
+        "category": "agenzia"
     },
     {
         "name": "Il Fatto Quotidiano",
-        "url": "https://logo.clearbit.com/ilfattoquotidiano.it"
+        "url": "/logos/ilfattoquotidiano.svg",
+        "category": "nazionale"
     },
     {
         "name": "La Gazzetta dello Sport",
-        "url": "https://logo.clearbit.com/gazzetta.it"
+        "url": "/logos/gazzetta.svg",
+        "category": "sport"
     },
     {
         "name": "Sky TG24",
-        "url": "https://logo.clearbit.com/tg24.sky.it"
+        "url": "/logos/skytg24.svg",
+        "category": "broadcast"
     },
     {
         "name": "Il Giornale",
-        "url": "https://logo.clearbit.com/ilgiornale.it"
+        "url": "/logos/ilgiornale.svg",
+        "category": "nazionale"
     },
     {
         "name": "Libero",
-        "url": "https://logo.clearbit.com/liberoquotidiano.it"
+        "url": "/logos/libero.svg",
+        "category": "nazionale"
     },
     {
         "name": "Adnkronos",
-        "url": "https://logo.clearbit.com/adnkronos.com"
+        "url": "/logos/adnkronos.svg",
+        "category": "agenzia"
     },
     {
         "name": "AGI",
-        "url": "https://logo.clearbit.com/agi.it"
+        "url": "/logos/agi.png",
+        "category": "agenzia"
     },
     {
         "name": "Il Mattino",
-        "url": "https://logo.clearbit.com/ilmattino.it"
+        "url": "/logos/ilmattino.png",
+        "category": "locale"
     },
     {
         "name": "Corriere del Mezzogiorno",
-        "url": "https://logo.clearbit.com/corriere.it"
+        "url": "/logos/corriere.png",
+        "category": "locale"
     },
     {
         "name": "Il Tempo",
-        "url": "https://logo.clearbit.com/iltempo.it"
+        "url": "/logos/iltempo.png",
+        "category": "locale"
+    },
+    {
+        "name": "Askanews",
+        "url": "/logos/Askanews.png",
+        "category": "agenzia"
+    },
+    {
+        "name": "Agenzia Nova",
+        "url": "/logos/agenzianova.jpg",
+        "category": "agenzia"
+    },
+    {
+        "name": "Agenzia DIRE",
+        "url": "/logos/dire.jpg",
+        "category": "agenzia"
+    },
+    {
+        "name": "Fanpage",
+        "url": "/logos/fanpage.svg",
+        "category": "web"
+    },
+    {
+        "name": "Il Giornale d'Italia",
+        "url": "/logos/ilgiornaleditalia.png",
+        "category": "nazionale"
+    },
+    {
+        "name": "Il Diario del Lavoro",
+        "url": "/logos/ildiariodellavoro.png",
+        "category": "economico"
+    },
+    {
+        "name": "Benevento News 24",
+        "url": "/logos/beneventonews24.png",
+        "category": "locale"
+    },
+    {
+        "name": "Cronache del Sannio",
+        "url": "/logos/cronachedelsannio.png",
+        "category": "locale"
+    },
+    {
+        "name": "Eco del Sannio",
+        "url": "/logos/ecodelsannio.png",
+        "category": "locale"
+    },
+    {
+        "name": "TV Sette Benevento",
+        "url": "/logos/tvsette%20benevento.png",
+        "category": "broadcast"
     }
 ]

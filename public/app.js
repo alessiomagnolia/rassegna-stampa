@@ -1448,7 +1448,18 @@ function openLogoArchive(idx) {
     currentEditingArticleIndex = idx;
     document.getElementById('logoArchiveModal').classList.remove('hidden');
     document.getElementById('logoSearchInput').value = '';
-    renderLogoArchive(logoArchive);
+    
+    if (!logoArchive || logoArchive.length === 0) {
+        fetch('/assets/logos.json?v=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                logoArchive = data;
+                renderLogoArchive(logoArchive);
+            })
+            .catch(() => renderLogoArchive([]));
+    } else {
+        renderLogoArchive(logoArchive);
+    }
 }
 
 function closeLogoArchive() {
@@ -1460,37 +1471,56 @@ function closeLogoArchive() {
 function renderLogoArchive(logos) {
     const grid = document.getElementById('logoGrid');
     grid.innerHTML = '';
-    if (logos.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center;">Nessun logo trovato.</p>';
+    if (!logos || logos.length === 0) {
+        grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 2rem;">Nessun logo trovato.</p>';
         return;
     }
     
     logos.forEach(logo => {
         const div = document.createElement('div');
-        div.style.cssText = 'background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; text-align: center; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px;';
-        div.onmouseover = () => div.style.borderColor = 'var(--accent-primary)';
-        div.onmouseout = () => div.style.borderColor = 'var(--border-color)';
-        div.onclick = () => selectLogoFromArchive(logo.url);
+        div.className = 'logo-picker-item';
+        div.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; align-items: center; min-height: 110px; user-select: none;';
+        div.onmouseover = () => {
+            div.style.borderColor = 'var(--accent-primary)';
+            div.style.background = 'rgba(124, 92, 255, 0.08)';
+            div.style.transform = 'translateY(-2px)';
+            div.style.boxShadow = '0 6px 16px rgba(0,0,0,0.25)';
+        };
+        div.onmouseout = () => {
+            div.style.borderColor = 'var(--border-color)';
+            div.style.background = 'rgba(255,255,255,0.03)';
+            div.style.transform = 'translateY(0)';
+            div.style.boxShadow = 'none';
+        };
+        div.onclick = () => selectLogoFromArchive(logo.url, logo.name);
         
-        // Use proxy to load external logo images without CORS issues
-        const proxiedSrc = `/api/proxy-image?url=${encodeURIComponent(logo.url)}`;
+        // Percorsi locali o data:URI usati direttamente, percorsi esterni via proxy
+        const imgSrc = (logo.url && (logo.url.startsWith('/') || logo.url.startsWith('data:')))
+            ? logo.url
+            : (logo.url ? `/api/proxy-image?url=${encodeURIComponent(logo.url)}` : '');
+
         div.innerHTML = `
-            <img src="${proxiedSrc}" alt="${logo.name}" style="max-width: 100%; max-height: 40px; object-fit: contain; margin-bottom: 10px;" onerror="this.style.display='none'">
-            <span style="font-size: 0.8rem; color: var(--text-secondary);">${logo.name}</span>
+            <div style="width: 100%; height: 50px; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); overflow: hidden;">
+                <img src="${imgSrc}" alt="${logo.name}" loading="lazy" style="max-width: 100%; max-height: 42px; width: auto; height: auto; object-fit: contain;" onerror="this.parentElement.style.background='rgba(255,255,255,0.05)'; this.style.display='none';">
+            </div>
+            <span style="font-size: 0.78rem; font-weight: 500; color: var(--text-primary); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${logo.name}">${logo.name}</span>
         `;
         grid.appendChild(div);
     });
 }
 
-async function selectLogoFromArchive(url) {
+async function selectLogoFromArchive(url, name) {
     if (currentEditingArticleIndex === -1) return;
     try {
         state.articles[currentEditingArticleIndex].logoBase64 = url;
         state.articles[currentEditingArticleIndex].source_logo = url;
+        if (name && (!state.articles[currentEditingArticleIndex].source_name || state.articles[currentEditingArticleIndex].source_name === 'Fonte' || state.articles[currentEditingArticleIndex].source_name === 'Web')) {
+            state.articles[currentEditingArticleIndex].source_name = name;
+        }
         sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
         renderArticles();
         closeLogoArchive();
-        showToast('Logo testata aggiornato!', 'success');
+        showToast(`Logo ${name ? '"' + name + '" ' : ''}aggiornato!`, 'success');
     } catch (err) {
         console.error(err);
         showToast("Errore durante l'aggiornamento del logo", 'error');

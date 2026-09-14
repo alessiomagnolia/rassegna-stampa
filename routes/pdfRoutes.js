@@ -17,6 +17,26 @@ function fetchImageAsBase64(url) {
         // If it's already a data URI, return as-is
         if (url.startsWith('data:')) return resolve(url);
 
+        // Check if local file in public directory (e.g. /logos/... or /assets/logos/...)
+        if (url.startsWith('/')) {
+            try {
+                const localCleanPath = url.split('?')[0];
+                const localFilePath = path.join(__dirname, '..', 'public', decodeURIComponent(localCleanPath));
+                if (fs.existsSync(localFilePath)) {
+                    const ext = path.extname(localFilePath).toLowerCase();
+                    const mime = ext === '.svg' ? 'image/svg+xml' : (ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg'));
+                    const buf = fs.readFileSync(localFilePath);
+                    return resolve(`data:${mime};base64,${buf.toString('base64')}`);
+                }
+            } catch (err) {
+                console.error('[PDF] Errore lettura file locale logo:', err);
+            }
+        }
+
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return resolve(null);
+        }
+
         const protocol = url.startsWith('https') ? https : http;
         protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
             if (response.statusCode !== 200) return resolve(null);

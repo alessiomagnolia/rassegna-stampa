@@ -50,6 +50,21 @@ const http = require('http');
 app.get('/api/proxy-image', (req, res) => {
     const { url } = req.query;
     if (!url) return res.status(400).send('Missing url');
+
+    // Se è un percorso locale in /public
+    if (url.startsWith('/')) {
+        const localCleanPath = url.split('?')[0];
+        const localFilePath = path.join(__dirname, 'public', decodeURIComponent(localCleanPath));
+        if (fs.existsSync(localFilePath)) {
+            return res.sendFile(localFilePath);
+        }
+        return res.status(404).send('Not found');
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return res.status(400).send('Invalid url');
+    }
+
     const protocol = url.startsWith('https') ? https : http;
     protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (imgRes) => {
         if (imgRes.statusCode !== 200) return res.status(404).send('Not found');
