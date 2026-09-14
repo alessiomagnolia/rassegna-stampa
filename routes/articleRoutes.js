@@ -64,17 +64,7 @@ router.post('/extract', authMiddleware, async (req, res) => {
 });
 
 const { calculatePRAnalytics } = require('../services/analyticsService');
-const Anthropic = require('@anthropic-ai/sdk');
-
-function getAnthropicClient() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return null;
-    try {
-        return new Anthropic({ apiKey });
-    } catch {
-        return null;
-    }
-}
+const { getAnthropicClient, callAnthropicMessages } = require('../services/aiHelper');
 
 /**
  * POST /api/articles/analytics
@@ -150,11 +140,10 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
 }`;
 
                 const response = await Promise.race([
-                    anthropic.messages.create({
-                        model: 'claude-3-5-haiku-20241022',
+                    callAnthropicMessages(anthropic, {
                         max_tokens: 1500,
                         messages: [{ role: 'user', content: prompt }]
-                    }),
+                    }, { type: 'fast' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('AI_TIMEOUT')), 25000))
                 ]);
 

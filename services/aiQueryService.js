@@ -1,19 +1,4 @@
-const Anthropic = require('@anthropic-ai/sdk');
-
-/**
- * AI QUERY MULTIPLIER SERVICE
- * Generates 5-8 smart contextual query variations for media monitoring search.
- */
-
-function getAnthropicClient() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return null;
-    try {
-        return new Anthropic({ apiKey });
-    } catch {
-        return null;
-    }
-}
+const { getAnthropicClient, callAnthropicMessages } = require('./aiHelper');
 
 /**
  * Fallback query generator based on Italian press review search patterns.
@@ -56,11 +41,10 @@ Rispondi ESCLUSIVAMENTE con un array JSON di stringhe di ricerca pulite, senza s
 ["chiave 1", "chiave 2", "chiave 3", "chiave 4", "chiave 5"]`;
 
             const response = await Promise.race([
-                client.messages.create({
-                    model: 'claude-3-5-haiku-20241022',
+                callAnthropicMessages(client, {
                     max_tokens: 200,
                     messages: [{ role: 'user', content: prompt }]
-                }),
+                }, { type: 'fast' }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('AI Query Expansion Timeout')), 3000))
             ]);
 

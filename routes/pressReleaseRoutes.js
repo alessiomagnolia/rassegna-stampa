@@ -1,19 +1,9 @@
 const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../database/db');
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAnthropicClient, callAnthropicMessages } = require('../services/aiHelper');
 
 const router = express.Router();
-
-function getAnthropicClient() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-        throw new Error('Chiave API di Anthropic non configurata nel server (.env)');
-    }
-    return new Anthropic({
-        apiKey: apiKey,
-    });
-}
 
 /**
  * GET /api/press/history
@@ -167,8 +157,7 @@ ${extra_instructions ? `- ISTRUZIONI AGGIUNTIVE: ${extra_instructions}\n` : ''}
 
 IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire dal titolo. Nessun saluto, nessun commento prima o dopo.`;
 
-        const response = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
+        const response = await callAnthropicMessages(anthropic, {
             max_tokens: 4000,
             system: systemPrompt,
             messages: [
@@ -366,11 +355,10 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido strutturato così:
 }`;
 
                 const response = await Promise.race([
-                    anthropic.messages.create({
-                        model: 'claude-3-5-haiku-20241022',
+                    callAnthropicMessages(anthropic, {
                         max_tokens: 1200,
                         messages: [{ role: 'user', content: prompt }]
-                    }),
+                    }, { type: 'fast' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 25000))
                 ]);
 
