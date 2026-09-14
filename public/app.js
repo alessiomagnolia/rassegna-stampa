@@ -929,7 +929,7 @@ async function loadHistory() {
                 </div>
                 <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
                     <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
-                    ${item.is_editable ? `<button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>` : ''}
+                    <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>
                     <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
                     <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);" title="Genera Briefing Esecutivo per questa rassegna"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Briefing AI</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
@@ -2229,23 +2229,6 @@ function renderClientModalList() {
     feather.replace();
 }
 
-window.handleClientLogoChange = async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-        clientFormLogoBase64 = await fileToBase64(file);
-        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-        const logoPrev = document.getElementById('clientLogoPreview');
-        if (logoPrevContainer && logoPrev) {
-            logoPrev.src = clientFormLogoBase64;
-            logoPrevContainer.classList.remove('hidden');
-            logoPrevContainer.style.display = 'block';
-        }
-        showToast('Logo del cliente caricato!', 'success');
-    } catch (err) {
-        showToast('Errore nel caricamento del logo', 'error');
-    }
-};
 
 window.toggleTemplateCard = function() {
     const content = document.getElementById('templateSectionContent');
@@ -2533,12 +2516,30 @@ window.toggleArchiveSort = function(btn) {
 
 function loadCustomArchiveLogos() {
     const saved = localStorage.getItem('rs_custom_archive_logos');
+    let customLogos = [];
     if (saved) {
         try {
-            const custom = JSON.parse(saved);
-            archiveLogosList = [...custom, ...archiveLogosList];
-        } catch(e){}
+            customLogos = JSON.parse(saved);
+        } catch(e) {}
     }
+
+    // Merge custom logos with the logos loaded from /assets/logos.json (logoArchive)
+    // logoArchive is loaded at startup; if not ready yet, use fallback hardcoded list
+    const baseLogos = (logoArchive && logoArchive.length > 0)
+        ? logoArchive.map(l => ({ name: l.name, url: l.url, category: l.category || 'nazionale', isCustom: false }))
+        : [
+            { name: 'la Repubblica', category: 'nazionale', url: '/logos/repubblica.png' },
+            { name: 'Corriere della Sera', category: 'nazionale', url: '/logos/corriere.png' },
+            { name: 'Il Sole 24 Ore', category: 'economico', url: '/logos/ilsole24ore.png' },
+            { name: 'ANSA', category: 'agenzia', url: '/logos/ansa.png' },
+            { name: 'Il Mattino', category: 'locale', url: '/logos/ilmattino.png' },
+            { name: 'Askanews', category: 'agenzia', url: '/logos/Askanews.png' },
+            { name: 'Agenzia Nova', category: 'agenzia', url: '/logos/agenzianova.jpg' },
+            { name: 'Agenzia DIRE', category: 'agenzia', url: '/logos/dire.jpg' },
+            { name: 'TV Sette Benevento', category: 'broadcast', url: '/logos/tvsette%20benevento.png' }
+        ];
+
+    archiveLogosList = [...customLogos, ...baseLogos];
 }
 
 window.renderArchiveLogos = function() {
@@ -2611,14 +2612,53 @@ window.renderArchiveLogos = function() {
         card.appendChild(imgContainer);
         card.appendChild(infoDiv);
 
+        // Action buttons row
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.cssText = 'margin-top:10px; display:flex; gap:4px; flex-wrap:wrap; justify-content:center;';
+
+        // Copy URL button — always present
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn btn-outline btn-sm';
+        copyBtn.style.cssText = 'font-size:0.7rem; padding:2px 8px;';
+        copyBtn.innerHTML = '<i data-feather="copy" style="width:11px;height:11px;vertical-align:middle;margin-right:2px;"></i> Copia URL';
+        copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            const logoUrl = item.url || item.base64 || '';
+            navigator.clipboard.writeText(logoUrl).then(() => {
+                showToast(`URL logo "${item.name}" copiato!`, 'success');
+            }).catch(() => showToast('Errore copia URL', 'error'));
+        };
+        actionsDiv.appendChild(copyBtn);
+
         if (item.isCustom) {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'btn btn-outline btn-sm';
-            removeBtn.style.cssText = 'margin-top:10px; font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;';
-            removeBtn.innerHTML = '<i data-feather="trash-2" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Rimuovi';
-            removeBtn.onclick = () => deleteCustomArchiveLogo(item.name);
-            card.appendChild(removeBtn);
+            removeBtn.style.cssText = 'font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;';
+            removeBtn.innerHTML = '<i data-feather="trash-2" style="width:11px;height:11px;vertical-align:middle;margin-right:2px;"></i> Rimuovi';
+            removeBtn.onclick = (e) => { e.stopPropagation(); deleteCustomArchiveLogo(item.name); };
+            actionsDiv.appendChild(removeBtn);
         }
+
+        card.appendChild(actionsDiv);
+
+        // Click on card: if there's an article being edited, apply the logo; otherwise copy URL
+        card.style.cursor = 'pointer';
+        card.onclick = () => {
+            const logoSrc = item.url || item.base64 || '';
+            if (typeof window.currentEditingLogoIdx !== 'undefined' && window.currentEditingLogoIdx !== null) {
+                // Apply to article currently being edited
+                if (state.articles && state.articles[window.currentEditingLogoIdx]) {
+                    state.articles[window.currentEditingLogoIdx].source_logo = logoSrc;
+                    showToast(`Logo "${item.name}" applicato all'articolo!`, 'success');
+                    renderArticles();
+                    window.currentEditingLogoIdx = null;
+                }
+            } else {
+                navigator.clipboard.writeText(logoSrc).then(() => {
+                    showToast(`URL logo "${item.name}" copiato negli appunti!`, 'success');
+                }).catch(() => showToast('Errore copia', 'error'));
+            }
+        };
 
         grid.appendChild(card);
     });
@@ -2694,8 +2734,8 @@ window.filterArchiveCategory = function(cat, btn) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadProfile();
-    loadClients();
+    loadFullProfileData();
+    loadPlatformSettings();
     loadCustomArchiveLogos();
     renderArchiveLogos();
     if (window.location.hash === '#media-crm') {
@@ -2879,7 +2919,7 @@ window.openMorningDigestForCurrentArticles = async function() {
             ...data.digest,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
-            emailText: data.whatsappText || ''
+            emailText: data.emailText || data.whatsappText || ''
         };
         renderDigestModalContent(data.digest);
 
@@ -2929,7 +2969,7 @@ window.openMorningDigestFromHistory = async function(reviewId) {
             ...data.digest,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
-            emailText: data.whatsappText || ''
+            emailText: data.emailText || data.whatsappText || ''
         };
         renderDigestModalContent(data.digest);
 
@@ -3597,7 +3637,7 @@ window.generateBriefingFromPageSelector = async function() {
             ...data.digest,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
-            emailText: data.whatsappText || ''
+            emailText: data.emailText || data.whatsappText || ''
         };
 
         // Render Subject

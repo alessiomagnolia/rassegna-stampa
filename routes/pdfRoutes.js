@@ -386,8 +386,15 @@ router.get('/download/:filename', authMiddleware, (req, res) => {
         const review = db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(safeFilename, req.userId);
         
         if (!review) {
-            // Check if it is a generated KPI report or ephemeral export created in output directory
+            // KPI and draft files are ephemeral — not stored in press_reviews.
+            // Security: verify the file is recent (max 2h) to prevent brute-force guessing of old filenames.
             if (safeFilename.startsWith('Report_KPI') || safeFilename.startsWith('draft_')) {
+                const fileStat = fs.statSync(filePath);
+                const ageMs = Date.now() - fileStat.mtimeMs;
+                const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+                if (ageMs > TWO_HOURS_MS) {
+                    return res.status(403).json({ error: 'File scaduto o non autorizzato.' });
+                }
                 return res.download(filePath, safeFilename);
             }
             return res.status(404).json({ error: 'PDF non trovato o non autorizzato.' });

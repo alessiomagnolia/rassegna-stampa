@@ -186,8 +186,13 @@ router.delete('/logo', authMiddleware, (req, res) => {
         
         if (user && user.logo_path) {
             const fullPath = path.join(__dirname, '..', user.logo_path);
-            if (fs.existsSync(fullPath)) {
-                fs.unlinkSync(fullPath);
+            try {
+                if (fs.existsSync(fullPath)) {
+                    fs.unlinkSync(fullPath);
+                }
+            } catch (fsErr) {
+                // Log the I/O error but continue — clean the DB path regardless
+                console.warn('Delete logo: file not found on disk, cleaning DB anyway:', fsErr.message);
             }
             
             db.prepare('UPDATE users SET logo_path = "" WHERE id = ?').run(req.userId);

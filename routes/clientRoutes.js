@@ -115,7 +115,7 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
     try {
         const db = getDb();
-        const result = db.prepare('DELETE FROM clients WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+        const result = db.prepare('DELETE FROM clients WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
         
         if (result.changes === 0) {
             return res.status(404).json({ error: 'Cliente non trovato.' });

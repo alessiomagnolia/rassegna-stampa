@@ -161,7 +161,13 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
                 const textRes = response.content[0]?.text || '';
                 const jsonMatch = textRes.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
-                    digestData = JSON.parse(jsonMatch[0]);
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    // Validate required arrays exist before accepting the AI response
+                    if (parsed && Array.isArray(parsed.highlights) && Array.isArray(parsed.clips)) {
+                        digestData = parsed;
+                    } else {
+                        console.warn('[Digest] AI response missing required arrays (highlights/clips), using fallback.');
+                    }
                 }
             } catch (aiErr) {
                 console.warn('[Digest] Fallback AI error/timeout, using structured engine:', aiErr.message);
