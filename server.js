@@ -92,6 +92,16 @@ app.get('/accept-invite', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'accept-invite.html'));
 });
 
+// Editor Locandine Eventi
+app.get('/locandine', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'locandine.html'));
+});
+
+// Editor LinkedIn Post
+app.get('/linkedin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'linkedin.html'));
+});
+
 // Fallback to index.html for SPA if needed (currently using multiple HTML files though)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

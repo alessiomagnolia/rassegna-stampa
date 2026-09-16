@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Locandine & Eventi | Rassegna Stampa</title>
+    <script>
+        (function() {
+            var theme = localStorage.getItem('rs_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <!-- Google Fonts: Syne (Ultra-Bold geometric close to CY Grotesk Grand Black), Archivo Black, Playfair Display Italic, Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Syne:wght@700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=20260916_01">
+    
+    <!-- Librerie esterne: html2canvas per render HD, feather-icons e libreria IA rimozione sfondo -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        :root {
+            --editor-bg: #0f1117;
+            --editor-panel: #161922;
+            --editor-card: #1e2230;
+            --editor-border: #2b3145;
+            --editor-text: #f1f5f9;
+            --editor-muted: #94a3b8;
+            --accent-purple: #783c7b;
+            --accent-lime: #c2f82c;
+        }
+
+        [data-theme="light"] {
+            --editor-bg: #f3f4f6;
+            --editor-panel: #ffffff;
+            --editor-card: #f8fafc;
+            --editor-border: #e2e8f0;
+            --editor-text: #0f172a;
+            --editor-muted: #64748b;
+        }
+
+        /* Fallback / Font Face personalizzabile per CY Grotesk */
+        @font-face {
+            font-family: 'CustomUploadedFont';
+            src: local('CY Grotesk Grand Black'), local('Syne');
+            font-weight: 800;
+        }
+
+        body {
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* HEADER */
+        .editor-header {
+            height: 58px;
+            background: var(--editor-panel);
+            border-bottom: 1px solid var(--editor-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--editor-card);
+            border: 1px solid var(--editor-border);
+            border-radius: 8px;
+            color: var(--editor-text);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-pill {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(194, 248, 44, 0.15);
+            color: #a3d918;
+            border: 1px solid rgba(194, 248, 44, 0.3);
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-export-png {
+            background: #c2f82c;
+            color: #121212;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 10px rgba(194, 248, 44, 0.25);
+            transition: all 0.15s;
+        }
+        .btn-export-png:hover {
+            background: #d4ff4f;
+            transform: translateY(-1px);
+        }
+
+        .btn-export-secondary {
+            background: var(--editor-card);
+            color: var(--editor-text);
+            border: 1px solid var(--editor-border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .btn-export-secondary:hover {
+            border-color: var(--editor-text);
+        }
+
+        /* MAIN DUAL-PANEL LAYOUT */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 58px);
+            overflow: hidden;
+        }
+
+        /* LEFT CONTROLS */
+        .control-panel {
+            width: 440px;
+            background: var(--editor-panel);
+            border-right: 1px solid var(--editor-border);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .panel-section {
+            background: var(--editor-card);
+            border: 1px solid var(--editor-border);
+            border-radius: 10px;
+            padding: 0.9rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--editor-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 0.85rem;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--editor-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .form-control:focus {
+            border-color: var(--accent-lime);
+        }
+
+        .range-slider {
+            width: 100%;
+            accent-color: var(--accent-lime);
+            cursor: pointer;
+        }
+
+        /* PRESET BUTTONS */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .btn-preset {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s;
+        }
+        .btn-preset:hover {
+            border-color: var(--accent-lime);
+        }
+        .preset-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* COLOR PICKERS ROW */
+        .colors-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .color-item {
+            flex: 1;
+            min-width: 90px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--editor-bg);
+            border: 1px solid var(--editor-border);
+            border-radius: 6px;
+            padding: 4px 6px;
+        }
+        .color-input-wrapper input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+            background: transparent;
+        }
+        .color-hex {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: var(--editor-text);
+        }
+
+        /* RIGHT PREVIEW WORKSPACE */
+        .preview-workspace {
+            flex: 1;
+            background: var(--editor-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem 1rem;
+            user-select: none;
+        }
+
+        .preview-toolbar {
+            position: absolute;
+            top: 16px;
+            background: var(--editor-panel);
+            border: 1px solid var(--editor-border);
+            border-radius: 30px;
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        .format-badge {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent-lime);
+        }
+
+        /* POSTER CANVAS CONTAINER */
+        .poster-viewport {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* LIVE LOCANDINA CANVAS - 1080x1920 (9:16) */
+        #posterCanvas {
+            width: 1080px;
+            height: 1920px;
+            background-color: var(--accent-purple);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transform-origin: center center;
+            transition: transform 0.1s ease;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* LOCANDINA CONTENT LAYERS */
+        .poster-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* LAYER 1: LOWER BACKGROUND TEXT ("SPAZIO DOPO VIA PILA 11") */
+        .layer-text-middle {
+            position: absolute;
+            left: 75px;
+            top: 810px;
+            width: 930px;
+            z-index: 10;
+        }
+
+        .text-venue-name {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 92px;
+            line-height: 0.92;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            margin: 0;
+        }
+
+        .text-venue-address {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 92px;
+            line-height: 0.92;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            margin: 6px 0 0 0;
+        }
+
+        .text-venue-city {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-weight: 600;
+            font-size: 52px;
+            line-height: 1.1;
+            color: var(--accent-lime);
+            margin: 20px 0 0 0;
+        }
+
+        /* LAYER 2: SUBJECT / MUSICIAN IMAGE */
+        .layer-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 15; /* Sotto o sopra al testo in base al toggle */
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        #posterSubjectImage {
+            position: absolute;
+            bottom: -30px;
+            right: -20px;
+            width: 1100px;
+            max-width: none;
+            height: auto;
+            transform-origin: bottom center;
+            filter: grayscale(100%) contrast(135%) brightness(95%);
+            cursor: grab;
+            pointer-events: auto;
+        }
+        #posterSubjectImage:active {
+            cursor: grabbing;
+        }
+
+        /* LAYER 3: TOP TITLES & DATE */
+        .layer-text-top {
+            position: absolute;
+            top: 80px;
+            left: 75px;
+            right: 75px;
+            z-index: 20;
+        }
+
+        .title-filled {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 240px;
+            line-height: 0.82;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: -6px;
+            margin: 0;
+            display: block;
+            transform: scaleY(0.96);
+            transform-origin: top left;
+        }
+
+        .title-outline {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 165px;
+            line-height: 0.82;
+            color: transparent;
+            -webkit-text-stroke: 4.5px var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: -3px;
+            margin: 0;
+            display: block;
+            transform: scaleY(0.96);
+            transform-origin: top left;
+        }
+
+        .box-datetime {
+            margin-top: 25px;
+            text-align: right;
+        }
+
+        .text-date {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 80px;
+            line-height: 0.9;
+            color: var(--accent-lime);
+            letter-spacing: -2px;
+            display: block;
+        }
+
+        .text-time {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 800;
+            font-size: 38px;
+            line-height: 1.0;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* EXTRA TEXT LAYER */
+        .text-extra-notes {
+            font-family: 'Syne', 'CustomUploadedFont', sans-serif;
+            font-weight: 700;
+            font-size: 34px;
+            color: var(--accent-lime);
+            margin-top: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: none;
+        }
+
+        /* LAYER 4: BOTTOM FOOTER LOGOS */
+        .layer-footer {
+            position: absolute;
+            bottom: 60px;
+            left: 75px;
+            right: 75px;
+            height: 140px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .footer-logo-left {
+            display: flex;
+            align-items: flex-end;
+        }
+        .footer-logo-left img, .footer-logo-left svg {
+            height: 140px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .footer-logo-right {
+            display: flex;
+            align-items: flex-end;
+        }
+        .footer-logo-right img, .footer-logo-right svg {
+            height: 95px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 17, 23, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(194, 248, 44, 0.2);
+            border-top-color: var(--accent-lime);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e2230;
+            border: 1px solid var(--accent-lime);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .editor-layout {
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+            .control-panel {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--editor-border);
+            }
+            .preview-workspace {
+                min-height: 80vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="editor-header">
+        <div class="header-left">
+            <a href="dashboard.html" class="btn-back">
+                <i data-feather="arrow-left" style="width:14px;height:14px;"></i> Dashboard
+            </a>
+            <div class="header-title">
+                <i data-feather="image" style="width:18px;height:18px;color:var(--accent-lime);"></i>
+                <span>Editor Locandine Eventi</span>
+                <span class="badge-pill">Stile Spazio Dopo</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn-export-secondary" onclick="resetDefaults()" title="Ripristina valori originali">
+                <i data-feather="rotate-ccw" style="width:14px;height:14px;"></i> Reset
+            </button>
+            <button class="btn-export-secondary" onclick="copyImageToClipboard()" title="Copia immagine per WhatsApp/Telegram">
+                <i data-feather="copy" style="width:14px;height:14px;"></i> Copia
+            </button>
+            <button class="btn-export-secondary" onclick="exportPoster('jpeg')" title="Download JPEG compresso per social">
+                <i data-feather="download" style="width:14px;height:14px;"></i> JPEG HD
+            </button>
+            <button class="btn-export-png" onclick="exportPoster('png')" title="Download PNG massima risoluzione per stampa e story">
+                <i data-feather="download" style="width:15px;height:15px;"></i> Scarica PNG HD
+            </button>
+        </div>
+    </header>
+
+    <!-- WORKSPACE -->
+    <div class="editor-layout">
+
+        <!-- LEFT CONTROLS PANEL -->
+        <aside class="control-panel">
+
+            <!-- 1. PRESET RAPIDI -->
+            <div class="panel-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i data-feather="palette" style="width:15px;height:15px;color:var(--accent-lime);"></i> Preset Palette Rapidi</h3>
+                </div>
+                <div class="presets-grid">
+                    <button type="button" class="btn-preset" onclick="applyPreset('#783c7b', '#c2f82c', '#ffffff')">
+                        <span class="preset-dot" style="background:#783c7b; box-shadow:0 0 0 2px #c2f82c inset;"></span>
+                        <span>Spazio Dopo (Viola &amp; Lime)</span>
+                    </button>
+                    <button type="button" class="btn-preset" onclick="applyPreset('#111114', '#e6ff00', '#ffffff')">
+                        <span class="preset-dot" style="background:#111114; box-shadow:0 0 0 2px #e6ff00 inset;"></span>
+                        <span>Dark Club (Nero &amp; Fluo)</span>
+                    </button>
+                    <button type="button" class="btn-preset" onclick="applyPreset('#0f1b29', '#00f5d4', '#ffffff')">
+                        <span class="preset-dot" style="background:#0f1b29; box-shadow:0 0 0 2px #00f5d4 inset;"></span>
+                        <span>Cobalt Cyber (Blu &amp; Ciano)</span>
+                    </button>
+                    <button type="button" class="btn-preset" onclick="applyPreset('#ffffff', '#121212', '#783c7b')">
+                        <span class="preset-dot" style="background:#ffffff; box-shadow:0 0 0 2px #121212 inset;"></span>
+                        <span>Brutal White (Bianco &amp; Nero)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. COLORI PERSONALIZZATI -->
+            <div class="panel-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i data-feather="droplet" style="width:15px;height:15px;color:var(--accent-lime);"></i> Colori e Sfondo</h3>
+                </div>
+                <div class="colors-row">
+                    <div class="color-item">
+                        <span class="form-label">Sfondo</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="inputBgColor" value="#783c7b" oninput="updateColors()">
+                            <span class="color-hex" id="hexBgColor">#783C7B</span>
+                        </div>
+                    </div>
+                    <div class="color-item">
+                        <span class="form-label">Testi Primari</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="inputTextColor" value="#c2f82c" oninput="updateColors()">
+                            <span class="color-hex" id="hexTextColor">#C2F82C</span>
+                        </div>
+                    </div>
+                    <div class="color-item">
+                        <span class="form-label">Loghi &amp; Accenti</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="inputAccentColor" value="#ffffff" oninput="updateColors()">
+                            <span class="color-hex" id="hexAccentColor">#FFFFFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. GESTIONE IMMAGINE E SCONTORNO IA -->
+            <div class="panel-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i data-feather="camera" style="width:15px;height:15px;color:var(--accent-lime);"></i> Foto Musicista / Artista</h3>
+                </div>
+
+                <div class="form-group">
+                    <input type="file" id="inputSubjectFile" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; padding:9px; margin-bottom:8px;" onclick="document.getElementById('inputSubjectFile').click()">
+                        <i data-feather="upload" style="width:14px;height:14px;"></i> Carica Nuova Foto Artista
+                    </button>
+                </div>
+
+                <!-- PULSANTE SCONTORNO IA -->
+                <div class="form-group" style="display:flex; gap:6px;">
+                    <button type="button" id="btnAiBgRemoval" class="btn-export-png" style="flex:1; justify-content:center; font-size:0.8rem; padding:8px;" onclick="triggerAiBgRemoval()">
+                        <i data-feather="sparkles" style="width:14px;height:14px;"></i> Scontorna con IA
+                    </button>
+                    <button type="button" class="btn-export-secondary" style="justify-content:center; font-size:0.75rem; padding:8px;" onclick="resetToSampleImage()" title="Ripristina foto musicisti jazz predefinita">
+                        Foto Default
+                    </button>
+                </div>
+
+                <!-- CONTROLLI BIANCO E NERO & CONTRASTO -->
+                <div style="background:var(--editor-bg); padding:10px; border-radius:8px; border:1px solid var(--editor-border); margin-bottom:10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:0.8rem; font-weight:700; color:var(--editor-text);">Filtro Bianco &amp; Nero</span>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem;">
+                            <input type="checkbox" id="checkGrayscale" checked onchange="updateImageFilter()" style="accent-color:var(--accent-lime);">
+                            Attivo
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>Contrasto Jazz</span>
+                            <span id="valContrast">135%</span>
+                        </div>
+                        <input type="range" class="range-slider" id="rangeContrast" min="50" max="250" value="135" oninput="updateImageFilter()">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>Luminosità</span>
+                            <span id="valBrightness">95%</span>
+                        </div>
+                        <input type="range" class="range-slider" id="rangeBrightness" min="40" max="180" value="95" oninput="updateImageFilter()">
+                    </div>
+                </div>
+
+                <!-- PROFONDITÀ LIVELLO (DAVANTI / DIETRO AL TESTO) -->
+                <div class="form-group">
+                    <span class="form-label">Profondità / Sovrapposizione 3D</span>
+                    <select id="selectImageDepth" class="form-control" onchange="updateImageDepth()">
+                        <option value="behind">Sotto il testo ("SPAZIO DOPO" sopra il musicista)</option>
+                        <option value="front" selected>Sopra il testo (Lo strumento si sovrappone a "SPAZIO DOPO")</option>
+                    </select>
+                </div>
+
+                <!-- REGOLAZIONI POSIZIONE E SCALA -->
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>Dimensione (Zoom)</span>
+                        <span id="valScale">100%</span>
+                    </div>
+                    <input type="range" class="range-slider" id="rangeScale" min="30" max="220" value="100" oninput="updateImageTransform()">
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div class="form-group">
+                        <div class="form-label"><span>Sposta Orizzontale (X)</span></div>
+                        <input type="range" class="range-slider" id="rangePosX" min="-500" max="500" value="0" oninput="updateImageTransform()">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label"><span>Sposta Verticale (Y)</span></div>
+                        <input type="range" class="range-slider" id="rangePosY" min="-500" max="500" value="0" oninput="updateImageTransform()">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:6px;">
+                    <button type="button" class="btn-export-secondary" style="flex:1; justify-content:center; font-size:0.75rem;" onclick="flipImageHorizontal()">
+                        <i data-feather="repeat" style="width:13px;height:13px;"></i> Specchia (Flip)
+                    </button>
+                    <button type="button" class="btn-export-secondary" style="flex:1; justify-content:center; font-size:0.75rem;" onclick="centerImagePosition()">
+                        <i data-feather="crosshair" style="width:13px;height:13px;"></i> Ricentra
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. PERSONALIZZAZIONE TESTI -->
+            <div class="panel-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i data-feather="type" style="width:15px;height:15px;color:var(--accent-lime);"></i> Testi &amp; Tipografia</h3>
+                </div>
+
+                <!-- SCELTA FONT PRINCIPALE -->
+                <div class="form-group">
+                    <span class="form-label">Font Principale (Titoli &amp; Date)</span>
+                    <select id="selectFontFamily" class="form-control" onchange="updateFontFamily()">
+                        <option value="'Syne', sans-serif" selected>CY Grotesk Grand Black (Syne 800 Wide Match)</option>
+                        <option value="'Archivo Black', sans-serif">Archivo Black (Ultra Solid)</option>
+                        <option value="'Space Grotesk', sans-serif">Space Grotesk Bold</option>
+                        <option value="'Inter', sans-serif">Inter Black 900</option>
+                        <option value="'CustomUploadedFont', sans-serif">Font Personale Caricato</option>
+                    </select>
+                </div>
+
+                <!-- CARICA FONT PERSONALIZZATO TTF/WOFF2 -->
+                <div class="form-group">
+                    <input type="file" id="inputCustomFontFile" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="handleFontUpload(event)">
+                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputCustomFontFile').click()">
+                        <i data-feather="folder-plus" style="width:13px;height:13px;"></i> Hai il file font originale? Carica .ttf / .woff2
+                    </button>
+                </div>
+
+                <!-- TITOLO 1 (PIENO) -->
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>Titolo Superiore (Pieno)</span>
+                        <span id="valTitle1Size">240px</span>
+                    </div>
+                    <input type="text" id="inputTitle1" class="form-control" value="JAM" oninput="updateTexts()" style="font-weight:800; margin-bottom:4px;">
+                    <input type="range" class="range-slider" id="rangeTitle1Size" min="100" max="320" value="240" oninput="updateTexts()">
+                </div>
+
+                <!-- TITOLO 2 (OUTLINE) -->
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>Titolo Secondario</span>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:0.72rem; cursor:pointer;">
+                            <input type="checkbox" id="checkTitle2Outline" checked onchange="updateTexts()" style="accent-color:var(--accent-lime);">
+                            Solo Contorno (Outline)
+                        </label>
+                    </div>
+                    <input type="text" id="inputTitle2" class="form-control" value="SESSION" oninput="updateTexts()" style="font-weight:800; margin-bottom:4px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div>
+                            <span class="form-label">Dimensione</span>
+                            <input type="range" class="range-slider" id="rangeTitle2Size" min="70" max="220" value="165" oninput="updateTexts()">
+                        </div>
+                        <div>
+                            <span class="form-label">Spessore Bordo</span>
+                            <input type="range" class="range-slider" id="rangeStrokeWidth" min="1" max="10" value="4.5" step="0.5" oninput="updateTexts()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATA & ORA -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;" class="form-group">
+                    <div>
+                        <span class="form-label">Data</span>
+                        <input type="text" id="inputDate" class="form-control" value="26.09.26" oninput="updateTexts()" style="font-weight:700;">
+                    </div>
+                    <div>
+                        <span class="form-label">Orario</span>
+                        <input type="text" id="inputTime" class="form-control" value="ORE 21:00" oninput="updateTexts()" style="font-weight:700;">
+                    </div>
+                </div>
+
+                <!-- NOME LOCALE & INDIRIZZO -->
+                <div class="form-group">
+                    <span class="form-label">Nome Spazio / Locale</span>
+                    <input type="text" id="inputVenueName" class="form-control" value="SPAZIO DOPO" oninput="updateTexts()" style="font-weight:800;">
+                </div>
+
+                <div class="form-group">
+                    <span class="form-label">Indirizzo</span>
+                    <input type="text" id="inputVenueAddress" class="form-control" value="VIA PILA 11" oninput="updateTexts()" style="font-weight:800;">
+                </div>
+
+                <!-- COMUNE CORSIVO -->
+                <div class="form-group">
+                    <span class="form-label">Città / Sottotitolo (Corsivo Elegante)</span>
+                    <input type="text" id="inputVenueCity" class="form-control" value="Cassano D’Adda (MI)" oninput="updateTexts()" style="font-style:italic;">
+                </div>
+
+                <!-- NOTE AGGIUNTIVE -->
+                <div class="form-group">
+                    <span class="form-label">Note Aggiuntive (Es. Ingresso Libero)</span>
+                    <input type="text" id="inputExtraNotes" class="form-control" placeholder="Es. Ingresso riservato con tessera / Dj Set" oninput="updateTexts()">
+                </div>
+            </div>
+
+            <!-- 5. LOGHI & FOOTER -->
+            <div class="panel-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i data-feather="shield" style="width:15px;height:15px;color:var(--accent-lime);"></i> Loghi &amp; Sponsor</h3>
+                </div>
+
+                <!-- LOGO SINISTRO (STEMMA) -->
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span class="form-label" style="margin:0;">Stemma / Partner Sinistra</span>
+                        <label style="font-size:0.75rem; cursor:pointer;">
+                            <input type="checkbox" id="checkShowLogoLeft" checked onchange="toggleLogos()" style="accent-color:var(--accent-lime);">
+                            Visibile
+                        </label>
+                    </div>
+                    <input type="file" id="inputLogoLeftFile" accept="image/*" style="display:none;" onchange="handleLogoLeftUpload(event)">
+                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoLeftFile').click()">
+                        Cambia Stemma / Logo Sinistra
+                    </button>
+                </div>
+
+                <!-- LOGO DESTRO (SPAZIO DOPO) -->
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span class="form-label" style="margin:0;">Logo Spazio / Locale Destra</span>
+                        <label style="font-size:0.75rem; cursor:pointer;">
+                            <input type="checkbox" id="checkShowLogoRight" checked onchange="toggleLogos()" style="accent-color:var(--accent-lime);">
+                            Visibile
+                        </label>
+                    </div>
+                    <input type="file" id="inputLogoRightFile" accept="image/*" style="display:none;" onchange="handleLogoRightUpload(event)">
+                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoRightFile').click()">
+                        Cambia Logo Spazio Dopo
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- RIGHT PREVIEW CANVAS VIEWPORT -->
+        <main class="preview-workspace" id="previewContainer">
+
+            <!-- FLOATING TOOLBAR -->
+            <div class="preview-toolbar">
+                <span class="format-badge"><i data-feather="maximize" style="width:13px;height:13px;vertical-align:middle;"></i> Story &amp; Locandina 9:16 (1080×1920)</span>
+                <span style="color:var(--editor-border);">|</span>
+                <button type="button" class="btn-export-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="changeFormat('9:16')">9:16 Story</button>
+                <button type="button" class="btn-export-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="changeFormat('A4')">A4 Stampa</button>
+                <button type="button" class="btn-export-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="changeFormat('4:5')">4:5 Post</button>
+            </div>
+
+            <!-- VIEWPORT WRAPPER -->
+            <div class="poster-viewport" id="posterViewport">
+                
+                <!-- 1080x1920 CANVAS REAL ELEMENT -->
+                <div id="posterCanvas">
+
+                    <!-- LAYER: UPPER TITLES AND DATE -->
+                    <div class="layer-text-top" id="layerTextTop">
+                        <h1 class="title-filled" id="posterTitle1">JAM</h1>
+                        <h2 class="title-outline" id="posterTitle2">SESSION</h2>
+                        
+                        <div class="box-datetime" id="posterBoxDateTime">
+                            <span class="text-date" id="posterDate">26.09.26</span>
+                            <span class="text-time" id="posterTime">ORE 21:00</span>
+                        </div>
+                    </div>
+
+                    <!-- LAYER: MIDDLE VENUE & CITY TEXT -->
+                    <div class="layer-text-middle" id="layerTextMiddle">
+                        <div class="text-venue-name" id="posterVenueName">SPAZIO DOPO</div>
+                        <div class="text-venue-address" id="posterVenueAddress">VIA PILA 11</div>
+                        <div class="text-venue-city" id="posterVenueCity">Cassano D’Adda (MI)</div>
+                        <div class="text-extra-notes" id="posterExtraNotes"></div>
+                    </div>
+
+                    <!-- LAYER: SUBJECT / MUSICIANS IMAGE -->
+                    <div class="layer-image-container" id="layerImageContainer">
+                        <img id="posterSubjectImage" src="assets/sample-musicians.png" alt="Soggetto Locandina" crossorigin="anonymous">
+                    </div>
+
+                    <!-- LAYER: FOOTER LOGOS -->
+                    <div class="layer-footer" id="layerFooter">
+                        <!-- STEMMA COMUNALE SINISTRA -->
+                        <div class="footer-logo-left" id="posterLogoLeftContainer">
+                            <img id="posterLogoLeftImg" src="assets/stemma-cassano.png" alt="Stemma Cassano d'Adda" crossorigin="anonymous">
+                        </div>
+
+                        <!-- LOGO SPAZIO DOPO DESTRA -->
+                        <div class="footer-logo-right" id="posterLogoRightContainer">
+                            <img id="posterLogoRightImg" src="assets/logo-spaziodopo-original.png" alt="Spazio Dopo Logo" crossorigin="anonymous">
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- LOADING MODAL / SPINNER -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Elaborazione in corso...</div>
+        <div id="loadingProgress" style="font-size:0.8rem; color:var(--accent-lime); margin-top:6px;"></div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast-msg" id="toastMsg">
+        <i data-feather="check-circle" style="color:var(--accent-lime); width:18px;height:18px;"></i>
+        <span id="toastText">Operazione completata!</span>
+    </div>
+
+    <!-- SCRIPT APPLICATION -->
+    <script>
+        // --- INIZIALIZZAZIONE ICONE FEATHER ---
+        feather.replace();
+
+        // --- STATO DELL'EDITOR ---
+        const posterState = {
+            format: '9:16',
+            width: 1080,
+            height: 1920,
+            bgColor: '#783c7b',
+            textColor: '#c2f82c',
+            accentColor: '#ffffff',
+            imgScale: 1.0,
+            imgPosX: 0,
+            imgPosY: 0,
+            imgFlip: false,
+            imgContrast: 135,
+            imgBrightness: 95,
+            imgGrayscale: true,
+            imgDepth: 'front', // 'front' (sopra il testo "Spazio Dopo") o 'behind' (sotto)
+            fontFamily: "'Syne', sans-serif"
+        };
+
+        // --- CALCOLO RESPONSIVE DELLO ZOOM DELLA CANVAS ---
+        function fitCanvasToScreen() {
+            const viewport = document.getElementById('previewContainer');
+            const canvas = document.getElementById('posterCanvas');
+            if (!viewport || !canvas) return;
+
+            const padding = 100;
+            const availW = viewport.clientWidth - 40;
+            const availH = viewport.clientHeight - padding;
+
+            const scaleW = availW / posterState.width;
+            const scaleH = availH / posterState.height;
+            const finalScale = Math.min(scaleW, scaleH, 0.55); // Max 0.55 per schermi grandi
+
+            canvas.style.transform = `scale(${finalScale})`;
+        }
+
+        window.addEventListener('resize', fitCanvasToScreen);
+        setTimeout(fitCanvasToScreen, 100);
+
+        // --- AGGIORNAMENTO COLORI & PALETTE ---
+        function updateColors() {
+            const bg = document.getElementById('inputBgColor').value;
+            const text = document.getElementById('inputTextColor').value;
+            const accent = document.getElementById('inputAccentColor').value;
+
+            posterState.bgColor = bg;
+            posterState.textColor = text;
+            posterState.accentColor = accent;
+
+            document.getElementById('hexBgColor').textContent = bg.toUpperCase();
+            document.getElementById('hexTextColor').textContent = text.toUpperCase();
+            document.getElementById('hexAccentColor').textContent = accent.toUpperCase();
+
+            // Sfondo canvas
+            document.getElementById('posterCanvas').style.backgroundColor = bg;
+
+            // Testi colorati
+            const textElements = [
+                'posterTitle1',
+                'posterDate',
+                'posterTime',
+                'posterVenueName',
+                'posterVenueAddress',
+                'posterVenueCity',
+                'posterExtraNotes'
+            ];
+            textElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.color = text;
+            });
+
+            // Outline stroke per il titolo 2
+            const title2 = document.getElementById('posterTitle2');
+            const isOutline = document.getElementById('checkTitle2Outline').checked;
+            const strokeW = document.getElementById('rangeStrokeWidth').value;
+            if (title2) {
+                if (isOutline) {
+                    title2.style.webkitTextStroke = `${strokeW}px ${text}`;
+                    title2.style.color = 'transparent';
+                } else {
+                    title2.style.webkitTextStroke = 'none';
+                    title2.style.color = text;
+                }
+            }
+        }
+
+        function applyPreset(bg, text, accent) {
+            document.getElementById('inputBgColor').value = bg;
+            document.getElementById('inputTextColor').value = text;
+            document.getElementById('inputAccentColor').value = accent;
+            updateColors();
+            showToast('Preset applicato con successo!');
+        }
+
+        // --- AGGIORNAMENTO TESTI & TIPOGRAFIA ---
+        function updateTexts() {
+            const t1 = document.getElementById('inputTitle1').value;
+            const t1Size = document.getElementById('rangeTitle1Size').value;
+            document.getElementById('valTitle1Size').textContent = `${t1Size}px`;
+
+            const t2 = document.getElementById('inputTitle2').value;
+            const t2Size = document.getElementById('rangeTitle2Size').value;
+            const isOutline = document.getElementById('checkTitle2Outline').checked;
+            const strokeW = document.getElementById('rangeStrokeWidth').value;
+
+            const dateVal = document.getElementById('inputDate').value;
+            const timeVal = document.getElementById('inputTime').value;
+
+            const venue = document.getElementById('inputVenueName').value;
+            const address = document.getElementById('inputVenueAddress').value;
+            const city = document.getElementById('inputVenueCity').value;
+            const extra = document.getElementById('inputExtraNotes').value;
+
+            // Elementi DOM canvas
+            const elT1 = document.getElementById('posterTitle1');
+            const elT2 = document.getElementById('posterTitle2');
+            const elDate = document.getElementById('posterDate');
+            const elTime = document.getElementById('posterTime');
+            const elVenue = document.getElementById('posterVenueName');
+            const elAddress = document.getElementById('posterVenueAddress');
+            const elCity = document.getElementById('posterVenueCity');
+            const elExtra = document.getElementById('posterExtraNotes');
+
+            if (elT1) {
+                elT1.textContent = t1;
+                elT1.style.fontSize = `${t1Size}px`;
+            }
+            if (elT2) {
+                elT2.textContent = t2;
+                elT2.style.fontSize = `${t2Size}px`;
+                if (isOutline) {
+                    elT2.style.webkitTextStroke = `${strokeW}px ${posterState.textColor}`;
+                    elT2.style.color = 'transparent';
+                } else {
+                    elT2.style.webkitTextStroke = 'none';
+                    elT2.style.color = posterState.textColor;
+                }
+            }
+            if (elDate) elDate.textContent = dateVal;
+            if (elTime) elTime.textContent = timeVal;
+            if (elVenue) elVenue.textContent = venue;
+            if (elAddress) elAddress.textContent = address;
+            if (elCity) elCity.textContent = city;
+
+            if (elExtra) {
+                if (extra.trim()) {
+                    elExtra.textContent = extra;
+                    elExtra.style.display = 'block';
+                } else {
+                    elExtra.style.display = 'none';
+                }
+            }
+        }
+
+        // --- CAMBIO FONT FAMILY ---
+        function updateFontFamily() {
+            const font = document.getElementById('selectFontFamily').value;
+            posterState.fontFamily = font;
+            
+            const titles = [
+                'posterTitle1',
+                'posterTitle2',
+                'posterDate',
+                'posterTime',
+                'posterVenueName',
+                'posterVenueAddress',
+                'posterExtraNotes'
+            ];
+            titles.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.fontFamily = font;
+            });
+        }
+
+        // --- CARICAMENTO FONT TTF/WOFF2 PERSONALIZZATO ---
+        async function handleFontUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const fontBuffer = await file.arrayBuffer();
+                const fontFace = new FontFace('CustomUploadedFont', fontBuffer);
+                await fontFace.load();
+                document.fonts.add(fontFace);
+
+                const select = document.getElementById('selectFontFamily');
+                select.value = "'CustomUploadedFont', sans-serif";
+                updateFontFamily();
+                showToast(`Font "${file.name}" caricato e applicato!`);
+            } catch (err) {
+                alert('Errore nel caricamento del font: ' + err.message);
+            }
+        }
+
+        // --- GESTIONE IMMAGINE E FILTRO BIANCO & NERO ---
+        function updateImageFilter() {
+            const isGray = document.getElementById('checkGrayscale').checked;
+            const contrast = document.getElementById('rangeContrast').value;
+            const brightness = document.getElementById('rangeBrightness').value;
+
+            posterState.imgGrayscale = isGray;
+            posterState.imgContrast = contrast;
+            posterState.imgBrightness = brightness;
+
+            document.getElementById('valContrast').textContent = `${contrast}%`;
+            document.getElementById('valBrightness').textContent = `${brightness}%`;
+
+            const img = document.getElementById('posterSubjectImage');
+            if (img) {
+                const grayPart = isGray ? 'grayscale(100%)' : 'grayscale(0%)';
+                img.style.filter = `${grayPart} contrast(${contrast}%) brightness(${brightness}%)`;
+            }
+        }
+
+        function updateImageTransform() {
+            const scale = document.getElementById('rangeScale').value / 100;
+            const posX = document.getElementById('rangePosX').value;
+            const posY = document.getElementById('rangePosY').value;
+
+            posterState.imgScale = scale;
+            posterState.imgPosX = posX;
+            posterState.imgPosY = posY;
+
+            document.getElementById('valScale').textContent = `${Math.round(scale * 100)}%`;
+
+            const img = document.getElementById('posterSubjectImage');
+            if (img) {
+                const flipX = posterState.imgFlip ? -1 : 1;
+                img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale * flipX}, ${scale})`;
+            }
+        }
+
+        function flipImageHorizontal() {
+            posterState.imgFlip = !posterState.imgFlip;
+            updateImageTransform();
+        }
+
+        function centerImagePosition() {
+            document.getElementById('rangePosX').value = 0;
+            document.getElementById('rangePosY').value = 0;
+            updateImageTransform();
+        }
+
+        // --- PROFONDITÀ LIVELLO (DAVANTI O DIETRO AL TESTO) ---
+        function updateImageDepth() {
+            const depth = document.getElementById('selectImageDepth').value;
+            posterState.imgDepth = depth;
+            const imgLayer = document.getElementById('layerImageContainer');
+            const textMiddle = document.getElementById('layerTextMiddle');
+
+            if (depth === 'front') {
+                // L'immagine si sovrappone a "SPAZIO DOPO" (proprio come il contrabbasso nella locandina originale)
+                imgLayer.style.zIndex = '15';
+                textMiddle.style.zIndex = '10';
+            } else {
+                // Il testo "SPAZIO DOPO" è sopra l'immagine
+                imgLayer.style.zIndex = '8';
+                textMiddle.style.zIndex = '12';
+            }
+        }
+
+        // --- CARICAMENTO NUOVA FOTO ARTISTA ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('posterSubjectImage');
+                img.src = e.target.result;
+                img.onload = () => {
+                    updateImageFilter();
+                    updateImageTransform();
+                    showToast('Nuova foto artista caricata!');
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetToSampleImage() {
+            const img = document.getElementById('posterSubjectImage');
+            img.src = 'assets/sample-musicians.png';
+            posterState.imgFlip = false;
+            document.getElementById('rangeScale').value = 100;
+            document.getElementById('rangePosX').value = 0;
+            document.getElementById('rangePosY').value = 0;
+            updateImageFilter();
+            updateImageTransform();
+            showToast('Foto musicisti predefinita ripristinata.');
+        }
+
+        // --- SCONTORNO AUTOMATICO DELLO SFONDO CON IA ---
+        async function triggerAiBgRemoval() {
+            const img = document.getElementById('posterSubjectImage');
+            if (!img || !img.src) {
+                alert('Nessuna immagine presente da scontornare.');
+                return;
+            }
+
+            const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            const progress = document.getElementById('loadingProgress');
+
+            overlay.style.display = 'flex';
+            text.textContent = "Preparazione rimozione sfondo con IA...";
+            progress.textContent = "Caricamento modello neurale WASM...";
+
+            try {
+                // Carichiamo la libreria @imgly/background-removal dinamicamente
+                if (!window.imglyRemoveBackground) {
+                    await loadScript('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/dist/bundle.js');
+                }
+
+                if (window.imglyRemoveBackground) {
+                    text.textContent = "Scontorno IA in corso...";
+                    progress.textContent = "Isolamento del soggetto...";
+
+                    const blob = await window.imglyRemoveBackground(img.src, {
+                        progress: (key, current, total) => {
+                            if (total > 0) {
+                                const pct = Math.round((current / total) * 100);
+                                progress.textContent = `Progresso: ${pct}%`;
+                            }
+                        }
+                    });
+
+                    const newUrl = URL.createObjectURL(blob);
+                    img.src = newUrl;
+                    img.onload = () => {
+                        overlay.style.display = 'none';
+                        updateImageFilter();
+                        showToast('✨ Sfondo rimosso con successo con IA!');
+                    };
+                    return;
+                }
+            } catch (aiErr) {
+                console.warn('Libreria IA remota non disponibile o bloccata, uso algoritmo canvas di riserva:', aiErr);
+            }
+
+            // FALLBACK INTELLIGENTE CON CANVAS (Threshold / High-Contrast Chroma Cutout)
+            text.textContent = "Scontorno rapido con algoritmo Canvas...";
+            progress.textContent = "Rilevamento bordi e contrasto...";
+
+            setTimeout(() => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || 800;
+                    canvas.height = img.naturalHeight || 800;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const d = imgData.data;
+
+                    // Identifica se il colore degli angoli è tendente al bianco o scuro
+                    const cornerR = (d[0] + d[(canvas.width - 1) * 4] + d[(canvas.height - 1) * canvas.width * 4]) / 3;
+                    const isWhiteBg = cornerR > 180;
+
+                    for (let i = 0; i < d.length; i += 4) {
+                        const r = d[i];
+                        const g = d[i+1];
+                        const b = d[i+2];
+
+                        if (isWhiteBg) {
+                            // Rimuove pixel chiari / bianchi
+                            if (r > 200 && g > 200 && b > 200) {
+                                d[i+3] = 0; // Trasparente
+                            }
+                        } else {
+                            // Rimuove pixel scuri / neri uniformi
+                            if (r < 35 && g < 35 && b < 35) {
+                                d[i+3] = 0;
+                            }
+                        }
+                    }
+
+                    ctx.putImageData(imgData, 0, 0);
+                    img.src = canvas.toDataURL('image/png');
+                    overlay.style.display = 'none';
+                    updateImageFilter();
+                    showToast('Scontorno automatico completato!');
+                } catch (fallbackErr) {
+                    overlay.style.display = 'none';
+                    alert('Impossibile scontornare automaticamente questa immagine. Prova a caricare un file PNG già scontornato.');
+                }
+            }, 500);
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+
+        // --- GESTIONE LOGHI ---
+        function toggleLogos() {
+            const showLeft = document.getElementById('checkShowLogoLeft').checked;
+            const showRight = document.getElementById('checkShowLogoRight').checked;
+
+            document.getElementById('posterLogoLeftContainer').style.display = showLeft ? 'flex' : 'none';
+            document.getElementById('posterLogoRightContainer').style.display = showRight ? 'flex' : 'none';
+        }
+
+        function handleLogoLeftUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('posterLogoLeftImg').src = e.target.result;
+                showToast('Logo partner sinistro aggiornato!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleLogoRightUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('posterLogoRightImg').src = e.target.result;
+                showToast('Logo spazio destro aggiornato!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- FORMATI CANVAS (9:16, A4, 4:5) ---
+        function changeFormat(fmt) {
+            const canvas = document.getElementById('posterCanvas');
+            posterState.format = fmt;
+
+            if (fmt === '9:16') {
+                posterState.width = 1080;
+                posterState.height = 1920;
+            } else if (fmt === 'A4') {
+                posterState.width = 1240;
+                posterState.height = 1754;
+            } else if (fmt === '4:5') {
+                posterState.width = 1080;
+                posterState.height = 1350;
+            }
+            canvas.style.width = `${posterState.width}px`;
+            canvas.style.height = `${posterState.height}px`;
+
+            fitCanvasToScreen();
+            showToast(`Formato impostato su ${fmt}`);
+        }
+
+        // --- ESPORTAZIONE AD ALTA RISOLUZIONE (PNG / JPEG) ---
+        async function exportPoster(formatType) {
+            const canvasEl = document.getElementById('posterCanvas');
+            if (!canvasEl) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            const progress = document.getElementById('loadingProgress');
+
+            overlay.style.display = 'flex';
+            text.textContent = "Rendering grafico ad altissima definizione...";
+            progress.textContent = "Elaborazione in corso con html2canvas...";
+
+            // Salviamo lo zoom attuale e resettiamo temporaneamente la scala a 1 per il render nativo 1080x1920
+            const origTransform = canvasEl.style.transform;
+            canvasEl.style.transform = 'none';
+
+            try {
+                const rendered = await html2canvas(canvasEl, {
+                    scale: 2, // 2x Super-Sampling per definizione cristallina 4K
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: posterState.bgColor,
+                    logging: false
+                });
+
+                // Ripristiniamo la scala responsive
+                canvasEl.style.transform = origTransform;
+                overlay.style.display = 'none';
+
+                const mime = formatType === 'jpeg' ? 'image/jpeg' : 'image/png';
+                const quality = formatType === 'jpeg' ? 0.95 : 1.0;
+                const dataUrl = rendered.toDataURL(mime, quality);
+
+                // Download automatico del file
+                const a = document.createElement('a');
+                const cleanTitle = (document.getElementById('inputTitle1').value || 'Locandina').replace(/\s+/g, '_');
+                const cleanDate = (document.getElementById('inputDate').value || '').replace(/[^\w]/g, '_');
+                a.download = `Locandina_${cleanTitle}_${cleanDate}.${formatType}`;
+                a.href = dataUrl;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                showToast(`Locandina scaricata con successo in ${formatType.toUpperCase()} HD!`);
+            } catch (err) {
+                canvasEl.style.transform = origTransform;
+                overlay.style.display = 'none';
+                alert('Errore durante l\'esportazione: ' + err.message);
+            }
+        }
+
+        // --- COPIA NEGLI APPUNTI ---
+        async function copyImageToClipboard() {
+            const canvasEl = document.getElementById('posterCanvas');
+            const origTransform = canvasEl.style.transform;
+            canvasEl.style.transform = 'none';
+
+            showToast('Generazione immagine per gli appunti...');
+
+            try {
+                const rendered = await html2canvas(canvasEl, {
+                    scale: 1.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: posterState.bgColor
+                });
+                canvasEl.style.transform = origTransform;
+
+                rendered.toBlob(async blob => {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        showToast('Locandina copiata negli appunti! Incollala su WhatsApp o Telegram.');
+                    } catch (clipErr) {
+                        showToast('Download avviato (gli appunti richiedono permessi browser)');
+                        exportPoster('png');
+                    }
+                }, 'image/png');
+            } catch (e) {
+                canvasEl.style.transform = origTransform;
+                exportPoster('png');
+            }
+        }
+
+        // --- RESET AI VALORI ORIGINALI ---
+        function resetDefaults() {
+            document.getElementById('inputTitle1').value = "JAM";
+            document.getElementById('rangeTitle1Size').value = 240;
+            document.getElementById('inputTitle2').value = "SESSION";
+            document.getElementById('rangeTitle2Size').value = 165;
+            document.getElementById('checkTitle2Outline').checked = true;
+            document.getElementById('rangeStrokeWidth').value = 4.5;
+            document.getElementById('inputDate').value = "26.09.26";
+            document.getElementById('inputTime').value = "ORE 21:00";
+            document.getElementById('inputVenueName').value = "SPAZIO DOPO";
+            document.getElementById('inputVenueAddress').value = "VIA PILA 11";
+            document.getElementById('inputVenueCity').value = "Cassano D’Adda (MI)";
+            document.getElementById('inputExtraNotes').value = "";
+            applyPreset('#783c7b', '#c2f82c', '#ffffff');
+            resetToSampleImage();
+            updateTexts();
+            showToast('Tutti i parametri sono stati reimpostati.');
+        }
+
+        // --- DRAG & DROP DELL'IMMAGINE SUL CANVAS ---
+        let isDraggingImg = false;
+        let startX, startY;
+        const subjectImg = document.getElementById('posterSubjectImage');
+
+        if (subjectImg) {
+            const handleDragStart = (clientX, clientY) => {
+                isDraggingImg = true;
+                startX = clientX;
+                startY = clientY;
+            };
+
+            const handleDragMove = (clientX, clientY) => {
+                if (!isDraggingImg) return;
+                const dx = (clientX - startX) * 2;
+                const dy = (clientY - startY) * 2;
+                startX = clientX;
+                startY = clientY;
+
+                const curX = parseInt(document.getElementById('rangePosX').value) + dx;
+                const curY = parseInt(document.getElementById('rangePosY').value) + dy;
+                document.getElementById('rangePosX').value = curX;
+                document.getElementById('rangePosY').value = curY;
+                updateImageTransform();
+            };
+
+            const handleDragEnd = () => {
+                isDraggingImg = false;
+            };
+
+            // Mouse events
+            subjectImg.addEventListener('mousedown', e => {
+                handleDragStart(e.clientX, e.clientY);
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', e => handleDragMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleDragEnd);
+
+            // Touch events
+            subjectImg.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) {
+                    handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+            window.addEventListener('touchmove', e => {
+                if (isDraggingImg && e.touches.length === 1) {
+                    handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+            window.addEventListener('touchend', handleDragEnd);
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toastMsg');
+            const text = document.getElementById('toastText');
+            if (!toast || !text) return;
+
+            text.textContent = message;
+            toast.style.display = 'flex';
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Setup iniziale
+        updateColors();
+        updateTexts();
+        updateImageFilter();
+        updateImageTransform();
+        updateImageDepth();
+    </script>
+</body>
+</html>
