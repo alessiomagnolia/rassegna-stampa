@@ -5602,3 +5602,752 @@ async function teamDissolve() {
 }
 window.teamDissolve = teamDissolve;
 
+// ==========================================================================
+// --- MODULO REPORT PERIODICI & COVERAGE BOOK ---
+// ==========================================================================
+
+let rawReportsList = [];
+let currentReportDraft = null;
+
+async function loadReportsPage() {
+    const container = document.getElementById('reportsListContainer');
+    if (!container) return;
+
+    try {
+        const reports = await apiCall('GET', '/api/reports');
+        if (Array.isArray(reports)) {
+            rawReportsList = reports;
+            renderReportsList(reports);
+        }
+    } catch (err) {
+        console.error('Error loading reports:', err);
+        container.innerHTML = `
+            <div class="empty-state" style="text-align:center; padding:3rem 1.5rem;">
+                <p style="color:var(--danger, #ef4444); margin-bottom:12px;">Impossibile caricare i report: ${escapeHtml(err.message)}</p>
+                <button class="btn btn-outline btn-sm" onclick="loadReportsPage()">Riprova</button>
+            </div>
+        `;
+    }
+}
+window.loadReportsPage = loadReportsPage;
+
+function renderReportsList(reports) {
+    const container = document.getElementById('reportsListContainer');
+    if (!container) return;
+
+    if (!reports || reports.length === 0) {
+        container.innerHTML = `
+            <div class="glass-card" style="text-align:center; padding:4rem 2rem; border-radius:14px; max-width:680px; margin:2rem auto;">
+                <div style="width:64px; height:64px; border-radius:50%; background:rgba(124,92,255,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+                    <i data-feather="pie-chart" style="width:32px; height:32px; color:var(--accent-primary);"></i>
+                </div>
+                <h3 style="font-size:1.3rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem;">Nessun Report Periodico Creato</h3>
+                <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
+                    I report servono per inviare al cliente il resoconto complessivo delle attività svolte (es. mensile, trimestrale o annuale) aggregando tutti i lanci, le uscite e le metriche Audience &amp; Letture stimate.
+                </p>
+                <button class="btn btn-gradient" onclick="openCreateReportModal()" style="padding:0.75rem 1.5rem;">
+                    <i data-feather="plus-circle" style="width:16px;height:16px;margin-right:6px;"></i> Crea il tuo primo Report
+                </button>
+            </div>
+        `;
+        if (window.feather) feather.replace();
+        return;
+    }
+
+    let cardsHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;">`;
+
+    reports.forEach(r => {
+        const kpis = r.summaryKPIs || {};
+        const launchesCount = kpis.total_launches || 0;
+        const pickupsCount = kpis.total_pickups || 0;
+        const audienceOTS = kpis.formatted_audience_ots || 'N/D';
+        const reads = kpis.formatted_estimated_reads || 'N/D';
+        const dateCreated = new Date(r.created_at).toLocaleDateString('it-IT');
+
+        cardsHtml += `
+            <div class="glass-card" style="border-radius:14px; padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; border:1px solid var(--border-color); background:var(--bg-card);">
+                <div>
+                    <!-- Header card: Client & Period -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem; gap:8px;">
+                        <div>
+                            <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); background:rgba(124,92,255,0.12); padding:2px 8px; border-radius:6px;">
+                                ${escapeHtml(r.client_name)}
+                            </span>
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-primary); margin-top:6px; line-height:1.3;">
+                                ${escapeHtml(r.title)}
+                            </h3>
+                        </div>
+                        ${r.client_logo ? `<img src="${r.client_logo}" alt="Logo" style="max-height:28px; max-width:80px; object-fit:contain;">` : ''}
+                    </div>
+
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                        <i data-feather="calendar" style="width:13px;height:13px;"></i>
+                        <span>${escapeHtml(r.period_label || 'Periodo')}</span>
+                        <span>&bull;</span>
+                        <span>Creata il ${dateCreated}</span>
+                    </div>
+
+                    <!-- Mini KPI row -->
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center; margin-bottom:1.25rem;">
+                        <div>
+                            <div style="font-size:1rem; font-weight:800; color:var(--accent-primary);">${launchesCount}</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Lanci</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1rem; font-weight:800; color:#ffffff;">${pickupsCount}</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Uscite</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1rem; font-weight:800; color:#ffffff;">${audienceOTS}</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">OTS</div>
+                        </div>
+                        <div>
+                            <div style="font-size:1rem; font-weight:800; color:#38bdf8;">${reads}</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Letture</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display:flex; gap:6px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-outline btn-sm" onclick="openReportEmailModal(${r.id})" title="Copia Testo per Email">
+                            <i data-feather="mail" style="width:13px;height:13px;"></i> Email
+                        </button>
+                        <a href="/report/${r.share_token}" target="_blank" class="btn btn-outline btn-sm" title="Apri Portale Web Permanente">
+                            <i data-feather="external-link" style="width:13px;height:13px;"></i> Portale
+                        </a>
+                        <button class="btn btn-outline btn-sm" onclick="downloadSingleReportPdf(${r.id})" title="Scarica PDF Esecutivo">
+                            <i data-feather="download" style="width:13px;height:13px;"></i> PDF
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-outline btn-sm" onclick="openEditReportModal(${r.id})" title="Modifica Report">
+                            <i data-feather="edit-2" style="width:13px;height:13px;"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteReportItem(${r.id})" title="Elimina Report">
+                            <i data-feather="trash-2" style="width:13px;height:13px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    cardsHtml += `</div>`;
+    container.innerHTML = cardsHtml;
+    if (window.feather) feather.replace();
+}
+
+async function populateReportClientsDropdown(selectedClientName = '') {
+    const select = document.getElementById('reportClientSelect');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Seleziona Cliente --</option>';
+
+    const clientNamesSet = new Set();
+
+    try {
+        const clients = await apiCall('GET', '/api/clients');
+        if (Array.isArray(clients)) {
+            clients.forEach(c => {
+                if (c.name && c.name.trim()) clientNamesSet.add(c.name.trim());
+            });
+        }
+    } catch(e) {}
+
+    if (Array.isArray(rawHistoryItems)) {
+        rawHistoryItems.forEach(it => {
+            if (it.client_name && it.client_name.trim()) {
+                clientNamesSet.add(it.client_name.trim());
+            }
+        });
+    }
+
+    const sortedNames = Array.from(clientNamesSet).sort((a, b) => a.localeCompare(b, 'it'));
+    sortedNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (selectedClientName && name.toLowerCase() === selectedClientName.toLowerCase()) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+}
+
+function openCreateReportModal() {
+    const modal = document.getElementById('reportModal');
+    const form = document.getElementById('reportForm');
+    if (!modal || !form) return;
+
+    form.reset();
+    document.getElementById('reportEditId').value = '';
+    document.getElementById('reportModalTitle').textContent = 'Nuovo Report Periodico Media Relations';
+    document.getElementById('reportKpiBanner').style.display = 'none';
+    document.getElementById('reportLaunchesTbody').innerHTML = `
+        <tr>
+            <td colspan="5" style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+                Seleziona un cliente e clicca su "Aggrega Dati dal Database" per compilare i lanci.
+            </td>
+        </tr>
+    `;
+
+    populateReportClientsDropdown();
+
+    onReportPeriodPresetChange('this_month');
+    switchReportDeliveryTab('email');
+
+    currentReportDraft = {
+        summaryKPIs: {},
+        launches: [],
+        topMedia: []
+    };
+
+    modal.classList.remove('hidden');
+    if (window.feather) feather.replace();
+}
+window.openCreateReportModal = openCreateReportModal;
+
+function closeReportModal() {
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.classList.add('hidden');
+}
+window.closeReportModal = closeReportModal;
+
+function onReportClientSelected() {
+    const clientSelect = document.getElementById('reportClientSelect');
+    const labelInput = document.getElementById('reportPeriodLabel');
+    if (!clientSelect || !labelInput) return;
+
+    const cName = clientSelect.value;
+    if (cName && !labelInput.value) {
+        labelInput.value = `Resoconto Media Relations ${cName}`;
+    }
+}
+window.onReportClientSelected = onReportClientSelected;
+
+function onReportPeriodPresetChange(preset) {
+    const inputStart = document.getElementById('reportPeriodStart');
+    const inputEnd   = document.getElementById('reportPeriodEnd');
+    const inputLabel = document.getElementById('reportPeriodLabel');
+    if (!inputStart || !inputEnd) return;
+
+    const now = new Date();
+    const todayStr = toYYYYMMDD(now);
+
+    let startStr = '';
+    let endStr   = todayStr;
+    let labelStr = '';
+
+    const ITALIAN_MONTHS_NAMES = [
+        'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+    ];
+
+    if (preset === 'this_month') {
+        startStr = toYYYYMMDD(new Date(now.getFullYear(), now.getMonth(), 1));
+        endStr = todayStr;
+        labelStr = `Mese di ${ITALIAN_MONTHS_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+    } else if (preset === 'last_month') {
+        const lastM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        startStr = toYYYYMMDD(lastM);
+        endStr = toYYYYMMDD(new Date(now.getFullYear(), now.getMonth(), 0));
+        labelStr = `Mese di ${ITALIAN_MONTHS_NAMES[lastM.getMonth()]} ${lastM.getFullYear()}`;
+    } else if (preset === 'last_quarter') {
+        const d90 = new Date();
+        d90.setDate(d90.getDate() - 90);
+        startStr = toYYYYMMDD(d90);
+        endStr = todayStr;
+        labelStr = `Ultimo Trimestre ${now.getFullYear()}`;
+    } else if (preset === 'last_semester') {
+        const d180 = new Date();
+        d180.setDate(d180.getDate() - 180);
+        startStr = toYYYYMMDD(d180);
+        endStr = todayStr;
+        labelStr = `Semestre ${now.getFullYear()}`;
+    } else if (preset === 'year_to_date') {
+        startStr = `${now.getFullYear()}-01-01`;
+        endStr = todayStr;
+        labelStr = `Anno ${now.getFullYear()}`;
+    } else if (preset === 'dekra_demo') {
+        startStr = '2025-01-01';
+        endStr = '2025-07-31';
+        labelStr = 'Gennaio – Luglio 2025';
+    }
+
+    if (startStr) inputStart.value = startStr;
+    if (endStr) inputEnd.value = endStr;
+    if (labelStr && inputLabel && !inputLabel.value) {
+        inputLabel.value = labelStr;
+    } else if (labelStr && inputLabel && (inputLabel.value.startsWith('Mese') || inputLabel.value.startsWith('Semestre') || inputLabel.value.startsWith('Gennaio'))) {
+        inputLabel.value = labelStr;
+    }
+}
+window.onReportPeriodPresetChange = onReportPeriodPresetChange;
+
+async function runReportAggregation() {
+    const clientSelect = document.getElementById('reportClientSelect');
+    const inputStart   = document.getElementById('reportPeriodStart');
+    const inputEnd     = document.getElementById('reportPeriodEnd');
+    const inputLabel   = document.getElementById('reportPeriodLabel');
+    const btnTrigger   = document.getElementById('btnTriggerAggregation');
+
+    const clientName = clientSelect ? clientSelect.value.trim() : '';
+    if (!clientName) {
+        showToast('Seleziona prima un cliente.', 'warning');
+        return;
+    }
+
+    const periodStart = inputStart ? inputStart.value : '';
+    const periodEnd   = inputEnd ? inputEnd.value : '';
+    const periodLabel = inputLabel ? inputLabel.value.trim() : '';
+
+    if (btnTrigger) {
+        btnTrigger.disabled = true;
+        btnTrigger.innerHTML = '<i data-feather="loader" class="spin"></i> Aggregazione in corso...';
+    }
+
+    try {
+        const res = await apiCall('POST', '/api/reports/aggregate', {
+            clientName,
+            periodStart,
+            periodEnd,
+            periodLabel
+        });
+
+        currentReportDraft = res;
+
+        // Visualizza Banner KPI
+        const kpis = res.summaryKPIs || {};
+        document.getElementById('reportAggLaunches').textContent = kpis.total_launches || res.launchesCount || 0;
+        document.getElementById('reportAggPickups').textContent = kpis.total_pickups || res.totalPickups || 0;
+        document.getElementById('reportAggAudience').textContent = kpis.formatted_audience_ots || 'N/D';
+        document.getElementById('reportAggReads').textContent = kpis.formatted_estimated_reads || 'N/D';
+        document.getElementById('reportAggSentiment').textContent = kpis.overall_sentiment || 'Positivo';
+        document.getElementById('reportKpiBanner').style.display = 'block';
+
+        // Precompila campi se vuoti
+        const salutationInput = document.getElementById('reportRecipientSalutation');
+        if (salutationInput && !salutationInput.value) {
+            salutationInput.value = 'Caro Presidente, Caro Toni,';
+        }
+
+        const titleInput = document.getElementById('reportRecipientTitle');
+        if (titleInput && !titleInput.value) {
+            titleInput.value = `Presidente di ${clientName}`;
+        }
+
+        const topMediaInput = document.getElementById('reportTopMediaText');
+        if (topMediaInput && res.topMedia && res.topMedia.length > 0) {
+            topMediaInput.value = res.topMedia.join(', ');
+        }
+
+        const senderInput = document.getElementById('reportSenderSignature');
+        if (senderInput && !senderInput.value) {
+            senderInput.value = 'Attilio';
+        }
+
+        // Render tabella lanci
+        renderReportLaunchesTable(res.launches);
+
+        // Aggiorna anteprima email
+        updateReportEmailPreviewText();
+
+        showToast(`Aggregati con successo ${res.launchesCount} lanci per ${res.totalPickups} uscite totali!`, 'success');
+
+    } catch (err) {
+        console.error('Aggregation error:', err);
+        showToast('Errore durante l\'aggregazione: ' + err.message, 'error');
+    } finally {
+        if (btnTrigger) {
+            btnTrigger.disabled = false;
+            btnTrigger.innerHTML = '<i data-feather="zap" style="width:16px;height:16px;"></i> Aggrega Dati dal Database';
+            if (window.feather) feather.replace();
+        }
+    }
+}
+window.runReportAggregation = runReportAggregation;
+
+function renderReportLaunchesTable(launches) {
+    const tbody = document.getElementById('reportLaunchesTbody');
+    if (!tbody) return;
+
+    if (!launches || launches.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+                    Nessuna rassegna trovata per questo cliente nel periodo selezionato. Puoi aggiungere lanci manualmente con il pulsante in alto.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = launches.map((l, idx) => `
+        <tr data-index="${idx}" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:6px 10px; text-align:center;">
+                <input type="checkbox" class="history-checkbox launch-include-chk" ${l.included !== false ? 'checked' : ''} onchange="onLaunchIncludeChange(${idx}, this.checked)">
+            </td>
+            <td style="padding:6px 10px;">
+                <input type="text" class="launch-date-input" value="${escapeHtml(l.date || '')}" oninput="onLaunchFieldChange(${idx}, 'date', this.value)"
+                    style="width:100%; padding:3px 6px; font-size:0.75rem; border-radius:4px; border:1px solid var(--border-color); background:transparent; color:var(--text-primary);">
+            </td>
+            <td style="padding:6px 10px;">
+                <input type="text" class="launch-title-input" value="${escapeHtml(l.title || '')}" oninput="onLaunchFieldChange(${idx}, 'title', this.value)"
+                    style="width:100%; padding:3px 6px; font-size:0.8rem; font-weight:600; border-radius:4px; border:1px solid var(--border-color); background:transparent; color:var(--text-primary);">
+            </td>
+            <td style="padding:6px 10px; text-align:right;">
+                <input type="number" class="launch-pickups-input" value="${l.pickups || 0}" min="0" oninput="onLaunchFieldChange(${idx}, 'pickups', parseInt(this.value) || 0)"
+                    style="width:65px; padding:3px 6px; font-size:0.8rem; font-weight:700; text-align:right; border-radius:4px; border:1px solid var(--border-color); background:transparent; color:var(--accent-primary);">
+            </td>
+            <td style="padding:6px 10px; text-align:center;">
+                <button type="button" class="btn-icon btn-sm" onclick="removeManualLaunchRow(${idx})" title="Rimuovi lancio" style="color:var(--text-muted);">
+                    <i data-feather="x" style="width:13px;height:13px;"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    if (window.feather) feather.replace();
+}
+
+function onLaunchIncludeChange(idx, checked) {
+    if (currentReportDraft && currentReportDraft.launches && currentReportDraft.launches[idx]) {
+        currentReportDraft.launches[idx].included = checked;
+        updateReportEmailPreviewText();
+    }
+}
+window.onLaunchIncludeChange = onLaunchIncludeChange;
+
+function onLaunchFieldChange(idx, field, val) {
+    if (currentReportDraft && currentReportDraft.launches && currentReportDraft.launches[idx]) {
+        currentReportDraft.launches[idx][field] = val;
+        updateReportEmailPreviewText();
+    }
+}
+window.onLaunchFieldChange = onLaunchFieldChange;
+
+function addNewManualLaunchRow() {
+    if (!currentReportDraft) {
+        currentReportDraft = { launches: [] };
+    }
+    if (!currentReportDraft.launches) currentReportDraft.launches = [];
+
+    const today = new Date();
+    const dateFormatted = today.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.');
+
+    currentReportDraft.launches.push({
+        date: dateFormatted,
+        title: 'Nuovo Comunicato Stampa',
+        pickups: 10,
+        included: true
+    });
+
+    renderReportLaunchesTable(currentReportDraft.launches);
+    updateReportEmailPreviewText();
+}
+window.addNewManualLaunchRow = addNewManualLaunchRow;
+
+function removeManualLaunchRow(idx) {
+    if (currentReportDraft && currentReportDraft.launches) {
+        currentReportDraft.launches.splice(idx, 1);
+        renderReportLaunchesTable(currentReportDraft.launches);
+        updateReportEmailPreviewText();
+    }
+}
+window.removeManualLaunchRow = removeManualLaunchRow;
+
+function updateReportEmailPreviewText() {
+    const textarea = document.getElementById('reportGeneratedEmailText');
+    if (!textarea) return;
+
+    const clientSelect = document.getElementById('reportClientSelect');
+    const clientName = clientSelect ? clientSelect.value.trim() : 'Cliente';
+    const periodLabel = (document.getElementById('reportPeriodLabel')?.value || 'Periodo').trim();
+    const salutation = (document.getElementById('reportRecipientSalutation')?.value || 'Caro Presidente,').trim();
+    const recipientTitle = (document.getElementById('reportRecipientTitle')?.value || '').trim();
+    const eventsText = (document.getElementById('reportEventsSupported')?.value || '').trim();
+    const topMedia = (document.getElementById('reportTopMediaText')?.value || '').trim();
+    const signature = (document.getElementById('reportSenderSignature')?.value || 'Attilio').trim();
+
+    const launches = (currentReportDraft?.launches || []).filter(l => l.included !== false);
+    const totalPickups = launches.reduce((acc, l) => acc + (l.pickups || 0), 0);
+
+    let eventsSection = '';
+    if (eventsText) {
+        const eventsLines = eventsText.split('\n').filter(l => l.trim().length > 0);
+        eventsSection = "Tra le attività svolte dall'ufficio stampa, segnaliamo il supporto per i seguenti eventi a cui ha partecipato " + clientName + ":\n" +
+            eventsLines.map(e => `- ${e.replace(/^[-•*]\s*/, '').trim()};`).join('\n') + "\n\n";
+    }
+
+    let topMediaSection = '';
+    if (topMedia) {
+        topMediaSection = `Tra le uscite più significative segnaliamo: ${topMedia}.\n\n`;
+    }
+
+    const shareUrl = document.getElementById('reportShareUrlDisplay')?.value || '[LINK_PORTALE_PERMANENTE]';
+    const launchesDetails = launches.map(l => `${l.date} - ${l.title} – ${l.pickups || 0} uscite`).join('\n');
+
+    const emailText = `${salutation}
+con la presente Vi inviamo il Report Media relations e Press office${recipientTitle ? ' per ' + recipientTitle : ''}, relativo ai mesi di ${periodLabel}, con ${launches.length} lanci di comunicati stampa e dichiarazioni per un totale di ${totalPickups} pubblicazioni.
+
+${eventsSection}${topMediaSection}Nel seguente link permanente è possibile trovare il report completo e accedere a tutti i singoli lanci e rassegne PDF:
+${shareUrl}
+
+Inviamo, di seguito, il dettaglio dei lanci effettuati.
+Ringraziando per l’attenzione, restiamo a disposizione.
+Un caro saluto,
+${signature}
+
+REPORT ${clientName.toUpperCase()} ${periodLabel.toUpperCase()}
+${launches.length} LANCI PER ${totalPickups} USCITE
+${launchesDetails}`;
+
+    textarea.value = emailText;
+}
+
+function copyReportEmailText() {
+    const textarea = document.getElementById('reportGeneratedEmailText');
+    if (!textarea || !textarea.value) {
+        showToast('Nessun testo generato da copiare.', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        showToast('Testo email esecutiva copiato negli appunti!', 'success');
+    }).catch(() => {
+        textarea.select();
+        document.execCommand('copy');
+        showToast('Testo email esecutiva copiato negli appunti!', 'success');
+    });
+}
+window.copyReportEmailText = copyReportEmailText;
+
+function switchReportDeliveryTab(tabName) {
+    const tabs = ['email', 'portal', 'pdf'];
+    tabs.forEach(t => {
+        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        const content = document.getElementById('tabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.toggle('active', t === tabName);
+        if (content) content.style.display = (t === tabName) ? 'block' : 'none';
+    });
+}
+window.switchReportDeliveryTab = switchReportDeliveryTab;
+
+async function saveReportForm(event) {
+    if (event) event.preventDefault();
+
+    const clientSelect = document.getElementById('reportClientSelect');
+    const clientName = clientSelect ? clientSelect.value.trim() : '';
+    if (!clientName) {
+        showToast('Seleziona un cliente valido.', 'warning');
+        return;
+    }
+
+    const editId = document.getElementById('reportEditId')?.value || null;
+    const periodStart = document.getElementById('reportPeriodStart')?.value || '';
+    const periodEnd = document.getElementById('reportPeriodEnd')?.value || '';
+    const periodLabel = (document.getElementById('reportPeriodLabel')?.value || '').trim();
+    const recipientSalutation = (document.getElementById('reportRecipientSalutation')?.value || '').trim();
+    const recipientTitle = (document.getElementById('reportRecipientTitle')?.value || '').trim();
+    const eventsText = (document.getElementById('reportEventsSupported')?.value || '').trim();
+    const topMediaText = (document.getElementById('reportTopMediaText')?.value || '').trim();
+    const executiveNotes = (document.getElementById('reportExecutiveNotes')?.value || '').trim();
+    const senderSignature = (document.getElementById('reportSenderSignature')?.value || '').trim();
+
+    const eventsSupported = eventsText ? eventsText.split('\n').map(e => e.trim()).filter(Boolean) : [];
+    const topMedia = topMediaText ? topMediaText.split(',').map(m => m.trim()).filter(Boolean) : [];
+
+    const launches = (currentReportDraft?.launches || []).filter(l => l.included !== false);
+    const summaryKPIs = currentReportDraft?.summaryKPIs || {};
+    summaryKPIs.total_launches = launches.length;
+    summaryKPIs.total_pickups = launches.reduce((acc, l) => acc + (l.pickups || 0), 0);
+
+    const payload = {
+        id: editId ? parseInt(editId) : undefined,
+        clientName,
+        clientLogo: currentReportDraft?.clientLogo || '',
+        title: `Report Media Relations ${clientName} - ${periodLabel}`,
+        periodStart,
+        periodEnd,
+        periodLabel,
+        recipientSalutation,
+        recipientTitle,
+        eventsSupported,
+        executiveNotes,
+        senderSignature,
+        summaryKPIs,
+        launches,
+        topMedia
+    };
+
+    try {
+        const res = await apiCall('POST', '/api/reports/save', payload);
+        showToast('Report salvato con successo!', 'success');
+
+        if (res.id) {
+            document.getElementById('reportEditId').value = res.id;
+        }
+
+        const origin = window.location.origin;
+        const fullShareUrl = `${origin}${res.shareUrl}`;
+        const shareDisplay = document.getElementById('reportShareUrlDisplay');
+        if (shareDisplay) {
+            shareDisplay.value = fullShareUrl;
+        }
+        const openBtn = document.getElementById('btnOpenPortalLive');
+        if (openBtn) {
+            openBtn.style.display = 'inline-flex';
+            openBtn.dataset.url = fullShareUrl;
+        }
+
+        updateReportEmailPreviewText();
+        loadReportsPage();
+
+    } catch (err) {
+        console.error('Save report error:', err);
+        showToast('Errore nel salvataggio del report: ' + err.message, 'error');
+    }
+}
+window.saveReportForm = saveReportForm;
+
+function copyReportShareUrl() {
+    const input = document.getElementById('reportShareUrlDisplay');
+    if (!input || !input.value) {
+        showToast('Salva prima il report per generare il link.', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('Link permanente copiato negli appunti!', 'success');
+    });
+}
+window.copyReportShareUrl = copyReportShareUrl;
+
+function openReportShareUrl() {
+    const input = document.getElementById('reportShareUrlDisplay');
+    if (input && input.value) {
+        window.open(input.value, '_blank');
+    }
+}
+window.openReportShareUrl = openReportShareUrl;
+
+async function generateAndDownloadReportPdf() {
+    const editId = document.getElementById('reportEditId')?.value;
+    if (!editId) {
+        showToast('Salva prima il report per generare il PDF.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnDownloadReportPdfAction');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spin"></i> Generazione PDF A4 in corso...';
+    }
+
+    try {
+        const res = await apiCall('POST', `/api/reports/${editId}/pdf`);
+        triggerDownload(res.downloadUrl, res.filename);
+        showToast('PDF Esecutivo generato e scaricato con successo!', 'success');
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        showToast('Errore durante la generazione del PDF: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="download" style="width:15px;height:15px;"></i> Genera e Scarica PDF Esecutivo';
+            if (window.feather) feather.replace();
+        }
+    }
+}
+window.generateAndDownloadReportPdf = generateAndDownloadReportPdf;
+
+async function openEditReportModal(reportId) {
+    try {
+        const report = await apiCall('GET', `/api/reports/${reportId}`);
+        const modal = document.getElementById('reportModal');
+        const form = document.getElementById('reportForm');
+        if (!modal || !form) return;
+
+        form.reset();
+        document.getElementById('reportEditId').value = report.id;
+        document.getElementById('reportModalTitle').textContent = `Modifica: ${report.title}`;
+
+        await populateReportClientsDropdown(report.client_name);
+
+        document.getElementById('reportPeriodStart').value = report.period_start || '';
+        document.getElementById('reportPeriodEnd').value = report.period_end || '';
+        document.getElementById('reportPeriodLabel').value = report.period_label || '';
+        document.getElementById('reportRecipientSalutation').value = report.recipient_salutation || '';
+        document.getElementById('reportRecipientTitle').value = report.recipient_title || '';
+        document.getElementById('reportEventsSupported').value = (report.eventsSupported || []).join('\n');
+        document.getElementById('reportTopMediaText').value = (report.topMedia || []).join(', ');
+        document.getElementById('reportExecutiveNotes').value = report.executive_notes || '';
+        document.getElementById('reportSenderSignature').value = report.sender_signature || '';
+
+        const origin = window.location.origin;
+        const fullShareUrl = `${origin}${report.shareUrl}`;
+        const shareDisplay = document.getElementById('reportShareUrlDisplay');
+        if (shareDisplay) shareDisplay.value = fullShareUrl;
+        const openBtn = document.getElementById('btnOpenPortalLive');
+        if (openBtn) {
+            openBtn.style.display = 'inline-flex';
+            openBtn.dataset.url = fullShareUrl;
+        }
+
+        currentReportDraft = {
+            summaryKPIs: report.summaryKPIs || {},
+            launches: report.launches || [],
+            topMedia: report.topMedia || [],
+            clientLogo: report.client_logo || ''
+        };
+
+        const kpis = report.summaryKPIs || {};
+        document.getElementById('reportAggLaunches').textContent = kpis.total_launches || (report.launches ? report.launches.length : 0);
+        document.getElementById('reportAggPickups').textContent = kpis.total_pickups || 0;
+        document.getElementById('reportAggAudience').textContent = kpis.formatted_audience_ots || 'N/D';
+        document.getElementById('reportAggReads').textContent = kpis.formatted_estimated_reads || 'N/D';
+        document.getElementById('reportAggSentiment').textContent = kpis.overall_sentiment || 'Positivo';
+        document.getElementById('reportKpiBanner').style.display = 'block';
+
+        renderReportLaunchesTable(report.launches);
+        updateReportEmailPreviewText();
+
+        modal.classList.remove('hidden');
+        if (window.feather) feather.replace();
+
+    } catch (err) {
+        showToast('Errore nel caricamento del report: ' + err.message, 'error');
+    }
+}
+window.openEditReportModal = openEditReportModal;
+
+async function openReportEmailModal(reportId) {
+    await openEditReportModal(reportId);
+    switchReportDeliveryTab('email');
+}
+window.openReportEmailModal = openReportEmailModal;
+
+async function downloadSingleReportPdf(reportId) {
+    showToast('Generazione PDF in corso...', 'info');
+    try {
+        const res = await apiCall('POST', `/api/reports/${reportId}/pdf`);
+        triggerDownload(res.downloadUrl, res.filename);
+        showToast('PDF scaricato con successo!', 'success');
+    } catch (err) {
+        showToast('Errore nel download del PDF: ' + err.message, 'error');
+    }
+}
+window.downloadSingleReportPdf = downloadSingleReportPdf;
+
+async function deleteReportItem(reportId) {
+    if (!confirm('Sei sicuro di voler eliminare questo report?')) return;
+    try {
+        await apiCall('DELETE', `/api/reports/${reportId}`);
+        showToast('Report eliminato con successo.', 'success');
+        loadReportsPage();
+    } catch (err) {
+        showToast('Errore durante l\'eliminazione: ' + err.message, 'error');
+    }
+}
+window.deleteReportItem = deleteReportItem;
+

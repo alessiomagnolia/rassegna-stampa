@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260916_03">
+    <link rel="stylesheet" href="styles.css?v=20260916_04">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -176,6 +176,10 @@
                 <a href="#" class="sidebar-item" data-page="media-crm">
                     <span class="sidebar-icon"><i data-feather="users"></i></span>
                     <span class="sidebar-label">Rubrica Media & PR</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="reports">
+                    <span class="sidebar-icon"><i data-feather="pie-chart"></i></span>
+                    <span class="sidebar-label">Report Periodici</span>
                 </a>
 
                 <div class="sidebar-divider"></div>
@@ -1402,6 +1406,268 @@
             </div>
         </div>
 
+        <!-- PAGE: REPORT PERIODICI (COVERAGE BOOK) -->
+        <div id="page-reports" class="page-view">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="pie-chart" style="width:28px;height:28px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> Report Periodici &amp; Coverage</h1>
+                    <p class="page-subtitle">Crea resoconti esecutivi (mensili, trimestrali, semestrali) per i tuoi clienti con email pronta all'uso, PDF di alto profilo e link web permanente.</p>
+                </div>
+                <div>
+                    <button class="btn btn-gradient" onclick="openCreateReportModal()" style="display:inline-flex; align-items:center; gap:6px;">
+                        <i data-feather="plus-circle" style="width:16px;height:16px;"></i> + Nuovo Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Griglia dei Report Esistenti -->
+            <div id="reportsListContainer">
+                <div class="empty-state" style="text-align:center; padding:3rem 1.5rem;">
+                    <i data-feather="pie-chart" style="width:48px;height:48px;color:var(--text-muted);margin-bottom:1rem;"></i>
+                    <p style="color:var(--text-muted); margin-bottom:1rem;">Caricamento dei report in corso...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL / WIZARD: CREA O MODIFICA REPORT -->
+        <div id="reportModal" class="modal-overlay hidden">
+            <div class="modal-content glass-card" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div>
+                        <h2 id="reportModalTitle" style="font-size:1.3rem; font-weight:800; color:var(--text-primary); margin:0;">Nuovo Report Periodico Media Relations</h2>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Seleziona il cliente e il periodo per aggregare all'istante tutti i dati dello storico.</p>
+                    </div>
+                    <button type="button" class="btn-icon" onclick="closeReportModal()"><i data-feather="x"></i></button>
+                </div>
+
+                <form id="reportForm" onsubmit="saveReportForm(event)">
+                    <input type="hidden" id="reportEditId" value="">
+
+                    <!-- PASSO 1: SELEZIONE CLIENTE & PERIODO -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <div style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                            <i data-feather="layers" style="width:16px;height:16px;"></i> 1. Selezione Cliente &amp; Periodo
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:1rem; align-items:end;">
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Cliente *</label>
+                                <select id="reportClientSelect" onchange="onReportClientSelected()" required
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                                    <option value="">-- Seleziona Cliente --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Periodo Rapido</label>
+                                <select id="reportPeriodPreset" onchange="onReportPeriodPresetChange(this.value)"
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                                    <option value="custom">Personalizzato (Date Libere)</option>
+                                    <option value="this_month">Questo Mese</option>
+                                    <option value="last_month">Mese Scorso</option>
+                                    <option value="last_quarter">Ultimo Trimestre (3 mesi)</option>
+                                    <option value="last_semester">Ultimo Semestre (6 mesi)</option>
+                                    <option value="year_to_date">Anno in Corso</option>
+                                    <option value="dekra_demo">Gennaio – Luglio 2025 (Preset)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Dal Giorno</label>
+                                <input type="date" id="reportPeriodStart"
+                                    style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Al Giorno</label>
+                                <input type="date" id="reportPeriodEnd"
+                                    style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; flex-wrap:wrap; gap:1rem;">
+                            <div style="flex:1; min-width:220px;">
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Etichetta Periodo (es. per il titolo e l'email) *</label>
+                                <input type="text" id="reportPeriodLabel" placeholder="Es. Gennaio – Luglio 2025" required
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                            <button type="button" class="btn btn-gradient" id="btnTriggerAggregation" onclick="runReportAggregation()" style="height:42px; padding:0 1.25rem; font-size:0.85rem; font-weight:700; display:inline-flex; align-items:center; gap:8px;">
+                                <i data-feather="zap" style="width:16px;height:16px;"></i> Aggrega Dati dal Database
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- BANNER RISULTATI AGGREGAZIONE (KPI) -->
+                    <div id="reportKpiBanner" style="display:none; margin-bottom:1.5rem;">
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.75rem;">
+                            <div style="background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.3); border-radius:10px; padding:0.9rem; text-align:center;">
+                                <div id="reportAggLaunches" style="font-size:1.5rem; font-weight:800; color:var(--accent-primary);">0</div>
+                                <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Lanci Trovati</div>
+                            </div>
+                            <div style="background:rgba(124,92,255,0.08); border:1px solid rgba(124,92,255,0.3); border-radius:10px; padding:0.9rem; text-align:center;">
+                                <div id="reportAggPickups" style="font-size:1.5rem; font-weight:800; color:#ffffff;">0</div>
+                                <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Pubblicazioni Totali</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:10px; padding:0.9rem; text-align:center;">
+                                <div id="reportAggAudience" style="font-size:1.5rem; font-weight:800; color:#ffffff;">0</div>
+                                <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Audience Netta (OTS)</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:10px; padding:0.9rem; text-align:center;">
+                                <div id="reportAggReads" style="font-size:1.5rem; font-weight:800; color:#38bdf8;">0</div>
+                                <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Letture Stimate</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:10px; padding:0.9rem; text-align:center;">
+                                <div id="reportAggSentiment" style="font-size:1rem; font-weight:800; color:#10b981; padding-top:4px;">Positivo</div>
+                                <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Sentiment</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 2: PERSONALIZZAZIONE ESECUTIVA -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <div style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                            <i data-feather="edit-3" style="width:16px;height:16px;"></i> 2. Personalizzazione Esecutiva (Destinatario &amp; Contesto)
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Saluto Destinatario (es. per l'incipit dell'email)</label>
+                                <input type="text" id="reportRecipientSalutation" placeholder="Es. Caro Presidente, Caro Toni,"
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Ruolo / Formula Istituzionale</label>
+                                <input type="text" id="reportRecipientTitle" placeholder="Es. Presidente di DEKRA Italia, Toni Purcaro"
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:1rem;">
+                            <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Attività ed Eventi Speciali Supportati dall'Ufficio Stampa (uno per riga)</label>
+                            <textarea id="reportEventsSupported" rows="3" placeholder="Es:&#10;#FORUMAutoMotive 2025&#10;Progetto “Safe Secure Sustainable” a Lodi, rivolto ai giovani studenti&#10;100 anni di DEKRA, presso la Camera dei Deputati"
+                                style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; font-family:inherit;"></textarea>
+                        </div>
+
+                        <div style="margin-bottom:1rem;">
+                            <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Testate Più Significative Rilevate (separate da virgola o generate in automatico)</label>
+                            <textarea id="reportTopMediaText" rows="2" placeholder="La Repubblica, Corriere della Sera, Il Sole 24 Ore, Rai News 24, La Stampa..."
+                                style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; font-family:inherit;"></textarea>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Note Strategiche / Conclusioni (Opzionale)</label>
+                                <input type="text" id="reportExecutiveNotes" placeholder="Es. Ottima penetrazione sulle testate B2B e automotive; forte crescita della reputazione istituzionale."
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Firma Mittente Ufficio Stampa</label>
+                                <input type="text" id="reportSenderSignature" placeholder="Es. Attilio"
+                                    style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 3: DETTAGLIO CRONOLOGICO DEI LANCI -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <div style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); display:flex; align-items:center; gap:6px;">
+                                <i data-feather="list" style="width:16px;height:16px;"></i> 3. Lanci Inclusi nel Report
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addNewManualLaunchRow()" style="font-size:0.75rem;">
+                                + Aggiungi Lancio Manuale
+                            </button>
+                        </div>
+                        <div id="reportLaunchesTableWrap" style="max-height:260px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.82rem;" id="reportLaunchesTable">
+                                <thead>
+                                    <tr style="background:rgba(255,255,255,0.04); text-align:left; color:var(--text-muted);">
+                                        <th style="padding:6px 10px; width:40px;">Inc.</th>
+                                        <th style="padding:6px 10px; width:85px;">Data</th>
+                                        <th style="padding:6px 10px;">Titolo Lancio / Comunicato</th>
+                                        <th style="padding:6px 10px; width:90px; text-align:right;">Uscite</th>
+                                        <th style="padding:6px 10px; width:35px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportLaunchesTbody">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+                                            Seleziona un cliente e clicca su "Aggrega Dati dal Database" per compilare i lanci.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 4: MODALITÀ DI CONSEGNA & ANTEPRIMA -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <div style="font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); margin-bottom:0.75rem; display:flex; align-items:center; gap:6px;">
+                            <i data-feather="send" style="width:16px;height:16px;"></i> 4. Anteprima &amp; Canali di Consegna
+                        </div>
+
+                        <!-- Tab Bottoni -->
+                        <div style="display:flex; gap:8px; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-sm btn-outline active" id="tabBtnEmail" onclick="switchReportDeliveryTab('email')">
+                                <i data-feather="mail" style="width:14px;height:14px;"></i> Email Esecutiva
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" id="tabBtnPortal" onclick="switchReportDeliveryTab('portal')">
+                                <i data-feather="globe" style="width:14px;height:14px;"></i> Portale Permanente
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" id="tabBtnPdf" onclick="switchReportDeliveryTab('pdf')">
+                                <i data-feather="file-text" style="width:14px;height:14px;"></i> Documento PDF A4
+                            </button>
+                        </div>
+
+                        <!-- Tab Content: Email -->
+                        <div id="tabContentEmail">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-size:0.75rem; color:var(--text-muted);">Testo pronto per l'invio via email o messaggio WhatsApp:</span>
+                                <button type="button" class="btn btn-sm btn-gradient" onclick="copyReportEmailText()" style="font-size:0.75rem; padding:4px 10px;">
+                                    <i data-feather="copy" style="width:12px;height:12px;"></i> Copia Testo Email
+                                </button>
+                            </div>
+                            <textarea id="reportGeneratedEmailText" rows="10" readonly
+                                style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.82rem; font-family:monospace; line-height:1.5;"></textarea>
+                        </div>
+
+                        <!-- Tab Content: Portale Web -->
+                        <div id="tabContentPortal" style="display:none;">
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                                Il cliente può accedere all'intero report online tramite link permanente sicuro (nessuna scadenza come WeTransfer):
+                            </p>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <input type="text" id="reportShareUrlDisplay" readonly placeholder="Salva il report per generare il link permanente"
+                                    style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="copyReportShareUrl()" style="height:38px; white-space:nowrap;">
+                                    <i data-feather="copy" style="width:14px;height:14px;"></i> Copia Link
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="openReportShareUrl()" id="btnOpenPortalLive" style="height:38px; white-space:nowrap; display:none;">
+                                    <i data-feather="external-link" style="width:14px;height:14px;"></i> Apri
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab Content: PDF -->
+                        <div id="tabContentPdf" style="display:none; text-align:center; padding:1.5rem 1rem;">
+                            <i data-feather="file-text" style="width:40px;height:40px;color:var(--accent-primary);margin-bottom:0.75rem;"></i>
+                            <h4 style="color:#ffffff; margin-bottom:0.4rem;">Presentazione PDF Esecutiva A4</h4>
+                            <p style="font-size:0.85rem; color:var(--text-muted); max-width:500px; margin:0 auto 1.25rem;">
+                                Scarica il documento completo di copertina, KPI certificati AMEC/Audiweb, loghi dei top media e dettaglio cronologico dei lanci.
+                            </p>
+                            <button type="button" class="btn btn-gradient" id="btnDownloadReportPdfAction" onclick="generateAndDownloadReportPdf()" style="padding:8px 20px;">
+                                <i data-feather="download" style="width:15px;height:15px;"></i> Genera e Scarica PDF Esecutivo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border-color); padding-top:1rem;">
+                        <button type="button" class="btn btn-outline" onclick="closeReportModal()">Chiudi</button>
+                        <button type="submit" class="btn btn-gradient" id="btnSaveReportSubmit">
+                            <i data-feather="save" style="width:15px;height:15px;"></i> Salva Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- PAGE: COMUNICATI (placeholder) -->
         <div id="page-comunicati" class="page-view">
             <div class="page-header">
@@ -2220,6 +2486,14 @@
                         if (typeof window.loadTeamPage === 'function') window.loadTeamPage();
                     }, 200);
                 }
+            } else if (page === 'reports') {
+                if (typeof window.loadReportsPage === 'function') {
+                    window.loadReportsPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.loadReportsPage === 'function') window.loadReportsPage();
+                    }, 200);
+                }
             }
         }
         window.showDashboardPage = showDashboardPage;
@@ -2259,7 +2533,7 @@
         feather.replace();
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260916_10"></script>
+    <script src="app.js?v=20260916_11"></script>
     <script src="ui.js?v=20260914_25"></script>
 </body>
 </html>

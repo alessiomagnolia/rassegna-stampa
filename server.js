@@ -35,6 +35,7 @@ const pressReleaseRoutes = require('./routes/pressReleaseRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const teamRoutes = require('./routes/teamRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -45,6 +46,7 @@ app.use('/api/press', pressReleaseRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');
@@ -78,6 +80,11 @@ app.get('/api/proxy-image', (req, res) => {
 // Interactive White-label Public Share Portal
 app.get('/share/:token', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'share.html'));
+});
+
+// Interactive Public Coverage Report Portal
+app.get('/report/:token', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'report.html'));
 });
 
 // Pagina pubblica di accettazione invito team

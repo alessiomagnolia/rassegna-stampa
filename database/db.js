@@ -213,7 +213,41 @@ function initDatabase() {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_releases_team ON press_releases(team_id)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_team_members_user   ON team_members(user_id)`).run();
 
-    // ── FINE TEAM ACCOUNTS ─────────────────────────────────────────────────────
+    // ── COVERAGE REPORTS (REPORT PERIODICI ESECUTIVI) ──────────────────────────
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS coverage_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            team_id INTEGER DEFAULT NULL,
+            client_id INTEGER DEFAULT NULL,
+            client_name TEXT NOT NULL,
+            client_logo TEXT DEFAULT '',
+            title TEXT NOT NULL,
+            period_start TEXT NOT NULL,
+            period_end TEXT NOT NULL,
+            period_label TEXT NOT NULL,
+            recipient_salutation TEXT DEFAULT '',
+            recipient_title TEXT DEFAULT '',
+            events_supported TEXT DEFAULT '[]',
+            executive_notes TEXT DEFAULT '',
+            sender_signature TEXT DEFAULT '',
+            summary_kpis TEXT NOT NULL DEFAULT '{}',
+            launches_json TEXT NOT NULL DEFAULT '[]',
+            top_media_json TEXT NOT NULL DEFAULT '[]',
+            share_token TEXT UNIQUE NOT NULL,
+            pdf_filename TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+        )
+    `).run();
+
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coverage_reports_user ON coverage_reports(user_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coverage_reports_team ON coverage_reports(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coverage_reports_token ON coverage_reports(share_token)`).run();
+    // ── FINE COVERAGE REPORTS ──────────────────────────────────────────────────
 
     console.log('✅ Database SQLite inizializzato.');
     return db;
