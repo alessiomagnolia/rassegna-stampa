@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_31">
+    <link rel="stylesheet" href="styles.css?v=20260916_01">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -42,23 +42,24 @@
             </a>
         </div>
 
-        <!-- RIGHT: Client Selector + Desktop Upgrade -->
-        <div class="nav-user" style="display:flex; align-items:center; justify-content:flex-end; gap:10px;">
-            <!-- Desktop Only: Upgrade Button -->
-            <button id="btnUpgradePlanHeader" class="btn btn-gradient btn-sm hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento" style="padding:6px 14px; font-size:0.82rem; font-weight:700; border-radius:10px; display:flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(124,92,255,0.25); text-transform:uppercase;">
-                <i data-feather="zap" style="width:15px;height:15px;"></i> Upgrade
-            </button>
-
-            <!-- Client Selector Box -->
-            <div class="client-selector-box" style="display:flex; align-items:center; gap:6px; background:var(--bg-secondary); padding:5px 10px; border-radius:10px; border:1px solid var(--border-color);">
-                <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);"></i>
-                <select id="globalClientSelect" style="background:transparent; color:var(--text-primary); border:none; outline:none; font-size:0.88rem; cursor:pointer; max-width:160px; height:26px;">
+        <!-- RIGHT: Client Selector (Sinistra) + Desktop Upgrade (Destra) -->
+        <div class="nav-user">
+            <!-- 1. Client Selector Box (Sinistra) -->
+            <div class="client-selector-box" title="Seleziona o aggiungi un cliente per la rassegna">
+                <i data-feather="user-check" style="width:16px;height:16px;color:var(--accent-primary);flex-shrink:0;"></i>
+                <select id="globalClientSelect" title="Cliente attivo">
                     <option value="" style="color:black;">Nessun Cliente</option>
                 </select>
-                <button id="btnManageClient" class="btn btn-outline btn-sm" onclick="openClientModal()" title="Aggiungi / Gestisci Cliente" style="padding:3px 6px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                    <i data-feather="plus" style="width:15px;height:15px;"></i>
+                <button type="button" id="btnManageClient" class="btn-client-add" onclick="openClientModal()" title="Aggiungi o gestisci clienti" aria-label="Aggiungi o gestisci clienti">
+                    <i data-feather="plus" style="width:15px;height:15px;stroke-width:2.5;"></i>
                 </button>
             </div>
+
+            <!-- 2. Desktop Only: Upgrade Button (Destra) -->
+            <button id="btnUpgradePlanHeader" class="btn btn-gradient hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento">
+                <i data-feather="zap" style="width:15px;height:15px;flex-shrink:0;"></i>
+                <span>Upgrade</span>
+            </button>
         </div>
     </nav>
 
