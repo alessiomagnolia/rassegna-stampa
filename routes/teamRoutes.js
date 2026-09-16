@@ -200,6 +200,7 @@ router.post('/invite', authMiddleware, async (req, res) => {
 
         // Tentativo di invio email (non bloccante)
         let emailSent = false;
+        let emailError = null;
         try {
             emailSent = await sendInviteEmail(
                 invitedEmail,
@@ -208,16 +209,18 @@ router.post('/invite', authMiddleware, async (req, res) => {
                 inviteLink
             );
         } catch (emailErr) {
-            console.warn('[Team] Invio email fallito (non critico):', emailErr.message);
+            emailError = emailErr.message || 'Errore connessione SMTP';
+            console.warn('[Team] Invio email fallito:', emailErr.message);
         }
 
         res.json({
             success: true,
             inviteLink,
             emailSent,
+            emailError,
             message: emailSent
-                ? `Invito inviato a ${invitedEmail}.`
-                : `Link di invito generato. Copialo e invialo manualmente a ${invitedEmail}.`
+                ? `Invito inviato via email a ${invitedEmail}.`
+                : (emailError ? `Impossibile spedire l'email (${emailError}). Copia il link di seguito:` : `Link di invito generato. Copialo e invialo a ${invitedEmail}.`)
         });
     } catch (error) {
         console.error('Errore invito team:', error);

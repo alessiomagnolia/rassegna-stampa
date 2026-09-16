@@ -4751,10 +4751,11 @@ async function teamSendInvite() {
             emailInput.value = '';
             if (data.emailSent) {
                 resultEl.style.color = 'var(--success-color, #16a34a)';
-                resultEl.innerHTML = `Invito inviato con successo a <strong>${email}</strong>! Riceverà un'email con il link per accedere.`;
+                resultEl.innerHTML = `Invito inviato con successo via email a <strong>${email}</strong>! Controlla anche la cartella Spam/Posta indesiderata.`;
             } else {
-                resultEl.style.color = 'var(--accent-primary, #7c5cff)';
-                resultEl.innerHTML = `Invito registrato! Puoi copiare e inviare questo link al tuo collega:<br>
+                resultEl.style.color = 'var(--text-primary)';
+                const reason = data.emailError ? `<div style="font-size:0.78rem; color:var(--danger-color, #dc2626); margin-bottom:6px;">Nota sull'invio email: ${data.emailError}</div>` : '';
+                resultEl.innerHTML = `${reason}<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">L'invito è comunque valido. Puoi copiare e inviare direttamente questo link al tuo collega:</div>
                     <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
                         <input type="text" id="copyInviteLinkInput" value="${data.inviteLink}" readonly
                             style="flex:1; padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.8rem;"

@@ -17,19 +17,20 @@ const nodemailer = require('nodemailer');
 let transporter = null;
 
 function getTransporter() {
-    if (transporter) return transporter;
-
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        return null; // Modalità link-only
+        return null; // Credenziali non presenti
     }
 
-    const emailUser = process.env.EMAIL_USER.trim();
-    // Rimuove eventuali spazi dalla password per le app (Google la genera con spazi tipo "abcd efgh ijkl mnop")
-    const emailPass = process.env.EMAIL_PASS.replace(/\s+/g, '');
+    // Pulisce eventuali virgolette (es. se inserite per errore su Render) e spazi
+    const emailUser = (process.env.EMAIL_USER || '').replace(/['"]/g, '').trim();
+    const emailPass = (process.env.EMAIL_PASS || '').replace(/['"\s]/g, '').trim();
+
+    if (!emailUser || !emailPass) return null;
+
     const isGmail = emailUser.toLowerCase().includes('@gmail.com') || emailUser.toLowerCase().includes('@googlemail.com');
 
     if (isGmail) {
-        transporter = nodemailer.createTransport({
+        return nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: emailUser,
@@ -39,22 +40,20 @@ function getTransporter() {
             greetingTimeout: 8000,
             socketTimeout: 12000,
         });
-    } else {
-        transporter = nodemailer.createTransport({
-            host:   process.env.EMAIL_HOST || 'smtp.gmail.com',
-            port:   parseInt(process.env.EMAIL_PORT || '465'),
-            secure: (process.env.EMAIL_PORT === '465' || !process.env.EMAIL_PORT),
-            auth: {
-                user: emailUser,
-                pass: emailPass,
-            },
-            connectionTimeout: 8000,
-            greetingTimeout: 8000,
-            socketTimeout: 12000,
-        });
     }
 
-    return transporter;
+    return nodemailer.createTransport({
+        host:   process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port:   parseInt(process.env.EMAIL_PORT || '465'),
+        secure: (process.env.EMAIL_PORT === '465' || !process.env.EMAIL_PORT),
+        auth: {
+            user: emailUser,
+            pass: emailPass,
+        },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 12000,
+    });
 }
 
 /**
@@ -69,11 +68,14 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
     const t = getTransporter();
 
     if (!t) {
-        console.log(`[Email] Modalità link-only. Link invito: ${inviteLink}`);
-        return false;
+        console.warn(`[Email] EMAIL_USER o EMAIL_PASS mancanti o non ancora attive su Render. EMAIL_USER=${!!process.env.EMAIL_USER}, EMAIL_PASS=${!!process.env.EMAIL_PASS}`);
+        const err = new Error('Variabili EMAIL_USER o EMAIL_PASS non trovate o non ancora attive su Render.');
+        err.code = 'CONFIG_MISSING';
+        throw err;
     }
 
-    const fromName  = process.env.EMAIL_FROM || `Rassegna Stampa <${process.env.EMAIL_USER}>`;
+    const cleanUser = (process.env.EMAIL_USER || '').replace(/['"]/g, '').trim();
+    const fromName  = process.env.EMAIL_FROM || `Rassegna Stampa <${cleanUser}>`;
     const todayStr  = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const htmlBody = `
