@@ -156,6 +156,65 @@ function initDatabase() {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_contacts_user ON media_contacts(user_id)`).run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_contacts_beat ON media_contacts(beat)`).run();
 
+    // ── TEAM ACCOUNTS ──────────────────────────────────────────────────────────
+
+    // Tabella teams: un team per ogni owner
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_user_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (owner_user_id) REFERENCES users(id)
+        )
+    `).run();
+
+    // Tabella team_members: chi fa parte di quale team
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT DEFAULT 'member',
+            joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(team_id, user_id),
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `).run();
+
+    // Tabella team_invites: inviti pendenti con token univoco
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS team_invites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            invited_email TEXT NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            invited_by INTEGER NOT NULL,
+            expires_at DATETIME NOT NULL,
+            accepted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY (invited_by) REFERENCES users(id)
+        )
+    `).run();
+
+    // Migration: aggiunta team_id alle risorse condivise (ignorata se esiste già)
+    const prCols  = db.prepare('PRAGMA table_info(press_reviews)').all().map(c => c.name);
+    const clCols  = db.prepare('PRAGMA table_info(clients)').all().map(c => c.name);
+    const prlCols = db.prepare('PRAGMA table_info(press_releases)').all().map(c => c.name);
+
+    if (!prCols.includes('team_id'))  db.prepare('ALTER TABLE press_reviews  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+    if (!clCols.includes('team_id'))  db.prepare('ALTER TABLE clients         ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+    if (!prlCols.includes('team_id')) db.prepare('ALTER TABLE press_releases  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_reviews_team  ON press_reviews(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_clients_team        ON clients(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_releases_team ON press_releases(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_team_members_user   ON team_members(user_id)`).run();
+
+    // ── FINE TEAM ACCOUNTS ─────────────────────────────────────────────────────
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }

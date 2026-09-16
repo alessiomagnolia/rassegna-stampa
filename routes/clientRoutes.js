@@ -7,15 +7,26 @@ const router = express.Router();
 // All client routes require authentication
 router.use(authMiddleware);
 
-// GET /api/clients - Get all clients for the logged-in user
+// GET /api/clients - Ottieni tutti i clienti (personali + del team se presente)
 router.get('/', (req, res) => {
     try {
         const db = getDb();
-        const clients = db.prepare(`
-            SELECT * FROM clients 
-            WHERE user_id = ? 
-            ORDER BY name ASC
-        `).all(req.userId);
+        let clients;
+        if (req.teamId) {
+            // Membro di un team: vede i clienti del team + i propri personali
+            clients = db.prepare(`
+                SELECT * FROM clients
+                WHERE user_id = ? OR team_id = ?
+                ORDER BY name ASC
+            `).all(req.userId, req.teamId);
+        } else {
+            // Account personale
+            clients = db.prepare(`
+                SELECT * FROM clients
+                WHERE user_id = ? AND (team_id IS NULL OR team_id = 0)
+                ORDER BY name ASC
+            `).all(req.userId);
+        }
         res.json({ clients });
     } catch (error) {
         console.error('Errore recupero clienti:', error);
@@ -27,11 +38,19 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     try {
         const db = getDb();
-        const client = db.prepare(`
-            SELECT * FROM clients 
-            WHERE id = ? AND user_id = ?
-        `).get(req.params.id, req.userId);
-        
+        let client;
+        if (req.teamId) {
+            client = db.prepare(`
+                SELECT * FROM clients
+                WHERE id = ? AND (user_id = ? OR team_id = ?)
+            `).get(req.params.id, req.userId, req.teamId);
+        } else {
+            client = db.prepare(`
+                SELECT * FROM clients
+                WHERE id = ? AND user_id = ?
+            `).get(req.params.id, req.userId);
+        }
+
         if (!client) {
             return res.status(404).json({ error: 'Cliente non trovato.' });
         }
@@ -42,23 +61,24 @@ router.get('/:id', (req, res) => {
     }
 });
 
-// POST /api/clients - Create new client
+// POST /api/clients - Crea nuovo cliente
 router.post('/', (req, res) => {
     try {
         const { name, logo_base64, keywords, tone_of_voice, notes } = req.body;
-        
+
         if (!name || !name.trim()) {
             return res.status(400).json({ error: 'Il nome del cliente è obbligatorio.' });
         }
 
         const db = getDb();
         const stmt = db.prepare(`
-            INSERT INTO clients (user_id, name, logo_base64, keywords, tone_of_voice, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO clients (user_id, team_id, name, logo_base64, keywords, tone_of_voice, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
 
         const result = stmt.run(
             req.userId,
+            req.teamId || null,
             name.trim(),
             logo_base64 || '',
             keywords ? keywords.trim() : '',
@@ -73,6 +93,7 @@ router.post('/', (req, res) => {
         res.status(500).json({ error: 'Impossibile creare il cliente.' });
     }
 });
+
 
 // PUT /api/clients/:id - Update client
 router.put('/:id', (req, res) => {

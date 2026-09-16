@@ -181,6 +181,11 @@
                 <div class="sidebar-divider"></div>
                 <div class="sidebar-section-label">Gestione</div>
 
+                <a href="#" class="sidebar-item" data-page="team">
+                    <span class="sidebar-icon"><i data-feather="users"></i></span>
+                    <span class="sidebar-label">Il Tuo Team</span>
+                    <span class="sidebar-badge team-badge" id="teamBadge" style="display:none;">1</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="profilo">
                     <span class="sidebar-icon"><i data-feather="user"></i></span>
                     <span class="sidebar-label">Profilo</span>
@@ -191,7 +196,7 @@
                 </a>
                 <a href="#" class="sidebar-item" data-page="piani">
                     <span class="sidebar-icon"><i data-feather="credit-card"></i></span>
-                    <span class="sidebar-label">Piani & Abbonamenti</span>
+                    <span class="sidebar-label">Piani &amp; Abbonamenti</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="impostazioni">
                     <span class="sidebar-icon"><i data-feather="settings"></i></span>
@@ -1993,6 +1998,19 @@
         </div>
     </div>
 
+    <!-- PAGE: TEAM -->
+    <div id="page-team" class="page-view" style="padding: 2rem 1.5rem 3rem;">
+        <div style="max-width: 700px; margin: 0 auto;">
+            <div style="margin-bottom: 1.75rem;">
+                <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem;">Il Tuo Team</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted);">Collabora con i tuoi colleghi sulle stesse rassegne, clienti e comunicati.</p>
+            </div>
+            <div id="teamPageContent">
+                <div style="text-align:center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem;">Caricamento...</div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
         // Auth check
@@ -2086,6 +2104,14 @@
                         if (typeof window.loadMediaContacts === 'function') window.loadMediaContacts();
                     }, 200);
                 }
+            } else if (page === 'team') {
+                if (typeof window.loadTeamPage === 'function') {
+                    window.loadTeamPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.loadTeamPage === 'function') window.loadTeamPage();
+                    }, 200);
+                }
             }
         }
         window.showDashboardPage = showDashboardPage;
@@ -2125,7 +2151,7 @@
         feather.replace();
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260914_29"></script>
+    <script src="app.js?v=20260916_02"></script>
     <script src="ui.js?v=20260914_25"></script>
 </body>
 </html>

@@ -130,9 +130,9 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         // Save to history (including full articles JSON for editor reopening)
         const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+            INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, req.teamId || null, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
             id: info.lastInsertRowid,
@@ -268,9 +268,9 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const placeholderFilename = `draft_${Date.now()}.pdf`;
         const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+            INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(req.userId, req.teamId || null, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
             id: info.lastInsertRowid,
@@ -430,15 +430,30 @@ router.get('/download/:filename', authMiddleware, (req, res) => {
 router.get('/history', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        const history = db.prepare(`
-            SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
-                   '/api/pdf/download/' || pdf_filename as downloadUrl,
-                   CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable
-            FROM press_reviews 
-            WHERE user_id = ? 
-            ORDER BY created_at DESC
-        `).all(req.userId);
-        
+        let history;
+        if (req.teamId) {
+            // Mostra rassegne del team + personali
+            history = db.prepare(`
+                SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
+                       '/api/pdf/download/' || pdf_filename as downloadUrl,
+                       CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable,
+                       team_id
+                FROM press_reviews
+                WHERE user_id = ? OR team_id = ?
+                ORDER BY created_at DESC
+            `).all(req.userId, req.teamId);
+        } else {
+            history = db.prepare(`
+                SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
+                       '/api/pdf/download/' || pdf_filename as downloadUrl,
+                       CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable,
+                       team_id
+                FROM press_reviews
+                WHERE user_id = ? AND (team_id IS NULL OR team_id = 0)
+                ORDER BY created_at DESC
+            `).all(req.userId);
+        }
+
         res.json(history);
     } catch (error) {
         console.error('Get history error:', error);
@@ -451,9 +466,16 @@ router.get('/review/:id', authMiddleware, (req, res) => {
     try {
         const { id } = req.params;
         const db = getDb();
-        const review = db.prepare(
-            'SELECT * FROM press_reviews WHERE id = ? AND user_id = ?'
-        ).get(id, req.userId);
+        let review;
+        if (req.teamId) {
+            review = db.prepare(
+                'SELECT * FROM press_reviews WHERE id = ? AND (user_id = ? OR team_id = ?)'
+            ).get(id, req.userId, req.teamId);
+        } else {
+            review = db.prepare(
+                'SELECT * FROM press_reviews WHERE id = ? AND user_id = ?'
+            ).get(id, req.userId);
+        }
 
         if (!review) {
             return res.status(404).json({ error: 'Rassegna non trovata.' });
@@ -479,9 +501,14 @@ router.delete('/:id', authMiddleware, (req, res) => {
     try {
         const { id } = req.params;
         const db = getDb();
-        
-        const review = db.prepare('SELECT pdf_filename FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
-        
+
+        let review;
+        if (req.teamId) {
+            review = db.prepare('SELECT pdf_filename FROM press_reviews WHERE id = ? AND (user_id = ? OR team_id = ?)').get(id, req.userId, req.teamId);
+        } else {
+            review = db.prepare('SELECT pdf_filename FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
+        }
+
         if (!review) {
             return res.status(404).json({ error: 'Rassegna non trovata.' });
         }
@@ -492,7 +519,7 @@ router.delete('/:id', authMiddleware, (req, res) => {
         }
 
         db.prepare('DELETE FROM press_reviews WHERE id = ?').run(id);
-        
+
         res.json({ success: true, message: 'Rassegna eliminata con successo.' });
     } catch (error) {
         console.error('Delete review error:', error);

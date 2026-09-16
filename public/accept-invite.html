@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accetta invito — Rassegna Stampa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #1e293b;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.1);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #7c5cff;
+            padding: 28px 32px;
+        }
+
+        .card-header .brand {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #c4b5fd;
+            margin-bottom: 6px;
+        }
+
+        .card-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .card-body { padding: 28px 32px; }
+
+        .invite-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .invite-info .team-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #7c5cff;
+            margin-bottom: 4px;
+        }
+
+        .invite-info .inviter {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .invite-info .expires {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+            gap: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all .15s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: #7c5cff;
+            border-bottom-color: #7c5cff;
+            font-weight: 600;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Form */
+        .form-group { margin-bottom: 14px; }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #1e293b;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #7c5cff;
+            box-shadow: 0 0 0 3px rgba(124,92,255,.12);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .15s;
+            margin-top: 18px;
+        }
+
+        .btn-primary {
+            background: #7c5cff;
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: #6d4eeb; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #dc2626;
+            margin-top: 14px;
+            display: none;
+        }
+
+        .success-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 14px;
+            color: #16a34a;
+            text-align: center;
+            display: none;
+        }
+
+        .success-box strong { display: block; font-size: 16px; margin-bottom: 6px; }
+
+        .loader {
+            text-align: center;
+            padding: 20px 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .invalid-msg {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .invalid-msg .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .invalid-msg h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #dc2626;
+        }
+
+        .invalid-msg p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .redirect-note {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="card-header">
+        <div class="brand">Rassegna Stampa</div>
+        <h1>Invito a collaborare</h1>
+    </div>
+    <div class="card-body">
+
+        <!-- Loader -->
+        <div class="loader" id="loader">Verifica invito in corso...</div>
+
+        <!-- Invito non valido -->
+        <div class="invalid-msg" id="invalidMsg" style="display:none;">
+            <div class="icon">&#x26A0;</div>
+            <h2 id="invalidTitle">Invito non valido</h2>
+            <p id="invalidDesc">Questo link di invito non è valido o è scaduto.</p>
+        </div>
+
+        <!-- Invito valido: mostra info + form -->
+        <div id="validContent" style="display:none;">
+            <div class="invite-info">
+                <div class="team-name" id="teamNameDisplay"></div>
+                <div class="inviter">Invitato da <strong id="inviterDisplay"></strong></div>
+                <div class="expires" id="expiresDisplay"></div>
+            </div>
+
+            <!-- Tabs Login / Registrati -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Ho già un account</button>
+                <button class="tab-btn" onclick="switchTab('register')">Registrati</button>
+            </div>
+
+            <!-- Tab Login -->
+            <div class="tab-panel active" id="tabLogin">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="tuo@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="La tua password">
+                </div>
+                <button class="btn btn-primary" id="btnLogin" onclick="doLogin()">Accedi e accetta l'invito</button>
+                <div class="error-box" id="loginError"></div>
+            </div>
+
+            <!-- Tab Registrazione -->
+            <div class="tab-panel" id="tabRegister">
+                <div class="form-group">
+                    <label>Nome azienda</label>
+                    <input type="text" id="regCompany" placeholder="Es. Studio Comunicazione">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="tuo@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="Almeno 6 caratteri">
+                </div>
+                <button class="btn btn-primary" id="btnRegister" onclick="doRegister()">Registrati e accetta l'invito</button>
+                <div class="error-box" id="registerError"></div>
+            </div>
+
+            <!-- Messaggio di successo -->
+            <div class="success-box" id="successBox">
+                <strong>Benvenuto nel team!</strong>
+                <span id="successMsg"></span>
+            </div>
+            <div class="redirect-note" id="redirectNote" style="display:none;">Reindirizzamento alla dashboard in corso...</div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let inviteToken = null;
+    let inviteData  = null;
+
+    // Leggi il token dalla query string
+    function getToken() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('token');
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach((b, i) => {
+            b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+        });
+        document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+        document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    }
+
+    function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function hideError(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    async function acceptInvite(token, authToken) {
+        const res = await fetch(`/api/teams/invite/${token}/accept`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        return res.json();
+    }
+
+    async function doLogin() {
+        hideError('loginError');
+        const email    = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const btn      = document.getElementById('btnLogin');
+
+        if (!email || !password) {
+            return showError('loginError', 'Inserisci email e password.');
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Accesso in corso...';
+
+        try {
+            const res  = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                btn.disabled = false;
+                btn.textContent = 'Accedi e accetta l\'invito';
+                return showError('loginError', data.error || 'Credenziali non valide.');
+            }
+
+            // Salva il token e poi accetta l'invito
+            localStorage.setItem('rs_token', data.token);
+            const acceptRes = await acceptInvite(inviteToken, data.token);
+
+            if (acceptRes.success || acceptRes.team) {
+                showSuccess(acceptRes.message || `Benvenuto nel team "${acceptRes.team?.name}"!`);
+            } else {
+                showError('loginError', acceptRes.error || 'Impossibile accettare l\'invito.');
+                btn.disabled = false;
+                btn.textContent = 'Accedi e accetta l\'invito';
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = 'Accedi e accetta l\'invito';
+            showError('loginError', 'Errore di connessione. Riprova.');
+        }
+    }
+
+    async function doRegister() {
+        hideError('registerError');
+        const company  = document.getElementById('regCompany').value.trim();
+        const email    = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const btn      = document.getElementById('btnRegister');
+
+        if (!email || !password) {
+            return showError('registerError', 'Inserisci email e password.');
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Registrazione in corso...';
+
+        try {
+            const res  = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, company_name: company || email.split('@')[0] })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                btn.disabled = false;
+                btn.textContent = 'Registrati e accetta l\'invito';
+                return showError('registerError', data.error || 'Errore durante la registrazione.');
+            }
+
+            localStorage.setItem('rs_token', data.token);
+            const acceptRes = await acceptInvite(inviteToken, data.token);
+
+            if (acceptRes.success || acceptRes.team) {
+                showSuccess(acceptRes.message || `Benvenuto nel team "${acceptRes.team?.name}"!`);
+            } else {
+                showError('registerError', acceptRes.error || 'Impossibile accettare l\'invito.');
+                btn.disabled = false;
+                btn.textContent = 'Registrati e accetta l\'invito';
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = 'Registrati e accetta l\'invito';
+            showError('registerError', 'Errore di connessione. Riprova.');
+        }
+    }
+
+    function showSuccess(msg) {
+        document.getElementById('tabLogin').style.display = 'none';
+        document.getElementById('tabRegister').style.display = 'none';
+        document.querySelectorAll('.tabs').forEach(t => t.style.display = 'none');
+        document.getElementById('successMsg').textContent = msg;
+        document.getElementById('successBox').style.display = 'block';
+        document.getElementById('redirectNote').style.display = 'block';
+
+        // Redirect alla dashboard dopo 2.5 secondi
+        setTimeout(() => { window.location.href = '/dashboard.html'; }, 2500);
+    }
+
+    // Init: verifica il token all'avvio
+    (async function init() {
+        inviteToken = getToken();
+        if (!inviteToken) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('invalidMsg').style.display = 'block';
+            document.getElementById('invalidTitle').textContent = 'Link non valido';
+            document.getElementById('invalidDesc').textContent = 'Nessun token di invito trovato nel link. Controlla l\'email e riprova.';
+            return;
+        }
+
+        try {
+            const res  = await fetch(`/api/teams/invite/${inviteToken}`);
+            const data = await res.json();
+
+            document.getElementById('loader').style.display = 'none';
+
+            if (!res.ok || !data.valid) {
+                document.getElementById('invalidMsg').style.display = 'block';
+                document.getElementById('invalidDesc').textContent = data.error || 'Invito non valido.';
+                return;
+            }
+
+            inviteData = data.invite;
+
+            document.getElementById('teamNameDisplay').textContent = inviteData.teamName;
+            document.getElementById('inviterDisplay').textContent  = inviteData.inviterName;
+
+            const exp = new Date(inviteData.expiresAt).toLocaleDateString('it-IT', {
+                day: '2-digit', month: 'long', year: 'numeric'
+            });
+            document.getElementById('expiresDisplay').textContent = `Invito valido fino al ${exp}`;
+
+            // Pre-compila l'email se nel link
+            if (inviteData.invitedEmail) {
+                document.getElementById('loginEmail').value    = inviteData.invitedEmail;
+                document.getElementById('regEmail').value      = inviteData.invitedEmail;
+            }
+
+            document.getElementById('validContent').style.display = 'block';
+
+            // Se l'utente è già loggato, accetta direttamente
+            const savedToken = localStorage.getItem('rs_token');
+            if (savedToken) {
+                const acceptRes = await acceptInvite(inviteToken, savedToken);
+                if (acceptRes.success || acceptRes.team) {
+                    showSuccess(acceptRes.message || `Benvenuto nel team "${acceptRes.team?.name}"!`);
+                }
+                // Se errore (es. già in un team) mostro i form normali
+            }
+
+        } catch (e) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('invalidMsg').style.display = 'block';
+            document.getElementById('invalidDesc').textContent = 'Errore di connessione. Riprova più tardi.';
+        }
+    })();
+</script>
+
+</body>
+</html>

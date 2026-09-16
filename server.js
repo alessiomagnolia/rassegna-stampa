@@ -34,6 +34,7 @@ const newsRoutes = require('./routes/newsRoutes');
 const pressReleaseRoutes = require('./routes/pressReleaseRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const teamRoutes = require('./routes/teamRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -43,6 +44,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/press', pressReleaseRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/teams', teamRoutes);
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');
@@ -76,6 +78,11 @@ app.get('/api/proxy-image', (req, res) => {
 // Interactive White-label Public Share Portal
 app.get('/share/:token', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'share.html'));
+});
+
+// Pagina pubblica di accettazione invito team
+app.get('/accept-invite', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'accept-invite.html'));
 });
 
 // Fallback to index.html for SPA if needed (currently using multiple HTML files though)

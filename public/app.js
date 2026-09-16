@@ -4512,10 +4512,288 @@ setTimeout(() => {
         if (typeof window.loadMediaContacts === 'function') window.loadMediaContacts();
     } else if (targetPage === 'storico') {
         if (typeof window.loadHistory === 'function') window.loadHistory();
+    } else if (targetPage === 'team') {
+        if (typeof window.loadTeamPage === 'function') window.loadTeamPage();
     }
 }, 100);
 
 
+// ══════════════════════════════════════════════════════════════════════════════
+//  SEZIONE TEAM
+// ══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Carica e renderizza la pagina team.
+ * Eseguita ogni volta che l'utente clicca "Il Tuo Team" nella sidebar.
+ */
+async function loadTeamPage() {
+    const container = document.getElementById('teamPageContent');
+    if (!container) return;
 
+    container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem;">Caricamento...</div>`;
+
+    try {
+        const res  = await fetch('/api/teams/mine', { headers: { Authorization: `Bearer ${state.token}` } });
+        const data = await res.json();
+
+        if (data.team) {
+            renderTeamPanel(container, data.team);
+        } else {
+            renderTeamCreation(container);
+        }
+    } catch (e) {
+        container.innerHTML = `<div style="color: var(--danger-color); text-align:center; padding:1rem;">Errore nel caricamento del team. Riprova.</div>`;
+    }
+}
+window.loadTeamPage = loadTeamPage;
+
+/** Renderizza il pannello del team (l'utente è già membro) */
+function renderTeamPanel(container, team) {
+    const isOwner = team.myRole === 'owner';
+
+    const membersHtml = team.members.map(m => {
+        const initials = (m.company_name || m.email || '?').slice(0, 2).toUpperCase();
+        const isMe = m.user_id === state.user?.id;
+        const removeBtn = (isOwner && !isMe)
+            ? `<button class="btn btn-sm btn-danger-outline" onclick="teamRemoveMember(${m.user_id})" title="Rimuovi dal team" style="padding:4px 10px; font-size:0.75rem; border-radius:6px; border: 1px solid var(--danger-color); background:transparent; color:var(--danger-color); cursor:pointer;">Rimuovi</button>`
+            : (isMe ? `<span style="font-size:0.75rem; color:var(--text-muted);">(tu)</span>` : '');
+
+        return `
+        <div class="team-member-row" style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom: 1px solid var(--border-color);">
+            <div style="width:36px; height:36px; border-radius:50%; background: var(--accent-primary); color:#fff; font-size:0.75rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${initials}</div>
+            <div style="flex:1; min-width:0;">
+                <div style="font-weight:600; font-size:0.875rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.company_name || m.email}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${m.email} &bull; ${m.role === 'owner' ? 'Proprietario' : 'Membro'}</div>
+            </div>
+            ${removeBtn}
+        </div>`;
+    }).join('');
+
+    const pendingHtml = isOwner && team.pendingInvites.length > 0
+        ? `<div style="margin-top:1.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:0.75rem;">Inviti in attesa</div>
+            ${team.pendingInvites.map(inv => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem;">
+                    <span style="color:var(--text-primary);">${inv.invited_email}</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">In attesa</span>
+                </div>`).join('')}
+           </div>`
+        : '';
+
+    const dangerZoneHtml = isOwner
+        ? `<button class="btn btn-sm" onclick="teamDissolve()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--danger-color); background:transparent; color:var(--danger-color); font-weight:600; cursor:pointer; margin-top:0.5rem;">Sciogli il Team</button>
+           <p style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.5;">Le rassegne e i clienti rimarranno nel tuo account personale.</p>`
+        : `<button class="btn btn-sm" onclick="teamLeave()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--danger-color); background:transparent; color:var(--danger-color); font-weight:600; cursor:pointer; margin-top:0.5rem;">Abbandona il Team</button>`;
+
+    container.innerHTML = `
+        <!-- Info team -->
+        <div class="card" style="padding:1.25rem 1.5rem; border-radius:12px; border:1px solid var(--border-color); background:var(--bg-secondary); margin-bottom:1.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:4px;">Team</div>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--text-primary);">${team.name}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${team.members.length} membro${team.members.length !== 1 ? 'i' : ''}</div>
+        </div>
+
+        <!-- Membri -->
+        <div style="margin-bottom:1.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:0.75rem;">Membri</div>
+            ${membersHtml}
+        </div>
+
+        ${pendingHtml}
+
+        <!-- Invita un collega (solo owner) -->
+        ${isOwner ? `
+        <div style="margin-top:1.75rem; padding:1.25rem 1.5rem; border-radius:12px; border:1px solid var(--border-color); background:var(--bg-secondary);">
+            <div style="font-size:0.875rem; font-weight:700; color:var(--text-primary); margin-bottom:0.75rem;">Invita un Collega</div>
+            <div style="display:flex; gap:8px;">
+                <input type="email" id="teamInviteEmail" placeholder="email@collega.com"
+                    style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.875rem;">
+                <button class="btn btn-gradient btn-sm" onclick="teamSendInvite()" style="padding:9px 18px; font-size:0.875rem; white-space:nowrap;">Invia Invito</button>
+            </div>
+            <div id="teamInviteResult" style="margin-top:8px; font-size:0.8rem; display:none;"></div>
+        </div>` : ''}
+
+        <!-- Zona pericolosa -->
+        <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border-color);">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--danger-color, #dc2626); margin-bottom:0.75rem;">Zona Pericolosa</div>
+            ${dangerZoneHtml}
+        </div>
+    `;
+}
+
+/** Renderizza la schermata di creazione team (l'utente non è in nessun team) */
+function renderTeamCreation(container) {
+    container.innerHTML = `
+        <div style="text-align:center; padding: 2.5rem 1rem;">
+            <div style="width:64px; height:64px; border-radius:50%; background:rgba(124,92,255,.1); display:flex; align-items:center; justify-content:center; margin: 0 auto 1rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7c5cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem;">Nessun team attivo</h3>
+            <p style="font-size:0.875rem; color:var(--text-muted); max-width:380px; margin: 0 auto 1.75rem; line-height:1.6;">Crea un team per collaborare con i tuoi colleghi sulle stesse rassegne stampa, clienti e comunicati.</p>
+
+            <div style="max-width:380px; margin:0 auto;">
+                <input type="text" id="teamNameInput" placeholder="Nome del team (es. Studio PR, Agenzia Comms...)"
+                    style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.875rem; margin-bottom:12px;">
+                <button class="btn btn-gradient" onclick="teamCreate()" style="width:100%; padding:11px; font-size:0.875rem; font-weight:600; border-radius:8px;">Crea il Team</button>
+                <div id="teamCreateError" style="margin-top:8px; font-size:0.8rem; color:var(--danger-color, #dc2626); display:none;"></div>
+            </div>
+
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-top:1.25rem; line-height:1.6;">
+                Hai ricevuto un invito via email?<br>
+                Clicca il link nell'email per accedere al team del tuo collega.
+            </p>
+        </div>
+    `;
+}
+
+/** Crea un nuovo team */
+async function teamCreate() {
+    const input = document.getElementById('teamNameInput');
+    const errEl = document.getElementById('teamCreateError');
+    if (!input) return;
+
+    const name = input.value.trim();
+    if (!name) {
+        errEl.textContent = 'Inserisci un nome per il team.';
+        errEl.style.display = 'block';
+        return;
+    }
+    errEl.style.display = 'none';
+
+    try {
+        const res  = await fetch('/api/teams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.token}` },
+            body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            await loadTeamPage();
+        } else {
+            errEl.textContent = data.error || 'Impossibile creare il team.';
+            errEl.style.display = 'block';
+        }
+    } catch (e) {
+        errEl.textContent = 'Errore di connessione. Riprova.';
+        errEl.style.display = 'block';
+    }
+}
+window.teamCreate = teamCreate;
+
+/** Invia un invito email a un collega */
+async function teamSendInvite() {
+    const emailInput = document.getElementById('teamInviteEmail');
+    const resultEl   = document.getElementById('teamInviteResult');
+    if (!emailInput || !resultEl) return;
+
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    resultEl.style.display = 'none';
+
+    try {
+        const res  = await fetch('/api/teams/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.token}` },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        resultEl.style.display = 'block';
+        if (res.ok && data.success) {
+            resultEl.style.color = 'var(--success-color, #16a34a)';
+            if (data.emailSent) {
+                resultEl.textContent = data.message;
+            } else {
+                // Modalità link-only: mostra il link copiabile
+                resultEl.innerHTML = `Invito generato. Copia e invia questo link a ${email}:<br>
+                    <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+                        <input type="text" value="${data.inviteLink}" readonly
+                            style="flex:1; padding:6px 8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.75rem;"
+                            onclick="this.select()">
+                        <button onclick="navigator.clipboard.writeText('${data.inviteLink}').then(() => this.textContent='Copiato')"
+                            style="padding:5px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:0.75rem; cursor:pointer; white-space:nowrap;">
+                            Copia
+                        </button>
+                    </div>`;
+            }
+            emailInput.value = '';
+        } else {
+            resultEl.style.color = 'var(--danger-color, #dc2626)';
+            resultEl.textContent = data.error || 'Impossibile inviare l\'invito.';
+        }
+    } catch (e) {
+        resultEl.style.display = 'block';
+        resultEl.style.color   = 'var(--danger-color, #dc2626)';
+        resultEl.textContent   = 'Errore di connessione. Riprova.';
+    }
+}
+window.teamSendInvite = teamSendInvite;
+
+/** Rimuove un membro dal team (solo owner) */
+async function teamRemoveMember(userId) {
+    if (!confirm('Rimuovere questo membro dal team?')) return;
+
+    try {
+        const res  = await fetch(`/api/teams/members/${userId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${state.token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            await loadTeamPage();
+        } else {
+            alert(data.error || 'Impossibile rimuovere il membro.');
+        }
+    } catch (e) {
+        alert('Errore di connessione. Riprova.');
+    }
+}
+window.teamRemoveMember = teamRemoveMember;
+
+/** Il membro abbandona il team */
+async function teamLeave() {
+    if (!confirm('Vuoi davvero abbandonare il team? Non vedrai più le rassegne condivise.')) return;
+
+    try {
+        const res  = await fetch('/api/teams/leave', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${state.token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            await loadTeamPage();
+        } else {
+            alert(data.error || 'Impossibile abbandonare il team.');
+        }
+    } catch (e) {
+        alert('Errore di connessione. Riprova.');
+    }
+}
+window.teamLeave = teamLeave;
+
+/** L'owner scioglie il team */
+async function teamDissolve() {
+    if (!confirm('Sciogliere il team? Tutti i membri perderanno l\'accesso condiviso. I tuoi dati personali resteranno intatti.')) return;
+
+    try {
+        const res  = await fetch('/api/teams', {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${state.token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            await loadTeamPage();
+        } else {
+            alert(data.error || 'Impossibile sciogliere il team.');
+        }
+    } catch (e) {
+        alert('Errore di connessione. Riprova.');
+    }
+}
+window.teamDissolve = teamDissolve;
 
