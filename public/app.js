@@ -916,65 +916,541 @@ async function triggerDownload(url, filename) {
 }
 window.triggerDownload = triggerDownload;
 
-// --- HISTORY ---
+// --- HISTORY (Organizzato per Cliente e per Data) ---
 
-function renderHistoryItems(list, history) {
+let rawHistoryItems = [];
+let selectedHistoryIds = new Set();
+let currentHistoryGrouping = 'date'; // 'date' | 'client'
+
+const ITALIAN_MONTHS = [
+    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+];
+
+function formatMonthLabel(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Senza data';
+    return `${ITALIAN_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function getYearMonthKey(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '0000-00';
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${d.getFullYear()}-${m}`;
+}
+
+function populateHistoryFilters(items) {
+    const clientSelect = document.getElementById('historyClientFilter');
+    const monthSelect  = document.getElementById('historyMonthFilter');
+    if (!clientSelect || !monthSelect) return;
+
+    const currentClient = clientSelect.value;
+    const currentMonth  = monthSelect.value;
+
+    // Raccoglie clienti con conteggio
+    const clientCounts = {};
+    let noClientCount = 0;
+
+    // Raccoglie mesi con conteggio (chiave YYYY-MM -> { label, count })
+    const monthMap = {};
+
+    items.forEach(item => {
+        // Cliente
+        const cName = (item.client_name || '').trim();
+        if (cName) {
+            clientCounts[cName] = (clientCounts[cName] || 0) + 1;
+        } else {
+            noClientCount++;
+        }
+
+        // Mese
+        const ymKey = getYearMonthKey(item.created_at);
+        if (!monthMap[ymKey]) {
+            monthMap[ymKey] = {
+                label: formatMonthLabel(item.created_at),
+                count: 0
+            };
+        }
+        monthMap[ymKey].count++;
+    });
+
+    // Popola Clienti
+    let clientOptionsHtml = `<option value="all">Tutti i Clienti (${items.length})</option>`;
+    const sortedClients = Object.keys(clientCounts).sort((a, b) => a.localeCompare(b, 'it'));
+    sortedClients.forEach(c => {
+        clientOptionsHtml += `<option value="${escapeHtml(c)}">${escapeHtml(c)} (${clientCounts[c]})</option>`;
+    });
+    if (noClientCount > 0) {
+        clientOptionsHtml += `<option value="__none__">Rassegne Generali / Senza Cliente (${noClientCount})</option>`;
+    }
+    clientSelect.innerHTML = clientOptionsHtml;
+    if (currentClient && Array.from(clientSelect.options).some(o => o.value === currentClient)) {
+        clientSelect.value = currentClient;
+    }
+
+    // Popola Mesi
+    let monthOptionsHtml = `<option value="all">Tutte le Date (${items.length})</option>`;
+    const sortedMonths = Object.keys(monthMap).sort((a, b) => b.localeCompare(a)); // Più recenti prima
+    sortedMonths.forEach(ym => {
+        monthOptionsHtml += `<option value="${ym}">${monthMap[ym].label} (${monthMap[ym].count})</option>`;
+    });
+    monthSelect.innerHTML = monthOptionsHtml;
+    if (currentMonth && Array.from(monthSelect.options).some(o => o.value === currentMonth)) {
+        monthSelect.value = currentMonth;
+    }
+}
+
+function setHistoryGrouping(mode) {
+    currentHistoryGrouping = mode;
+    const btnDate   = document.getElementById('btnGroupDate');
+    const btnClient = document.getElementById('btnGroupClient');
+    if (btnDate && btnClient) {
+        if (mode === 'date') {
+            btnDate.classList.add('active');
+            btnClient.classList.remove('active');
+        } else {
+            btnClient.classList.add('active');
+            btnDate.classList.remove('active');
+        }
+    }
+    filterAndRenderHistory();
+}
+window.setHistoryGrouping = setHistoryGrouping;
+
+function filterAndRenderHistory() {
+    const searchInput  = document.getElementById('historySearchInput');
+    const clientSelect = document.getElementById('historyClientFilter');
+    const monthSelect  = document.getElementById('historyMonthFilter');
+    const listEl       = document.getElementById('historyList');
+    const countEl      = document.getElementById('historyCountSummary');
+    if (!listEl) return;
+
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const selClient = clientSelect?.value || 'all';
+    const selMonth  = monthSelect?.value || 'all';
+
+    const filtered = rawHistoryItems.filter(item => {
+        // Filtro testo
+        if (query) {
+            const titleMatch  = (item.title || '').toLowerCase().includes(query);
+            const clientMatch = (item.client_name || '').toLowerCase().includes(query);
+            if (!titleMatch && !clientMatch) return false;
+        }
+
+        // Filtro cliente
+        if (selClient !== 'all') {
+            if (selClient === '__none__') {
+                if ((item.client_name || '').trim() !== '') return false;
+            } else {
+                if ((item.client_name || '').trim() !== selClient) return false;
+            }
+        }
+
+        // Filtro periodo
+        if (selMonth !== 'all') {
+            const ym = getYearMonthKey(item.created_at);
+            if (ym !== selMonth) return false;
+        }
+
+        return true;
+    });
+
+    if (countEl) {
+        countEl.textContent = `Visualizzate ${filtered.length} rassegne su ${rawHistoryItems.length} totali`;
+    }
+
+    renderGroupedHistory(filtered, currentHistoryGrouping);
+    updateBatchActionsBar();
+}
+window.filterAndRenderHistory = filterAndRenderHistory;
+
+function renderGroupedHistory(items, groupBy) {
+    const list = document.getElementById('historyList');
+    if (!list) return;
+
     list.innerHTML = '';
-    if (!history || history.length === 0) {
-        list.innerHTML = '<div class="empty-state">Nessuna rassegna generata finora.</div>';
+
+    if (!items || items.length === 0) {
+        const isFiltered = rawHistoryItems.length > 0;
+        list.innerHTML = `
+            <div class="empty-state" style="padding:3rem 1.5rem; text-align:center;">
+                <p style="margin-bottom:0.75rem; color:var(--text-muted);">
+                    ${isFiltered ? 'Nessuna rassegna trovata con i filtri selezionati.' : 'Nessuna rassegna generata finora.'}
+                </p>
+                ${isFiltered ? `<button class="btn btn-outline btn-sm" onclick="resetHistoryFilters()">Reimposta Filtri</button>` : ''}
+            </div>`;
         return;
     }
 
-    history.forEach(item => {
-        const date = new Date(item.created_at).toLocaleDateString('it-IT');
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-            <div class="history-info">
-                <strong style="font-size:1.05rem;">${escapeHtml(item.title)}</strong>
-                <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.85rem;">
-                    ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${escapeHtml(item.client_name)}` : ''}
-                </span>
-            </div>
-            <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
-                <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
-                <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>
-                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
-                <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);" title="Genera Briefing Esecutivo per questa rassegna"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Briefing AI</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
-            </div>
-        `;
-        list.appendChild(div);
-    });
+    if (groupBy === 'client') {
+        // ── RAGGRUPPATO PER CLIENTE ──────────────────────────────────────────
+        const clientGroups = {};
+        items.forEach(item => {
+            const cName = (item.client_name || '').trim() || 'Rassegne Generali (senza cliente)';
+            if (!clientGroups[cName]) clientGroups[cName] = [];
+            clientGroups[cName].push(item);
+        });
+
+        // Ordina clienti (quelli col nome prima in ordine alfabetico, 'senza cliente' alla fine)
+        const sortedClientKeys = Object.keys(clientGroups).sort((a, b) => {
+            if (a.startsWith('Rassegne Generali')) return 1;
+            if (b.startsWith('Rassegne Generali')) return -1;
+            return a.localeCompare(b, 'it');
+        });
+
+        sortedClientKeys.forEach(groupName => {
+            const groupItems = clientGroups[groupName];
+            renderHistoryGroupCard(list, groupName, groupItems, 'user');
+        });
+
+    } else {
+        // ── RAGGRUPPATO PER DATA (Mese / Anno) ───────────────────────────────
+        const dateGroups = {};
+        items.forEach(item => {
+            const ymKey = getYearMonthKey(item.created_at);
+            if (!dateGroups[ymKey]) {
+                dateGroups[ymKey] = {
+                    label: formatMonthLabel(item.created_at),
+                    items: []
+                };
+            }
+            dateGroups[ymKey].items.push(item);
+        });
+
+        // Ordina dal mese più recente al più vecchio
+        const sortedYmKeys = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a));
+
+        sortedYmKeys.forEach(ymKey => {
+            const group = dateGroups[ymKey];
+            renderHistoryGroupCard(list, group.label, group.items, 'calendar');
+        });
+    }
+
     if (window.feather) feather.replace();
 }
+
+function renderHistoryGroupCard(container, groupTitle, items, iconName) {
+    const card = document.createElement('div');
+    card.className = 'history-group-card';
+
+    // Calcola se tutte le rassegne del gruppo sono selezionate
+    const allGroupSelected = items.every(it => selectedHistoryIds.has(it.id));
+    const itemIdsAttr = items.map(it => it.id).join(',');
+
+    const header = document.createElement('div');
+    header.className = 'history-group-header';
+    header.innerHTML = `
+        <div class="history-group-title">
+            <i data-feather="${iconName}" style="width:18px;height:18px;color:var(--accent-primary);"></i>
+            <span>${escapeHtml(groupTitle)}</span>
+            <span class="history-group-badge">${items.length} rassegn${items.length === 1 ? 'a' : 'e'}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; font-size:0.8rem; flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" onclick="downloadGroupReviews([${itemIdsAttr}])" style="padding:4px 10px; font-size:0.75rem;">
+                <i data-feather="download" style="width:12px;height:12px;margin-right:4px;"></i> Scarica tutto (${items.length})
+            </button>
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--text-secondary);">
+                <input type="checkbox" class="history-checkbox group-checkbox" data-ids="${itemIdsAttr}"
+                    ${allGroupSelected ? 'checked' : ''}
+                    onchange="toggleGroupSelection([${itemIdsAttr}], this.checked)">
+                <span>Seleziona</span>
+            </label>
+        </div>
+    `;
+    card.appendChild(header);
+
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'history-group-items';
+
+    items.forEach(item => {
+        const isSelected = selectedHistoryIds.has(item.id);
+        const itemRow = document.createElement('div');
+        itemRow.className = `history-item ${isSelected ? 'selected' : ''}`;
+        itemRow.id = `history-item-${item.id}`;
+
+        const dateStr = new Date(item.created_at).toLocaleDateString('it-IT', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+
+        const clientBadgeHtml = item.client_name
+            ? `<span class="history-client-badge"><i data-feather="user" style="width:11px;height:11px;"></i> ${escapeHtml(item.client_name)}</span>`
+            : '';
+
+        itemRow.innerHTML = `
+            <div style="display:flex; align-items:flex-start; gap:12px; flex:1; min-width:0;">
+                <input type="checkbox" class="history-checkbox item-checkbox" data-id="${item.id}"
+                    ${isSelected ? 'checked' : ''}
+                    onchange="toggleSelectReview(${item.id}, this.checked)" style="margin-top:4px;">
+                <div class="history-info">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <div class="history-meta">
+                        <span><i data-feather="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${dateStr}</span>
+                        <span>&bull;</span>
+                        <span><i data-feather="file-text" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'}</span>
+                        ${clientBadgeHtml}
+                        ${item.team_id ? `<span style="font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:1px 6px; border-radius:4px;">Condiviso nel Team</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="history-actions">
+                <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${escapeHtml(item.filename)}')">
+                    <i data-feather="download" style="width:14px;height:14px;margin-right:4px;"></i> Scarica PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})" title="Riapri per modificare">
+                    <i data-feather="edit-2" style="width:14px;height:14px;margin-right:4px;"></i> Modifica
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" title="Condividi rassegna">
+                    <i data-feather="share-2" style="width:14px;height:14px;"></i>
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" title="Briefing Esecutivo AI">
+                    <i data-feather="zap" style="width:14px;height:14px;color:var(--accent-primary);"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" title="Elimina rassegna">
+                    <i data-feather="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+            </div>
+        `;
+        itemsContainer.appendChild(itemRow);
+    });
+
+    card.appendChild(itemsContainer);
+    container.appendChild(card);
+}
+
+function resetHistoryFilters() {
+    const searchInput  = document.getElementById('historySearchInput');
+    const clientSelect = document.getElementById('historyClientFilter');
+    const monthSelect  = document.getElementById('historyMonthFilter');
+    if (searchInput)  searchInput.value = '';
+    if (clientSelect) clientSelect.value = 'all';
+    if (monthSelect)  monthSelect.value = 'all';
+    filterAndRenderHistory();
+}
+window.resetHistoryFilters = resetHistoryFilters;
+
+// ── GESTIONE SELEZIONE E AZIONI CUMULATIVE ──────────────────────────────────
+
+function toggleSelectReview(id, checked) {
+    if (checked) {
+        selectedHistoryIds.add(id);
+    } else {
+        selectedHistoryIds.delete(id);
+    }
+    const itemEl = document.getElementById(`history-item-${id}`);
+    if (itemEl) itemEl.classList.toggle('selected', checked);
+    updateBatchActionsBar();
+}
+window.toggleSelectReview = toggleSelectReview;
+
+function toggleGroupSelection(ids, checked) {
+    ids.forEach(id => {
+        if (checked) {
+            selectedHistoryIds.add(id);
+        } else {
+            selectedHistoryIds.delete(id);
+        }
+        const itemEl = document.getElementById(`history-item-${id}`);
+        if (itemEl) {
+            itemEl.classList.toggle('selected', checked);
+            const chk = itemEl.querySelector('.item-checkbox');
+            if (chk) chk.checked = checked;
+        }
+    });
+    updateBatchActionsBar();
+}
+window.toggleGroupSelection = toggleGroupSelection;
+
+function toggleSelectAllVisible(checked) {
+    const allVisibleCheckboxes = document.querySelectorAll('#historyList .item-checkbox');
+    allVisibleCheckboxes.forEach(chk => {
+        const id = parseInt(chk.dataset.id);
+        if (!isNaN(id)) {
+            if (checked) selectedHistoryIds.add(id);
+            else selectedHistoryIds.delete(id);
+            chk.checked = checked;
+            const itemEl = document.getElementById(`history-item-${id}`);
+            if (itemEl) itemEl.classList.toggle('selected', checked);
+        }
+    });
+    document.querySelectorAll('#historyList .group-checkbox').forEach(gc => gc.checked = checked);
+    updateBatchActionsBar();
+}
+window.toggleSelectAllVisible = toggleSelectAllVisible;
+
+function deselectAllReviews() {
+    selectedHistoryIds.clear();
+    document.querySelectorAll('#historyList .item-checkbox').forEach(c => c.checked = false);
+    document.querySelectorAll('#historyList .group-checkbox').forEach(c => c.checked = false);
+    document.querySelectorAll('#historyList .history-item').forEach(it => it.classList.remove('selected'));
+    const chkAll = document.getElementById('chkSelectAllVisible');
+    if (chkAll) chkAll.checked = false;
+    updateBatchActionsBar();
+}
+window.deselectAllReviews = deselectAllReviews;
+
+function updateBatchActionsBar() {
+    const bar = document.getElementById('historyBatchActions');
+    const badge = document.getElementById('selectedCountBadge');
+    if (!bar || !badge) return;
+
+    const count = selectedHistoryIds.size;
+    if (count > 0) {
+        bar.style.display = 'flex';
+        badge.textContent = `${count} selezionat${count === 1 ? 'a' : 'e'}`;
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+// ── ESPORTAZIONE E DOWNLOAD CUMULATIVO ──────────────────────────────────────
+
+async function downloadSelectedReviews() {
+    if (selectedHistoryIds.size === 0) {
+        showToast('Nessuna rassegna selezionata.', 'warning');
+        return;
+    }
+
+    const itemsToDownload = rawHistoryItems.filter(it => selectedHistoryIds.has(it.id));
+    if (itemsToDownload.length === 0) return;
+
+    const btn = document.getElementById('btnDownloadSelected');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = `Download di ${itemsToDownload.length} PDF...`;
+    }
+
+    showToast(`Avvio download di ${itemsToDownload.length} rassegne in corso...`, 'info');
+
+    let count = 0;
+    for (const item of itemsToDownload) {
+        triggerDownload(item.downloadUrl, item.filename);
+        count++;
+        await new Promise(r => setTimeout(r, 450));
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-feather="download" style="width:14px;height:14px;"></i> Scarica Selezionate`;
+        if (window.feather) feather.replace();
+    }
+
+    showToast(`Tutti i ${count} PDF sono stati avviati per il download!`, 'success');
+}
+window.downloadSelectedReviews = downloadSelectedReviews;
+
+async function downloadGroupReviews(ids) {
+    if (!ids || ids.length === 0) return;
+    const items = rawHistoryItems.filter(it => ids.includes(it.id));
+    showToast(`Avvio download di ${items.length} rassegne...`, 'info');
+    for (const item of items) {
+        triggerDownload(item.downloadUrl, item.filename);
+        await new Promise(r => setTimeout(r, 450));
+    }
+    showToast(`Download di ${items.length} rassegne completato!`, 'success');
+}
+window.downloadGroupReviews = downloadGroupReviews;
+
+function exportHistoryCsv() {
+    const searchInput  = document.getElementById('historySearchInput');
+    const clientSelect = document.getElementById('historyClientFilter');
+    const monthSelect  = document.getElementById('historyMonthFilter');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const selClient = clientSelect?.value || 'all';
+    const selMonth  = monthSelect?.value || 'all';
+
+    let itemsToExport = rawHistoryItems.filter(item => {
+        if (selectedHistoryIds.size > 0) {
+            return selectedHistoryIds.has(item.id);
+        }
+        if (query) {
+            const titleMatch  = (item.title || '').toLowerCase().includes(query);
+            const clientMatch = (item.client_name || '').toLowerCase().includes(query);
+            if (!titleMatch && !clientMatch) return false;
+        }
+        if (selClient !== 'all') {
+            if (selClient === '__none__') {
+                if ((item.client_name || '').trim() !== '') return false;
+            } else {
+                if ((item.client_name || '').trim() !== selClient) return false;
+            }
+        }
+        if (selMonth !== 'all') {
+            if (getYearMonthKey(item.created_at) !== selMonth) return false;
+        }
+        return true;
+    });
+
+    if (itemsToExport.length === 0) {
+        showToast('Nessuna rassegna da esportare.', 'warning');
+        return;
+    }
+
+    // Costruisce il file CSV
+    const rows = [
+        ['ID', 'Titolo Rassegna', 'Cliente', 'Data Creazione', 'Numero Articoli', 'Nome File PDF', 'Link Download']
+    ];
+
+    const origin = window.location.origin;
+
+    itemsToExport.forEach(it => {
+        const dateStr = new Date(it.created_at).toLocaleDateString('it-IT');
+        rows.push([
+            it.id,
+            `"${(it.title || '').replace(/"/g, '""')}"`,
+            `"${(it.client_name || 'Generale').replace(/"/g, '""')}"`,
+            dateStr,
+            it.article_count,
+            `"${(it.filename || '').replace(/"/g, '""')}"`,
+            `${origin}${it.downloadUrl}`
+        ]);
+    });
+
+    const csvContent = "\uFEFF" + rows.map(e => e.join(';')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `Indice_Rassegne_${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast(`Indice esportato con successo (${itemsToExport.length} rassegne)!`, 'success');
+}
+window.exportHistoryCsv = exportHistoryCsv;
+
+// ── CARICAMENTO STORICO DAL SERVER ──────────────────────────────────────────
 
 async function loadHistory() {
     const list = document.getElementById('historyList');
     if (!list) return;
 
-    // 1. Mostra subito la versione memorizzata nella cache locale se presente
+    // Cache locale rapida per evitare schermate vuote
     const cachedStr = localStorage.getItem('rs_cached_history');
-    if (cachedStr && list.children.length === 0) {
+    if (cachedStr && rawHistoryItems.length === 0) {
         try {
             const cached = JSON.parse(cachedStr);
             if (Array.isArray(cached) && cached.length > 0) {
-                renderHistoryItems(list, cached);
+                rawHistoryItems = cached;
+                populateHistoryFilters(rawHistoryItems);
+                filterAndRenderHistory();
             }
         } catch (e) {}
     }
 
     try {
         const history = await apiCall('GET', '/api/pdf/history');
-        
         if (Array.isArray(history)) {
-            // Salva nella cache locale del browser
+            rawHistoryItems = history;
             try { localStorage.setItem('rs_cached_history', JSON.stringify(history)); } catch (e) {}
-            renderHistoryItems(list, history);
+            populateHistoryFilters(rawHistoryItems);
+            filterAndRenderHistory();
         }
     } catch (error) {
-        // Se c'è già la cronologia a schermo (dalla cache), non cancellarla, mostra solo un avviso
-        if (list.children.length === 0 || list.querySelector('.empty-state')) {
+        if (rawHistoryItems.length === 0) {
             list.innerHTML = `
                 <div class="empty-state" style="text-align:center; padding:2rem;">
                     <p style="color:var(--danger-color, #dc2626); margin-bottom:12px;">Impossibile caricare lo storico: ${escapeHtml(error.message)}</p>
@@ -983,6 +1459,7 @@ async function loadHistory() {
         }
     }
 }
+window.loadHistory = loadHistory;
 
 async function deleteHistory(id) {
     if (!confirm('Sei sicuro di voler eliminare questa rassegna?')) return;

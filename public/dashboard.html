@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260916_01">
+    <link rel="stylesheet" href="styles.css?v=20260916_02">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -1284,14 +1284,86 @@
 
         <!-- PAGE: STORICO -->
         <div id="page-storico" class="page-view">
-            <div class="page-header">
-                <h1 class="page-title"><i data-feather="book" style="width:28px;height:28px;vertical-align:middle;"></i> Storico Rassegne</h1>
-                <p class="page-subtitle">Le tue rassegne generate negli ultimi 30 giorni</p>
-            </div>
-            <div class="glass-card">
-                <div id="historyList" class="history-list">
-                    <div class="empty-state">Caricamento storico...</div>
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="book" style="width:28px;height:28px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> Storico Rassegne</h1>
+                    <p class="page-subtitle">Tutte le tue rassegne stampa, organizzate per cliente e periodo.</p>
                 </div>
+                <!-- Barra Azioni Cumulative (visibile quando ci sono rassegne selezionate) -->
+                <div id="historyBatchActions" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span id="selectedCountBadge" style="font-size:0.85rem; font-weight:600; color:var(--text-secondary); background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:20px;">0 selezionate</span>
+                    <button class="btn btn-sm btn-gradient" id="btnDownloadSelected" onclick="downloadSelectedReviews()" style="display:inline-flex; align-items:center; gap:6px;">
+                        <i data-feather="download" style="width:14px;height:14px;"></i> Scarica Selezionate
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="exportHistoryCsv()" style="display:inline-flex; align-items:center; gap:6px;">
+                        <i data-feather="file-text" style="width:14px;height:14px;"></i> Esporta Indice (CSV)
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="deselectAllReviews()" style="font-size:0.75rem; color:var(--text-muted);">
+                        Deseleziona
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtri & Controlli Rapidi -->
+            <div class="glass-card" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem; border-radius:12px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; align-items:end;">
+                    <!-- Ricerca Testuale -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Cerca</label>
+                        <div style="position:relative;">
+                            <input type="text" id="historySearchInput" placeholder="Cerca per titolo o cliente..." oninput="filterAndRenderHistory()"
+                                style="width:100%; padding:9px 12px 9px 34px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <i data-feather="search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-muted); pointer-events:none;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Filtro Cliente -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Cliente</label>
+                        <select id="historyClientFilter" onchange="filterAndRenderHistory()"
+                            style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="all">Tutti i Clienti</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Periodo (Mese / Anno) -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Periodo</label>
+                        <select id="historyMonthFilter" onchange="filterAndRenderHistory()"
+                            style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                            <option value="all">Tutte le Date</option>
+                        </select>
+                    </div>
+
+                    <!-- Raggruppamento (Toggle Data / Cliente) -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Raggruppa per</label>
+                        <div style="display:flex; border-radius:8px; border:1px solid var(--border-color); overflow:hidden; background:var(--bg-primary);">
+                            <button type="button" id="btnGroupDate" onclick="setHistoryGrouping('date')" class="btn-group-toggle active"
+                                style="flex:1; padding:8px 10px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
+                                Per Data
+                            </button>
+                            <button type="button" id="btnGroupClient" onclick="setHistoryGrouping('client')" class="btn-group-toggle"
+                                style="flex:1; padding:8px 10px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
+                                Per Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra di stato e selezione globale -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); font-size:0.8rem; color:var(--text-muted); flex-wrap:wrap; gap:0.5rem;">
+                    <div id="historyCountSummary">Caricamento rassegne...</div>
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
+                        <input type="checkbox" id="chkSelectAllVisible" onchange="toggleSelectAllVisible(this.checked)" class="history-checkbox">
+                        <span>Seleziona tutte quelle visibili</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Lista Raggruppata delle Rassegne -->
+            <div id="historyList" class="history-list">
+                <div class="empty-state">Caricamento storico...</div>
             </div>
         </div>
 
@@ -2152,7 +2224,7 @@
         feather.replace();
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260916_08"></script>
+    <script src="app.js?v=20260916_09"></script>
     <script src="ui.js?v=20260914_25"></script>
 </body>
 </html>
