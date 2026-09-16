@@ -922,10 +922,52 @@ let rawHistoryItems = [];
 let selectedHistoryIds = new Set();
 let currentHistoryGrouping = 'date'; // 'date' | 'client'
 
+const ITALIAN_DAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 const ITALIAN_MONTHS = [
     'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ];
+
+function toYYYYMMDD(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getItemDateKey(dateStr) {
+    if (!dateStr) return '0000-00-00';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+        const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return match ? `${match[1]}-${match[2]}-${match[3]}` : '0000-00-00';
+    }
+    return toYYYYMMDD(d);
+}
+
+function formatDayLabel(dateKey) {
+    if (!dateKey || dateKey === '0000-00-00') return 'Data non specificata';
+    const now = new Date();
+    const todayKey = toYYYYMMDD(now);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = toYYYYMMDD(yesterday);
+
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const dayName = ITALIAN_DAYS[dateObj.getDay()] || '';
+    const monthName = ITALIAN_MONTHS[m - 1] || '';
+
+    let prefix = '';
+    if (dateKey === todayKey) {
+        prefix = 'Oggi &bull; ';
+    } else if (dateKey === yesterdayKey) {
+        prefix = 'Ieri &bull; ';
+    }
+
+    return `${prefix}${dayName} ${d} ${monthName} ${y}`;
+}
 
 function formatMonthLabel(dateStr) {
     const d = new Date(dateStr);
@@ -942,17 +984,15 @@ function getYearMonthKey(dateStr) {
 
 function populateHistoryFilters(items) {
     const clientSelect = document.getElementById('historyClientFilter');
-    const monthSelect  = document.getElementById('historyMonthFilter');
-    if (!clientSelect || !monthSelect) return;
+    const periodSelect = document.getElementById('historyPeriodPreset');
+    if (!clientSelect) return;
 
     const currentClient = clientSelect.value;
-    const currentMonth  = monthSelect.value;
+    const currentPreset = periodSelect ? periodSelect.value : 'all';
 
     // Raccoglie clienti con conteggio
     const clientCounts = {};
     let noClientCount = 0;
-
-    // Raccoglie mesi con conteggio (chiave YYYY-MM -> { label, count })
     const monthMap = {};
 
     items.forEach(item => {
@@ -964,7 +1004,7 @@ function populateHistoryFilters(items) {
             noClientCount++;
         }
 
-        // Mese
+        // Mesi presenti
         const ymKey = getYearMonthKey(item.created_at);
         if (!monthMap[ymKey]) {
             monthMap[ymKey] = {
@@ -989,16 +1029,151 @@ function populateHistoryFilters(items) {
         clientSelect.value = currentClient;
     }
 
-    // Popola Mesi
-    let monthOptionsHtml = `<option value="all">Tutte le Date (${items.length})</option>`;
-    const sortedMonths = Object.keys(monthMap).sort((a, b) => b.localeCompare(a)); // Più recenti prima
-    sortedMonths.forEach(ym => {
-        monthOptionsHtml += `<option value="${ym}">${monthMap[ym].label} (${monthMap[ym].count})</option>`;
-    });
-    monthSelect.innerHTML = monthOptionsHtml;
-    if (currentMonth && Array.from(monthSelect.options).some(o => o.value === currentMonth)) {
-        monthSelect.value = currentMonth;
+    // Popola Periodo / Preset
+    if (periodSelect) {
+        let periodOptionsHtml = `
+            <option value="all">Tutte le Date</option>
+            <option value="today">Oggi</option>
+            <option value="yesterday">Ieri</option>
+            <option value="last7">Ultimi 7 giorni</option>
+            <option value="last30">Ultimi 30 giorni</option>
+            <option value="this_month">Questo mese</option>
+            <option value="last_month">Mese scorso</option>
+        `;
+
+        const sortedMonths = Object.keys(monthMap).sort((a, b) => b.localeCompare(a));
+        if (sortedMonths.length > 0) {
+            periodOptionsHtml += `<optgroup label="Mesi Specifici">`;
+            sortedMonths.forEach(ym => {
+                periodOptionsHtml += `<option value="month:${ym}">${monthMap[ym].label} (${monthMap[ym].count})</option>`;
+            });
+            periodOptionsHtml += `</optgroup>`;
+        }
+        periodOptionsHtml += `<option value="custom">Giorno / Periodo specifico</option>`;
+        periodSelect.innerHTML = periodOptionsHtml;
+
+        if (currentPreset && Array.from(periodSelect.options).some(o => o.value === currentPreset)) {
+            periodSelect.value = currentPreset;
+        }
     }
+}
+
+function applyHistoryPeriodPreset(presetVal) {
+    const inputFrom = document.getElementById('historyDateFrom');
+    const inputTo   = document.getElementById('historyDateTo');
+    const presetSel = document.getElementById('historyPeriodPreset');
+    const btnReset  = document.getElementById('btnResetDates');
+    if (!inputFrom || !inputTo) return;
+
+    const now = new Date();
+    const todayStr = toYYYYMMDD(now);
+
+    let fromStr = '';
+    let toStr   = '';
+
+    if (presetVal === 'all') {
+        fromStr = '';
+        toStr = '';
+    } else if (presetVal === 'today') {
+        fromStr = todayStr;
+        toStr = todayStr;
+    } else if (presetVal === 'yesterday') {
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        fromStr = toYYYYMMDD(y);
+        toStr = toYYYYMMDD(y);
+    } else if (presetVal === 'last7') {
+        const d7 = new Date();
+        d7.setDate(d7.getDate() - 6);
+        fromStr = toYYYYMMDD(d7);
+        toStr = todayStr;
+    } else if (presetVal === 'last30') {
+        const d30 = new Date();
+        d30.setDate(d30.getDate() - 29);
+        fromStr = toYYYYMMDD(d30);
+        toStr = todayStr;
+    } else if (presetVal === 'this_month') {
+        fromStr = toYYYYMMDD(new Date(now.getFullYear(), now.getMonth(), 1));
+        toStr = todayStr;
+    } else if (presetVal === 'last_month') {
+        fromStr = toYYYYMMDD(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+        toStr = toYYYYMMDD(new Date(now.getFullYear(), now.getMonth(), 0));
+    } else if (presetVal && presetVal.startsWith('month:')) {
+        const ym = presetVal.replace('month:', '');
+        const [year, month] = ym.split('-').map(Number);
+        fromStr = `${year}-${String(month).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        toStr = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    } else if (presetVal === 'custom') {
+        fromStr = inputFrom.value;
+        toStr = inputTo.value;
+    }
+
+    inputFrom.value = fromStr;
+    inputTo.value = toStr;
+
+    if (presetSel && presetSel.value !== presetVal) {
+        presetSel.value = presetVal;
+    }
+
+    updateDateChipsActive(presetVal);
+
+    if (btnReset) {
+        btnReset.style.display = (fromStr || toStr) ? 'inline-flex' : 'none';
+    }
+
+    filterAndRenderHistory();
+}
+window.applyHistoryPeriodPreset = applyHistoryPeriodPreset;
+
+function applyHistoryDateChip(chipKey) {
+    applyHistoryPeriodPreset(chipKey);
+}
+window.applyHistoryDateChip = applyHistoryDateChip;
+
+function onHistoryDateInputChange() {
+    const inputFrom = document.getElementById('historyDateFrom');
+    const inputTo   = document.getElementById('historyDateTo');
+    const presetSel = document.getElementById('historyPeriodPreset');
+    const btnReset  = document.getElementById('btnResetDates');
+    if (!inputFrom || !inputTo) return;
+
+    const fromVal = inputFrom.value;
+    const toVal   = inputTo.value;
+
+    if (presetSel) {
+        presetSel.value = 'custom';
+    }
+    updateDateChipsActive('custom');
+
+    if (btnReset) {
+        btnReset.style.display = (fromVal || toVal) ? 'inline-flex' : 'none';
+    }
+
+    filterAndRenderHistory();
+}
+window.onHistoryDateInputChange = onHistoryDateInputChange;
+
+function clearHistoryDateFilter() {
+    applyHistoryPeriodPreset('all');
+}
+window.clearHistoryDateFilter = clearHistoryDateFilter;
+
+function updateDateChipsActive(activeKey) {
+    const chips = {
+        'all': 'chipDateAll',
+        'today': 'chipDateToday',
+        'yesterday': 'chipDateYesterday',
+        'last7': 'chipDateLast7',
+        'this_month': 'chipDateThisMonth',
+        'last_month': 'chipDateLastMonth'
+    };
+    Object.keys(chips).forEach(k => {
+        const el = document.getElementById(chips[k]);
+        if (el) {
+            el.classList.toggle('active', k === activeKey);
+        }
+    });
 }
 
 function setHistoryGrouping(mode) {
@@ -1021,17 +1196,19 @@ window.setHistoryGrouping = setHistoryGrouping;
 function filterAndRenderHistory() {
     const searchInput  = document.getElementById('historySearchInput');
     const clientSelect = document.getElementById('historyClientFilter');
-    const monthSelect  = document.getElementById('historyMonthFilter');
+    const inputFrom    = document.getElementById('historyDateFrom');
+    const inputTo      = document.getElementById('historyDateTo');
     const listEl       = document.getElementById('historyList');
     const countEl      = document.getElementById('historyCountSummary');
     if (!listEl) return;
 
     const query = (searchInput?.value || '').toLowerCase().trim();
     const selClient = clientSelect?.value || 'all';
-    const selMonth  = monthSelect?.value || 'all';
+    const dateFrom  = (inputFrom?.value || '').trim();
+    const dateTo    = (inputTo?.value || '').trim();
 
     const filtered = rawHistoryItems.filter(item => {
-        // Filtro testo
+        // Filtro testo (titolo o cliente)
         if (query) {
             const titleMatch  = (item.title || '').toLowerCase().includes(query);
             const clientMatch = (item.client_name || '').toLowerCase().includes(query);
@@ -1047,17 +1224,33 @@ function filterAndRenderHistory() {
             }
         }
 
-        // Filtro periodo
-        if (selMonth !== 'all') {
-            const ym = getYearMonthKey(item.created_at);
-            if (ym !== selMonth) return false;
-        }
+        // Filtro per data precisa a livello di giorno
+        const itemDateKey = getItemDateKey(item.created_at);
+        if (dateFrom && itemDateKey < dateFrom) return false;
+        if (dateTo && itemDateKey > dateTo) return false;
 
         return true;
     });
 
     if (countEl) {
-        countEl.textContent = `Visualizzate ${filtered.length} rassegne su ${rawHistoryItems.length} totali`;
+        let filterNote = '';
+        if (dateFrom && dateTo) {
+            if (dateFrom === dateTo) {
+                const [y, m, d] = dateFrom.split('-');
+                filterNote = ` &bull; Giorno: <strong>${d}/${m}/${y}</strong>`;
+            } else {
+                const [y1, m1, d1] = dateFrom.split('-');
+                const [y2, m2, d2] = dateTo.split('-');
+                filterNote = ` &bull; Dal <strong>${d1}/${m1}/${y1}</strong> al <strong>${d2}/${m2}/${y2}</strong>`;
+            }
+        } else if (dateFrom) {
+            const [y, m, d] = dateFrom.split('-');
+            filterNote = ` &bull; Dal <strong>${d}/${m}/${y}</strong>`;
+        } else if (dateTo) {
+            const [y, m, d] = dateTo.split('-');
+            filterNote = ` &bull; Fino al <strong>${d}/${m}/${y}</strong>`;
+        }
+        countEl.innerHTML = `Visualizzate <strong>${filtered.length}</strong> rassegne su ${rawHistoryItems.length} totali${filterNote}`;
     }
 
     renderGroupedHistory(filtered, currentHistoryGrouping);
@@ -1105,24 +1298,24 @@ function renderGroupedHistory(items, groupBy) {
         });
 
     } else {
-        // ── RAGGRUPPATO PER DATA (Mese / Anno) ───────────────────────────────
-        const dateGroups = {};
+        // ── RAGGRUPPATO PER DATA (Giorno) ────────────────────────────────────
+        const dayGroups = {};
         items.forEach(item => {
-            const ymKey = getYearMonthKey(item.created_at);
-            if (!dateGroups[ymKey]) {
-                dateGroups[ymKey] = {
-                    label: formatMonthLabel(item.created_at),
+            const dayKey = getItemDateKey(item.created_at);
+            if (!dayGroups[dayKey]) {
+                dayGroups[dayKey] = {
+                    label: formatDayLabel(dayKey),
                     items: []
                 };
             }
-            dateGroups[ymKey].items.push(item);
+            dayGroups[dayKey].items.push(item);
         });
 
-        // Ordina dal mese più recente al più vecchio
-        const sortedYmKeys = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a));
+        // Ordina dal giorno più recente al più vecchio
+        const sortedDayKeys = Object.keys(dayGroups).sort((a, b) => b.localeCompare(a));
 
-        sortedYmKeys.forEach(ymKey => {
-            const group = dateGroups[ymKey];
+        sortedDayKeys.forEach(dayKey => {
+            const group = dayGroups[dayKey];
             renderHistoryGroupCard(list, group.label, group.items, 'calendar');
         });
     }
@@ -1138,12 +1331,15 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
     const allGroupSelected = items.every(it => selectedHistoryIds.has(it.id));
     const itemIdsAttr = items.map(it => it.id).join(',');
 
+    const isHtmlTitle = typeof groupTitle === 'string' && groupTitle.includes('&bull;');
+    const displayTitle = isHtmlTitle ? groupTitle : escapeHtml(groupTitle);
+
     const header = document.createElement('div');
     header.className = 'history-group-header';
     header.innerHTML = `
         <div class="history-group-title">
             <i data-feather="${iconName}" style="width:18px;height:18px;color:var(--accent-primary);"></i>
-            <span>${escapeHtml(groupTitle)}</span>
+            <span>${displayTitle}</span>
             <span class="history-group-badge">${items.length} rassegn${items.length === 1 ? 'a' : 'e'}</span>
         </div>
         <div style="display:flex; align-items:center; gap:12px; font-size:0.8rem; flex-wrap:wrap;">
@@ -1163,15 +1359,25 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'history-group-items';
 
+    const isDateGrouping = (iconName === 'calendar');
+
     items.forEach(item => {
         const isSelected = selectedHistoryIds.has(item.id);
         const itemRow = document.createElement('div');
         itemRow.className = `history-item ${isSelected ? 'selected' : ''}`;
         itemRow.id = `history-item-${item.id}`;
 
-        const dateStr = new Date(item.created_at).toLocaleDateString('it-IT', {
-            day: '2-digit', month: 'short', year: 'numeric'
-        });
+        const d = new Date(item.created_at);
+        const timeStr = !isNaN(d.getTime())
+            ? d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+            : '';
+        const fullDateStr = !isNaN(d.getTime())
+            ? d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '';
+
+        const dateMetaHtml = isDateGrouping
+            ? (timeStr ? `<span><i data-feather="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>Ore ${timeStr}</span><span>&bull;</span>` : '')
+            : `<span><i data-feather="calendar" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${fullDateStr}${timeStr ? ', ' + timeStr : ''}</span><span>&bull;</span>`;
 
         const clientBadgeHtml = item.client_name
             ? `<span class="history-client-badge"><i data-feather="user" style="width:11px;height:11px;"></i> ${escapeHtml(item.client_name)}</span>`
@@ -1185,8 +1391,7 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
                 <div class="history-info">
                     <strong>${escapeHtml(item.title)}</strong>
                     <div class="history-meta">
-                        <span><i data-feather="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${dateStr}</span>
-                        <span>&bull;</span>
+                        ${dateMetaHtml}
                         <span><i data-feather="file-text" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'}</span>
                         ${clientBadgeHtml}
                         ${item.team_id ? `<span style="font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:1px 6px; border-radius:4px;">Condiviso nel Team</span>` : ''}
@@ -1221,10 +1426,17 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
 function resetHistoryFilters() {
     const searchInput  = document.getElementById('historySearchInput');
     const clientSelect = document.getElementById('historyClientFilter');
-    const monthSelect  = document.getElementById('historyMonthFilter');
+    const inputFrom    = document.getElementById('historyDateFrom');
+    const inputTo      = document.getElementById('historyDateTo');
+    const presetSel    = document.getElementById('historyPeriodPreset');
+    const btnReset     = document.getElementById('btnResetDates');
     if (searchInput)  searchInput.value = '';
     if (clientSelect) clientSelect.value = 'all';
-    if (monthSelect)  monthSelect.value = 'all';
+    if (inputFrom)    inputFrom.value = '';
+    if (inputTo)      inputTo.value = '';
+    if (presetSel)    presetSel.value = 'all';
+    if (btnReset)     btnReset.style.display = 'none';
+    updateDateChipsActive('all');
     filterAndRenderHistory();
 }
 window.resetHistoryFilters = resetHistoryFilters;
@@ -1354,10 +1566,12 @@ window.downloadGroupReviews = downloadGroupReviews;
 function exportHistoryCsv() {
     const searchInput  = document.getElementById('historySearchInput');
     const clientSelect = document.getElementById('historyClientFilter');
-    const monthSelect  = document.getElementById('historyMonthFilter');
+    const inputFrom    = document.getElementById('historyDateFrom');
+    const inputTo      = document.getElementById('historyDateTo');
     const query = (searchInput?.value || '').toLowerCase().trim();
     const selClient = clientSelect?.value || 'all';
-    const selMonth  = monthSelect?.value || 'all';
+    const dateFrom  = (inputFrom?.value || '').trim();
+    const dateTo    = (inputTo?.value || '').trim();
 
     let itemsToExport = rawHistoryItems.filter(item => {
         if (selectedHistoryIds.size > 0) {
@@ -1375,9 +1589,9 @@ function exportHistoryCsv() {
                 if ((item.client_name || '').trim() !== selClient) return false;
             }
         }
-        if (selMonth !== 'all') {
-            if (getYearMonthKey(item.created_at) !== selMonth) return false;
-        }
+        const itemDateKey = getItemDateKey(item.created_at);
+        if (dateFrom && itemDateKey < dateFrom) return false;
+        if (dateTo && itemDateKey > dateTo) return false;
         return true;
     });
 
@@ -1388,18 +1602,21 @@ function exportHistoryCsv() {
 
     // Costruisce il file CSV
     const rows = [
-        ['ID', 'Titolo Rassegna', 'Cliente', 'Data Creazione', 'Numero Articoli', 'Nome File PDF', 'Link Download']
+        ['ID', 'Titolo Rassegna', 'Cliente', 'Data Creazione', 'Ora', 'Numero Articoli', 'Nome File PDF', 'Link Download']
     ];
 
     const origin = window.location.origin;
 
     itemsToExport.forEach(it => {
-        const dateStr = new Date(it.created_at).toLocaleDateString('it-IT');
+        const d = new Date(it.created_at);
+        const dateStr = !isNaN(d.getTime()) ? d.toLocaleDateString('it-IT') : '';
+        const timeStr = !isNaN(d.getTime()) ? d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
         rows.push([
             it.id,
             `"${(it.title || '').replace(/"/g, '""')}"`,
             `"${(it.client_name || 'Generale').replace(/"/g, '""')}"`,
             dateStr,
+            timeStr,
             it.article_count,
             `"${(it.filename || '').replace(/"/g, '""')}"`,
             `${origin}${it.downloadUrl}`

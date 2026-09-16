@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Rassegna Stampa</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260916_02">
+    <link rel="stylesheet" href="styles.css?v=20260916_03">
     <script>
         (function() {
             var theme = localStorage.getItem('rs_theme') || 'light';
@@ -1306,9 +1306,9 @@
 
             <!-- Filtri & Controlli Rapidi -->
             <div class="glass-card" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem; border-radius:12px;">
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; align-items:end;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:1rem; align-items:end;">
                     <!-- Ricerca Testuale -->
-                    <div>
+                    <div style="min-width:180px;">
                         <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Cerca</label>
                         <div style="position:relative;">
                             <input type="text" id="historySearchInput" placeholder="Cerca per titolo o cliente..." oninput="filterAndRenderHistory()"
@@ -1326,13 +1326,34 @@
                         </select>
                     </div>
 
-                    <!-- Filtro Periodo (Mese / Anno) -->
+                    <!-- Filtro Periodo Rapido -->
                     <div>
-                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Periodo</label>
-                        <select id="historyMonthFilter" onchange="filterAndRenderHistory()"
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Periodo Rapido</label>
+                        <select id="historyPeriodPreset" onchange="applyHistoryPeriodPreset(this.value)"
                             style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
                             <option value="all">Tutte le Date</option>
+                            <option value="today">Oggi</option>
+                            <option value="yesterday">Ieri</option>
+                            <option value="last7">Ultimi 7 giorni</option>
+                            <option value="last30">Ultimi 30 giorni</option>
+                            <option value="this_month">Questo mese</option>
+                            <option value="last_month">Mese scorso</option>
+                            <option value="custom">Giorno / Periodo specifico</option>
                         </select>
+                    </div>
+
+                    <!-- Dal Giorno -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Dal Giorno</label>
+                        <input type="date" id="historyDateFrom" onchange="onHistoryDateInputChange()"
+                            style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    </div>
+
+                    <!-- Al Giorno -->
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Al Giorno</label>
+                        <input type="date" id="historyDateTo" onchange="onHistoryDateInputChange()"
+                            style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
                     </div>
 
                     <!-- Raggruppamento (Toggle Data / Cliente) -->
@@ -1340,19 +1361,33 @@
                         <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Raggruppa per</label>
                         <div style="display:flex; border-radius:8px; border:1px solid var(--border-color); overflow:hidden; background:var(--bg-primary);">
                             <button type="button" id="btnGroupDate" onclick="setHistoryGrouping('date')" class="btn-group-toggle active"
-                                style="flex:1; padding:8px 10px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
+                                style="flex:1; padding:8px 8px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
                                 Per Data
                             </button>
                             <button type="button" id="btnGroupClient" onclick="setHistoryGrouping('client')" class="btn-group-toggle"
-                                style="flex:1; padding:8px 10px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
+                                style="flex:1; padding:8px 8px; font-size:0.8rem; font-weight:600; border:none; cursor:pointer;">
                                 Per Cliente
                             </button>
                         </div>
                     </div>
                 </div>
 
+                <!-- Scorciatoie rapide per giorno -->
+                <div style="display:flex; align-items:center; gap:8px; margin-top:1rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); flex-wrap:wrap;">
+                    <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Scorciatoie Giorni:</span>
+                    <button type="button" class="btn-date-chip active" id="chipDateAll" onclick="applyHistoryDateChip('all')">Tutte</button>
+                    <button type="button" class="btn-date-chip" id="chipDateToday" onclick="applyHistoryDateChip('today')">Oggi</button>
+                    <button type="button" class="btn-date-chip" id="chipDateYesterday" onclick="applyHistoryDateChip('yesterday')">Ieri</button>
+                    <button type="button" class="btn-date-chip" id="chipDateLast7" onclick="applyHistoryDateChip('last7')">Ultimi 7 gg</button>
+                    <button type="button" class="btn-date-chip" id="chipDateThisMonth" onclick="applyHistoryDateChip('this_month')">Questo mese</button>
+                    <button type="button" class="btn-date-chip" id="chipDateLastMonth" onclick="applyHistoryDateChip('last_month')">Mese scorso</button>
+                    <button type="button" id="btnResetDates" class="btn btn-outline btn-sm" onclick="clearHistoryDateFilter()" style="display:none; height:24px; padding:0 8px; font-size:0.72rem; margin-left:auto; align-items:center; gap:4px;">
+                        <i data-feather="x" style="width:11px;height:11px;"></i> Azzera Date
+                    </button>
+                </div>
+
                 <!-- Barra di stato e selezione globale -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); font-size:0.8rem; color:var(--text-muted); flex-wrap:wrap; gap:0.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem; font-size:0.8rem; color:var(--text-muted); flex-wrap:wrap; gap:0.5rem;">
                     <div id="historyCountSummary">Caricamento rassegne...</div>
                     <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
                         <input type="checkbox" id="chkSelectAllVisible" onchange="toggleSelectAllVisible(this.checked)" class="history-checkbox">
@@ -2224,7 +2259,7 @@
         feather.replace();
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260916_09"></script>
+    <script src="app.js?v=20260916_10"></script>
     <script src="ui.js?v=20260914_25"></script>
 </body>
 </html>

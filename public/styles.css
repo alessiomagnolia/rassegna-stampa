@@ -1361,6 +1361,39 @@ input::placeholder, textarea::placeholder {
     cursor: pointer;
 }
 
+.btn-date-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 20px;
+    padding: 3px 11px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.btn-date-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-date-chip.active {
+    background: var(--accent-primary, #7c5cff);
+    color: #ffffff;
+    border-color: var(--accent-primary, #7c5cff);
+}
+
+input[type="date"] {
+    color-scheme: dark;
+}
+
+[data-theme="light"] input[type="date"] {
+    color-scheme: light;
+}
+
 /* Loading States */
 .shimmer-card {
     height: 120px;
