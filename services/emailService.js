@@ -23,15 +23,36 @@ function getTransporter() {
         return null; // Modalità link-only
     }
 
-    transporter = nodemailer.createTransport({
-        host:   process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port:   parseInt(process.env.EMAIL_PORT || '587'),
-        secure: process.env.EMAIL_PORT === '465',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
+    const emailUser = process.env.EMAIL_USER.trim();
+    // Rimuove eventuali spazi dalla password per le app (Google la genera con spazi tipo "abcd efgh ijkl mnop")
+    const emailPass = process.env.EMAIL_PASS.replace(/\s+/g, '');
+    const isGmail = emailUser.toLowerCase().includes('@gmail.com') || emailUser.toLowerCase().includes('@googlemail.com');
+
+    if (isGmail) {
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: emailUser,
+                pass: emailPass,
+            },
+            connectionTimeout: 8000,
+            greetingTimeout: 8000,
+            socketTimeout: 12000,
+        });
+    } else {
+        transporter = nodemailer.createTransport({
+            host:   process.env.EMAIL_HOST || 'smtp.gmail.com',
+            port:   parseInt(process.env.EMAIL_PORT || '465'),
+            secure: (process.env.EMAIL_PORT === '465' || !process.env.EMAIL_PORT),
+            auth: {
+                user: emailUser,
+                pass: emailPass,
+            },
+            connectionTimeout: 8000,
+            greetingTimeout: 8000,
+            socketTimeout: 12000,
+        });
+    }
 
     return transporter;
 }
@@ -131,15 +152,23 @@ L'invito scade tra 7 giorni.
 Se non ti aspettavi questo invito, ignora questa email.
 `.trim();
 
-    await t.sendMail({
-        from:    fromName,
-        to:      toEmail,
-        subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
-        text:    textBody,
-        html:    htmlBody,
-    });
-
-    return true;
+    try {
+        await Promise.race([
+            t.sendMail({
+                from:    fromName,
+                to:      toEmail,
+                subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
+                text:    textBody,
+                html:    htmlBody,
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP_TIMEOUT')), 10000))
+        ]);
+        console.log(`[Email] Invito inviato con successo a ${toEmail}`);
+        return true;
+    } catch (err) {
+        console.error('[Email] Errore durante invio email via Nodemailer:', err.message);
+        throw err;
+    }
 }
 
 module.exports = { sendInviteEmail };

@@ -4582,9 +4582,8 @@ function renderTeamPanel(container, team) {
         : '';
 
     const dangerZoneHtml = isOwner
-        ? `<button class="btn btn-sm" onclick="teamDissolve()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--danger-color); background:transparent; color:var(--danger-color); font-weight:600; cursor:pointer; margin-top:0.5rem;">Sciogli il Team</button>
-           <p style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.5;">Le rassegne e i clienti rimarranno nel tuo account personale.</p>`
-        : `<button class="btn btn-sm" onclick="teamLeave()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--danger-color); background:transparent; color:var(--danger-color); font-weight:600; cursor:pointer; margin-top:0.5rem;">Abbandona il Team</button>`;
+        ? `<button class="btn btn-sm btn-outline" onclick="teamDissolve()" style="padding:7px 14px; font-size:0.78rem; border-radius:6px; color:var(--text-muted); border:1px solid var(--border-color); cursor:pointer; background:transparent;">Sciogli il Team</button>`
+        : `<button class="btn btn-sm btn-outline" onclick="teamLeave()" style="padding:7px 14px; font-size:0.78rem; border-radius:6px; color:var(--text-muted); border:1px solid var(--border-color); cursor:pointer; background:transparent;">Abbandona il Team</button>`;
 
     container.innerHTML = `
         <!-- Info team -->
@@ -4605,19 +4604,26 @@ function renderTeamPanel(container, team) {
         <!-- Invita un collega (solo owner) -->
         ${isOwner ? `
         <div style="margin-top:1.75rem; padding:1.25rem 1.5rem; border-radius:12px; border:1px solid var(--border-color); background:var(--bg-secondary);">
-            <div style="font-size:0.875rem; font-weight:700; color:var(--text-primary); margin-bottom:0.75rem;">Invita un Collega</div>
+            <div style="font-size:0.875rem; font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">Invita un Collega</div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Inserisci l'email del collega per inviargli l'accesso al team.</p>
             <div style="display:flex; gap:8px;">
                 <input type="email" id="teamInviteEmail" placeholder="email@collega.com"
+                    onkeydown="if(event.key === 'Enter'){ event.preventDefault(); teamSendInvite(); }"
                     style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.875rem;">
-                <button class="btn btn-gradient btn-sm" onclick="teamSendInvite()" style="padding:9px 18px; font-size:0.875rem; white-space:nowrap;">Invia Invito</button>
+                <button class="btn btn-gradient btn-sm" id="btnTeamSendInvite" onclick="teamSendInvite()" style="padding:9px 18px; font-size:0.875rem; white-space:nowrap;">Invia Invito</button>
             </div>
-            <div id="teamInviteResult" style="margin-top:8px; font-size:0.8rem; display:none;"></div>
+            <div id="teamInviteResult" style="margin-top:10px; font-size:0.82rem; display:none; line-height:1.5;"></div>
         </div>` : ''}
 
-        <!-- Zona pericolosa -->
-        <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border-color);">
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--danger-color, #dc2626); margin-bottom:0.75rem;">Zona Pericolosa</div>
-            ${dangerZoneHtml}
+        <!-- Gestione Team (uscita/scioglimento) senza scritte allarmistiche -->
+        <div style="margin-top:2.5rem; padding-top:1.25rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--text-secondary);">${isOwner ? 'Eliminazione Team' : 'Abbandono Team'}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${isOwner ? 'I tuoi clienti e rassegne rimarranno al sicuro nel tuo account.' : 'Non avrai più accesso ai documenti condivisi da questo team.'}</div>
+            </div>
+            <div>
+                ${dangerZoneHtml}
+            </div>
         </div>
     `;
 }
@@ -4634,8 +4640,9 @@ function renderTeamCreation(container) {
 
             <div style="max-width:380px; margin:0 auto;">
                 <input type="text" id="teamNameInput" placeholder="Nome del team (es. Studio PR, Agenzia Comms...)"
+                    onkeydown="if(event.key === 'Enter'){ event.preventDefault(); teamCreate(); }"
                     style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.875rem; margin-bottom:12px;">
-                <button class="btn btn-gradient" onclick="teamCreate()" style="width:100%; padding:11px; font-size:0.875rem; font-weight:600; border-radius:8px;">Crea il Team</button>
+                <button class="btn btn-gradient" id="btnTeamCreate" onclick="teamCreate()" style="width:100%; padding:11px; font-size:0.875rem; font-weight:600; border-radius:8px;">Crea il Team</button>
                 <div id="teamCreateError" style="margin-top:8px; font-size:0.8rem; color:var(--danger-color, #dc2626); display:none;"></div>
             </div>
 
@@ -4651,20 +4658,30 @@ function renderTeamCreation(container) {
 async function teamCreate() {
     const input = document.getElementById('teamNameInput');
     const errEl = document.getElementById('teamCreateError');
+    const btn   = document.getElementById('btnTeamCreate');
     if (!input) return;
 
     const name = input.value.trim();
     if (!name) {
-        errEl.textContent = 'Inserisci un nome per il team.';
-        errEl.style.display = 'block';
+        if (errEl) {
+            errEl.textContent = 'Inserisci un nome per il team.';
+            errEl.style.display = 'block';
+        }
         return;
     }
-    errEl.style.display = 'none';
+    if (errEl) errEl.style.display = 'none';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Creazione in corso...';
+    }
+
+    const token = state.token || localStorage.getItem('rs_token');
 
     try {
         const res  = await fetch('/api/teams', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.token}` },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ name })
         });
         const data = await res.json();
@@ -4672,12 +4689,21 @@ async function teamCreate() {
         if (res.ok && data.success) {
             await loadTeamPage();
         } else {
-            errEl.textContent = data.error || 'Impossibile creare il team.';
-            errEl.style.display = 'block';
+            if (errEl) {
+                errEl.textContent = data.error || 'Impossibile creare il team.';
+                errEl.style.display = 'block';
+            }
         }
     } catch (e) {
-        errEl.textContent = 'Errore di connessione. Riprova.';
-        errEl.style.display = 'block';
+        if (errEl) {
+            errEl.textContent = 'Errore di connessione. Riprova.';
+            errEl.style.display = 'block';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Crea il Team';
+        }
     }
 }
 window.teamCreate = teamCreate;
@@ -4686,48 +4712,79 @@ window.teamCreate = teamCreate;
 async function teamSendInvite() {
     const emailInput = document.getElementById('teamInviteEmail');
     const resultEl   = document.getElementById('teamInviteResult');
-    if (!emailInput || !resultEl) return;
+    const btn        = document.getElementById('btnTeamSendInvite');
+    if (!emailInput) return;
 
     const email = emailInput.value.trim();
-    if (!email) return;
+    if (!email) {
+        if (resultEl) {
+            resultEl.style.display = 'block';
+            resultEl.style.color = 'var(--danger-color, #dc2626)';
+            resultEl.textContent = 'Inserisci un indirizzo email prima di inviare.';
+        }
+        return;
+    }
 
-    resultEl.style.display = 'none';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Invio in corso...';
+    }
+    if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.style.color = 'var(--text-muted)';
+        resultEl.textContent = 'Invio dell\'invito in corso...';
+    }
+
+    const token = state.token || localStorage.getItem('rs_token');
 
     try {
         const res  = await fetch('/api/teams/invite', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.token}` },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ email })
         });
         const data = await res.json();
 
-        resultEl.style.display = 'block';
+        if (resultEl) resultEl.style.display = 'block';
+
         if (res.ok && data.success) {
-            resultEl.style.color = 'var(--success-color, #16a34a)';
+            emailInput.value = '';
             if (data.emailSent) {
-                resultEl.textContent = data.message;
+                resultEl.style.color = 'var(--success-color, #16a34a)';
+                resultEl.innerHTML = `Invito inviato con successo a <strong>${email}</strong>! Riceverà un'email con il link per accedere.`;
             } else {
-                // Modalità link-only: mostra il link copiabile
-                resultEl.innerHTML = `Invito generato. Copia e invia questo link a ${email}:<br>
-                    <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
-                        <input type="text" value="${data.inviteLink}" readonly
-                            style="flex:1; padding:6px 8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.75rem;"
+                resultEl.style.color = 'var(--accent-primary, #7c5cff)';
+                resultEl.innerHTML = `Invito registrato! Puoi copiare e inviare questo link al tuo collega:<br>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="text" id="copyInviteLinkInput" value="${data.inviteLink}" readonly
+                            style="flex:1; padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.8rem;"
                             onclick="this.select()">
-                        <button onclick="navigator.clipboard.writeText('${data.inviteLink}').then(() => this.textContent='Copiato')"
-                            style="padding:5px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:0.75rem; cursor:pointer; white-space:nowrap;">
-                            Copia
+                        <button onclick="navigator.clipboard.writeText('${data.inviteLink}').then(() => { this.textContent='Copiato!'; setTimeout(() => this.textContent='Copia Link', 2000); })"
+                            class="btn btn-sm btn-outline"
+                            style="padding:7px 14px; font-size:0.8rem; cursor:pointer; white-space:nowrap;">
+                            Copia Link
                         </button>
                     </div>`;
             }
-            emailInput.value = '';
+            // Aggiorna l'elenco inviti in attesa dopo 2 secondi
+            setTimeout(() => {
+                loadTeamPage();
+            }, 2500);
         } else {
             resultEl.style.color = 'var(--danger-color, #dc2626)';
-            resultEl.textContent = data.error || 'Impossibile inviare l\'invito.';
+            resultEl.textContent = data.error || 'Impossibile inviare l\'invito. Verifica l\'email inserita.';
         }
     } catch (e) {
-        resultEl.style.display = 'block';
-        resultEl.style.color   = 'var(--danger-color, #dc2626)';
-        resultEl.textContent   = 'Errore di connessione. Riprova.';
+        if (resultEl) {
+            resultEl.style.display = 'block';
+            resultEl.style.color   = 'var(--danger-color, #dc2626)';
+            resultEl.textContent   = 'Errore di connessione. Riprova.';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Invia Invito';
+        }
     }
 }
 window.teamSendInvite = teamSendInvite;
