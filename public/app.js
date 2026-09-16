@@ -4541,6 +4541,7 @@ async function loadTeamPage() {
         } else {
             renderTeamCreation(container);
         }
+        if (window.feather) feather.replace();
     } catch (e) {
         container.innerHTML = `<div style="color: var(--danger-color); text-align:center; padding:1rem;">Errore nel caricamento del team. Riprova.</div>`;
     }
