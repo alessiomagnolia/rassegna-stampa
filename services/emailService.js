@@ -109,7 +109,7 @@ function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
 /**
  * Invia l'email di invito al team.
  */
-async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
+async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink, inviterEmail) {
     const todayStr = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
     const htmlBody = buildEmailHtml(inviterName, teamName, inviteLink, todayStr);
     const textBody = `Sei stato invitato nel team "${teamName}" da ${inviterName}.\n\nAccetta l'invito: ${inviteLink}\n\nL'invito scade tra 7 giorni.`;
@@ -118,24 +118,34 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
     if (process.env.RESEND_API_KEY) {
         try {
             const apiKey = process.env.RESEND_API_KEY.replace(/['"\s]/g, '').trim();
-            const fromSender = process.env.EMAIL_FROM || 'Rassegna Stampa <onboarding@resend.dev>';
+            const fromSender = process.env.EMAIL_FROM || `${inviterName} tramite Rassegna Stampa <onboarding@resend.dev>`;
+            
+            const payload = {
+                from: fromSender,
+                to: [toEmail],
+                subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
+                html: htmlBody,
+                text: textBody,
+            };
+            if (inviterEmail) {
+                payload.reply_to = inviterEmail;
+            }
+
             const res = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    from: fromSender,
-                    to: [toEmail],
-                    subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
-                    html: htmlBody,
-                    text: textBody,
-                }),
+                body: JSON.stringify(payload),
             });
             const resData = await res.json();
             if (!res.ok) {
-                throw new Error(resData.message || 'Errore API Resend');
+                let errDetail = resData.message || 'Errore API Resend';
+                if (res.status === 403 && (errDetail.includes('onboarding@resend.dev') || errDetail.includes('only send to'))) {
+                    errDetail = "Resend (dominio test) può inviare solo all'indirizzo email con cui ti sei registrato su Resend. Per inviare a qualsiasi email, aggiungi il tuo dominio su resend.com/domains.";
+                }
+                throw new Error(errDetail);
             }
             console.log(`[Email] Invito inviato con successo via Resend a ${toEmail}`);
             return true;

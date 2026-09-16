@@ -206,7 +206,8 @@ router.post('/invite', authMiddleware, async (req, res) => {
                 invitedEmail,
                 inviter.company_name || inviter.email,
                 team.name,
-                inviteLink
+                inviteLink,
+                inviter.email
             );
         } catch (emailErr) {
             emailError = emailErr.message || 'Errore connessione SMTP';
