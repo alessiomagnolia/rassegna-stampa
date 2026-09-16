@@ -4530,11 +4530,25 @@ async function loadTeamPage() {
     const container = document.getElementById('teamPageContent');
     if (!container) return;
 
+    const token = state.token || localStorage.getItem('rs_token');
+    if (!token) {
+        container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem;">Sessione non attiva. Effettua l'accesso per visualizzare il team.</div>`;
+        return;
+    }
+
     container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem;">Caricamento...</div>`;
 
     try {
-        const res  = await fetch('/api/teams/mine', { headers: { Authorization: `Bearer ${state.token}` } });
+        const res  = await fetch('/api/teams/mine', { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
+
+        if (!res.ok) {
+            container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem;">
+                <p style="color:var(--danger-color, #dc2626); margin-bottom:12px;">${data.error || 'Impossibile recuperare i dati del team.'}</p>
+                <button class="btn btn-outline btn-sm" onclick="loadTeamPage()">Riprova</button>
+            </div>`;
+            return;
+        }
 
         if (data.team) {
             renderTeamPanel(container, data.team);
@@ -4543,7 +4557,10 @@ async function loadTeamPage() {
         }
         if (window.feather) feather.replace();
     } catch (e) {
-        container.innerHTML = `<div style="color: var(--danger-color); text-align:center; padding:1rem;">Errore nel caricamento del team. Riprova.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--danger-color, #dc2626); font-size: 0.875rem;">
+            Errore di connessione durante il recupero del team.
+            <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="loadTeamPage()">Riprova</button></div>
+        </div>`;
     }
 }
 window.loadTeamPage = loadTeamPage;
