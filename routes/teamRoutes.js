@@ -228,6 +228,22 @@ router.post('/invite', authMiddleware, async (req, res) => {
     }
 });
 
+// ── Diagnostica configurazione email ────────────────────────────────────────
+
+/**
+ * GET /api/teams/diagnose-email
+ * Verifica se EMAIL_USER e EMAIL_PASS sono configurati e se Gmail accetta la connessione.
+ */
+router.get('/diagnose-email', async (req, res) => {
+    try {
+        const { verifyConnection } = require('../services/emailService');
+        const status = await verifyConnection();
+        res.json(status);
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
 // ── Verifica token invito ──────────────────────────────────────────────────
 
 /**

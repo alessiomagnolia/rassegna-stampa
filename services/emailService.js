@@ -173,4 +173,42 @@ Se non ti aspettavi questo invito, ignora questa email.
     }
 }
 
-module.exports = { sendInviteEmail };
+/**
+ * Verifica lo stato di configurazione e la raggiungibilità del server SMTP.
+ */
+async function verifyConnection() {
+    const rawUser = process.env.EMAIL_USER;
+    const rawPass = process.env.EMAIL_PASS;
+
+    if (!rawUser || !rawPass) {
+        return {
+            ok: false,
+            error: "Variabili EMAIL_USER o EMAIL_PASS mancanti su Render.",
+            details: { hasUser: !!rawUser, hasPass: !!rawPass }
+        };
+    }
+
+    const t = getTransporter();
+    if (!t) {
+        return { ok: false, error: "Impossibile creare il transporter nodemailer." };
+    }
+
+    try {
+        await Promise.race([
+            t.verify(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout verifica SMTP (8s)')), 8000))
+        ]);
+        const cleanUser = rawUser.replace(/['"]/g, '').trim();
+        const masked = cleanUser.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+        return { ok: true, message: `Connessione SMTP verificata con successo per ${masked}` };
+    } catch (err) {
+        return {
+            ok: false,
+            error: err.message || 'Errore di autenticazione SMTP',
+            code: err.code || null,
+            response: err.response || null
+        };
+    }
+}
+
+module.exports = { sendInviteEmail, verifyConnection };
