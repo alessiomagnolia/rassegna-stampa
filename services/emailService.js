@@ -1,27 +1,19 @@
 /**
  * emailService.js
- * Invio email via Nodemailer (supporta Gmail app-password e SMTP generici).
- * Configurazione tramite variabili d'ambiente:
- *   EMAIL_HOST     (default: smtp.gmail.com)
- *   EMAIL_PORT     (default: 587)
- *   EMAIL_USER     es. tuoemail@gmail.com
- *   EMAIL_PASS     app-password Gmail (o password SMTP)
- *   EMAIL_FROM     es. "Rassegna Stampa <tuoemail@gmail.com>"
- *
- * Se EMAIL_USER non è impostato, il servizio opera in modalità "link only"
- * (non invia email ma restituisce comunque il link di invito).
+ * Invio email di invito team.
+ * Supporta:
+ * 1. Resend API (porta 443 HTTPS - compatibile 100% con il piano gratuito di Render)
+ * 2. Nodemailer SMTP (Gmail app-password o SMTP standard)
+ * 3. Link-only (se nessuna credenziale è configurata o se SMTP è bloccato da Render)
  */
 
 const nodemailer = require('nodemailer');
 
-let transporter = null;
-
 function getTransporter() {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        return null; // Credenziali non presenti
+        return null;
     }
 
-    // Pulisce eventuali virgolette (es. se inserite per errore su Render) e spazi
     const emailUser = (process.env.EMAIL_USER || '').replace(/['"]/g, '').trim();
     const emailPass = (process.env.EMAIL_PASS || '').replace(/['"\s]/g, '').trim();
 
@@ -36,9 +28,9 @@ function getTransporter() {
                 user: emailUser,
                 pass: emailPass,
             },
-            connectionTimeout: 8000,
-            greetingTimeout: 8000,
-            socketTimeout: 12000,
+            connectionTimeout: 6000,
+            greetingTimeout: 6000,
+            socketTimeout: 8000,
         });
     }
 
@@ -50,35 +42,14 @@ function getTransporter() {
             user: emailUser,
             pass: emailPass,
         },
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 12000,
+        connectionTimeout: 6000,
+        greetingTimeout: 6000,
+        socketTimeout: 8000,
     });
 }
 
-/**
- * Invia l'email di invito al team.
- * @param {string} toEmail          - Indirizzo email del destinatario
- * @param {string} inviterName      - Nome/azienda di chi invita
- * @param {string} teamName         - Nome del team
- * @param {string} inviteLink       - Link completo di accettazione
- * @returns {Promise<boolean>}      - true se inviata, false se in modalità link-only
- */
-async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
-    const t = getTransporter();
-
-    if (!t) {
-        console.warn(`[Email] EMAIL_USER o EMAIL_PASS mancanti o non ancora attive su Render. EMAIL_USER=${!!process.env.EMAIL_USER}, EMAIL_PASS=${!!process.env.EMAIL_PASS}`);
-        const err = new Error('Variabili EMAIL_USER o EMAIL_PASS non trovate o non ancora attive su Render.');
-        err.code = 'CONFIG_MISSING';
-        throw err;
-    }
-
-    const cleanUser = (process.env.EMAIL_USER || '').replace(/['"]/g, '').trim();
-    const fromName  = process.env.EMAIL_FROM || `Rassegna Stampa <${cleanUser}>`;
-    const todayStr  = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
-
-    const htmlBody = `
+function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
+    return `
 <!DOCTYPE html>
 <html lang="it">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -87,16 +58,12 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
     <tr>
       <td align="center">
         <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-
-          <!-- Header -->
           <tr>
             <td style="background:#7c5cff;padding:28px 36px;">
               <p style="margin:0;font-size:13px;color:#e0d9ff;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Rassegna Stampa</p>
               <h1 style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:700;">Sei stato invitato a collaborare</h1>
             </td>
           </tr>
-
-          <!-- Body -->
           <tr>
             <td style="padding:32px 36px;color:#1e293b;">
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
@@ -105,8 +72,6 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
               <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.6;">
                 Come membro del team potrai vedere e modificare le stesse rassegne stampa, clienti e comunicati dei tuoi colleghi.
               </p>
-
-              <!-- CTA -->
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="background:#7c5cff;border-radius:8px;">
@@ -116,19 +81,15 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
                   </td>
                 </tr>
               </table>
-
               <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
                 Se il pulsante non funziona, copia e incolla questo link nel browser:<br>
                 <a href="${inviteLink}" style="color:#7c5cff;word-break:break-all;">${inviteLink}</a>
               </p>
-
               <p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">
                 L'invito scade tra 7 giorni (${todayStr}).
               </p>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="padding:20px 36px;border-top:1px solid #e2e8f0;background:#f8fafc;">
               <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;">
@@ -137,22 +98,65 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
   </table>
 </body>
 </html>`;
+}
 
-    const textBody = `
-Sei stato invitato nel team "${teamName}" da ${inviterName}.
+/**
+ * Invia l'email di invito al team.
+ */
+async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink) {
+    const todayStr = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+    const htmlBody = buildEmailHtml(inviterName, teamName, inviteLink, todayStr);
+    const textBody = `Sei stato invitato nel team "${teamName}" da ${inviterName}.\n\nAccetta l'invito: ${inviteLink}\n\nL'invito scade tra 7 giorni.`;
 
-Accetta l'invito: ${inviteLink}
+    // 1. Resend REST API (porta 443 HTTPS - compatibile con tutti i piani Render)
+    if (process.env.RESEND_API_KEY) {
+        try {
+            const apiKey = process.env.RESEND_API_KEY.replace(/['"\s]/g, '').trim();
+            const fromSender = process.env.EMAIL_FROM || 'Rassegna Stampa <onboarding@resend.dev>';
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    from: fromSender,
+                    to: [toEmail],
+                    subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
+                    html: htmlBody,
+                    text: textBody,
+                }),
+            });
+            const resData = await res.json();
+            if (!res.ok) {
+                throw new Error(resData.message || 'Errore API Resend');
+            }
+            console.log(`[Email] Invito inviato con successo via Resend a ${toEmail}`);
+            return true;
+        } catch (resendErr) {
+            console.error('[Email] Errore invio via Resend:', resendErr.message);
+            throw resendErr;
+        }
+    }
 
-L'invito scade tra 7 giorni.
-Se non ti aspettavi questo invito, ignora questa email.
-`.trim();
+    // 2. Nodemailer SMTP (Gmail / Custom SMTP)
+    const t = getTransporter();
+
+    if (!t) {
+        console.warn('[Email] Credenziali EMAIL_USER/EMAIL_PASS mancanti.');
+        const err = new Error('Variabili EMAIL_USER o EMAIL_PASS non configurate su Render.');
+        err.code = 'CONFIG_MISSING';
+        throw err;
+    }
+
+    const cleanUser = (process.env.EMAIL_USER || '').replace(/['"]/g, '').trim();
+    const fromName  = process.env.EMAIL_FROM || `Rassegna Stampa <${cleanUser}>`;
 
     try {
         await Promise.race([
@@ -163,12 +167,15 @@ Se non ti aspettavi questo invito, ignora questa email.
                 text:    textBody,
                 html:    htmlBody,
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP_TIMEOUT')), 10000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP_TIMEOUT')), 8000))
         ]);
-        console.log(`[Email] Invito inviato con successo a ${toEmail}`);
+        console.log(`[Email] Invito inviato con successo via SMTP a ${toEmail}`);
         return true;
     } catch (err) {
-        console.error('[Email] Errore durante invio email via Nodemailer:', err.message);
+        console.error('[Email] Errore durante invio SMTP:', err.message);
+        if (err.message === 'SMTP_TIMEOUT' || err.message.includes('timeout') || err.message.includes('ETIMEDOUT')) {
+            throw new Error('Render blocca le connessioni SMTP sui piani gratuiti. Invia direttamente il link qui sotto al tuo collega via WhatsApp/email.');
+        }
         throw err;
     }
 }
@@ -177,6 +184,10 @@ Se non ti aspettavi questo invito, ignora questa email.
  * Verifica lo stato di configurazione e la raggiungibilità del server SMTP.
  */
 async function verifyConnection() {
+    if (process.env.RESEND_API_KEY) {
+        return { ok: true, type: 'resend', message: 'Configurato con Resend (API HTTPS porta 443 - attivo e compatibile con Render)' };
+    }
+
     const rawUser = process.env.EMAIL_USER;
     const rawPass = process.env.EMAIL_PASS;
 
@@ -196,17 +207,20 @@ async function verifyConnection() {
     try {
         await Promise.race([
             t.verify(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout verifica SMTP (8s)')), 8000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP_TIMEOUT')), 6000))
         ]);
         const cleanUser = rawUser.replace(/['"]/g, '').trim();
         const masked = cleanUser.replace(/(.{2})(.*)(@.*)/, '$1***$3');
-        return { ok: true, message: `Connessione SMTP verificata con successo per ${masked}` };
+        return { ok: true, type: 'smtp', message: `Connessione SMTP verificata per ${masked}` };
     } catch (err) {
+        let errMsg = err.message || 'Errore di autenticazione SMTP';
+        if (err.message === 'SMTP_TIMEOUT' || err.message.includes('timeout') || err.message.includes('ETIMEDOUT')) {
+            errMsg = 'Render blocca le porte SMTP in uscita (25, 465, 587) sul piano gratuito per prevenire abusi. Usa il link di invito generato oppure una chiave Resend API.';
+        }
         return {
             ok: false,
-            error: err.message || 'Errore di autenticazione SMTP',
-            code: err.code || null,
-            response: err.response || null
+            error: errMsg,
+            code: err.code || null
         };
     }
 }
