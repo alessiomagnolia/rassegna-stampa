@@ -68,8 +68,9 @@ window.escapeHtml = escapeHtml;
 async function apiCall(method, endpoint, body = null, isFormData = false) {
     const headers = {};
     
-    if (state.token) {
-        headers['Authorization'] = `Bearer ${state.token}`;
+    const token = state.token || localStorage.getItem('rs_token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
     
     if (!isFormData) {
@@ -917,44 +918,69 @@ window.triggerDownload = triggerDownload;
 
 // --- HISTORY ---
 
+function renderHistoryItems(list, history) {
+    list.innerHTML = '';
+    if (!history || history.length === 0) {
+        list.innerHTML = '<div class="empty-state">Nessuna rassegna generata finora.</div>';
+        return;
+    }
+
+    history.forEach(item => {
+        const date = new Date(item.created_at).toLocaleDateString('it-IT');
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+            <div class="history-info">
+                <strong style="font-size:1.05rem;">${escapeHtml(item.title)}</strong>
+                <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.85rem;">
+                    ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${escapeHtml(item.client_name)}` : ''}
+                </span>
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
+                <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
+                <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>
+                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
+                <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);" title="Genera Briefing Esecutivo per questa rassegna"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Briefing AI</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    if (window.feather) feather.replace();
+}
+
 async function loadHistory() {
     const list = document.getElementById('historyList');
     if (!list) return;
 
+    // 1. Mostra subito la versione memorizzata nella cache locale se presente
+    const cachedStr = localStorage.getItem('rs_cached_history');
+    if (cachedStr && list.children.length === 0) {
+        try {
+            const cached = JSON.parse(cachedStr);
+            if (Array.isArray(cached) && cached.length > 0) {
+                renderHistoryItems(list, cached);
+            }
+        } catch (e) {}
+    }
+
     try {
         const history = await apiCall('GET', '/api/pdf/history');
         
-        list.innerHTML = '';
-        
-        if (history.length === 0) {
-            list.innerHTML = '<div class="empty-state">Nessuna rassegna generata finora.</div>';
-            return;
+        if (Array.isArray(history)) {
+            // Salva nella cache locale del browser
+            try { localStorage.setItem('rs_cached_history', JSON.stringify(history)); } catch (e) {}
+            renderHistoryItems(list, history);
         }
-
-        history.forEach(item => {
-            const date = new Date(item.created_at).toLocaleDateString('it-IT');
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `
-                <div class="history-info">
-                    <strong style="font-size:1.05rem;">${item.title}</strong>
-                    <span class="history-meta" style="margin-top:4px; display:block; color:var(--text-muted); font-size:0.85rem;">
-                        ${date} &bull; ${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'} ${item.client_name ? `&bull; Cliente: ${item.client_name}` : ''}
-                    </span>
-                </div>
-                <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
-                    <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${item.filename}')"><i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica PDF</button>
-                    <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})"><i data-feather="edit-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Modifica</button>
-                    <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" style="border-color:rgba(255,255,255,0.25);"><i data-feather="share-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Condividi</button>
-                    <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" style="border-color:var(--accent-primary); color:var(--accent-primary);" title="Genera Briefing Esecutivo per questa rassegna"><i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Briefing AI</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" style="margin-left:auto;"><i data-feather="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i></button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-        feather.replace();
     } catch (error) {
-        list.innerHTML = '<div class="empty-state">Errore nel caricamento dello storico.</div>';
+        // Se c'è già la cronologia a schermo (dalla cache), non cancellarla, mostra solo un avviso
+        if (list.children.length === 0 || list.querySelector('.empty-state')) {
+            list.innerHTML = `
+                <div class="empty-state" style="text-align:center; padding:2rem;">
+                    <p style="color:var(--danger-color, #dc2626); margin-bottom:12px;">Impossibile caricare lo storico: ${escapeHtml(error.message)}</p>
+                    <button class="btn btn-outline btn-sm" onclick="loadHistory()">Riprova</button>
+                </div>`;
+        }
     }
 }
 
