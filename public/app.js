@@ -4570,14 +4570,17 @@ function renderTeamPanel(container, team) {
         </div>`;
     }).join('');
 
-    const pendingHtml = isOwner && team.pendingInvites.length > 0
-        ? `<div style="margin-top:1.5rem;">
+    const pendingInvites = team.pendingInvites || [];
+    const pendingHtml = isOwner
+        ? `<div id="teamPendingInvitesContainer" style="${pendingInvites.length > 0 ? 'margin-top:1.5rem;' : 'display:none; margin-top:1.5rem;'}">
             <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:0.75rem;">Inviti in attesa</div>
-            ${team.pendingInvites.map(inv => `
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem;">
-                    <span style="color:var(--text-primary);">${inv.invited_email}</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">In attesa</span>
-                </div>`).join('')}
+            <div id="teamPendingInvitesList">
+                ${pendingInvites.map(inv => `
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem;">
+                        <span style="color:var(--text-primary);">${inv.invited_email}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">In attesa</span>
+                    </div>`).join('')}
+            </div>
            </div>`
         : '';
 
@@ -4767,10 +4770,16 @@ async function teamSendInvite() {
                         </button>
                     </div>`;
             }
-            // Aggiorna l'elenco inviti in attesa dopo 2 secondi
-            setTimeout(() => {
-                loadTeamPage();
-            }, 2500);
+            // Aggiorna dinamicamente la lista degli inviti in attesa senza ricaricare la pagina
+            const pendingBox  = document.getElementById('teamPendingInvitesContainer');
+            const pendingList = document.getElementById('teamPendingInvitesList');
+            if (pendingBox && pendingList) {
+                pendingBox.style.display = 'block';
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem;';
+                row.innerHTML = `<span style="color:var(--text-primary);">${email}</span><span style="font-size:0.75rem; color:var(--text-muted);">In attesa</span>`;
+                pendingList.prepend(row);
+            }
         } else {
             resultEl.style.color = 'var(--danger-color, #dc2626)';
             resultEl.textContent = data.error || 'Impossibile inviare l\'invito. Verifica l\'email inserita.';
