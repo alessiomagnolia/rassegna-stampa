@@ -984,15 +984,15 @@
                     <h1 class="page-title"><i data-feather="users" style="width:28px;height:28px;vertical-align:middle;"></i> Rubrica Media & PR</h1>
                     <p class="page-subtitle">Gestisci i contatti dei giornalisti, le testate e i settori tematici per i tuoi comunicati e rassegne.</p>
                 </div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-outline" onclick="quickLaunchMailingList()" title="Invia comunicato o pitch ai contatti">
-                        <i data-feather="send" style="width:15px;height:15px;margin-right:4px;"></i> Mailing List / Lancio
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" class="btn btn-gradient" onclick="openAddContactModal()" style="display:inline-flex; align-items:center; gap:8px; font-weight:700; padding:10px 20px; font-size:0.9rem; box-shadow:0 4px 18px rgba(124, 92, 255, 0.45); cursor:pointer;">
+                        <i data-feather="user-plus" style="width:17px;height:17px;"></i> <span>+ Nuovo Contatto</span>
                     </button>
-                    <button type="button" class="btn btn-outline" onclick="openImportContactsModal()">
-                        <i data-feather="upload" style="width:15px;height:15px;margin-right:4px;"></i> Importa CSV
+                    <button type="button" class="btn btn-outline" onclick="quickLaunchMailingList()" title="Invia comunicato o pitch ai contatti" style="display:inline-flex; align-items:center; gap:6px; padding:9px 15px; font-size:0.85rem;">
+                        <i data-feather="send" style="width:15px;height:15px;"></i> <span>Mailing List / Lancio</span>
                     </button>
-                    <button type="button" class="btn btn-gradient" onclick="openAddContactModal()">
-                        <i data-feather="user-plus" style="width:15px;height:15px;margin-right:4px;"></i> + Nuovo Contatto
+                    <button type="button" class="btn btn-outline" onclick="openImportContactsModal()" style="display:inline-flex; align-items:center; gap:6px; padding:9px 15px; font-size:0.85rem;">
+                        <i data-feather="upload" style="width:15px;height:15px;"></i> <span>Importa CSV</span>
                     </button>
                 </div>
             </div>
