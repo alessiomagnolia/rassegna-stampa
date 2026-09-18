@@ -1840,7 +1840,7 @@
                     <div class="form-group">
                         <div class="color-picker-box">
                             <div class="color-picker-left">
-                                <input type="color" id="colorBgCard" value="#061124" oninput="updateCardColors()">
+                                <input type="color" id="colorBgCard" value="#061124" autocomplete="off" oninput="updateCardColors()">
                                 <div>
                                     <div class="color-name-label">Colore Sfondo Card</div>
                                     <small style="font-size:0.7rem; color:var(--editor-muted);">I cubi 3D si ricolorano automaticamente</small>
@@ -1854,7 +1854,7 @@
                     <div class="form-group">
                         <div class="color-picker-box">
                             <div class="color-picker-left">
-                                <input type="color" id="colorMainTitle" value="#ffffff" oninput="updateCardColors()">
+                                <input type="color" id="colorMainTitle" value="#ffffff" autocomplete="off" oninput="updateCardColors()">
                                 <div>
                                     <div class="color-name-label">Titolo &amp; Testi Principali</div>
                                     <small style="font-size:0.7rem; color:var(--editor-muted);">Titolo evento, brand, dati pillars</small>
@@ -1868,7 +1868,7 @@
                     <div class="form-group">
                         <div class="color-picker-box">
                             <div class="color-picker-left">
-                                <input type="color" id="colorAccentPretitle" value="#e2e8f0" oninput="updateCardColors()">
+                                <input type="color" id="colorAccentPretitle" value="#e2e8f0" autocomplete="off" oninput="updateCardColors()">
                                 <div>
                                     <div class="color-name-label">Sopratitolo &amp; Icone</div>
                                     <small style="font-size:0.7rem; color:var(--editor-muted);">Categoria, icone delle colonne, divisore</small>
@@ -1882,7 +1882,7 @@
                     <div class="form-group">
                         <div class="color-picker-box">
                             <div class="color-picker-left">
-                                <input type="color" id="colorSubtext" value="#cbd5e1" oninput="updateCardColors()">
+                                <input type="color" id="colorSubtext" value="#cbd5e1" autocomplete="off" oninput="updateCardColors()">
                                 <div>
                                     <div class="color-name-label">Relatori &amp; Etichette Secondarie</div>
                                     <small style="font-size:0.7rem; color:var(--editor-muted);">Ospiti, etichette pillars, tagline</small>
@@ -1894,7 +1894,13 @@
 
                     <!-- PALETTE COORDINATE RAPIDE A 1-CLICK -->
                     <div class="form-group" style="margin-top:6px;">
-                        <label class="form-label">Palette Cromatiche a 1 Click</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="margin-bottom:0;">Palette Cromatiche a 1 Click</label>
+                            <button type="button" class="btn-action" style="padding:3px 8px; font-size:0.72rem; color:var(--editor-text); background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2);" onclick="resetWhiteTexts()" title="Ripristina subito tutti i testi in bianco puro">
+                                <i data-feather="refresh-cw" style="width:11px; height:11px; margin-right:3px;"></i>
+                                <span>Bianco Puro</span>
+                            </button>
+                        </div>
                         <div class="palette-grid">
                             <button type="button" class="palette-btn" onclick="applyPresetPalette('#061124', '#ffffff', '#e2e8f0', '#cbd5e1')">
                                 <span class="palette-dot" style="background:#061124;"></span>
@@ -2807,6 +2813,16 @@
             showToast('Palette colori applicata!');
         }
 
+        // Ripristino Rapido Colori Testi in Bianco Puro
+        function resetWhiteTexts() {
+            document.getElementById('colorMainTitle').value = '#ffffff';
+            document.getElementById('colorAccentPretitle').value = '#e2e8f0';
+            document.getElementById('colorSubtext').value = '#cbd5e1';
+            updateCardColors();
+            renderIcons();
+            showToast('✓ Testi ripristinati in Bianco Puro (#FFFFFF)!');
+        }
+
         // Aggiorna icona Feather per un pillar
         function updateIcon(boxId, iconName) {
             const box = document.getElementById(boxId);
@@ -3362,6 +3378,11 @@
             setLogoPosition('top-left');
             setLogoDisplayMode(editorState.customLogoUrl ? 'both' : 'both');
             setCardTemplate(editorState.template || 'eventi');
+            
+            // Garanzia testo predefinito in bianco puro (#ffffff)
+            if (document.getElementById('colorMainTitle')) {
+                document.getElementById('colorMainTitle').value = '#ffffff';
+            }
             updateCard();
             fitCanvasToViewport();
         });
