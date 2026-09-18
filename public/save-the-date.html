@@ -509,6 +509,69 @@
             margin-top: 4px;
         }
 
+        /* SELETTORE TEMPLATE GRAFICO */
+        .template-selector-bar {
+            background: var(--editor-card);
+            border: 1px solid var(--editor-border);
+            border-radius: 12px;
+            padding: 11px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        }
+
+        .template-selector-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        .template-pill-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .template-pill-btn .tpl-icon-box {
+            font-size: 1.1rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .template-pill-btn:hover {
+            border-color: var(--accent-glow);
+            background: rgba(56, 189, 248, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .template-pill-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+        }
+
         /* PRESETS TESTI RAPIDI */
         .presets-grid {
             display: grid;
@@ -920,6 +983,210 @@
         }
 
         /* =======================================================
+           TEMPLATE 2: CYBER WAVE (Stile Sophos - Onda Fluida Tech)
+           ======================================================= */
+        #saveTheDateCanvas.template-cyber-wave {
+            padding: 50px 75px 44px 75px;
+        }
+        #saveTheDateCanvas.template-cyber-wave .card-center-hero {
+            align-items: flex-start;
+            text-align: left;
+            max-width: 840px;
+            width: 100%;
+        }
+        #saveTheDateCanvas.template-cyber-wave .event-pretitle {
+            text-align: left;
+            font-size: 17px;
+            letter-spacing: 5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        #saveTheDateCanvas.template-cyber-wave .event-main-title {
+            text-align: left;
+            font-size: 66px;
+            line-height: 1.04;
+            letter-spacing: -0.5px;
+            font-weight: 800;
+            margin: 0 0 16px 0;
+            text-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+        }
+        #saveTheDateCanvas.template-cyber-wave .event-subtitle-speakers {
+            text-align: left;
+            font-size: 18.5px;
+            line-height: 1.45;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            max-width: 680px;
+            margin-bottom: 22px;
+            color: rgba(255, 255, 255, 0.92);
+        }
+        #saveTheDateCanvas.template-cyber-wave .event-divider {
+            margin: 0 0 24px 0;
+            width: 110px;
+            height: 3.5px;
+            border-radius: 3px;
+            background: #38bdf8;
+            opacity: 0.85;
+        }
+        #saveTheDateCanvas.template-cyber-wave .event-info-pillars {
+            justify-content: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            width: auto;
+        }
+        #saveTheDateCanvas.template-cyber-wave .info-pillar {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            gap: 12px;
+        }
+        #saveTheDateCanvas.template-cyber-wave .pillar-icon-box svg {
+            width: 26px;
+            height: 26px;
+        }
+        #saveTheDateCanvas.template-cyber-wave .pillar-title {
+            font-size: 14.5px;
+            font-weight: 800;
+        }
+        #saveTheDateCanvas.template-cyber-wave .pillar-subtitle {
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        /* =======================================================
+           TEMPLATE 3: LAYERED CHEVRONS (Stile Seja Best - Livelli 3D)
+           ======================================================= */
+        #saveTheDateCanvas.template-chevrons {
+            padding: 48px 65px 44px 65px;
+        }
+        #saveTheDateCanvas.template-chevrons .card-center-hero {
+            align-items: flex-start;
+            text-align: left;
+            max-width: 780px;
+            width: 100%;
+        }
+        #saveTheDateCanvas.template-chevrons .event-pretitle {
+            text-align: left;
+            font-size: 16px;
+            letter-spacing: 3.5px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        #saveTheDateCanvas.template-chevrons .event-main-title {
+            text-align: left;
+            font-size: 64px;
+            line-height: 1.08;
+            font-weight: 900;
+            margin: 0 0 12px 0;
+            position: relative;
+            display: inline-block;
+        }
+        #saveTheDateCanvas.template-chevrons .event-divider {
+            margin: 0 0 20px 0;
+            width: 220px;
+            height: 4px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #38bdf8 0%, rgba(56, 189, 248, 0.05) 100%);
+            opacity: 1;
+            border: none;
+        }
+        #saveTheDateCanvas.template-chevrons .event-subtitle-speakers {
+            text-align: left;
+            font-size: 20px;
+            line-height: 1.35;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            max-width: 620px;
+            margin-bottom: 24px;
+        }
+        #saveTheDateCanvas.template-chevrons .event-info-pillars {
+            justify-content: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+            width: auto;
+        }
+        #saveTheDateCanvas.template-chevrons .info-pillar {
+            background: rgba(6, 17, 36, 0.65);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 12px;
+            padding: 12px 18px;
+            box-shadow: -6px 8px 24px rgba(0, 0, 0, 0.4);
+            gap: 12px;
+        }
+        #saveTheDateCanvas.template-chevrons .pillar-icon-box svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* =======================================================
+           TEMPLATE 4: EDITORIAL GLASS (Stile Frame Awards - Fasce Vetro)
+           ======================================================= */
+        #saveTheDateCanvas.template-editorial-glass {
+            padding: 44px 60px 38px 60px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .card-top-bar {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            padding-bottom: 14px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .card-center-hero {
+            align-items: center;
+            text-align: center;
+            margin: auto 0;
+            width: 100%;
+        }
+        #saveTheDateCanvas.template-editorial-glass .event-pretitle {
+            letter-spacing: 7px;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .event-main-title {
+            font-size: 78px;
+            line-height: 0.94;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+            margin: 0 0 16px 0;
+            max-width: 1000px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .event-subtitle-speakers {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 24px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .event-divider {
+            display: none;
+        }
+        #saveTheDateCanvas.template-editorial-glass .event-info-pillars {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.22);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 14px 24px;
+            border-radius: 8px;
+            justify-content: space-around;
+            gap: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+        #saveTheDateCanvas.template-editorial-glass .info-pillar {
+            gap: 14px;
+        }
+        #saveTheDateCanvas.template-editorial-glass .card-bottom-bar {
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 12px;
+        }
+
+        /* =======================================================
            FORMAT VARIATIONS (1:1 Square & 9:16 Story)
            ======================================================= */
         /* 1:1 Square (1080 x 1080) */
@@ -937,6 +1204,19 @@
         }
         #saveTheDateCanvas.format-1-1 .event-info-pillars {
             gap: 44px;
+        }
+
+        /* Overrides Formato 1:1 per i nuovi template */
+        #saveTheDateCanvas.format-1-1.template-cyber-wave .card-center-hero,
+        #saveTheDateCanvas.format-1-1.template-chevrons .card-center-hero {
+            max-width: 920px;
+        }
+        #saveTheDateCanvas.format-1-1.template-cyber-wave .event-main-title,
+        #saveTheDateCanvas.format-1-1.template-chevrons .event-main-title {
+            font-size: 68px;
+        }
+        #saveTheDateCanvas.format-1-1.template-editorial-glass .event-main-title {
+            font-size: 76px;
         }
 
         /* 9:16 Vertical Story (1080 x 1920) */
@@ -984,6 +1264,36 @@
         }
         #saveTheDateCanvas.format-9-16 .cta-link {
             font-size: 20px;
+        }
+
+        /* Overrides Formato 9:16 per i nuovi template */
+        #saveTheDateCanvas.format-9-16.template-cyber-wave .card-center-hero,
+        #saveTheDateCanvas.format-9-16.template-chevrons .card-center-hero {
+            max-width: 100%;
+            align-items: flex-start;
+        }
+        #saveTheDateCanvas.format-9-16.template-cyber-wave .event-info-pillars,
+        #saveTheDateCanvas.format-9-16.template-chevrons .event-info-pillars {
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+            gap: 20px;
+        }
+        #saveTheDateCanvas.format-9-16.template-cyber-wave .info-pillar,
+        #saveTheDateCanvas.format-9-16.template-chevrons .info-pillar {
+            width: 100%;
+            padding: 16px 24px;
+        }
+        #saveTheDateCanvas.format-9-16.template-editorial-glass .event-main-title {
+            font-size: 90px;
+            line-height: 0.94;
+        }
+        #saveTheDateCanvas.format-9-16.template-editorial-glass .event-info-pillars {
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 26px;
+            padding: 24px 20px;
         }
 
         /* TOAST NOTIFICATION */
@@ -1069,7 +1379,7 @@
                     <i data-feather="calendar" style="color:var(--accent-glow); width:18px; height:18px;"></i>
                     <span>Editor Save the Date</span>
                 </h1>
-                <span class="badge-template">Eventi</span>
+                <span class="badge-template" id="headerTemplateBadge">Eventi 3D</span>
             </div>
         </div>
 
@@ -1096,6 +1406,47 @@
              LEFT CONTROLS PANEL (TABBED, NEVER CLIPPED)
              ============================================== -->
         <aside class="controls-panel">
+
+            <!-- SELETTORE TEMPLATE GRAFICO (4 MODELLI) -->
+            <div class="template-selector-bar">
+                <div class="template-selector-header">
+                    <label class="form-label" style="font-weight:700; color:var(--editor-text); margin:0;">
+                        <i data-feather="layout" style="width:14px; height:14px; color:var(--accent-glow); margin-right:4px;"></i>
+                        <span>Template Grafico</span>
+                    </label>
+                    <span class="badge-template" id="badgeActiveTemplate">Eventi 3D</span>
+                </div>
+                <div class="template-grid">
+                    <button type="button" class="template-pill-btn active" id="tplBtn_eventi" onclick="setCardTemplate('eventi')" title="Cubi Geometrici 3D (Classico)">
+                        <span class="tpl-icon-box">🎲</span>
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700;">Eventi 3D</div>
+                            <div style="font-size:0.64rem; color:var(--editor-muted); font-weight:500;">Cubi Geometrici</div>
+                        </div>
+                    </button>
+                    <button type="button" class="template-pill-btn" id="tplBtn_cyber_wave" onclick="setCardTemplate('cyber-wave')" title="Onda Fluida Tech (Stile Sophos)">
+                        <span class="tpl-icon-box">🌊</span>
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700;">Cyber Wave</div>
+                            <div style="font-size:0.64rem; color:var(--editor-muted); font-weight:500;">Onda Fluida Tech</div>
+                        </div>
+                    </button>
+                    <button type="button" class="template-pill-btn" id="tplBtn_chevrons" onclick="setCardTemplate('chevrons')" title="Livelli 3D Chevrons (Stile Seja Best)">
+                        <span class="tpl-icon-box">📐</span>
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700;">Chevrons</div>
+                            <div style="font-size:0.64rem; color:var(--editor-muted); font-weight:500;">Livelli &amp; Frecce 3D</div>
+                        </div>
+                    </button>
+                    <button type="button" class="template-pill-btn" id="tplBtn_editorial_glass" onclick="setCardTemplate('editorial-glass')" title="Fasce Vetro &amp; Awards (Stile Frame)">
+                        <span class="tpl-icon-box">🏆</span>
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700;">Editorial Glass</div>
+                            <div style="font-size:0.64rem; color:var(--editor-muted); font-weight:500;">Fasce Vetro &amp; Gala</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
 
             <!-- TAB NAVIGATION -->
             <nav class="editor-tabs">
@@ -1439,7 +1790,7 @@
                     <div class="form-group">
                         <label class="form-label">Scegli Tipo di Sfondo</label>
                         <select class="form-control" id="selectBgMode" onchange="changeBgMode()">
-                            <option value="cubes-3d" selected>Cubi 3D Geometrici (Reattivo al Colore)</option>
+                            <option value="cubes-3d" selected>Grafica Template (Reattiva al Colore)</option>
                             <option value="clean-gradient">Sfumatura Radiale / Tinta Unita</option>
                             <option value="custom-image">Carica Foto di Sfondo...</option>
                         </select>
@@ -1656,7 +2007,7 @@
             <div class="canvas-stage-wrapper">
 
                 <!-- SAVE THE DATE CANVAS (Target di Rendering HD) -->
-                <div id="saveTheDateCanvas" class="format-16-9">
+                <div id="saveTheDateCanvas" class="format-16-9 template-eventi">
 
                     <!-- LAYER SFONDO CON CUBI ISOMETRICI 3D DINAMICI -->
                     <div class="canvas-bg-layer" id="canvasBgLayer">
@@ -2420,13 +2771,167 @@
         function changeBgMode() {
             const mode = document.getElementById('selectBgMode').value;
             editorState.bgMode = mode;
-            const bgLayer = document.getElementById('canvasBgLayer');
             const customUploadGroup = document.getElementById('customBgUploadGroup');
+            if (customUploadGroup) {
+                customUploadGroup.style.display = (mode === 'custom-image') ? 'flex' : 'none';
+            }
+            renderTemplateBackground();
+        }
 
-            customUploadGroup.style.display = (mode === 'custom-image') ? 'flex' : 'none';
+        // Render Sfondo Grafico Dinamico per Template
+        function renderTemplateBackground() {
+            const mode = editorState.bgMode || 'cubes-3d';
+            const bgLayer = document.getElementById('canvasBgLayer');
+            if (!bgLayer) return;
 
             if (mode === 'cubes-3d') {
-                bgLayer.innerHTML = `
+                const tpl = editorState.template || 'eventi';
+                if (tpl === 'cyber-wave') {
+                    bgLayer.innerHTML = `
+                    <svg class="canvas-bg-svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="waveRadGlow" cx="85%" cy="40%" r="55%">
+                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.32"/>
+                                <stop offset="50%" stop-color="#0284c7" stop-opacity="0.12"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                            </radialGradient>
+                            <linearGradient id="waveUpperRibbon" x1="10%" y1="0%" x2="90%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22"/>
+                                <stop offset="40%" stop-color="#38bdf8" stop-opacity="0.25"/>
+                                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.05"/>
+                            </linearGradient>
+                            <linearGradient id="waveMainFlow" x1="0%" y1="20%" x2="100%" y2="80%">
+                                <stop offset="0%" stop-color="#0284c7" stop-opacity="0.35"/>
+                                <stop offset="40%" stop-color="#38bdf8" stop-opacity="0.28"/>
+                                <stop offset="70%" stop-color="#0369a1" stop-opacity="0.15"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
+                            </linearGradient>
+                            <linearGradient id="waveDeepCorner" x1="100%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.40"/>
+                                <stop offset="60%" stop-color="#0284c7" stop-opacity="0.10"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.60"/>
+                            </linearGradient>
+                            <linearGradient id="waveStroke1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+                                <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.75"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                            </linearGradient>
+                            <linearGradient id="waveStroke2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+                                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05"/>
+                            </linearGradient>
+                            <filter id="waveShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="-15" dy="18" stdDeviation="25" flood-color="#000000" flood-opacity="0.65"/>
+                            </filter>
+                        </defs>
+                        <!-- Glow Radiale -->
+                        <rect width="1200" height="675" fill="url(#waveRadGlow)"/>
+                        <!-- Linee High-tech Fluid Flow -->
+                        <g opacity="0.4">
+                            <path d="M 520 -50 C 680 180, 780 440, 1250 560" stroke="url(#waveStroke1)" stroke-width="2.5" fill="none"/>
+                            <path d="M 580 -40 C 740 200, 840 450, 1260 590" stroke="url(#waveStroke2)" stroke-width="1.5" fill="none"/>
+                            <path d="M 640 -30 C 800 220, 900 460, 1280 620" stroke="url(#waveStroke2)" stroke-width="1.2" fill="none"/>
+                            <path d="M 460 -60 C 620 160, 720 430, 1240 530" stroke="url(#waveStroke1)" stroke-width="1.5" fill="none"/>
+                        </g>
+                        <!-- Nastri e Onde 3D -->
+                        <g filter="url(#waveShadow)">
+                            <path d="M 660 -20 C 780 120, 850 310, 1220 420 L 1220 690 L 860 690 C 640 540, 560 360, 510 200 C 470 70, 540 10, 660 -20 Z" fill="url(#waveDeepCorner)"/>
+                            <path d="M 720 -30 C 860 140, 880 340, 1220 480 L 1220 640 C 940 520, 760 340, 680 160 C 640 70, 670 10, 720 -30 Z" fill="url(#waveMainFlow)"/>
+                            <path d="M 780 -30 C 920 160, 960 340, 1220 430 L 1220 370 C 980 290, 890 140, 810 -30 Z" fill="url(#waveUpperRibbon)"/>
+                        </g>
+                    </svg>
+                    `;
+                } else if (tpl === 'chevrons') {
+                    bgLayer.innerHTML = `
+                    <svg class="canvas-bg-svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="chevGlow" cx="90%" cy="30%" r="60%">
+                                <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"/>
+                                <stop offset="60%" stop-color="#0891b2" stop-opacity="0.08"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                            </radialGradient>
+                            <linearGradient id="chevGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+                                <stop offset="40%" stop-color="#ffffff" stop-opacity="0.06"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
+                            </linearGradient>
+                            <linearGradient id="chevGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.40"/>
+                                <stop offset="40%" stop-color="#0891b2" stop-opacity="0.20"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+                            </linearGradient>
+                            <linearGradient id="chevGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.80"/>
+                                <stop offset="100%" stop-color="#0891b2" stop-opacity="0.30"/>
+                            </linearGradient>
+                            <linearGradient id="chevGradBack" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.65"/>
+                            </linearGradient>
+                            <filter id="chevDropShadow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feDropShadow dx="-18" dy="24" stdDeviation="22" flood-color="#000000" flood-opacity="0.75"/>
+                            </filter>
+                        </defs>
+                        <!-- Glow di Sfondo -->
+                        <rect width="1200" height="675" fill="url(#chevGlow)"/>
+                        <!-- Piani Inclinati Chevrons 3D -->
+                        <g transform="translate(480, -180) rotate(-22)" filter="url(#chevDropShadow)">
+                            <rect x="520" y="-80" width="220" height="1200" rx="44" fill="url(#chevGradBack)"/>
+                            <rect x="290" y="40" width="200" height="1100" rx="40" fill="url(#chevGrad1)"/>
+                            <rect x="262" y="160" width="14" height="820" rx="7" fill="url(#chevGrad3)"/>
+                            <rect x="40" y="120" width="200" height="980" rx="40" fill="url(#chevGrad2)"/>
+                            <rect x="14" y="220" width="12" height="740" rx="6" fill="url(#chevGrad3)"/>
+                            <rect x="-100" y="420" width="90" height="240" rx="20" fill="url(#chevGrad1)"/>
+                        </g>
+                    </svg>
+                    `;
+                } else if (tpl === 'editorial-glass') {
+                    bgLayer.innerHTML = `
+                    <svg class="canvas-bg-svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="glassAuraCenter" cx="50%" cy="20%" r="65%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+                                <stop offset="40%" stop-color="#38bdf8" stop-opacity="0.12"/>
+                                <stop offset="80%" stop-color="#0284c7" stop-opacity="0.04"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.30"/>
+                            </radialGradient>
+                            <linearGradient id="glassBandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06"/>
+                                <stop offset="50%" stop-color="#ffffff" stop-opacity="0.12"/>
+                                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.04"/>
+                            </linearGradient>
+                            <linearGradient id="glassLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+                                <stop offset="20%" stop-color="#ffffff" stop-opacity="0.35"/>
+                                <stop offset="80%" stop-color="#ffffff" stop-opacity="0.35"/>
+                                <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                            </linearGradient>
+                            <filter id="glassSoftBlur">
+                                <feGaussianBlur stdDeviation="30"/>
+                            </filter>
+                        </defs>
+                        <!-- Illuminazione Radiale / Aura -->
+                        <rect width="1200" height="675" fill="url(#glassAuraCenter)"/>
+                        <circle cx="600" cy="180" r="220" fill="#ffffff" opacity="0.08" filter="url(#glassSoftBlur)"/>
+                        <circle cx="200" cy="520" r="180" fill="#38bdf8" opacity="0.06" filter="url(#glassSoftBlur)"/>
+                        <!-- Fasce Orizzontali Glassmorphism -->
+                        <rect x="50" y="30" width="1100" height="90" rx="14" fill="url(#glassBandGrad)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                        <rect x="50" y="140" width="1100" height="320" rx="16" fill="url(#glassBandGrad)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+                        <rect x="50" y="480" width="1100" height="155" rx="14" fill="url(#glassBandGrad)" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+                        <line x1="50" y1="120" x2="1150" y2="120" stroke="url(#glassLineGrad)" stroke-width="1"/>
+                        <line x1="50" y1="470" x2="1150" y2="470" stroke="url(#glassLineGrad)" stroke-width="1"/>
+                        <!-- Indicatori Tipografici / Registration Marks -->
+                        <g stroke="rgba(255,255,255,0.3)" stroke-width="1.2">
+                            <line x1="30" y1="20" x2="42" y2="20"/><line x1="36" y1="14" x2="36" y2="26"/>
+                            <line x1="1158" y1="20" x2="1170" y2="20"/><line x1="1164" y1="14" x2="1164" y2="26"/>
+                            <line x1="30" y1="655" x2="42" y2="655"/><line x1="36" y1="649" x2="36" y2="661"/>
+                            <line x1="1158" y1="655" x2="1170" y2="655"/><line x1="1164" y1="649" x2="1164" y2="661"/>
+                        </g>
+                    </svg>
+                    `;
+                } else {
+                    // Template predefinito: cubi 3d isometrici
+                    bgLayer.innerHTML = `
                     <svg class="canvas-bg-svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="cubeLightTop" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -2483,7 +2988,8 @@
                             </g>
                         </g>
                     </svg>
-                `;
+                    `;
+                }
             } else if (mode === 'clean-gradient') {
                 bgLayer.innerHTML = `
                     <div style="width:100%; height:100%; background:radial-gradient(circle at 50% 40%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.5) 100%);"></div>
@@ -2497,6 +3003,44 @@
                 }
             }
             updateCardColors();
+        }
+
+        // Selettore Template Grafico (4 Template distinti)
+        function setCardTemplate(tpl) {
+            editorState.template = tpl;
+
+            // Aggiorna pulsanti UI
+            document.querySelectorAll('.template-pill-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('tplBtn_' + tpl.replace(/-/g, '_'));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Aggiorna classi del Canvas
+            const canvas = document.getElementById('saveTheDateCanvas');
+            if (canvas) {
+                canvas.classList.remove('template-eventi', 'template-cyber-wave', 'template-chevrons', 'template-editorial-glass');
+                canvas.classList.add(`template-${tpl}`);
+            }
+
+            // Aggiorna badge template nella top bar
+            const badgeEl = document.getElementById('headerTemplateBadge');
+            if (badgeEl) {
+                const names = {
+                    'eventi': 'Eventi 3D',
+                    'cyber-wave': 'Cyber Wave',
+                    'chevrons': 'Chevrons 3D',
+                    'editorial-glass': 'Editorial Glass'
+                };
+                badgeEl.textContent = names[tpl] || 'Eventi 3D';
+            }
+
+            // Renderizza lo sfondo appropriato per il template
+            renderTemplateBackground();
+
+            // Mantiene il posizionamento del logo e aggiorna la card
+            setLogoPosition(editorState.logoPosition);
+            updateCard();
+            fitCanvasToViewport();
+            showToast(`Template: ${tpl.replace(/-/g, ' ').toUpperCase()}`);
         }
 
         // Upload Sfondo Personalizzato
@@ -2632,6 +3176,7 @@
             tryAutoLoadProfile();
             setLogoPosition('top-left');
             setLogoDisplayMode('both');
+            setCardTemplate('eventi');
             changeBgMode();
             applyPresetPalette('#061124', '#ffffff', '#e2e8f0', '#cbd5e1');
             updateCard();
@@ -2751,6 +3296,7 @@
             setupInlineEditing();
             setLogoPosition('top-left');
             setLogoDisplayMode(editorState.customLogoUrl ? 'both' : 'both');
+            setCardTemplate(editorState.template || 'eventi');
             updateCard();
             fitCanvasToViewport();
         });
