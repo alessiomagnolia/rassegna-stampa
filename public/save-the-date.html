@@ -1007,22 +1007,16 @@
             line-height: 1.04;
             letter-spacing: -0.5px;
             font-weight: 800;
-            margin: 0 0 16px 0;
+            margin: 0 0 18px 0;
             text-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
         }
+        /* Nasconde relatori / sottotitolo per il template Cyber Wave */
         #saveTheDateCanvas.template-cyber-wave .event-subtitle-speakers {
-            text-align: left;
-            font-size: 18.5px;
-            line-height: 1.45;
-            font-weight: 500;
-            letter-spacing: 0.2px;
-            max-width: 680px;
-            margin-bottom: 22px;
-            color: rgba(255, 255, 255, 0.92);
+            display: none !important;
         }
         #saveTheDateCanvas.template-cyber-wave .event-divider {
-            margin: 0 0 24px 0;
-            width: 110px;
+            margin: 0 0 26px 0;
+            width: 120px;
             height: 3.5px;
             border-radius: 3px;
             background: #38bdf8;
@@ -1544,7 +1538,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" id="groupSubtitleSidebar">
                         <div class="form-label">
                             <span>Relatori / Ospiti Speciali / Dettaglio</span>
                             <span class="range-val" id="valSubtitleSize">19px</span>
@@ -2684,7 +2678,13 @@
             document.getElementById('valTitleSize2').textContent = `${titleSize}px`;
             mainTitle.style.fontSize = `${titleSize}px`;
 
-            document.getElementById('cardSubtitle').textContent = document.getElementById('inputSubtitle').value;
+            const subVal = (document.getElementById('inputSubtitle').value || '').trim();
+            const showSubtitle = (editorState.template !== 'cyber-wave') && (subVal !== '');
+            const cardSub = document.getElementById('cardSubtitle');
+            if (cardSub) {
+                cardSub.textContent = document.getElementById('inputSubtitle').value;
+                cardSub.style.display = showSubtitle ? 'block' : 'none';
+            }
 
             // Divisore
             const showDivider = document.getElementById('checkShowDivider').checked;
@@ -3080,6 +3080,12 @@
             const groupCol1 = document.getElementById('groupCol1Sidebar');
             if (groupCol1) {
                 groupCol1.style.display = (tpl === 'chevrons') ? 'none' : 'block';
+            }
+
+            // Mostra o nasconde la sezione Relatori nella sidebar se Cyber Wave
+            const groupSub = document.getElementById('groupSubtitleSidebar');
+            if (groupSub) {
+                groupSub.style.display = (tpl === 'cyber-wave') ? 'none' : 'block';
             }
 
             // Mantiene il posizionamento del logo e aggiorna la card
