@@ -102,6 +102,11 @@ app.get('/linkedin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'linkedin.html'));
 });
 
+// Editor Save the Date
+app.get('/save-the-date', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'save-the-date.html'));
+});
+
 // Fallback to index.html for SPA if needed (currently using multiple HTML files though)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

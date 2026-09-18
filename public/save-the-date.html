@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Save the Date | Rassegna Stampa</title>
+    <script>
+        (function() {
+            var theme = localStorage.getItem('rs_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <!-- Google Fonts: Montserrat (geometric impact bold for Save the Date & Conference), Inter, Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=20260918_01">
+    
+    <!-- Librerie: html2canvas per render ad altissima risoluzione e feather-icons -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        :root {
+            --editor-bg: #0d1117;
+            --editor-panel: #161b26;
+            --editor-card: #1f2636;
+            --editor-border: #2d3748;
+            --editor-text: #f8fafc;
+            --editor-muted: #94a3b8;
+            --accent-glow: #38bdf8;
+            --accent-brand: #7c5cff;
+        }
+
+        [data-theme="light"] {
+            --editor-bg: #f1f5f9;
+            --editor-panel: #ffffff;
+            --editor-card: #f8fafc;
+            --editor-border: #e2e8f0;
+            --editor-text: #0f172a;
+            --editor-muted: #64748b;
+            --accent-glow: #0284c7;
+            --accent-brand: #6366f1;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* HEADER */
+        .editor-header {
+            height: 58px;
+            background: var(--editor-panel);
+            border-bottom: 1px solid var(--editor-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--editor-card);
+            border: 1px solid var(--editor-border);
+            border-radius: 8px;
+            color: var(--editor-text);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .badge-template {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-card);
+            color: var(--editor-text);
+            transition: all 0.2s ease;
+        }
+        .btn-action:hover {
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+        }
+
+        .btn-primary-action {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ffffff !important;
+            box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+        }
+        .btn-primary-action:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        /* TWO-COLUMN LAYOUT */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            min-height: calc(100vh - 58px);
+        }
+
+        /* LEFT CONTROLS PANEL */
+        .controls-panel {
+            width: 440px;
+            background: var(--editor-panel);
+            border-right: 1px solid var(--editor-border);
+            padding: 1.25rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 58px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* COLLAPSIBLE ACCORDION SECTIONS */
+        .panel-section {
+            background: var(--editor-card);
+            border: 1px solid var(--editor-border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+        .panel-section:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .panel-section-header {
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .panel-section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            color: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .panel-section-title i, .panel-section-title svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .panel-toggle-icon {
+            font-size: 0.75rem;
+            color: var(--editor-muted);
+            transition: transform 0.2s ease;
+        }
+        .panel-section.open .panel-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .panel-section-body {
+            padding: 1rem;
+            display: none;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .panel-section.open .panel-section-body {
+            display: block;
+        }
+
+        /* FORM CONTROLS */
+        .form-group {
+            margin-bottom: 0.9rem;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--editor-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .form-control:focus {
+            border-color: var(--accent-glow);
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+        }
+
+        .range-slider {
+            width: 100%;
+            accent-color: var(--accent-glow);
+            cursor: pointer;
+        }
+
+        .range-val {
+            font-size: 0.75rem;
+            color: var(--accent-glow);
+            font-weight: 700;
+        }
+
+        /* TOGGLE SWITCH */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+        .toggle-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--editor-text);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: var(--editor-border);
+            transition: .2s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #0284c7;
+        }
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+
+        /* FORMAT SELECTOR PILLS */
+        .format-group {
+            display: flex;
+            gap: 8px;
+        }
+        .format-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: 1px solid var(--editor-border);
+            border-radius: 8px;
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .format-btn i {
+            width: 16px;
+            height: 16px;
+            color: var(--editor-muted);
+        }
+        .format-btn.active {
+            border-color: var(--accent-glow);
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-glow);
+        }
+        .format-btn.active i {
+            color: var(--accent-glow);
+        }
+
+        /* TEMPLATE SELECTOR CARDS */
+        .template-card {
+            border: 2px solid var(--editor-border);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--editor-bg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .template-card.active {
+            border-color: var(--accent-glow);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .template-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .template-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--editor-text);
+        }
+        .template-desc {
+            font-size: 0.72rem;
+            color: var(--editor-muted);
+        }
+
+        /* PALETTE PRESETS */
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .palette-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--editor-border);
+            border-radius: 8px;
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .palette-btn:hover {
+            border-color: var(--accent-glow);
+        }
+        .palette-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+
+        /* COLOR PICKER INPUTS */
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--editor-bg);
+            border: 1px solid var(--editor-border);
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+        .color-row input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+            background: transparent;
+        }
+        .color-hex-val {
+            font-family: monospace;
+            font-size: 0.78rem;
+            color: var(--editor-text);
+        }
+
+        /* FILE UPLOAD BOX */
+        .file-upload-box {
+            border: 1px dashed var(--editor-border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            background: var(--editor-bg);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .file-upload-box:hover {
+            border-color: var(--accent-glow);
+        }
+        .file-upload-text {
+            font-size: 0.75rem;
+            color: var(--editor-muted);
+            margin-top: 4px;
+        }
+
+        /* RIGHT PREVIEW WORKSPACE */
+        .preview-workspace {
+            flex: 1;
+            background: var(--editor-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: auto;
+            padding: 2.5rem 1.5rem;
+            user-select: none;
+        }
+
+        .preview-floating-bar {
+            position: absolute;
+            top: 16px;
+            background: var(--editor-panel);
+            border: 1px solid var(--editor-border);
+            border-radius: 30px;
+            padding: 4px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+        }
+
+        .canvas-stage-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* =======================================================
+           SAVE THE DATE CANVAS - REAL-TIME WYSIWYG RENDER
+           Default: 1200 x 675 px (16:9 Landscape)
+           ======================================================= */
+        #saveTheDateCanvas {
+            width: 1200px;
+            height: 675px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.6);
+            border-radius: 4px;
+            background-color: #061124;
+            transform-origin: center center;
+            box-sizing: border-box;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px 60px 42px 60px;
+        }
+
+        /* 3D CUBES BACKGROUND LAYER */
+        .canvas-bg-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .canvas-bg-svg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .canvas-overlay-dim {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: radial-gradient(circle at 50% 50%, rgba(5, 15, 35, 0.3) 0%, rgba(2, 6, 16, 0.82) 100%);
+            pointer-events: none;
+        }
+
+        /* FOREGROUND CONTENT LAYER */
+        .canvas-content-layer {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* TOP BAR: BRAND / LOGO */
+        .card-top-bar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo-img {
+            max-height: 44px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+
+        .brand-logo-default-icon {
+            width: 36px;
+            height: 36px;
+            color: #ffffff;
+            stroke-width: 2.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-text-block {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .brand-sub {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        /* CENTER HERO SECTION */
+        .card-center-hero {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            padding: 10px 0;
+        }
+
+        .event-pretitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 5.5px;
+            color: #e2e8f0;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            transition: color 0.2s;
+        }
+
+        .event-main-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 68px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #ffffff;
+            text-transform: uppercase;
+            line-height: 1.02;
+            margin: 0 0 16px 0;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 1080px;
+            word-break: break-word;
+        }
+
+        .event-subtitle-speakers {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 19px;
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 22px;
+        }
+
+        .event-divider {
+            width: 480px;
+            max-width: 85%;
+            height: 1.5px;
+            background: rgba(255, 255, 255, 0.35);
+            margin: 0 auto 24px auto;
+        }
+
+        /* 3 INFO COLUMNS / BADGES */
+        .event-info-pillars {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 52px;
+            width: 100%;
+        }
+
+        .info-pillar {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            text-align: left;
+        }
+
+        .pillar-icon-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .pillar-icon-box svg, .pillar-icon-box i {
+            width: 34px;
+            height: 34px;
+            stroke-width: 1.8;
+        }
+
+        .pillar-text-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .pillar-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+            line-height: 1.15;
+        }
+
+        .pillar-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            color: rgba(255, 255, 255, 0.85);
+            text-transform: uppercase;
+            line-height: 1.15;
+        }
+
+        /* BOTTOM FOOTER / CTA */
+        .card-footer-cta {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .cta-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2.2px;
+            color: rgba(255, 255, 255, 0.65);
+            text-transform: uppercase;
+        }
+
+        .cta-link {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 15.5px;
+            font-weight: 800;
+            letter-spacing: 1.6px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        /* =======================================================
+           FORMAT VARIATIONS (1:1 Square & 9:16 Story)
+           ======================================================= */
+        /* 1:1 Square (1080 x 1080) */
+        #saveTheDateCanvas.format-1-1 {
+            width: 1080px;
+            height: 1080px;
+            padding: 60px 65px 50px 65px;
+        }
+        #saveTheDateCanvas.format-1-1 .event-main-title {
+            font-size: 64px;
+        }
+        #saveTheDateCanvas.format-1-1 .event-divider {
+            width: 520px;
+            margin: 0 auto 32px auto;
+        }
+        #saveTheDateCanvas.format-1-1 .event-info-pillars {
+            gap: 44px;
+        }
+
+        /* 9:16 Vertical Story (1080 x 1920) */
+        #saveTheDateCanvas.format-9-16 {
+            width: 1080px;
+            height: 1920px;
+            padding: 100px 70px 80px 70px;
+        }
+        #saveTheDateCanvas.format-9-16 .event-pretitle {
+            font-size: 26px;
+            letter-spacing: 6px;
+        }
+        #saveTheDateCanvas.format-9-16 .event-main-title {
+            font-size: 82px;
+            line-height: 1.05;
+        }
+        #saveTheDateCanvas.format-9-16 .event-subtitle-speakers {
+            font-size: 24px;
+            margin-bottom: 36px;
+        }
+        #saveTheDateCanvas.format-9-16 .event-divider {
+            width: 600px;
+            margin: 0 auto 40px auto;
+        }
+        #saveTheDateCanvas.format-9-16 .event-info-pillars {
+            flex-direction: column;
+            gap: 36px;
+            align-items: center;
+        }
+        #saveTheDateCanvas.format-9-16 .info-pillar {
+            gap: 18px;
+        }
+        #saveTheDateCanvas.format-9-16 .pillar-icon-box svg {
+            width: 44px;
+            height: 44px;
+        }
+        #saveTheDateCanvas.format-9-16 .pillar-title {
+            font-size: 20px;
+        }
+        #saveTheDateCanvas.format-9-16 .pillar-subtitle {
+            font-size: 16px;
+        }
+        #saveTheDateCanvas.format-9-16 .cta-label {
+            font-size: 14px;
+        }
+        #saveTheDateCanvas.format-9-16 .cta-link {
+            font-size: 20px;
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #38bdf8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 12px 18px;
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            z-index: 1000;
+            animation: fadeInToast 0.25s ease-out;
+        }
+        @keyframes fadeInToast {
+            from { opacity: 0; transform: translateY(15px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* LOADING OVERLAY FOR EXPORT */
+        .export-loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            color: #ffffff;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(56, 189, 248, 0.2);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* RESPONSIVE LAYOUT */
+        @media (max-width: 1024px) {
+            .editor-container {
+                flex-direction: column;
+            }
+            .controls-panel {
+                width: 100%;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid var(--editor-border);
+            }
+            .preview-workspace {
+                min-height: 550px;
+                padding: 1.5rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOP HEADER ===== -->
+    <header class="editor-header">
+        <div class="header-left">
+            <a href="dashboard.html" class="btn-back" title="Torna alla Dashboard">
+                <i data-feather="arrow-left" style="width:15px; height:15px;"></i>
+                <span>Dashboard</span>
+            </a>
+            <div class="header-title-box">
+                <h1 class="header-title">
+                    <i data-feather="calendar" style="color:var(--accent-glow); width:18px; height:18px;"></i>
+                    <span>Editor Save the Date</span>
+                </h1>
+                <span class="badge-template" id="badgeCurrentTemplate">Eventi</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button type="button" class="btn-action" onclick="copyCardToClipboard()" title="Copia l'immagine direttamente negli appunti">
+                <i data-feather="copy" style="width:14px; height:14px;"></i>
+                <span>Copia</span>
+            </button>
+            <button type="button" class="btn-action" onclick="exportCard('jpeg')" title="Scarica l'immagine in formato JPEG">
+                <i data-feather="image" style="width:14px; height:14px;"></i>
+                <span>Scarica JPG</span>
+            </button>
+            <button type="button" class="btn-action btn-primary-action" onclick="exportCard('png')" title="Scarica l'immagine ad altissima risoluzione PNG">
+                <i data-feather="download" style="width:14px; height:14px;"></i>
+                <span>Scarica PNG HD</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== MAIN EDITOR CONTAINER ===== -->
+    <div class="editor-container">
+
+        <!-- ==============================================
+             LEFT CONTROLS PANEL (COLLAPSIBLE ACCORDIONS)
+             ============================================== -->
+        <aside class="controls-panel">
+
+            <!-- 1. FORMATO CARD -->
+            <div class="panel-section open" id="secFormat">
+                <div class="panel-section-header" onclick="toggleSection('secFormat')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="layout"></i>
+                        <span>1. Formato &amp; Risoluzione</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="format-group">
+                        <button type="button" class="format-btn active" id="btnFmt16x9" onclick="setCardFormat('16:9')">
+                            <i data-feather="monitor"></i>
+                            <span>16:9 Banner</span>
+                            <small style="font-size:0.65rem; color:var(--editor-muted);">1200×675 px</small>
+                        </button>
+                        <button type="button" class="format-btn" id="btnFmt1x1" onclick="setCardFormat('1:1')">
+                            <i data-feather="square"></i>
+                            <span>1:1 Post</span>
+                            <small style="font-size:0.65rem; color:var(--editor-muted);">1080×1080 px</small>
+                        </button>
+                        <button type="button" class="format-btn" id="btnFmt9x16" onclick="setCardFormat('9:16')">
+                            <i data-feather="smartphone"></i>
+                            <span>9:16 Story</span>
+                            <small style="font-size:0.65rem; color:var(--editor-muted);">1080×1920 px</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SCELTA TEMPLATE -->
+            <div class="panel-section open" id="secTemplate">
+                <div class="panel-section-header" onclick="toggleSection('secTemplate')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="layers"></i>
+                        <span>2. Template Grafico</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="template-card active" id="tplEventi">
+                        <div class="template-info">
+                            <span class="template-name">Eventi (Conference &amp; Summit)</span>
+                            <span class="template-desc">Stile 3D navy con blocchi geometrici, gerarchia bold e 3 icone</span>
+                        </div>
+                        <i data-feather="check-circle" style="color:var(--accent-glow); width:18px; height:18px;"></i>
+                    </div>
+
+                    <div class="template-card" style="opacity: 0.6; cursor: default; border-style: dashed;" title="Template aggiuntivo in arrivo">
+                        <div class="template-info">
+                            <span class="template-name">Comparse TV &amp; Interviste</span>
+                            <span class="template-desc">Template in arrivo con il prossimo rilascio</span>
+                        </div>
+                        <span class="badge-template" style="background: rgba(255,255,255,0.06); color: var(--editor-muted); border-color: rgba(255,255,255,0.1);">In arrivo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. BRAND & LOGO -->
+            <div class="panel-section open" id="secBrand">
+                <div class="panel-section-header" onclick="toggleSection('secBrand')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="shield"></i>
+                        <span>3. Brand &amp; Logo</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="form-group toggle-row">
+                        <span class="toggle-label">Mostra Logo e Brand</span>
+                        <label class="switch">
+                            <input type="checkbox" id="checkShowBrand" checked onchange="updateCard()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Carica Logo Aziendale (PNG trasparente o SVG)</label>
+                        <div class="file-upload-box" onclick="document.getElementById('inputLogoFile').click()">
+                            <i data-feather="upload-cloud" style="color:var(--accent-glow); width:20px; height:20px;"></i>
+                            <div class="file-upload-text">Clicca per selezionare il file del logo</div>
+                            <input type="file" id="inputLogoFile" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+                        </div>
+                        <div id="customLogoActions" style="display:none; margin-top:6px; text-align:right;">
+                            <button type="button" class="btn-action" style="padding:2px 8px; font-size:0.72rem;" onclick="removeCustomLogo()">
+                                Rimuovi logo personalizzato
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Nome Brand / Azienda</label>
+                            <input type="text" class="form-control" id="inputBrandName" value="PRYMATECH" oninput="updateCard()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sottotitolo / Dipartimento</label>
+                            <input type="text" class="form-control" id="inputBrandSub" value="TECHNOLOGY INDUSTRIES" oninput="updateCard()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. TESTI EVENTO (TITOLI) -->
+            <div class="panel-section open" id="secTitles">
+                <div class="panel-section-header" onclick="toggleSection('secTitles')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="type"></i>
+                        <span>4. Testi dell'Evento</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="form-group">
+                        <label class="form-label">Sopratitolo / Categoria</label>
+                        <input type="text" class="form-control" id="inputPretitle" value="TECHNOLOGY" oninput="updateCard()">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>Titolo Principale</span>
+                            <span class="range-val" id="valTitleSize">68px</span>
+                        </div>
+                        <input type="text" class="form-control" id="inputMainTitle" value="CONFERENCE" oninput="updateCard()" style="margin-bottom:6px; font-weight:700;">
+                        <input type="range" class="range-slider" id="rangeTitleSize" min="36" max="92" value="68" oninput="updateCard()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Relatori / Ospiti Speciali / Dettaglio</label>
+                        <input type="text" class="form-control" id="inputSubtitle" value="Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney" oninput="updateCard()">
+                    </div>
+
+                    <div class="form-group toggle-row">
+                        <span class="toggle-label">Mostra Linea Divisoria</span>
+                        <label class="switch">
+                            <input type="checkbox" id="checkShowDivider" checked onchange="updateCard()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. LE 3 COLONNE INFORMATIVE (DATI CHIAVE) -->
+            <div class="panel-section open" id="secPillars">
+                <div class="panel-section-header" onclick="toggleSection('secPillars')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="grid"></i>
+                        <span>5. Dettagli &amp; Icone Chiave</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+
+                    <!-- COLONNA 1 -->
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--editor-border); margin-bottom:10px;">
+                        <div class="form-group toggle-row" style="margin-bottom:8px;">
+                            <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 1 (Target / Partecipanti)</strong>
+                            <label class="switch">
+                                <input type="checkbox" id="checkShowCol1" checked onchange="updateCard()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Icona</label>
+                                <select class="form-control" id="selectIcon1" onchange="updateCard()">
+                                    <option value="user" selected>Utente (User)</option>
+                                    <option value="users">Gruppo (Users)</option>
+                                    <option value="award">Premio / Star</option>
+                                    <option value="tv">Televisione / TV</option>
+                                    <option value="mic">Microfono</option>
+                                    <option value="clock">Orario</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Dato Principale</label>
+                                <input type="text" class="form-control" id="inputCol1Title" value="500+" oninput="updateCard()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Etichetta</label>
+                                <input type="text" class="form-control" id="inputCol1Sub" value="VISITOR" oninput="updateCard()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLONNA 2 -->
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--editor-border); margin-bottom:10px;">
+                        <div class="form-group toggle-row" style="margin-bottom:8px;">
+                            <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 2 (Data &amp; Periodo)</strong>
+                            <label class="switch">
+                                <input type="checkbox" id="checkShowCol2" checked onchange="updateCard()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Icona</label>
+                                <select class="form-control" id="selectIcon2" onchange="updateCard()">
+                                    <option value="calendar" selected>Calendario</option>
+                                    <option value="clock">Orologio / Ora</option>
+                                    <option value="zap">Flash / Live</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data / Date Evento</label>
+                                <input type="text" class="form-control" id="inputCol2Val" value="10-14 MARCH" oninput="updateCard()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLONNA 3 -->
+                    <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--editor-border);">
+                        <div class="form-group toggle-row" style="margin-bottom:8px;">
+                            <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 3 (Luogo / Canale)</strong>
+                            <label class="switch">
+                                <input type="checkbox" id="checkShowCol3" checked onchange="updateCard()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Icona</label>
+                                <select class="form-control" id="selectIcon3" onchange="updateCard()">
+                                    <option value="map-pin" selected>Mappa (Pin)</option>
+                                    <option value="video">Streaming / Video</option>
+                                    <option value="globe">Online / Mondo</option>
+                                    <option value="tv">Canale TV</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sede / Luogo</label>
+                                <input type="text" class="form-control" id="inputCol3Title" value="WEST PALADIUM" oninput="updateCard()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Città / Canale</label>
+                                <input type="text" class="form-control" id="inputCol3Sub" value="UNITED STATES" oninput="updateCard()">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 6. FOOTER & CALL TO ACTION -->
+            <div class="panel-section open" id="secFooter">
+                <div class="panel-section-header" onclick="toggleSection('secFooter')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="link"></i>
+                        <span>6. Footer &amp; Contatti</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="form-group toggle-row">
+                        <span class="toggle-label">Mostra Footer / Link</span>
+                        <label class="switch">
+                            <input type="checkbox" id="checkShowFooter" checked onchange="updateCard()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Dicitura Introduzione</label>
+                            <input type="text" class="form-control" id="inputCtaLabel" value="MORE INFO AT:" oninput="updateCard()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sito Web / Link</label>
+                            <input type="text" class="form-control" id="inputCtaLink" value="WWW.PRYMATECHCONFERENCE.COM" oninput="updateCard()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. SFONDO & PALETTE COLORI -->
+            <div class="panel-section open" id="secStyle">
+                <div class="panel-section-header" onclick="toggleSection('secStyle')">
+                    <h2 class="panel-section-title">
+                        <i data-feather="droplet"></i>
+                        <span>7. Aspetto, Colori &amp; Sfondo</span>
+                    </h2>
+                    <span class="panel-toggle-icon">▼</span>
+                </div>
+                <div class="panel-section-body">
+                    <div class="form-group">
+                        <label class="form-label">Stile Sfondo Geometrico</label>
+                        <select class="form-control" id="selectBgStyle" onchange="changeBgStyle()">
+                            <option value="navy-cubes" selected>Cubi 3D Navy Tech (Fedele all'originale)</option>
+                            <option value="carbon-cubes">Cubi 3D Dark Carbon (Grafite e Nero)</option>
+                            <option value="cyber-cubes">Cubi 3D Cyber Purple (Indaco e Viola)</option>
+                            <option value="emerald-cubes">Cubi 3D Emerald Tech (Smeraldo e Blu)</option>
+                            <option value="clean-gradient">Sfumatura Radiale Elegante</option>
+                            <option value="custom-image">Carica Immagine di Sfondo...</option>
+                        </select>
+                    </div>
+
+                    <!-- Uploader Immagine Sfondo Personalizzata (nascosto se non selezionato) -->
+                    <div class="form-group" id="customBgUploadGroup" style="display:none;">
+                        <label class="form-label">Carica File Immagine di Sfondo</label>
+                        <div class="file-upload-box" onclick="document.getElementById('inputBgImageFile').click()">
+                            <i data-feather="image" style="color:var(--accent-glow); width:20px; height:20px;"></i>
+                            <div class="file-upload-text">Seleziona immagine di sfondo (JPG o PNG)</div>
+                            <input type="file" id="inputBgImageFile" accept="image/*" style="display:none;" onchange="handleBgImageUpload(event)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>Opacità Overlay Scura (per la leggibilità)</span>
+                            <span class="range-val" id="valOverlayOpacity">75%</span>
+                        </div>
+                        <input type="range" class="range-slider" id="rangeOverlayOpacity" min="20" max="95" value="75" oninput="updateCard()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Palette Rapide</label>
+                        <div class="palette-grid">
+                            <button type="button" class="palette-btn" onclick="applyColorPreset('#061124', '#e2e8f0', '#ffffff')">
+                                <span class="palette-dot" style="background:#071a3d;"></span>
+                                <span>Navy Tech</span>
+                            </button>
+                            <button type="button" class="palette-btn" onclick="applyColorPreset('#0d0f14', '#94a3b8', '#ffffff')">
+                                <span class="palette-dot" style="background:#181b22;"></span>
+                                <span>Dark Carbon</span>
+                            </button>
+                            <button type="button" class="palette-btn" onclick="applyColorPreset('#140d27', '#c084fc', '#ffffff')">
+                                <span class="palette-dot" style="background:#3b1e6d;"></span>
+                                <span>Cyber Purple</span>
+                            </button>
+                            <button type="button" class="palette-btn" onclick="applyColorPreset('#041d1a', '#34d399', '#ffffff')">
+                                <span class="palette-dot" style="background:#0a413a;"></span>
+                                <span>Emerald Tech</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Colore Pre-titolo</label>
+                            <div class="color-row">
+                                <input type="color" id="colorPretitle" value="#e2e8f0" oninput="updateCard()">
+                                <span class="color-hex-val" id="hexPretitle">#E2E8F0</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Colore Titolo &amp; Testi</label>
+                            <div class="color-row">
+                                <input type="color" id="colorMainText" value="#ffffff" oninput="updateCard()">
+                                <span class="color-hex-val" id="hexMainText">#FFFFFF</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:14px; text-align:center;">
+                        <button type="button" class="btn-action" style="width:100%; justify-content:center;" onclick="resetToOriginalTemplate()">
+                            <i data-feather="rotate-ccw" style="width:14px; height:14px;"></i>
+                            <span>Ripristina Grafica di Default</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ==============================================
+             RIGHT PREVIEW CANVAS AREA (WYSIWYG STAGE)
+             ============================================== -->
+        <main class="preview-workspace" id="previewWorkspace">
+
+            <div class="preview-floating-bar">
+                <span style="font-size:0.75rem; color:var(--editor-muted);">Anteprima Live:</span>
+                <span style="font-size:0.78rem; font-weight:700; color:var(--accent-glow);" id="lblCurrentResolution">1200 × 675 px (16:9)</span>
+            </div>
+
+            <div class="canvas-stage-wrapper">
+
+                <!-- SAVE THE DATE CANVAS (Target di Rendering HD) -->
+                <div id="saveTheDateCanvas" class="format-16-9">
+
+                    <!-- LAYER SFONDO 3D CON CUBI ISOMETRICI -->
+                    <div class="canvas-bg-layer" id="canvasBgLayer">
+                        <!-- SVG 3D Cubes High-Definition Asset -->
+                        <svg class="canvas-bg-svg" id="svg3dCubes" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <!-- Gradienti per facce dei cubi 3D (illuminazione da in alto a sinistra) -->
+                                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#081838"/>
+                                    <stop offset="50%" stop-color="#040e22"/>
+                                    <stop offset="100%" stop-color="#020612"/>
+                                </linearGradient>
+
+                                <linearGradient id="cubeTopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#1b417e"/>
+                                    <stop offset="100%" stop-color="#122b54"/>
+                                </linearGradient>
+
+                                <linearGradient id="cubeFrontGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#0e2348"/>
+                                    <stop offset="100%" stop-color="#071226"/>
+                                </linearGradient>
+
+                                <linearGradient id="cubeSideGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#050e1e"/>
+                                    <stop offset="100%" stop-color="#02060e"/>
+                                </linearGradient>
+
+                                <filter id="cubeShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="-10" dy="15" stdDeviation="20" flood-color="#000000" flood-opacity="0.65"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Sfondo base scuro -->
+                            <rect width="1200" height="675" fill="url(#bgGrad)"/>
+
+                            <!-- ================= 3D GEOMETRIC CUBES COMPOSITION ================= -->
+                            <g filter="url(#cubeShadow)">
+
+                                <!-- CUBO 1: Grande cubo centrale / sinistra inclinato -->
+                                <g transform="translate(180, 160) rotate(-14)">
+                                    <!-- Faccia Superiore (Top) -->
+                                    <polygon points="0,0 160,-50 320,0 160,50" fill="url(#cubeTopGrad)"/>
+                                    <!-- Faccia Frontale Sinistra (Front) -->
+                                    <polygon points="0,0 160,50 160,260 0,210" fill="url(#cubeFrontGrad)"/>
+                                    <!-- Faccia Laterale Destra (Side) -->
+                                    <polygon points="160,50 320,0 320,210 160,260" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 2: Cubo alto sinistra -->
+                                <g transform="translate(-40, 20) rotate(-10)">
+                                    <polygon points="0,0 130,-40 260,0 130,40" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 130,40 130,220 0,180" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="130,40 260,0 260,180 130,220" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 3: Cubo basso sinistra -->
+                                <g transform="translate(40, 480) rotate(-12)">
+                                    <polygon points="0,0 140,-45 280,0 140,45" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 140,45 140,240 0,195" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="140,45 280,0 280,195 140,240" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 4: Cubo centrale alto -->
+                                <g transform="translate(460, -30) rotate(-16)">
+                                    <polygon points="0,0 150,-45 300,0 150,45" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 150,45 150,220 0,175" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="150,45 300,0 300,175 150,220" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 5: Grande blocco laterale destro -->
+                                <g transform="translate(740, 110) rotate(-12)">
+                                    <polygon points="0,0 170,-55 340,0 170,55" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 170,55 170,290 0,235" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="170,55 340,0 340,235 170,290" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 6: Cubo profondo a destra -->
+                                <g transform="translate(980, 260) rotate(-15)">
+                                    <polygon points="0,0 150,-45 300,0 150,45" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 150,45 150,260 0,215" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="150,45 300,0 300,215 150,260" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                                <!-- CUBO 7: Cubo basso a destra -->
+                                <g transform="translate(680, 470) rotate(-14)">
+                                    <polygon points="0,0 160,-50 320,0 160,50" fill="url(#cubeTopGrad)"/>
+                                    <polygon points="0,0 160,50 160,250 0,200" fill="url(#cubeFrontGrad)"/>
+                                    <polygon points="160,50 320,0 320,200 160,250" fill="url(#cubeSideGrad)"/>
+                                </g>
+
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- OVERLAY SEMITRASPARENTE PER REGOLARE CONTRASTO TESTI -->
+                    <div class="canvas-overlay-dim" id="canvasOverlayDim"></div>
+
+                    <!-- ================= CONTENUTI EDITABILI ================= -->
+                    <div class="canvas-content-layer">
+
+                        <!-- TOP BAR: BRAND / LOGO -->
+                        <div class="card-top-bar" id="cardTopBar">
+                            <div class="brand-group">
+                                <!-- Logo personalizzato o icona geometrica originale -->
+                                <div id="brandLogoContainer">
+                                    <svg class="brand-logo-default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                    </svg>
+                                </div>
+                                <div class="brand-text-block">
+                                    <span class="brand-name" id="cardBrandName">PRYMATECH</span>
+                                    <span class="brand-sub" id="cardBrandSub">TECHNOLOGY INDUSTRIES</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HERO CENTRALE -->
+                        <div class="card-center-hero">
+                            <!-- Pre-titolo / Categoria -->
+                            <div class="event-pretitle" id="cardPretitle">TECHNOLOGY</div>
+
+                            <!-- Titolo Principale Evento -->
+                            <h2 class="event-main-title" id="cardMainTitle">CONFERENCE</h2>
+
+                            <!-- Relatori / Ospiti Speciali / Dettaglio -->
+                            <div class="event-subtitle-speakers" id="cardSubtitle">Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney</div>
+
+                            <!-- Linea divisoria -->
+                            <div class="event-divider" id="cardDivider"></div>
+
+                            <!-- Le 3 Colonne Informative con Icone -->
+                            <div class="event-info-pillars" id="cardInfoPillars">
+
+                                <!-- Colonna 1: Visitatori / Partecipanti -->
+                                <div class="info-pillar" id="pillarCol1">
+                                    <div class="pillar-icon-box" id="iconBox1">
+                                        <i data-feather="user"></i>
+                                    </div>
+                                    <div class="pillar-text-box">
+                                        <span class="pillar-title" id="cardCol1Title">500+</span>
+                                        <span class="pillar-subtitle" id="cardCol1Sub">VISITOR</span>
+                                    </div>
+                                </div>
+
+                                <!-- Colonna 2: Date Evento -->
+                                <div class="info-pillar" id="pillarCol2">
+                                    <div class="pillar-icon-box" id="iconBox2">
+                                        <i data-feather="calendar"></i>
+                                    </div>
+                                    <div class="pillar-text-box">
+                                        <span class="pillar-title" id="cardCol2Val">10-14 MARCH</span>
+                                    </div>
+                                </div>
+
+                                <!-- Colonna 3: Location / Sede -->
+                                <div class="info-pillar" id="pillarCol3">
+                                    <div class="pillar-icon-box" id="iconBox3">
+                                        <i data-feather="map-pin"></i>
+                                    </div>
+                                    <div class="pillar-text-box">
+                                        <span class="pillar-title" id="cardCol3Title">WEST PALADIUM</span>
+                                        <span class="pillar-subtitle" id="cardCol3Sub">UNITED STATES</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- FOOTER & CALL TO ACTION -->
+                        <div class="card-footer-cta" id="cardFooterCta">
+                            <span class="cta-label" id="cardCtaLabel">MORE INFO AT:</span>
+                            <span class="cta-link" id="cardCtaLink">WWW.PRYMATECHCONFERENCE.COM</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotify" class="toast-notify">
+        <i data-feather="check-circle" style="color:#38bdf8; width:18px; height:18px;"></i>
+        <span id="toastMsg">Operazione completata!</span>
+    </div>
+
+    <!-- EXPORT LOADING OVERLAY -->
+    <div id="exportLoadingOverlay" class="export-loading-overlay">
+        <div class="spinner"></div>
+        <h3 style="font-size:1.15rem; font-weight:700; margin:0 0 6px 0;">Rendering Grafico in Corso...</h3>
+        <p style="font-size:0.85rem; color:#94a3b8; margin:0;">Elaborazione ad alta definizione in corso, attendere qualche secondo.</p>
+    </div>
+
+    <!-- ==============================================
+         JAVASCRIPT LOGIC & RENDERING ENGINE
+         ============================================== -->
+    <script>
+        // Stato Globale dell'Editor Save the Date
+        const editorState = {
+            format: '16:9',
+            width: 1200,
+            height: 675,
+            template: 'eventi',
+            customLogoUrl: null,
+            customBgUrl: null,
+            bgStyle: 'navy-cubes'
+        };
+
+        // Aggiorna icone Feather
+        function renderIcons() {
+            if (window.feather) {
+                feather.replace();
+            }
+        }
+
+        // Accordion toggle
+        function toggleSection(secId) {
+            const el = document.getElementById(secId);
+            if (el) {
+                el.classList.toggle('open');
+            }
+        }
+
+        // Ridimensionamento responsive dell'anteprima (Scale to Fit)
+        function fitCanvasToViewport() {
+            const canvas = document.getElementById('saveTheDateCanvas');
+            const workspace = document.getElementById('previewWorkspace');
+            if (!canvas || !workspace) return;
+
+            const padding = 60;
+            const availWidth = workspace.clientWidth - padding;
+            const availHeight = workspace.clientHeight - 80;
+
+            const scaleX = availWidth / editorState.width;
+            const scaleY = availHeight / editorState.height;
+            const scale = Math.min(scaleX, scaleY, 1.0); // max 1.0 per evitare sfocature
+
+            canvas.style.transform = `scale(${Math.max(scale, 0.25)})`;
+        }
+
+        window.addEventListener('resize', fitCanvasToViewport);
+
+        // Selettore Formato (16:9, 1:1, 9:16)
+        function setCardFormat(fmt) {
+            editorState.format = fmt;
+            const canvas = document.getElementById('saveTheDateCanvas');
+            const lblRes = document.getElementById('lblCurrentResolution');
+
+            document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active'));
+
+            canvas.classList.remove('format-16-9', 'format-1-1', 'format-9-16');
+
+            if (fmt === '16:9') {
+                document.getElementById('btnFmt16x9').classList.add('active');
+                canvas.classList.add('format-16-9');
+                editorState.width = 1200;
+                editorState.height = 675;
+                lblRes.textContent = "1200 × 675 px (16:9 Banner)";
+            } else if (fmt === '1:1') {
+                document.getElementById('btnFmt1x1').classList.add('active');
+                canvas.classList.add('format-1-1');
+                editorState.width = 1080;
+                editorState.height = 1080;
+                lblRes.textContent = "1080 × 1080 px (1:1 Quadrato)";
+            } else if (fmt === '9:16') {
+                document.getElementById('btnFmt9x16').classList.add('active');
+                canvas.classList.add('format-9-16');
+                editorState.width = 1080;
+                editorState.height = 1920;
+                lblRes.textContent = "1080 × 1920 px (9:16 Story)";
+            }
+
+            fitCanvasToViewport();
+            showToast(`Formato impostato su ${fmt}`);
+        }
+
+        // Aggiorna testi ed elementi sul canvas in tempo reale
+        function updateCard() {
+            // Brand & Logo
+            const showBrand = document.getElementById('checkShowBrand').checked;
+            document.getElementById('cardTopBar').style.display = showBrand ? 'flex' : 'none';
+            document.getElementById('cardBrandName').textContent = document.getElementById('inputBrandName').value;
+            document.getElementById('cardBrandSub').textContent = document.getElementById('inputBrandSub').value;
+
+            // Titoli
+            document.getElementById('cardPretitle').textContent = document.getElementById('inputPretitle').value;
+            const mainTitle = document.getElementById('cardMainTitle');
+            mainTitle.textContent = document.getElementById('inputMainTitle').value;
+
+            const titleSize = document.getElementById('rangeTitleSize').value;
+            document.getElementById('valTitleSize').textContent = `${titleSize}px`;
+            mainTitle.style.fontSize = `${titleSize}px`;
+
+            document.getElementById('cardSubtitle').textContent = document.getElementById('inputSubtitle').value;
+
+            // Divisore
+            const showDivider = document.getElementById('checkShowDivider').checked;
+            document.getElementById('cardDivider').style.display = showDivider ? 'block' : 'none';
+
+            // Colonne Informative
+            const showCol1 = document.getElementById('checkShowCol1').checked;
+            const col1El = document.getElementById('pillarCol1');
+            col1El.style.display = showCol1 ? 'flex' : 'none';
+            document.getElementById('cardCol1Title').textContent = document.getElementById('inputCol1Title').value;
+            document.getElementById('cardCol1Sub').textContent = document.getElementById('inputCol1Sub').value;
+            updateIcon('iconBox1', document.getElementById('selectIcon1').value);
+
+            const showCol2 = document.getElementById('checkShowCol2').checked;
+            const col2El = document.getElementById('pillarCol2');
+            col2El.style.display = showCol2 ? 'flex' : 'none';
+            document.getElementById('cardCol2Val').textContent = document.getElementById('inputCol2Val').value;
+            updateIcon('iconBox2', document.getElementById('selectIcon2').value);
+
+            const showCol3 = document.getElementById('checkShowCol3').checked;
+            const col3El = document.getElementById('pillarCol3');
+            col3El.style.display = showCol3 ? 'flex' : 'none';
+            document.getElementById('cardCol3Title').textContent = document.getElementById('inputCol3Title').value;
+            document.getElementById('cardCol3Sub').textContent = document.getElementById('inputCol3Sub').value;
+            updateIcon('iconBox3', document.getElementById('selectIcon3').value);
+
+            // Footer
+            const showFooter = document.getElementById('checkShowFooter').checked;
+            document.getElementById('cardFooterCta').style.display = showFooter ? 'flex' : 'none';
+            document.getElementById('cardCtaLabel').textContent = document.getElementById('inputCtaLabel').value;
+            document.getElementById('cardCtaLink').textContent = document.getElementById('inputCtaLink').value;
+
+            // Opacità Overlay Scura
+            const overlayVal = document.getElementById('rangeOverlayOpacity').value;
+            document.getElementById('valOverlayOpacity').textContent = `${overlayVal}%`;
+            document.getElementById('canvasOverlayDim').style.background = 
+                `radial-gradient(circle at 50% 50%, rgba(5, 15, 35, ${(overlayVal/100)*0.4}) 0%, rgba(2, 6, 16, ${(overlayVal/100)}) 100%)`;
+
+            // Colori
+            const colorPre = document.getElementById('colorPretitle').value;
+            document.getElementById('cardPretitle').style.color = colorPre;
+            document.getElementById('hexPretitle').textContent = colorPre.toUpperCase();
+
+            const colorMain = document.getElementById('colorMainText').value;
+            mainTitle.style.color = colorMain;
+            document.getElementById('cardBrandName').style.color = colorMain;
+            document.getElementById('cardCtaLink').style.color = colorMain;
+            document.getElementById('cardCol1Title').style.color = colorMain;
+            document.getElementById('cardCol2Val').style.color = colorMain;
+            document.getElementById('cardCol3Title').style.color = colorMain;
+            document.getElementById('hexMainText').textContent = colorMain.toUpperCase();
+        }
+
+        // Aggiorna l'icona selezionata per i pillars
+        function updateIcon(boxId, iconName) {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            box.innerHTML = `<i data-feather="${iconName}"></i>`;
+            renderIcons();
+        }
+
+        // Gestione Upload Logo Personalizzato
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editorState.customLogoUrl = e.target.result;
+                const container = document.getElementById('brandLogoContainer');
+                container.innerHTML = `<img src="${e.target.result}" alt="Logo" class="brand-logo-img">`;
+                document.getElementById('customLogoActions').style.display = 'block';
+                showToast('Logo personalizzato caricato con successo!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Rimozione Logo Personalizzato
+        function removeCustomLogo() {
+            editorState.customLogoUrl = null;
+            document.getElementById('inputLogoFile').value = '';
+            document.getElementById('customLogoActions').style.display = 'none';
+            const container = document.getElementById('brandLogoContainer');
+            container.innerHTML = `
+                <svg class="brand-logo-default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            `;
+            showToast('Logo predefinito ripristinato.');
+        }
+
+        // Gestione Stile Sfondo
+        function changeBgStyle() {
+            const style = document.getElementById('selectBgStyle').value;
+            editorState.bgStyle = style;
+            const bgLayer = document.getElementById('canvasBgLayer');
+            const customUploadGroup = document.getElementById('customBgUploadGroup');
+
+            customUploadGroup.style.display = (style === 'custom-image') ? 'block' : 'none';
+
+            if (style === 'custom-image') {
+                if (editorState.customBgUrl) {
+                    bgLayer.innerHTML = `<img src="${editorState.customBgUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    showToast('Carica una foto per impostarla come sfondo');
+                }
+                return;
+            }
+
+            // Ricostruzione SVG con palette sfumata in base al tema selezionato
+            let topColors = ["#1b417e", "#122b54"];
+            let frontColors = ["#0e2348", "#071226"];
+            let sideColors = ["#050e1e", "#02060e"];
+            let baseGrad = ["#081838", "#040e22", "#020612"];
+
+            if (style === 'carbon-cubes') {
+                topColors = ["#333a46", "#212630"];
+                frontColors = ["#1b1f28", "#12151c"];
+                sideColors = ["#0e1017", "#07080b"];
+                baseGrad = ["#181b22", "#0f1115", "#060709"];
+            } else if (style === 'cyber-cubes') {
+                topColors = ["#5e2ba6", "#3d1b6e"];
+                frontColors = ["#32155e", "#1e093c"];
+                sideColors = ["#16052c", "#0b0217"];
+                baseGrad = ["#260d4b", "#14062a", "#070110"];
+            } else if (style === 'emerald-cubes') {
+                topColors = ["#115e59", "#0c433f"];
+                frontColors = ["#073532", "#042220"];
+                sideColors = ["#021816", "#010d0c"];
+                baseGrad = ["#09332e", "#041c19", "#010b0a"];
+            } else if (style === 'clean-gradient') {
+                bgLayer.innerHTML = `
+                    <div style="width:100%; height:100%; background:radial-gradient(ellipse at 50% 40%, #173b75 0%, #081a3d 50%, #030a18 100%);"></div>
+                `;
+                return;
+            }
+
+            // Iniezione SVG Cubes
+            bgLayer.innerHTML = `
+                <svg class="canvas-bg-svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="bgGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="${baseGrad[0]}"/>
+                            <stop offset="50%" stop-color="${baseGrad[1]}"/>
+                            <stop offset="100%" stop-color="${baseGrad[2]}"/>
+                        </linearGradient>
+                        <linearGradient id="cubeTopGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="${topColors[0]}"/>
+                            <stop offset="100%" stop-color="${topColors[1]}"/>
+                        </linearGradient>
+                        <linearGradient id="cubeFrontGradD" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="${frontColors[0]}"/>
+                            <stop offset="100%" stop-color="${frontColors[1]}"/>
+                        </linearGradient>
+                        <linearGradient id="cubeSideGradD" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="${sideColors[0]}"/>
+                            <stop offset="100%" stop-color="${sideColors[1]}"/>
+                        </linearGradient>
+                        <filter id="cubeShadowD" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="-10" dy="15" stdDeviation="20" flood-color="#000000" flood-opacity="0.65"/>
+                        </filter>
+                    </defs>
+                    <rect width="1200" height="675" fill="url(#bgGradD)"/>
+                    <g filter="url(#cubeShadowD)">
+                        <g transform="translate(180, 160) rotate(-14)">
+                            <polygon points="0,0 160,-50 320,0 160,50" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 160,50 160,260 0,210" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="160,50 320,0 320,210 160,260" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(-40, 20) rotate(-10)">
+                            <polygon points="0,0 130,-40 260,0 130,40" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 130,40 130,220 0,180" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="130,40 260,0 260,180 130,220" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(40, 480) rotate(-12)">
+                            <polygon points="0,0 140,-45 280,0 140,45" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 140,45 140,240 0,195" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="140,45 280,0 280,195 140,240" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(460, -30) rotate(-16)">
+                            <polygon points="0,0 150,-45 300,0 150,45" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 150,45 150,220 0,175" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="150,45 300,0 300,175 150,220" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(740, 110) rotate(-12)">
+                            <polygon points="0,0 170,-55 340,0 170,55" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 170,55 170,290 0,235" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="170,55 340,0 340,235 170,290" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(980, 260) rotate(-15)">
+                            <polygon points="0,0 150,-45 300,0 150,45" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 150,45 150,260 0,215" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="150,45 300,0 300,215 150,260" fill="url(#cubeSideGradD)"/>
+                        </g>
+                        <g transform="translate(680, 470) rotate(-14)">
+                            <polygon points="0,0 160,-50 320,0 160,50" fill="url(#cubeTopGradD)"/>
+                            <polygon points="0,0 160,50 160,250 0,200" fill="url(#cubeFrontGradD)"/>
+                            <polygon points="160,50 320,0 320,200 160,250" fill="url(#cubeSideGradD)"/>
+                        </g>
+                    </g>
+                </svg>
+            `;
+            showToast('Stile sfondo aggiornato!');
+        }
+
+        // Upload Sfondo Personalizzato
+        function handleBgImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editorState.customBgUrl = e.target.result;
+                const bgLayer = document.getElementById('canvasBgLayer');
+                bgLayer.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+                showToast('Foto di sfondo caricata!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Applicazione rapida palette colori
+        function applyColorPreset(bg, pre, main) {
+            document.getElementById('colorPretitle').value = pre;
+            document.getElementById('colorMainText').value = main;
+            updateCard();
+            showToast('Palette colori applicata!');
+        }
+
+        // Ripristino Template Originale (Prymatech Conference)
+        function resetToOriginalTemplate() {
+            document.getElementById('inputBrandName').value = "PRYMATECH";
+            document.getElementById('inputBrandSub').value = "TECHNOLOGY INDUSTRIES";
+            document.getElementById('inputPretitle').value = "TECHNOLOGY";
+            document.getElementById('inputMainTitle').value = "CONFERENCE";
+            document.getElementById('rangeTitleSize').value = 68;
+            document.getElementById('inputSubtitle').value = "Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney";
+            document.getElementById('checkShowDivider').checked = true;
+
+            document.getElementById('checkShowCol1').checked = true;
+            document.getElementById('selectIcon1').value = "user";
+            document.getElementById('inputCol1Title').value = "500+";
+            document.getElementById('inputCol1Sub').value = "VISITOR";
+
+            document.getElementById('checkShowCol2').checked = true;
+            document.getElementById('selectIcon2').value = "calendar";
+            document.getElementById('inputCol2Val').value = "10-14 MARCH";
+
+            document.getElementById('checkShowCol3').checked = true;
+            document.getElementById('selectIcon3').value = "map-pin";
+            document.getElementById('inputCol3Title').value = "WEST PALADIUM";
+            document.getElementById('inputCol3Sub').value = "UNITED STATES";
+
+            document.getElementById('checkShowFooter').checked = true;
+            document.getElementById('inputCtaLabel').value = "MORE INFO AT:";
+            document.getElementById('inputCtaLink').value = "WWW.PRYMATECHCONFERENCE.COM";
+
+            document.getElementById('selectBgStyle').value = "navy-cubes";
+            document.getElementById('rangeOverlayOpacity').value = 75;
+            document.getElementById('colorPretitle').value = "#e2e8f0";
+            document.getElementById('colorMainText').value = "#ffffff";
+
+            removeCustomLogo();
+            changeBgStyle();
+            updateCard();
+            setCardFormat('16:9');
+            showToast('Grafica di default del template Eventi ripristinata!');
+        }
+
+        // ==============================================
+        // ESPORTAZIONE AD ALTA DEFINIZIONE (PNG / JPEG)
+        // ==============================================
+        async function exportCard(type) {
+            const canvasEl = document.getElementById('saveTheDateCanvas');
+            if (!canvasEl) return;
+
+            const overlay = document.getElementById('exportLoadingOverlay');
+            overlay.style.display = 'flex';
+
+            // Salviamo lo zoom attuale e resettiamo temporaneamente la scala a 1 per il render nativo
+            const origTransform = canvasEl.style.transform;
+            canvasEl.style.transform = 'none';
+
+            try {
+                // Calcola il fattore di scala per garantire definizione nitida (2x)
+                const targetScale = 2.0;
+
+                const rendered = await html2canvas(canvasEl, {
+                    scale: targetScale,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#061124',
+                    logging: false
+                });
+
+                canvasEl.style.transform = origTransform;
+                overlay.style.display = 'none';
+
+                const mime = (type === 'jpeg') ? 'image/jpeg' : 'image/png';
+                const quality = (type === 'jpeg') ? 0.95 : 1.0;
+                const dataUrl = rendered.toDataURL(mime, quality);
+
+                // Download del file
+                const a = document.createElement('a');
+                const titleSlug = (document.getElementById('inputMainTitle').value || 'SaveTheDate').replace(/\s+/g, '_');
+                const dateSlug = (document.getElementById('inputCol2Val').value || '').replace(/[^\w]/g, '_');
+                a.download = `SaveTheDate_${titleSlug}_${dateSlug}.${type}`;
+                a.href = dataUrl;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                showToast(`Card Save the Date scaricata con successo in ${type.toUpperCase()} HD!`);
+            } catch (err) {
+                canvasEl.style.transform = origTransform;
+                overlay.style.display = 'none';
+                alert('Errore durante l\'esportazione: ' + err.message);
+            }
+        }
+
+        // ==============================================
+        // COPIA DIRETTA NEGLI APPUNTI
+        // ==============================================
+        async function copyCardToClipboard() {
+            const canvasEl = document.getElementById('saveTheDateCanvas');
+            if (!canvasEl) return;
+
+            const origTransform = canvasEl.style.transform;
+            canvasEl.style.transform = 'none';
+
+            showToast('Generazione immagine per gli appunti...');
+
+            try {
+                const rendered = await html2canvas(canvasEl, {
+                    scale: 1.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#061124',
+                    logging: false
+                });
+
+                canvasEl.style.transform = origTransform;
+
+                rendered.toBlob(async blob => {
+                    if (!blob) {
+                        alert('Impossibile generare il file per gli appunti.');
+                        return;
+                    }
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        showToast('✓ Immagine copiata negli appunti! Puoi incollarla su WhatsApp, Slack o social.');
+                    } catch (clipErr) {
+                        console.warn('Clipboard API diretta non supportata:', clipErr);
+                        alert('Per copiare negli appunti, assicurati di aver dato i permessi al browser, oppure usa il pulsante Scarica PNG.');
+                    }
+                }, 'image/png');
+            } catch (err) {
+                canvasEl.style.transform = origTransform;
+                alert('Errore copia appunti: ' + err.message);
+            }
+        }
+
+        // Toast feedback
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotify');
+            const text = document.getElementById('toastMsg');
+            if (!toast || !text) return;
+
+            text.textContent = msg;
+            toast.style.display = 'flex';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3200);
+        }
+
+        // Inizializzazione al caricamento
+        document.addEventListener('DOMContentLoaded', () => {
+            renderIcons();
+            updateCard();
+            fitCanvasToViewport();
+        });
+    </script>
+</body>
+</html>
