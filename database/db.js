@@ -140,6 +140,7 @@ function initDatabase() {
         CREATE TABLE IF NOT EXISTS media_contacts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            team_id INTEGER DEFAULT NULL,
             client_id INTEGER DEFAULT NULL,
             name TEXT NOT NULL,
             outlet TEXT NOT NULL,
@@ -203,15 +204,23 @@ function initDatabase() {
     const prCols  = db.prepare('PRAGMA table_info(press_reviews)').all().map(c => c.name);
     const clCols  = db.prepare('PRAGMA table_info(clients)').all().map(c => c.name);
     const prlCols = db.prepare('PRAGMA table_info(press_releases)').all().map(c => c.name);
+    const mcCols  = db.prepare('PRAGMA table_info(media_contacts)').all().map(c => c.name);
 
     if (!prCols.includes('team_id'))  db.prepare('ALTER TABLE press_reviews  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
     if (!clCols.includes('team_id'))  db.prepare('ALTER TABLE clients         ADD COLUMN team_id INTEGER DEFAULT NULL').run();
     if (!prlCols.includes('team_id')) db.prepare('ALTER TABLE press_releases  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+    if (!mcCols.includes('team_id'))  db.prepare('ALTER TABLE media_contacts  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+    if (!mcCols.includes('client_id')) db.prepare('ALTER TABLE media_contacts ADD COLUMN client_id INTEGER DEFAULT NULL').run();
+    if (!mcCols.includes('role'))     db.prepare('ALTER TABLE media_contacts ADD COLUMN role TEXT DEFAULT ""').run();
+    if (!mcCols.includes('beat'))     db.prepare('ALTER TABLE media_contacts ADD COLUMN beat TEXT DEFAULT "generale"').run();
+    if (!mcCols.includes('phone'))    db.prepare('ALTER TABLE media_contacts ADD COLUMN phone TEXT DEFAULT ""').run();
+    if (!mcCols.includes('notes'))    db.prepare('ALTER TABLE media_contacts ADD COLUMN notes TEXT DEFAULT ""').run();
 
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_reviews_team  ON press_reviews(team_id)`).run();
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_clients_team        ON clients(team_id)`).run();
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_releases_team ON press_releases(team_id)`).run();
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_team_members_user   ON team_members(user_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_reviews_team   ON press_reviews(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_clients_team         ON clients(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_press_releases_team  ON press_releases(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_contacts_team  ON media_contacts(team_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_team_members_user    ON team_members(user_id)`).run();
 
     // ── COVERAGE REPORTS (REPORT PERIODICI ESECUTIVI) ──────────────────────────
     db.prepare(`

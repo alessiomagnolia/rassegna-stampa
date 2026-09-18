@@ -4010,8 +4010,10 @@ window.copyShareReviewUrl = function() {
     }).catch(() => showToast('Errore durante la copia', 'error'));
 };
 
-// --- 4. MEDIA CONTACTS CRM CONTROLLER ---
+// --- 4. MEDIA CONTACTS CRM & MAILING LIST CONTROLLER ---
 let mediaContactsList = [];
+let selectedContactIds = new Set();
+let pressReleasesCache = [];
 
 window.loadMediaContacts = async function(beat = '', search = '') {
     const tbody = document.getElementById('crmContactsTableBody');
@@ -4027,29 +4029,39 @@ window.loadMediaContacts = async function(beat = '', search = '') {
         const res = await apiCall('GET', url);
         mediaContactsList = res.contacts || [];
 
+        // Update CRM stats
         const totalEl = document.getElementById('crmTotalContacts');
         const outletsEl = document.getElementById('crmTotalOutlets');
         const beatsEl = document.getElementById('crmTotalBeats');
 
-        if (totalEl) totalEl.textContent = mediaContactsList.length;
+        if (totalEl) totalEl.textContent = res.stats?.total !== undefined ? res.stats.total : mediaContactsList.length;
         if (outletsEl) {
-            const uniqueOutlets = new Set(mediaContactsList.map(c => (c.outlet || '').trim().toLowerCase()).filter(Boolean));
-            outletsEl.textContent = uniqueOutlets.size;
+            if (res.stats?.uniqueOutlets !== undefined) {
+                outletsEl.textContent = res.stats.uniqueOutlets;
+            } else {
+                const uniqueOutlets = new Set(mediaContactsList.map(c => (c.outlet || '').trim().toLowerCase()).filter(Boolean));
+                outletsEl.textContent = uniqueOutlets.size;
+            }
         }
         if (beatsEl) {
-            const uniqueBeats = new Set(mediaContactsList.map(c => (c.beat || '').trim().toLowerCase()).filter(Boolean));
-            beatsEl.textContent = uniqueBeats.size;
+            if (res.stats?.beats !== undefined) {
+                beatsEl.textContent = res.stats.beats.length;
+            } else {
+                const uniqueBeats = new Set(mediaContactsList.map(c => (c.beat || '').trim().toLowerCase()).filter(Boolean));
+                beatsEl.textContent = uniqueBeats.size;
+            }
         }
 
         if (mediaContactsList.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+                    <td colspan="7" style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
                         <i data-feather="users" style="width:36px; height:36px; opacity:0.4; margin-bottom:0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
                         Nessun contatto trovato. Clicca su "+ Nuovo Contatto" o "Importa CSV" per iniziare la tua rubrica stampa!
                     </td>
                 </tr>
             `;
+            updateMailingListBar();
             feather.replace();
             return;
         }
@@ -4066,8 +4078,12 @@ window.loadMediaContacts = async function(beat = '', search = '') {
 
         tbody.innerHTML = mediaContactsList.map(c => {
             const beatName = beatLabels[c.beat] || c.beat || 'Generale';
+            const isChecked = selectedContactIds.has(c.id);
             return `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s ease; ${isChecked ? 'background:rgba(124,92,255,0.06);' : ''}" onmouseover="if(!${isChecked}) this.style.background='rgba(255,255,255,0.02)'" onmouseout="if(!${isChecked}) this.style.background='transparent'">
+                    <td style="padding:12px 16px; text-align:center;">
+                        <input type="checkbox" class="crm-contact-checkbox" data-id="${c.id}" ${isChecked ? 'checked' : ''} onchange="toggleContactSelection(${c.id}, this.checked)" style="cursor:pointer; accent-color:var(--accent-primary); width:16px; height:16px;">
+                    </td>
                     <td style="padding:12px 16px;">
                         <strong style="color:var(--text-primary); font-size:0.92rem; display:block;">${escapeHtml(c.name)}</strong>
                     </td>
@@ -4081,7 +4097,7 @@ window.loadMediaContacts = async function(beat = '', search = '') {
                         </span>
                     </td>
                     <td style="padding:12px 16px;">
-                        <a href="mailto:${encodeURIComponent(c.email)}" style="color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:5px; font-size:0.83rem;" title="Invia Email">
+                        <a href="mailto:${encodeURIComponent(c.email)}" style="color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:5px; font-size:0.83rem;" title="Invia Email Diretta">
                             <i data-feather="mail" style="width:12px; height:12px; color:var(--text-muted);"></i> ${escapeHtml(c.email)}
                         </a>
                         ${c.phone ? `<a href="tel:${encodeURIComponent(c.phone)}" style="color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:5px; font-size:0.78rem; margin-top:3px;" title="Chiama">
@@ -4103,11 +4119,12 @@ window.loadMediaContacts = async function(beat = '', search = '') {
             `;
         }).join('');
 
+        updateMailingListBar();
         feather.replace();
 
     } catch (err) {
         console.error('Errore loadMediaContacts:', err);
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--danger);">Errore nel caricamento della rubrica.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--danger);">Errore nel caricamento della rubrica. Riprova più tardi.</td></tr>`;
     }
 };
 
@@ -4117,6 +4134,308 @@ window.filterCrmContacts = function() {
     loadMediaContacts(beat, search);
 };
 
+// --- CONTACT SELECTION & MAILING LIST BAR ---
+window.toggleContactSelection = function(id, isChecked) {
+    const numId = Number(id);
+    if (isChecked) {
+        selectedContactIds.add(numId);
+    } else {
+        selectedContactIds.delete(numId);
+    }
+    updateMailingListBar();
+};
+
+window.toggleCrmSelectAll = function(masterCheckbox) {
+    const isChecked = masterCheckbox.checked;
+    mediaContactsList.forEach(c => {
+        if (isChecked) {
+            selectedContactIds.add(c.id);
+        } else {
+            selectedContactIds.delete(c.id);
+        }
+    });
+
+    document.querySelectorAll('.crm-contact-checkbox').forEach(cb => {
+        cb.checked = isChecked;
+    });
+
+    updateMailingListBar();
+};
+
+window.selectAllVisibleContacts = function() {
+    if (mediaContactsList.length === 0) {
+        showToast('Nessun contatto visualizzato da selezionare.', 'warning');
+        return;
+    }
+    mediaContactsList.forEach(c => selectedContactIds.add(c.id));
+    document.querySelectorAll('.crm-contact-checkbox').forEach(cb => { cb.checked = true; });
+    const master = document.getElementById('crmSelectAll');
+    if (master) {
+        master.checked = true;
+        master.indeterminate = false;
+    }
+    updateMailingListBar();
+    showToast(`${mediaContactsList.length} contatti selezionati per la mailing list!`, 'info');
+};
+
+window.clearCrmSelection = function() {
+    selectedContactIds.clear();
+    document.querySelectorAll('.crm-contact-checkbox').forEach(cb => { cb.checked = false; });
+    const master = document.getElementById('crmSelectAll');
+    if (master) {
+        master.checked = false;
+        master.indeterminate = false;
+    }
+    updateMailingListBar();
+};
+
+window.updateMailingListBar = function() {
+    const count = selectedContactIds.size;
+    const bar = document.getElementById('crmMailingListBar');
+    const countEl = document.getElementById('crmSelectedCount');
+    if (countEl) countEl.textContent = count;
+    if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+
+    // Update master checkbox state
+    const master = document.getElementById('crmSelectAll');
+    if (master && mediaContactsList.length > 0) {
+        const visibleCount = mediaContactsList.length;
+        const selectedVisible = mediaContactsList.filter(c => selectedContactIds.has(c.id)).length;
+        master.checked = selectedVisible === visibleCount && visibleCount > 0;
+        master.indeterminate = selectedVisible > 0 && selectedVisible < visibleCount;
+    }
+};
+
+window.getSelectedContacts = function() {
+    return mediaContactsList.filter(c => selectedContactIds.has(c.id));
+};
+
+window.copySelectedEmailsBcc = function() {
+    const selected = window.getSelectedContacts();
+    if (selected.length === 0) {
+        showToast('Seleziona almeno un contatto con la casella di spunta.', 'warning');
+        return;
+    }
+    const emails = selected.map(c => (c.email || '').trim()).filter(Boolean);
+    if (emails.length === 0) {
+        showToast('Nessuna email valida trovata nei contatti selezionati.', 'error');
+        return;
+    }
+
+    navigator.clipboard.writeText(emails.join(', ')).then(() => {
+        showToast(`${emails.length} indirizzi email copiati negli appunti (pronti per il campo Ccn)!`, 'success');
+    }).catch(() => {
+        showToast('Errore durante la copia negli appunti.', 'error');
+    });
+};
+
+window.exportSelectedContactsCsv = function() {
+    let contactsToExport = window.getSelectedContacts();
+    if (contactsToExport.length === 0) {
+        contactsToExport = mediaContactsList;
+    }
+    if (contactsToExport.length === 0) {
+        showToast('Nessun contatto disponibile da esportare.', 'warning');
+        return;
+    }
+
+    let csvContent = '\uFEFFNome,Testata,Ruolo,Settore,Email,Telefono,Note\n';
+    contactsToExport.forEach(c => {
+        const row = [
+            '"' + (c.name || '').replace(/"/g, '""') + '"',
+            '"' + (c.outlet || '').replace(/"/g, '""') + '"',
+            '"' + (c.role || '').replace(/"/g, '""') + '"',
+            '"' + (c.beat || 'generale').replace(/"/g, '""') + '"',
+            '"' + (c.email || '').replace(/"/g, '""') + '"',
+            '"' + (c.phone || '').replace(/"/g, '""') + '"',
+            '"' + (c.notes || '').replace(/"/g, '""') + '"'
+        ].join(',');
+        csvContent += row + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rubrica_media_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Esportati ${contactsToExport.length} contatti in CSV con successo!`, 'success');
+};
+
+window.quickLaunchMailingList = function() {
+    if (selectedContactIds.size === 0 && mediaContactsList.length > 0) {
+        window.selectAllVisibleContacts();
+    }
+    window.openMailingListModal();
+};
+
+// --- MAILING LIST LAUNCH MODAL CONTROLLER ---
+window.openMailingListModal = async function() {
+    let selected = window.getSelectedContacts();
+    if (selected.length === 0) {
+        if (mediaContactsList.length > 0) {
+            window.selectAllVisibleContacts();
+            selected = window.getSelectedContacts();
+        } else {
+            showToast('Aggiungi o importa prima dei contatti nella rubrica per preparare una mailing list.', 'warning');
+            return;
+        }
+    }
+
+    window.renderMailingListRecipients();
+
+    // Populate press releases dropdown
+    const select = document.getElementById('mlPressReleaseSelect');
+    if (select) {
+        select.innerHTML = '<option value="">-- Seleziona un comunicato salvato o scrivi liberamente --</option>';
+        try {
+            const history = await apiCall('GET', '/api/press/history');
+            if (Array.isArray(history) && history.length > 0) {
+                pressReleasesCache = history;
+                history.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
+                    opt.textContent = `${p.title || 'Comunicato #' + p.id} ${p.client_name ? '(' + p.client_name + ')' : ''} [${dateStr}]`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch(e) {
+            console.log('Notice: press releases history not loaded', e);
+        }
+    }
+
+    const modal = document.getElementById('mailingListLaunchModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        feather.replace();
+    }
+};
+
+window.closeMailingListModal = function() {
+    const modal = document.getElementById('mailingListLaunchModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.renderMailingListRecipients = function() {
+    const container = document.getElementById('mlRecipientsContainer');
+    const countEl = document.getElementById('mlModalRecipientCount');
+    const selected = window.getSelectedContacts();
+
+    if (countEl) countEl.textContent = selected.length;
+    if (!container) return;
+
+    if (selected.length === 0) {
+        container.innerHTML = '<span style="color:var(--danger); font-size:0.8rem;">Nessun destinatario selezionato. Chiudi e seleziona i giornalisti dalla lista.</span>';
+        return;
+    }
+
+    container.innerHTML = selected.map(c => `
+        <span style="background:rgba(124,92,255,0.15); border:1px solid rgba(124,92,255,0.3); border-radius:14px; padding:3px 10px; font-size:0.75rem; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px;">
+            <strong>${escapeHtml(c.name)}</strong>
+            <span style="color:var(--text-muted); font-size:0.72rem;">(${escapeHtml(c.outlet || 'Media')})</span>
+            <span style="color:var(--accent-primary); font-size:0.72rem;">&lt;${escapeHtml(c.email)}&gt;</span>
+            <i data-feather="x" style="width:11px; height:11px; cursor:pointer; opacity:0.7;" onclick="removeRecipientFromMailing(${c.id})" title="Rimuovi"></i>
+        </span>
+    `).join('');
+
+    feather.replace();
+};
+
+window.removeRecipientFromMailing = function(id) {
+    selectedContactIds.delete(Number(id));
+    updateMailingListBar();
+    window.renderMailingListRecipients();
+
+    const cb = document.querySelector(`.crm-contact-checkbox[data-id="${id}"]`);
+    if (cb) cb.checked = false;
+};
+
+window.onSelectPressReleaseForMailing = async function(pressId) {
+    if (!pressId) return;
+    try {
+        const press = await apiCall('GET', `/api/press/${pressId}`);
+        if (!press) return;
+
+        const subjectInput = document.getElementById('mlEmailSubject');
+        const bodyTextarea = document.getElementById('mlEmailBody');
+
+        if (subjectInput) {
+            subjectInput.value = `COMUNICATO STAMPA: ${press.title || ''}`;
+        }
+        if (bodyTextarea) {
+            // Strip HTML tags for clean plain text in email client
+            let plainContent = (press.content || press.raw_content || '').replace(/<[^>]+>/g, '').trim();
+            const header = `Gentile Redazione / Gentile Collega,\n\ninviamo per la vostra cortese attenzione il seguente comunicato stampa:\n\n=== ${((press.title || '')).toUpperCase()} ===\n\n`;
+            const footer = `\n\n--\nUfficio Stampa & Comunicazione\nEmail: press@${(press.client_name || 'azienda').toLowerCase().replace(/[^a-z0-9]/g, '')}.it`;
+            bodyTextarea.value = header + plainContent + footer;
+        }
+        showToast('Titolo e testo del comunicato stampa caricati!', 'info');
+    } catch(err) {
+        console.error('Errore recupero comunicato stampa:', err);
+    }
+};
+
+window.triggerMailingListMailto = function() {
+    const selected = window.getSelectedContacts();
+    const emails = selected.map(c => (c.email || '').trim()).filter(Boolean);
+
+    if (emails.length === 0) {
+        showToast('Seleziona almeno un contatto con email valida.', 'warning');
+        return;
+    }
+
+    const subject = (document.getElementById('mlEmailSubject')?.value || '').trim();
+    const body = (document.getElementById('mlEmailBody')?.value || '').trim();
+
+    if (!subject) {
+        showToast("Inserisci l'oggetto dell'email prima di inviare.", 'warning');
+        return;
+    }
+    if (!body) {
+        showToast('Inserisci il messaggio o comunicato stampa da inviare.', 'warning');
+        return;
+    }
+
+    const bccParam = emails.join(',');
+    const mailtoUrl = `mailto:?bcc=${encodeURIComponent(bccParam)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    // If mailto URL exceeds browser/OS length limit (~2000 chars), handle gracefully
+    if (mailtoUrl.length > 1950) {
+        navigator.clipboard.writeText(emails.join(', '));
+        showToast(`I ${emails.length} indirizzi superano la capienza massima del link rapido. Sono stati copiati automaticamente negli appunti! Incollali nel campo Ccn della tua email.`, 'info', 7000);
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        return;
+    }
+
+    // Copy BCC to clipboard as safety backup
+    navigator.clipboard.writeText(emails.join(', ')).catch(() => {});
+    showToast(`Apertura client email con ${emails.length} destinatari in Ccn...`, 'success');
+    window.location.href = mailtoUrl;
+};
+
+window.copyMailingListTextAndBcc = function() {
+    const selected = window.getSelectedContacts();
+    const emails = selected.map(c => (c.email || '').trim()).filter(Boolean);
+    const subject = (document.getElementById('mlEmailSubject')?.value || '').trim();
+    const body = (document.getElementById('mlEmailBody')?.value || '').trim();
+
+    const fullText = `DESTINATARI IN CCN (${emails.length}):\n${emails.join(', ')}\n\nOGGETTO:\n${subject}\n\nTESTO:\n${body}`;
+    navigator.clipboard.writeText(fullText).then(() => {
+        showToast(`Tutto copiato negli appunti: Destinatari Ccn (${emails.length}), Oggetto e Testo del Comunicato!`, 'success');
+    }).catch(() => {
+        showToast('Errore durante la copia negli appunti.', 'error');
+    });
+};
+
+// --- ADD / EDIT CONTACT MODAL ---
 window.openAddContactModal = function() {
     document.getElementById('contactEditId').value = '';
     document.getElementById('contactModalTitle').innerHTML = '<i data-feather="user-plus" style="color:var(--accent-primary); width:18px; height:18px;"></i> <span>Nuovo Contatto Giornalista</span>';
@@ -4193,7 +4512,7 @@ window.saveMediaContact = async function(e) {
         closeContactModal();
         loadMediaContacts();
     } catch (err) {
-        showToast('Errore: ' + err.message, 'error');
+        showToast('Errore: ' + (err.message || 'Impossibile salvare il contatto.'), 'error');
     }
 };
 
@@ -4201,18 +4520,29 @@ window.deleteMediaContact = async function(id) {
     if (!confirm('Sei sicuro di voler rimuovere questo contatto dalla rubrica?')) return;
     try {
         await apiCall('DELETE', `/api/contacts/${id}`);
-        showToast('Contatto rimosso', 'success');
+        selectedContactIds.delete(Number(id));
+        showToast('Contatto rimosso dalla rubrica.', 'success');
         loadMediaContacts();
     } catch (err) {
-        showToast('Errore: ' + err.message, 'error');
+        showToast('Errore: ' + (err.message || 'Impossibile eliminare il contatto.'), 'error');
     }
 };
 
+// --- IMPORT CONTACTS CSV / TEXT MODAL ---
 window.openImportContactsModal = function() {
     const modal = document.getElementById('importContactsModal');
     const textarea = document.getElementById('importContactsTextarea');
     const countEl = document.getElementById('importContactsCount');
-    if (textarea) textarea.value = '';
+    if (textarea) {
+        textarea.value = '';
+        if (!textarea.dataset.countListener) {
+            textarea.dataset.countListener = 'true';
+            textarea.addEventListener('input', () => {
+                const lines = textarea.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                if (countEl) countEl.textContent = `${lines.length} contatti rilevati`;
+            });
+        }
+    }
     if (countEl) countEl.textContent = '0 contatti rilevati';
     if (modal) {
         modal.classList.remove('hidden');
@@ -4233,17 +4563,18 @@ window.executeImportContacts = async function() {
     const textarea = document.getElementById('importContactsTextarea');
     const text = textarea ? textarea.value.trim() : '';
     if (!text) {
-        showToast('Incolla almeno una riga di testo per importare.', 'warning');
+        showToast('Incolla almeno una riga di testo o CSV per importare.', 'warning');
         return;
     }
 
     try {
         const res = await apiCall('POST', '/api/contacts/import', { text });
-        showToast(`Importazione completata: ${res.count} contatti aggiunti!`, 'success');
+        const count = res.count !== undefined ? res.count : (res.imported || 0);
+        showToast(`Importazione completata: ${count} contatti aggiunti alla rubrica!`, 'success');
         closeImportContactsModal();
         loadMediaContacts();
     } catch (err) {
-        showToast('Errore importazione: ' + err.message, 'error');
+        showToast('Errore importazione: ' + (err.message || 'Errore sconosciuto'), 'error');
     }
 };
 

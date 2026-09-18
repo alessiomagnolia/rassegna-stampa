@@ -977,13 +977,17 @@
         </div>
 
         <!-- PAGE: MEDIA CRM (RUBRICA MEDIA & PR) -->
+        <!-- PAGE: MEDIA CRM (RUBRICA MEDIA & PR) -->
         <div id="page-media-crm" class="page-view">
             <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
                 <div>
                     <h1 class="page-title"><i data-feather="users" style="width:28px;height:28px;vertical-align:middle;"></i> Rubrica Media & PR</h1>
                     <p class="page-subtitle">Gestisci i contatti dei giornalisti, le testate e i settori tematici per i tuoi comunicati e rassegne.</p>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-outline" onclick="quickLaunchMailingList()" title="Invia comunicato o pitch ai contatti">
+                        <i data-feather="send" style="width:15px;height:15px;margin-right:4px;"></i> Mailing List / Lancio
+                    </button>
                     <button type="button" class="btn btn-outline" onclick="openImportContactsModal()">
                         <i data-feather="upload" style="width:15px;height:15px;margin-right:4px;"></i> Importa CSV
                     </button>
@@ -1013,13 +1017,13 @@
             </div>
 
             <!-- Search & Filters Toolbar -->
-            <div class="glass-card" style="padding:1rem; margin-bottom:1.5rem;">
+            <div class="glass-card" style="padding:1rem; margin-bottom:1rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div style="flex:1; min-width:260px; position:relative;">
                         <input type="text" id="crmSearchInput" placeholder="Cerca per nome giornalista, testata, email..." style="width:100%; padding:9px 12px 9px 36px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;" oninput="filterCrmContacts()">
                         <i data-feather="search" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-muted);"></i>
                     </div>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                         <select id="crmBeatFilter" style="padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;" onchange="filterCrmContacts()">
                             <option value="tutti">Tutti i Settori</option>
                             <option value="economia">Economia & Finanza</option>
@@ -1030,7 +1034,37 @@
                             <option value="lifestyle">Lifestyle & Cultura</option>
                             <option value="generale">Generale</option>
                         </select>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="selectAllVisibleContacts()" style="padding:8px 12px; font-size:0.82rem;" title="Seleziona tutti i contatti visualizzati">
+                            <i data-feather="check-square" style="width:14px;height:14px;margin-right:4px;"></i> Seleziona Tutti
+                        </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Mailing List Action Bar (visible when contacts are selected) -->
+            <div id="crmMailingListBar" style="display:none; align-items:center; justify-content:space-between; gap:12px; background:linear-gradient(135deg, rgba(124, 92, 255, 0.16), rgba(99, 102, 241, 0.12)); border:1px solid rgba(124, 92, 255, 0.4); border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <span style="display:inline-flex; align-items:center; gap:6px; background:var(--accent-primary); color:#ffffff; font-weight:700; font-size:0.85rem; padding:4px 12px; border-radius:20px;">
+                        <i data-feather="check-circle" style="width:14px; height:14px;"></i>
+                        <span id="crmSelectedCount">0</span> selezionati
+                    </span>
+                    <span style="font-size:0.85rem; color:var(--text-primary); font-weight:500;">
+                        Mailing List Stampa pronta per il lancio
+                    </span>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" class="btn btn-gradient btn-sm" onclick="openMailingListModal()" style="display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 10px rgba(124,92,255,0.4);">
+                        <i data-feather="send" style="width:14px;height:14px;"></i> Prepara Lancio Stampa
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copySelectedEmailsBcc()" style="display:inline-flex; align-items:center; gap:6px;" title="Copia le email separate da virgola per incolla in Ccn">
+                        <i data-feather="copy" style="width:14px;height:14px;"></i> Copia Ccn
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="exportSelectedContactsCsv()" style="display:inline-flex; align-items:center; gap:6px;" title="Scarica file CSV dei contatti selezionati">
+                        <i data-feather="download" style="width:14px;height:14px;"></i> Esporta CSV
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="clearCrmSelection()" style="color:var(--text-muted); border-color:transparent; padding:4px 8px;" title="Deseleziona tutti">
+                        Deseleziona
+                    </button>
                 </div>
             </div>
 
@@ -1040,6 +1074,9 @@
                     <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
                         <thead>
                             <tr style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border-color); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px;">
+                                <th style="padding:12px 16px; width:44px; text-align:center;">
+                                    <input type="checkbox" id="crmSelectAll" onchange="toggleCrmSelectAll(this)" title="Seleziona tutti i contatti visibili" style="cursor:pointer; accent-color:var(--accent-primary); width:16px; height:16px;">
+                                </th>
                                 <th style="padding:12px 16px;">Giornalista</th>
                                 <th style="padding:12px 16px;">Testata & Ruolo</th>
                                 <th style="padding:12px 16px;">Settore</th>
@@ -1050,7 +1087,7 @@
                         </thead>
                         <tbody id="crmContactsTableBody">
                             <tr>
-                                <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                                <td colspan="7" style="text-align:center; padding:3rem; color:var(--text-muted);">
                                     Caricamento contatti in corso...
                                 </td>
                             </tr>
@@ -2380,6 +2417,84 @@
                 <div style="display:flex; gap:8px;">
                     <button type="button" class="btn btn-outline btn-sm" onclick="closeImportContactsModal()">Annulla</button>
                     <button type="button" class="btn btn-gradient btn-sm" onclick="executeImportContacts()"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Importa Ora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mailing List / Press Launch Modal -->
+    <div id="mailingListLaunchModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y:auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="send" style="color:var(--accent-primary); width:20px; height:20px;"></i>
+                    <span>Lancio Comunicato Stampa / Mailing List</span>
+                </h3>
+                <button class="btn-icon" onclick="closeMailingListModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <!-- GDPR & Privacy Notice -->
+            <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.25); border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:10px;">
+                <i data-feather="shield" style="color:var(--success); width:18px; height:18px; flex-shrink:0; margin-top:2px;"></i>
+                <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.45;">
+                    <strong style="color:var(--text-primary); display:block; margin-bottom:2px;">Invio Protetto in Ccn (Copia Nascosta):</strong>
+                    Gli indirizzi email dei giornalisti selezionati saranno inseriti in <strong>Ccn</strong> per garantire la massima privacy e rispetto del GDPR: nessun destinatario vedrà gli altri contatti della lista.
+                </div>
+            </div>
+
+            <!-- Selected Recipients Summary -->
+            <div class="field-group" style="margin-bottom:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label style="font-size:0.82rem; font-weight:600;">Destinatari Selezionati (<span id="mlModalRecipientCount">0</span>)</label>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copySelectedEmailsBcc()" style="font-size:0.75rem; padding:2px 8px;">
+                        <i data-feather="copy" style="width:12px; height:12px; margin-right:4px;"></i> Copia solo Email (Ccn)
+                    </button>
+                </div>
+                <div id="mlRecipientsContainer" style="max-height:90px; overflow-y:auto; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:8px; padding:8px 10px; display:flex; flex-wrap:wrap; gap:6px;">
+                    <!-- Recipient badges will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Option to load from saved press release -->
+            <div class="field-group" style="margin-bottom:1.25rem;">
+                <label style="font-size:0.82rem; font-weight:600; display:block; margin-bottom:4px;">
+                    <i data-feather="file-text" style="width:13px; height:13px; vertical-align:middle; color:var(--accent-primary);"></i> Importa da Comunicato Stampa Esistente (Opzionale)
+                </label>
+                <select id="mlPressReleaseSelect" onchange="onSelectPressReleaseForMailing(this.value)" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                    <option value="">-- Seleziona un comunicato salvato o scrivi liberamente --</option>
+                </select>
+            </div>
+
+            <!-- Subject -->
+            <div class="field-group" style="margin-bottom:1.25rem;">
+                <label style="font-size:0.82rem; font-weight:600; display:block; margin-bottom:4px;">Oggetto Email *</label>
+                <input type="text" id="mlEmailSubject" placeholder="Es. COMUNICATO STAMPA: [Titolo della Notizia o Annuncio]" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.88rem; font-weight:500;">
+            </div>
+
+            <!-- Message / Press body -->
+            <div class="field-group" style="margin-bottom:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="font-size:0.82rem; font-weight:600;">Testo del Messaggio / Comunicato Stampa *</label>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Testo per email</span>
+                </div>
+                <textarea id="mlEmailBody" rows="9" placeholder="Gentile Redazione / Collega,&#10;&#10;inviamo il seguente comunicato stampa per la vostra attenzione...&#10;&#10;--&#10;Ufficio Stampa" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; line-height:1.55;"></textarea>
+            </div>
+
+            <!-- Hint box -->
+            <div style="font-size:0.78rem; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:8px 12px; margin-bottom:1.25rem;">
+                💡 <strong>Come procedere all'invio:</strong> Cliccando su <em>"Apri nel Client Email (Ccn)"</em> si aprirà il tuo programma di posta (Outlook, Thunderbird, Apple Mail) con l'oggetto, il testo e i destinatari già pronti in Ccn. In alternativa puoi usare <em>"Copia Testo & Ccn"</em> per incollare in Gmail o qualsiasi webmail.
+            </div>
+
+            <!-- Modal footer actions -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeMailingListModal()">Annulla</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyMailingListTextAndBcc()" title="Copia tutto negli appunti">
+                        <i data-feather="clipboard" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Testo & Ccn
+                    </button>
+                    <button type="button" class="btn btn-gradient btn-sm" onclick="triggerMailingListMailto()">
+                        <i data-feather="mail" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri nel Client Email (Ccn)
+                    </button>
                 </div>
             </div>
         </div>
