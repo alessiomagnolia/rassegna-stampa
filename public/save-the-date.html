@@ -1105,21 +1105,37 @@
         }
         #saveTheDateCanvas.template-chevrons .event-info-pillars {
             justify-content: flex-start;
-            gap: 18px;
+            gap: 20px;
             flex-wrap: wrap;
             width: auto;
         }
+        /* Nasconde accrediti per il template Chevrons 3D: restano solo Data/Orario e Luogo */
+        #saveTheDateCanvas.template-chevrons #pillarCol1 {
+            display: none !important;
+        }
         #saveTheDateCanvas.template-chevrons .info-pillar {
-            background: rgba(6, 17, 36, 0.65);
-            border: 1px solid rgba(56, 189, 248, 0.35);
+            background: rgba(6, 17, 36, 0.72);
+            border: 1px solid rgba(56, 189, 248, 0.4);
             border-radius: 12px;
-            padding: 12px 18px;
+            padding: 13px 20px;
             box-shadow: -6px 8px 24px rgba(0, 0, 0, 0.4);
-            gap: 12px;
+            gap: 13px;
         }
         #saveTheDateCanvas.template-chevrons .pillar-icon-box svg {
             width: 28px;
             height: 28px;
+        }
+        /* Allineamento a sinistra del footer CTA / Accrediti & Informazioni */
+        #saveTheDateCanvas.template-chevrons .card-bottom-bar {
+            justify-content: flex-start !important;
+        }
+        #saveTheDateCanvas.template-chevrons .card-footer-cta {
+            align-items: flex-start !important;
+            text-align: left !important;
+        }
+        #saveTheDateCanvas.template-chevrons .cta-label,
+        #saveTheDateCanvas.template-chevrons .cta-link {
+            text-align: left !important;
         }
 
         /* =======================================================
@@ -1554,8 +1570,8 @@
                         </h2>
                     </div>
 
-                    <!-- COLONNA 1: TARGET / VISITOR -->
-                    <div style="background:rgba(0,0,0,0.18); padding:10px 12px; border-radius:8px; border:1px solid var(--editor-border);">
+                    <!-- COLONNA 1: TARGET / VISITOR / ACCREDITI -->
+                    <div id="groupCol1Sidebar" style="background:rgba(0,0,0,0.18); padding:10px 12px; border-radius:8px; border:1px solid var(--editor-border);">
                         <div class="toggle-row" style="margin-bottom:8px;">
                             <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 1 (Partecipanti / Target)</strong>
                             <label class="switch">
@@ -1586,10 +1602,10 @@
                         </div>
                     </div>
 
-                    <!-- COLONNA 2: DATA & PERIODO -->
+                    <!-- COLONNA 2: DATA & ORARIO -->
                     <div style="background:rgba(0,0,0,0.18); padding:10px 12px; border-radius:8px; border:1px solid var(--editor-border);">
                         <div class="toggle-row" style="margin-bottom:8px;">
-                            <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 2 (Data / Periodo)</strong>
+                            <strong style="font-size:0.8rem; color:var(--accent-glow);">Colonna 2 (Data / Orario)</strong>
                             <label class="switch">
                                 <input type="checkbox" id="checkShowCol2" checked onchange="updateCard()">
                                 <span class="slider"></span>
@@ -1609,6 +1625,10 @@
                                 <label class="form-label">Data Evento</label>
                                 <input type="text" class="form-control" id="inputCol2Val" value="28 OTTOBRE 2026" oninput="updateCard()">
                             </div>
+                        </div>
+                        <div class="form-group" style="margin-top:8px;">
+                            <label class="form-label">Orario / Dettaglio (Opzionale)</label>
+                            <input type="text" class="form-control" id="inputCol2Sub" value="" placeholder="es. ORE 10:30 (opzionale)" oninput="updateCard()">
                         </div>
                     </div>
 
@@ -2141,13 +2161,14 @@
                                     </div>
                                 </div>
 
-                                <!-- Colonna 2: Date Evento -->
+                                <!-- Colonna 2: Date / Orario Evento -->
                                 <div class="info-pillar" id="pillarCol2" onclick="focusField('inputCol2Val')">
                                     <div class="pillar-icon-box" id="iconBox2">
                                         <i data-feather="calendar"></i>
                                     </div>
                                     <div class="pillar-text-box">
                                         <span class="pillar-title" id="cardCol2Val" contenteditable="true" spellcheck="false">28 OTTOBRE 2026</span>
+                                        <span class="pillar-subtitle" id="cardCol2Sub" contenteditable="true" spellcheck="false" style="display:none;"></span>
                                     </div>
                                 </div>
 
@@ -2337,10 +2358,17 @@
                 bottomLeftSlot.style.display = 'none';
                 bottomRightSlot.style.display = 'none';
                 bottomBar.style.flexDirection = 'row';
-                bottomBar.style.justifyContent = 'center';
                 bottomBar.style.alignItems = 'center';
-                cta.style.textAlign = 'center';
-                cta.style.alignItems = 'center';
+
+                if (editorState.template === 'chevrons') {
+                    bottomBar.style.justifyContent = 'flex-start';
+                    cta.style.textAlign = 'left';
+                    cta.style.alignItems = 'flex-start';
+                } else {
+                    bottomBar.style.justifyContent = 'center';
+                    cta.style.textAlign = 'center';
+                    cta.style.alignItems = 'center';
+                }
 
                 if (pos === 'top-left') {
                     topBar.style.justifyContent = 'flex-start';
@@ -2672,7 +2700,7 @@
             document.getElementById('cardInfoPillars').style.gap = `${pillGap}px`;
 
             // Colonne Informative
-            const showCol1 = document.getElementById('checkShowCol1').checked;
+            const showCol1 = document.getElementById('checkShowCol1').checked && (editorState.template !== 'chevrons');
             document.getElementById('pillarCol1').style.display = showCol1 ? 'flex' : 'none';
             document.getElementById('cardCol1Title').textContent = document.getElementById('inputCol1Title').value;
             document.getElementById('cardCol1Sub').textContent = document.getElementById('inputCol1Sub').value;
@@ -2681,6 +2709,16 @@
             const showCol2 = document.getElementById('checkShowCol2').checked;
             document.getElementById('pillarCol2').style.display = showCol2 ? 'flex' : 'none';
             document.getElementById('cardCol2Val').textContent = document.getElementById('inputCol2Val').value;
+            const inputCol2Sub = document.getElementById('inputCol2Sub');
+            const cardCol2Sub = document.getElementById('cardCol2Sub');
+            if (inputCol2Sub && cardCol2Sub) {
+                if (inputCol2Sub.value.trim()) {
+                    cardCol2Sub.textContent = inputCol2Sub.value;
+                    cardCol2Sub.style.display = 'block';
+                } else {
+                    cardCol2Sub.style.display = 'none';
+                }
+            }
             updateIcon('iconBox2', document.getElementById('selectIcon2').value);
 
             const showCol3 = document.getElementById('checkShowCol3').checked;
@@ -2743,6 +2781,8 @@
             document.getElementById('cardSubtitle').style.color = subCol;
             document.getElementById('cardBrandSub').style.color = subCol;
             document.getElementById('cardCol1Sub').style.color = subCol;
+            const cardCol2SubEl = document.getElementById('cardCol2Sub');
+            if (cardCol2SubEl) cardCol2SubEl.style.color = subCol;
             document.getElementById('cardCol3Sub').style.color = subCol;
             document.getElementById('cardCtaLabel').style.color = subCol;
         }
@@ -3036,6 +3076,12 @@
             // Renderizza lo sfondo appropriato per il template
             renderTemplateBackground();
 
+            // Mostra o nasconde la Colonna 1 (Accrediti) nella sidebar se Chevrons 3D
+            const groupCol1 = document.getElementById('groupCol1Sidebar');
+            if (groupCol1) {
+                groupCol1.style.display = (tpl === 'chevrons') ? 'none' : 'block';
+            }
+
             // Mantiene il posizionamento del logo e aggiorna la card
             setLogoPosition(editorState.logoPosition);
             updateCard();
@@ -3122,6 +3168,7 @@
                 { canvasId: 'cardCol1Title', inputId: 'inputCol1Title' },
                 { canvasId: 'cardCol1Sub', inputId: 'inputCol1Sub' },
                 { canvasId: 'cardCol2Val', inputId: 'inputCol2Val' },
+                { canvasId: 'cardCol2Sub', inputId: 'inputCol2Sub' },
                 { canvasId: 'cardCol3Title', inputId: 'inputCol3Title' },
                 { canvasId: 'cardCol3Sub', inputId: 'inputCol3Sub' },
                 { canvasId: 'cardCtaLabel', inputId: 'inputCtaLabel' },
@@ -3159,6 +3206,7 @@
             document.getElementById('checkShowCol2').checked = true;
             document.getElementById('selectIcon2').value = "calendar";
             document.getElementById('inputCol2Val').value = "28 OTTOBRE 2026";
+            if (document.getElementById('inputCol2Sub')) document.getElementById('inputCol2Sub').value = "";
 
             document.getElementById('checkShowCol3').checked = true;
             document.getElementById('selectIcon3').value = "map-pin";
