@@ -509,6 +509,106 @@
             margin-top: 4px;
         }
 
+        /* PRESETS TESTI RAPIDI */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .preset-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .preset-btn i {
+            width: 15px;
+            height: 15px;
+            color: var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .preset-btn:hover {
+            border-color: var(--accent-glow);
+            background: rgba(56, 189, 248, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* GRIGLIA POSIZIONE LOGO (3x2) */
+        .pos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .pos-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px 4px;
+            border-radius: 8px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.71rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .pos-btn i {
+            width: 15px;
+            height: 15px;
+            color: var(--editor-muted);
+        }
+        .pos-btn:hover {
+            border-color: var(--accent-glow);
+        }
+        .pos-btn.active {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+        }
+        .pos-btn.active i {
+            color: var(--accent-glow);
+        }
+
+        /* DISPLAY MODE PILLS */
+        .display-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .mode-btn {
+            padding: 7px 4px;
+            border-radius: 7px;
+            border: 1px solid var(--editor-border);
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover {
+            border-color: var(--accent-glow);
+        }
+        .mode-btn.active {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+        }
+
         /* RIGHT PREVIEW WORKSPACE */
         .preview-workspace {
             flex: 1;
@@ -605,9 +705,11 @@
         /* TOP BAR: BRAND / LOGO */
         .card-top-bar {
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
+            align-items: center;
+            justify-content: flex-start;
             width: 100%;
+            min-height: 48px;
+            transition: all 0.2s ease;
         }
 
         .brand-group {
@@ -615,22 +717,21 @@
             align-items: center;
             gap: 14px;
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
         .brand-logo-img {
             max-height: 46px;
-            max-width: 130px;
+            max-width: 160px;
             object-fit: contain;
-        }
-
-        .brand-logo-default-icon {
-            width: 38px;
-            height: 38px;
-            color: #ffffff;
-            stroke-width: 2.2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
         }
 
         .brand-text-block {
@@ -773,15 +874,31 @@
             line-height: 1.15;
         }
 
-        /* BOTTOM FOOTER / CTA */
+        /* BOTTOM BAR & FOOTER / CTA */
+        .card-bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 48px;
+            position: relative;
+            z-index: 5;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-slot {
+            display: none;
+            flex-shrink: 0;
+        }
+
         .card-footer-cta {
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            width: 100%;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .cta-label {
@@ -1001,6 +1118,37 @@
                  ============================================== -->
             <div class="tab-content active" id="tabContent">
 
+                <!-- 0. MODELLI RAPIDI DI TESTO (1-CLICK) -->
+                <div class="control-card">
+                    <div class="card-header-bar">
+                        <h2 class="card-header-title">
+                            <i data-feather="zap"></i>
+                            <span>Modelli Rapidi di Testo (1-Click)</span>
+                        </h2>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--editor-muted); margin-bottom:2px;">
+                        Applica istantaneamente un testo di prova realistico e professionale:
+                    </div>
+                    <div class="presets-grid">
+                        <button type="button" class="preset-btn" onclick="applyTextPreset('conferenza')">
+                            <i data-feather="mic"></i>
+                            <span>Conferenza Stampa</span>
+                        </button>
+                        <button type="button" class="preset-btn" onclick="applyTextPreset('tv')">
+                            <i data-feather="tv"></i>
+                            <span>Speciale TV &amp; Talk</span>
+                        </button>
+                        <button type="button" class="preset-btn" onclick="applyTextPreset('gala')">
+                            <i data-feather="award"></i>
+                            <span>Gala &amp; Premi</span>
+                        </button>
+                        <button type="button" class="preset-btn" onclick="applyTextPreset('summit')">
+                            <i data-feather="globe"></i>
+                            <span>Summit &amp; Keynote</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 1. TITOLI EVENTO -->
                 <div class="control-card">
                     <div class="card-header-bar">
@@ -1015,7 +1163,7 @@
                             <span>Sopratitolo / Categoria</span>
                             <span class="range-val" id="valPretitleSize">20px</span>
                         </div>
-                        <input type="text" class="form-control" id="inputPretitle" value="TECHNOLOGY" placeholder="es. TECHNOLOGY o SAVE THE DATE" oninput="updateCard()">
+                        <input type="text" class="form-control" id="inputPretitle" value="SAVE THE DATE" placeholder="es. SAVE THE DATE o INVITO ESCLUSIVO" oninput="updateCard()">
                     </div>
 
                     <div class="form-group">
@@ -1023,7 +1171,7 @@
                             <span>Titolo Principale Evento</span>
                             <span class="range-val" id="valTitleSize">68px</span>
                         </div>
-                        <input type="text" class="form-control" id="inputMainTitle" value="CONFERENCE" placeholder="es. CONFERENCE o CONFERENZA STAMPA" style="font-weight:700;" oninput="updateCard()">
+                        <input type="text" class="form-control" id="inputMainTitle" value="CONFERENZA STAMPA" placeholder="es. CONFERENZA STAMPA o PRESENTAZIONE ANNUALE" style="font-weight:700;" oninput="updateCard()">
                         <div style="margin-top:6px;">
                             <input type="range" class="range-slider" id="rangeTitleSize" min="32" max="96" value="68" oninput="updateCard()">
                         </div>
@@ -1034,7 +1182,7 @@
                             <span>Relatori / Ospiti Speciali / Dettaglio</span>
                             <span class="range-val" id="valSubtitleSize">19px</span>
                         </div>
-                        <input type="text" class="form-control" id="inputSubtitle" value="Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney" placeholder="es. Dr. Rossi • Dott. Bianchi" oninput="updateCard()">
+                        <input type="text" class="form-control" id="inputSubtitle" value="Presentazione Ufficiale e Tavola Rotonda con la Stampa" placeholder="es. Tavola Rotonda con la Stampa • Milano" oninput="updateCard()">
                     </div>
 
                     <div class="form-group toggle-row" style="margin-top:4px;">
@@ -1068,8 +1216,8 @@
                             <div class="form-group">
                                 <label class="form-label">Icona</label>
                                 <select class="form-control" id="selectIcon1" onchange="updateCard()">
-                                    <option value="user" selected>Utente (User)</option>
-                                    <option value="users">Gruppo (Users)</option>
+                                    <option value="users" selected>Gruppo (Users)</option>
+                                    <option value="user">Utente (User)</option>
                                     <option value="award">Premio / Star</option>
                                     <option value="tv">Televisione / TV</option>
                                     <option value="mic">Microfono</option>
@@ -1078,11 +1226,11 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Dato</label>
-                                <input type="text" class="form-control" id="inputCol1Title" value="500+" oninput="updateCard()">
+                                <input type="text" class="form-control" id="inputCol1Title" value="350+" oninput="updateCard()">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Etichetta</label>
-                                <input type="text" class="form-control" id="inputCol1Sub" value="VISITOR" oninput="updateCard()">
+                                <input type="text" class="form-control" id="inputCol1Sub" value="ACCREDITI STAMPA" oninput="updateCard()">
                             </div>
                         </div>
                     </div>
@@ -1108,7 +1256,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Data Evento</label>
-                                <input type="text" class="form-control" id="inputCol2Val" value="10-14 MARCH" oninput="updateCard()">
+                                <input type="text" class="form-control" id="inputCol2Val" value="28 OTTOBRE 2026" oninput="updateCard()">
                             </div>
                         </div>
                     </div>
@@ -1134,17 +1282,17 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Sede</label>
-                                <input type="text" class="form-control" id="inputCol3Title" value="WEST PALADIUM" oninput="updateCard()">
+                                <input type="text" class="form-control" id="inputCol3Title" value="PALAZZO DEI CONGRESSI" oninput="updateCard()">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Città / Canale</label>
-                                <input type="text" class="form-control" id="inputCol3Sub" value="UNITED STATES" oninput="updateCard()">
+                                <input type="text" class="form-control" id="inputCol3Sub" value="MILANO" oninput="updateCard()">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. BRAND & LOGO -->
+                <!-- 3. BRAND & LOGO (Personalizzabile al 100%) -->
                 <div class="control-card">
                     <div class="card-header-bar">
                         <h2 class="card-header-title">
@@ -1157,27 +1305,91 @@
                         </label>
                     </div>
 
-                    <div class="form-row-2">
-                        <div class="form-group">
-                            <label class="form-label">Nome Azienda</label>
-                            <input type="text" class="form-control" id="inputBrandName" value="PRYMATECH" oninput="updateCard()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Sottotitolo / Dipartimento</label>
-                            <input type="text" class="form-control" id="inputBrandSub" value="TECHNOLOGY INDUSTRIES" oninput="updateCard()">
+                    <!-- PULSANTE CARICA DAL PROFILO AZIENDALE -->
+                    <button type="button" class="btn-action" style="width:100%; justify-content:center; gap:8px;" onclick="loadFromUserProfile()">
+                        <i data-feather="user-check" style="width:14px; height:14px; color:var(--accent-glow);"></i>
+                        <span>Carica Dati dal Profilo Aziendale</span>
+                    </button>
+
+                    <!-- POSIZIONE LOGO / BRAND (6 DIREZIONI) -->
+                    <div class="form-group">
+                        <label class="form-label">Posizione nella Card</label>
+                        <div class="pos-grid">
+                            <button type="button" class="pos-btn active" id="posBtn_top_left" onclick="setLogoPosition('top-left')" title="In alto a sinistra">
+                                <i data-feather="arrow-up-left"></i>
+                                <span>Alto Sx</span>
+                            </button>
+                            <button type="button" class="pos-btn" id="posBtn_top_center" onclick="setLogoPosition('top-center')" title="In alto al centro">
+                                <i data-feather="arrow-up"></i>
+                                <span>Alto Centro</span>
+                            </button>
+                            <button type="button" class="pos-btn" id="posBtn_top_right" onclick="setLogoPosition('top-right')" title="In alto a destra">
+                                <i data-feather="arrow-up-right"></i>
+                                <span>Alto Dx</span>
+                            </button>
+                            <button type="button" class="pos-btn" id="posBtn_bottom_left" onclick="setLogoPosition('bottom-left')" title="In basso a sinistra">
+                                <i data-feather="arrow-down-left"></i>
+                                <span>Basso Sx</span>
+                            </button>
+                            <button type="button" class="pos-btn" id="posBtn_bottom_center" onclick="setLogoPosition('bottom-center')" title="In basso al centro">
+                                <i data-feather="arrow-down"></i>
+                                <span>Basso Centro</span>
+                            </button>
+                            <button type="button" class="pos-btn" id="posBtn_bottom_right" onclick="setLogoPosition('bottom-right')" title="In basso a destra">
+                                <i data-feather="arrow-down-right"></i>
+                                <span>Basso Dx</span>
+                            </button>
                         </div>
                     </div>
 
+                    <!-- MODALITÀ VISUALIZZAZIONE LOGO -->
                     <div class="form-group">
-                        <label class="form-label">Carica File Logo Trasparente (PNG o SVG)</label>
+                        <label class="form-label">Modalità Visualizzazione</label>
+                        <div class="display-mode-grid">
+                            <button type="button" class="mode-btn active" id="modeBtn_both" onclick="setLogoDisplayMode('both')">
+                                <span>Logo + Testo</span>
+                            </button>
+                            <button type="button" class="mode-btn" id="modeBtn_logo_only" onclick="setLogoDisplayMode('logo-only')">
+                                <span>Solo Logo</span>
+                            </button>
+                            <button type="button" class="mode-btn" id="modeBtn_text_only" onclick="setLogoDisplayMode('text-only')">
+                                <span>Solo Testo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SLIDER ALTEZZA / DIMENSIONE LOGO -->
+                    <div class="form-group" id="logoHeightGroup">
+                        <div class="form-label">
+                            <span>Dimensione Logo</span>
+                            <span class="range-val" id="valLogoHeight">46px</span>
+                        </div>
+                        <input type="range" class="range-slider" id="rangeLogoHeight" min="24" max="90" value="46" oninput="updateLogoHeight(this.value)">
+                    </div>
+
+                    <!-- NOME AZIENDA E SOTTOTITOLO -->
+                    <div class="form-row-2" id="brandTextInputsGroup">
+                        <div class="form-group">
+                            <label class="form-label">Nome Azienda</label>
+                            <input type="text" class="form-control" id="inputBrandName" value="LA TUA AZIENDA" placeholder="es. LA TUA AZIENDA" oninput="updateCard()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sottotitolo / Dipartimento</label>
+                            <input type="text" class="form-control" id="inputBrandSub" value="COMUNICAZIONE &amp; MEDIA" placeholder="es. COMUNICAZIONE & MEDIA" oninput="updateCard()">
+                        </div>
+                    </div>
+
+                    <!-- CARICA FILE LOGO -->
+                    <div class="form-group">
+                        <label class="form-label">Carica File Logo Trasparente (PNG, SVG, JPG)</label>
                         <div class="file-upload-box" onclick="document.getElementById('inputLogoFile').click()">
                             <i data-feather="upload-cloud" style="color:var(--accent-glow); width:20px; height:20px;"></i>
-                            <div class="file-upload-text">Clicca per selezionare il file del logo dal computer</div>
+                            <div class="file-upload-text">Clicca per selezionare il file del tuo logo dal computer</div>
                             <input type="file" id="inputLogoFile" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
                         </div>
                         <div id="customLogoActions" style="display:none; margin-top:6px; text-align:right;">
                             <button type="button" class="btn-action" style="padding:3px 8px; font-size:0.75rem;" onclick="removeCustomLogo()">
-                                Rimuovi logo personalizzato
+                                Rimuovi logo caricato
                             </button>
                         </div>
                     </div>
@@ -1199,11 +1411,11 @@
                     <div class="form-row-2">
                         <div class="form-group">
                             <label class="form-label">Dicitura Introduttiva</label>
-                            <input type="text" class="form-control" id="inputCtaLabel" value="MORE INFO AT:" oninput="updateCard()">
+                            <input type="text" class="form-control" id="inputCtaLabel" value="ACCREDITI &amp; INFORMAZIONI:" placeholder="es. ACCREDITI & INFORMAZIONI:" oninput="updateCard()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Sito Web / Link</label>
-                            <input type="text" class="form-control" id="inputCtaLink" value="WWW.PRYMATECHCONFERENCE.COM" oninput="updateCard()">
+                            <input type="text" class="form-control" id="inputCtaLink" value="WWW.EVENTO-AZIENDALE.IT" placeholder="es. WWW.AZIENDA.IT/EVENTO" oninput="updateCard()">
                         </div>
                     </div>
                 </div>
@@ -1534,17 +1746,18 @@
                     <!-- ================= CONTENUTI EDITABILI ================= -->
                     <div class="canvas-content-layer">
 
-                        <!-- TOP BAR: BRAND / LOGO -->
+                        <!-- TOP BAR: BRAND / LOGO (Slot Iniziale Posizione In Alto) -->
                         <div class="card-top-bar" id="cardTopBar" onclick="focusField('inputBrandName')">
-                            <div class="brand-group">
-                                <div id="brandLogoContainer">
-                                    <svg class="brand-logo-default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                                    </svg>
+                            <div class="brand-group" id="brandGroup">
+                                <div id="brandLogoContainer" class="brand-logo-container" style="display:none;">
+                                    <img id="brandLogoImg" class="brand-logo-img" src="" alt="Logo" style="display:none;">
+                                    <div id="brandLogoEmptyPlaceholder" style="display:none; border:1.5px dashed rgba(255,255,255,0.4); padding:6px 12px; border-radius:6px; font-size:11px; font-weight:600; color:rgba(255,255,255,0.8); cursor:pointer;" onclick="document.getElementById('inputLogoFile').click()">
+                                        + Clicca per caricare logo
+                                    </div>
                                 </div>
-                                <div class="brand-text-block">
-                                    <span class="brand-name" id="cardBrandName" contenteditable="true" spellcheck="false">PRYMATECH</span>
-                                    <span class="brand-sub" id="cardBrandSub" contenteditable="true" spellcheck="false">TECHNOLOGY INDUSTRIES</span>
+                                <div class="brand-text-block" id="brandTextBlock">
+                                    <span class="brand-name" id="cardBrandName" contenteditable="true" spellcheck="false">LA TUA AZIENDA</span>
+                                    <span class="brand-sub" id="cardBrandSub" contenteditable="true" spellcheck="false">COMUNICAZIONE &amp; MEDIA</span>
                                 </div>
                             </div>
                         </div>
@@ -1552,13 +1765,13 @@
                         <!-- HERO CENTRALE -->
                         <div class="card-center-hero">
                             <!-- Pre-titolo / Categoria -->
-                            <div class="event-pretitle" id="cardPretitle" contenteditable="true" spellcheck="false" onclick="focusField('inputPretitle')">TECHNOLOGY</div>
+                            <div class="event-pretitle" id="cardPretitle" contenteditable="true" spellcheck="false" onclick="focusField('inputPretitle')">SAVE THE DATE</div>
 
                             <!-- Titolo Principale Evento -->
-                            <h2 class="event-main-title" id="cardMainTitle" contenteditable="true" spellcheck="false" onclick="focusField('inputMainTitle')">CONFERENCE</h2>
+                            <h2 class="event-main-title" id="cardMainTitle" contenteditable="true" spellcheck="false" onclick="focusField('inputMainTitle')">CONFERENZA STAMPA</h2>
 
                             <!-- Relatori / Ospiti Speciali / Dettaglio -->
-                            <div class="event-subtitle-speakers" id="cardSubtitle" contenteditable="true" spellcheck="false" onclick="focusField('inputSubtitle')">Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney</div>
+                            <div class="event-subtitle-speakers" id="cardSubtitle" contenteditable="true" spellcheck="false" onclick="focusField('inputSubtitle')">Presentazione Ufficiale e Tavola Rotonda con la Stampa</div>
 
                             <!-- Linea divisoria -->
                             <div class="event-divider" id="cardDivider"></div>
@@ -1569,11 +1782,11 @@
                                 <!-- Colonna 1: Visitatori / Partecipanti -->
                                 <div class="info-pillar" id="pillarCol1" onclick="focusField('inputCol1Title')">
                                     <div class="pillar-icon-box" id="iconBox1">
-                                        <i data-feather="user"></i>
+                                        <i data-feather="users"></i>
                                     </div>
                                     <div class="pillar-text-box">
-                                        <span class="pillar-title" id="cardCol1Title" contenteditable="true" spellcheck="false">500+</span>
-                                        <span class="pillar-subtitle" id="cardCol1Sub" contenteditable="true" spellcheck="false">VISITOR</span>
+                                        <span class="pillar-title" id="cardCol1Title" contenteditable="true" spellcheck="false">350+</span>
+                                        <span class="pillar-subtitle" id="cardCol1Sub" contenteditable="true" spellcheck="false">ACCREDITI STAMPA</span>
                                     </div>
                                 </div>
 
@@ -1583,7 +1796,7 @@
                                         <i data-feather="calendar"></i>
                                     </div>
                                     <div class="pillar-text-box">
-                                        <span class="pillar-title" id="cardCol2Val" contenteditable="true" spellcheck="false">10-14 MARCH</span>
+                                        <span class="pillar-title" id="cardCol2Val" contenteditable="true" spellcheck="false">28 OTTOBRE 2026</span>
                                     </div>
                                 </div>
 
@@ -1593,18 +1806,22 @@
                                         <i data-feather="map-pin"></i>
                                     </div>
                                     <div class="pillar-text-box">
-                                        <span class="pillar-title" id="cardCol3Title" contenteditable="true" spellcheck="false">WEST PALADIUM</span>
-                                        <span class="pillar-subtitle" id="cardCol3Sub" contenteditable="true" spellcheck="false">UNITED STATES</span>
+                                        <span class="pillar-title" id="cardCol3Title" contenteditable="true" spellcheck="false">PALAZZO DEI CONGRESSI</span>
+                                        <span class="pillar-subtitle" id="cardCol3Sub" contenteditable="true" spellcheck="false">MILANO</span>
                                     </div>
                                 </div>
 
                             </div>
                         </div>
 
-                        <!-- FOOTER & CALL TO ACTION -->
-                        <div class="card-footer-cta" id="cardFooterCta" onclick="focusField('inputCtaLink')">
-                            <span class="cta-label" id="cardCtaLabel" contenteditable="true" spellcheck="false">MORE INFO AT:</span>
-                            <span class="cta-link" id="cardCtaLink" contenteditable="true" spellcheck="false">WWW.PRYMATECHCONFERENCE.COM</span>
+                        <!-- BOTTOM BAR & FOOTER CALL TO ACTION -->
+                        <div class="card-bottom-bar" id="cardBottomBar">
+                            <div class="bottom-slot" id="bottomLeftSlot"></div>
+                            <div class="card-footer-cta" id="cardFooterCta" onclick="focusField('inputCtaLink')">
+                                <span class="cta-label" id="cardCtaLabel" contenteditable="true" spellcheck="false">ACCREDITI &amp; INFORMAZIONI:</span>
+                                <span class="cta-link" id="cardCtaLink" contenteditable="true" spellcheck="false">WWW.EVENTO-AZIENDALE.IT</span>
+                            </div>
+                            <div class="bottom-slot" id="bottomRightSlot"></div>
                         </div>
 
                     </div>
@@ -1641,6 +1858,10 @@
             height: 675,
             template: 'eventi',
             bgMode: 'cubes-3d',
+            logoPosition: 'top-left',
+            logoDisplayMode: 'both', // 'both' | 'logo-only' | 'text-only'
+            logoHeight: 46,
+            showBrand: true,
             customLogoUrl: null,
             customBgUrl: null
         };
@@ -1740,11 +1961,337 @@
             document.getElementById('cardMainTitle').style.fontSize = `${val}px`;
         }
 
+        // Posizionamento del Logo / Brand nella Card (6 Direzioni)
+        function setLogoPosition(pos) {
+            editorState.logoPosition = pos;
+
+            document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('posBtn_' + pos.replace(/-/g, '_'));
+            if (btn) btn.classList.add('active');
+
+            const brandGroup = document.getElementById('brandGroup');
+            const topBar = document.getElementById('cardTopBar');
+            const bottomBar = document.getElementById('cardBottomBar');
+            const bottomLeftSlot = document.getElementById('bottomLeftSlot');
+            const bottomRightSlot = document.getElementById('bottomRightSlot');
+            const cta = document.getElementById('cardFooterCta');
+
+            if (!brandGroup || !topBar || !bottomBar || !cta) return;
+
+            const isBrandVisible = editorState.showBrand && (editorState.logoDisplayMode !== 'none');
+
+            if (pos.startsWith('top-')) {
+                topBar.style.display = isBrandVisible ? 'flex' : 'none';
+                topBar.appendChild(brandGroup);
+                bottomLeftSlot.style.display = 'none';
+                bottomRightSlot.style.display = 'none';
+                bottomBar.style.flexDirection = 'row';
+                bottomBar.style.justifyContent = 'center';
+                bottomBar.style.alignItems = 'center';
+                cta.style.textAlign = 'center';
+                cta.style.alignItems = 'center';
+
+                if (pos === 'top-left') {
+                    topBar.style.justifyContent = 'flex-start';
+                    brandGroup.style.flexDirection = 'row';
+                    brandGroup.style.textAlign = 'left';
+                    brandGroup.style.alignItems = 'center';
+                } else if (pos === 'top-center') {
+                    topBar.style.justifyContent = 'center';
+                    brandGroup.style.flexDirection = 'column';
+                    brandGroup.style.textAlign = 'center';
+                    brandGroup.style.alignItems = 'center';
+                } else if (pos === 'top-right') {
+                    topBar.style.justifyContent = 'flex-end';
+                    brandGroup.style.flexDirection = 'row-reverse';
+                    brandGroup.style.textAlign = 'right';
+                    brandGroup.style.alignItems = 'center';
+                }
+            } else if (pos.startsWith('bottom-')) {
+                topBar.style.display = 'none';
+                bottomBar.style.display = 'flex';
+
+                if (pos === 'bottom-left') {
+                    bottomBar.style.flexDirection = 'row';
+                    bottomBar.style.justifyContent = 'space-between';
+                    bottomBar.style.alignItems = 'flex-end';
+                    bottomLeftSlot.style.display = isBrandVisible ? 'block' : 'none';
+                    bottomLeftSlot.appendChild(brandGroup);
+                    bottomRightSlot.style.display = 'none';
+                    brandGroup.style.flexDirection = 'row';
+                    brandGroup.style.textAlign = 'left';
+                    brandGroup.style.alignItems = 'center';
+                    cta.style.textAlign = 'right';
+                    cta.style.alignItems = 'flex-end';
+                } else if (pos === 'bottom-right') {
+                    bottomBar.style.flexDirection = 'row';
+                    bottomBar.style.justifyContent = 'space-between';
+                    bottomBar.style.alignItems = 'flex-end';
+                    bottomLeftSlot.style.display = 'none';
+                    bottomRightSlot.style.display = isBrandVisible ? 'block' : 'none';
+                    bottomRightSlot.appendChild(brandGroup);
+                    brandGroup.style.flexDirection = 'row-reverse';
+                    brandGroup.style.textAlign = 'right';
+                    brandGroup.style.alignItems = 'center';
+                    cta.style.textAlign = 'left';
+                    cta.style.alignItems = 'flex-start';
+                } else if (pos === 'bottom-center') {
+                    bottomBar.style.flexDirection = 'column';
+                    bottomBar.style.justifyContent = 'center';
+                    bottomBar.style.alignItems = 'center';
+                    bottomBar.style.gap = '12px';
+                    bottomLeftSlot.style.display = isBrandVisible ? 'block' : 'none';
+                    bottomLeftSlot.appendChild(brandGroup);
+                    bottomRightSlot.style.display = 'none';
+                    brandGroup.style.flexDirection = 'column';
+                    brandGroup.style.textAlign = 'center';
+                    brandGroup.style.alignItems = 'center';
+                    cta.style.textAlign = 'center';
+                    cta.style.alignItems = 'center';
+                }
+            }
+        }
+
+        // Modalità Visualizzazione Logo / Brand (Logo + Testo, Solo Logo, Solo Testo)
+        function setLogoDisplayMode(mode) {
+            editorState.logoDisplayMode = mode;
+
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('modeBtn_' + mode.replace(/-/g, '_'));
+            if (btn) btn.classList.add('active');
+
+            const logoContainer = document.getElementById('brandLogoContainer');
+            const logoImg = document.getElementById('brandLogoImg');
+            const logoPlaceholder = document.getElementById('brandLogoEmptyPlaceholder');
+            const textBlock = document.getElementById('brandTextBlock');
+            const heightGroup = document.getElementById('logoHeightGroup');
+            const brandTextInputs = document.getElementById('brandTextInputsGroup');
+
+            if (mode === 'both') {
+                if (editorState.customLogoUrl) {
+                    logoContainer.style.display = 'flex';
+                    logoImg.style.display = 'block';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                } else {
+                    logoContainer.style.display = 'none';
+                }
+                textBlock.style.display = 'flex';
+                heightGroup.style.display = 'flex';
+                brandTextInputs.style.display = 'grid';
+            } else if (mode === 'logo-only') {
+                logoContainer.style.display = 'flex';
+                if (editorState.customLogoUrl) {
+                    logoImg.style.display = 'block';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                } else {
+                    logoImg.style.display = 'none';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'flex';
+                }
+                textBlock.style.display = 'none';
+                heightGroup.style.display = 'flex';
+                brandTextInputs.style.display = 'none';
+            } else if (mode === 'text-only') {
+                logoContainer.style.display = 'none';
+                textBlock.style.display = 'flex';
+                heightGroup.style.display = 'none';
+                brandTextInputs.style.display = 'grid';
+            }
+
+            setLogoPosition(editorState.logoPosition);
+        }
+
+        // Slider Altezza Logo
+        function updateLogoHeight(val) {
+            editorState.logoHeight = parseInt(val, 10) || 46;
+            document.getElementById('valLogoHeight').textContent = `${val}px`;
+            const img = document.getElementById('brandLogoImg');
+            if (img) {
+                img.style.maxHeight = `${val}px`;
+                img.style.height = `${val}px`;
+            }
+        }
+
+        // Carica dati dal profilo utente (localStorage)
+        function loadFromUserProfile() {
+            let loadedCount = 0;
+            try {
+                const fullProfStr = localStorage.getItem('rs_full_profile');
+                if (fullProfStr) {
+                    const prof = JSON.parse(fullProfStr);
+                    if (prof.companyName) {
+                        document.getElementById('inputBrandName').value = prof.companyName.toUpperCase();
+                        loadedCount++;
+                    }
+                    if (prof.website) {
+                        const cleanWeb = prof.website.toUpperCase().replace(/^HTTPS?:\/\//i, '').replace(/\/$/, '');
+                        document.getElementById('inputCtaLink').value = cleanWeb;
+                        loadedCount++;
+                    }
+                    if (prof.logoBase64) {
+                        editorState.customLogoUrl = prof.logoBase64;
+                        const img = document.getElementById('brandLogoImg');
+                        img.src = prof.logoBase64;
+                        img.style.display = 'block';
+                        img.style.maxHeight = `${editorState.logoHeight}px`;
+                        img.style.height = `${editorState.logoHeight}px`;
+                        document.getElementById('brandLogoContainer').style.display = 'flex';
+                        document.getElementById('customLogoActions').style.display = 'block';
+                        const ph = document.getElementById('brandLogoEmptyPlaceholder');
+                        if (ph) ph.style.display = 'none';
+                        loadedCount++;
+                    }
+                }
+                const savedCompName = localStorage.getItem('rs_company_name');
+                if (savedCompName && !loadedCount) {
+                    document.getElementById('inputBrandName').value = savedCompName.toUpperCase();
+                    loadedCount++;
+                }
+            } catch(e) {
+                console.error('Errore lettura profilo:', e);
+            }
+
+            if (loadedCount > 0) {
+                setLogoDisplayMode(editorState.customLogoUrl ? 'both' : 'text-only');
+                updateCard();
+                showToast('Dati del profilo aziendale caricati con successo!');
+            } else {
+                showToast('Nessun profilo aziendale salvato. Puoi inserire i tuoi dati direttamente qui.');
+            }
+        }
+
+        // Tentativo di pre-popolazione silenziosa all'avvio
+        function tryAutoLoadProfile() {
+            try {
+                const fullProfStr = localStorage.getItem('rs_full_profile');
+                if (fullProfStr) {
+                    const prof = JSON.parse(fullProfStr);
+                    if (prof.companyName) {
+                        document.getElementById('inputBrandName').value = prof.companyName.toUpperCase();
+                    }
+                    if (prof.website) {
+                        const cleanWeb = prof.website.toUpperCase().replace(/^HTTPS?:\/\//i, '').replace(/\/$/, '');
+                        document.getElementById('inputCtaLink').value = cleanWeb;
+                    }
+                    if (prof.logoBase64) {
+                        editorState.customLogoUrl = prof.logoBase64;
+                        const img = document.getElementById('brandLogoImg');
+                        img.src = prof.logoBase64;
+                        img.style.display = 'block';
+                        img.style.maxHeight = `${editorState.logoHeight}px`;
+                        img.style.height = `${editorState.logoHeight}px`;
+                        document.getElementById('brandLogoContainer').style.display = 'flex';
+                        document.getElementById('customLogoActions').style.display = 'block';
+                    }
+                    return;
+                }
+                const savedCompName = localStorage.getItem('rs_company_name');
+                if (savedCompName) {
+                    document.getElementById('inputBrandName').value = savedCompName.toUpperCase();
+                }
+            } catch(e) {}
+        }
+
+        // Modelli Rapidi di Testo Realistici (1-Click)
+        const textPresets = {
+            conferenza: {
+                pretitle: "SAVE THE DATE",
+                mainTitle: "CONFERENZA STAMPA",
+                titleSize: 68,
+                subtitle: "Presentazione Ufficiale e Tavola Rotonda con la Stampa",
+                col1Icon: "users",
+                col1Val: "350+",
+                col1Sub: "ACCREDITI STAMPA",
+                col2Icon: "calendar",
+                col2Val: "28 OTTOBRE 2026",
+                col3Icon: "map-pin",
+                col3Title: "PALAZZO DEI CONGRESSI",
+                col3Sub: "MILANO",
+                ctaLabel: "ACCREDITI & INFORMAZIONI:",
+                ctaLink: "WWW.EVENTO-AZIENDALE.IT"
+            },
+            tv: {
+                pretitle: "DIRETTA TELEVISIVA",
+                mainTitle: "INTERVISTA & SPECIALE TV",
+                titleSize: 62,
+                subtitle: "Ospiti in studio e focus di approfondimento economico",
+                col1Icon: "tv",
+                col1Val: "CANALE 5",
+                col1Sub: "DIRETTA NAZIONALE",
+                col2Icon: "clock",
+                col2Val: "15 NOVEMBRE • ORE 21:15",
+                col3Icon: "map-pin",
+                col3Title: "STUDI TELEVISIVI",
+                col3Sub: "ROMA",
+                ctaLabel: "DIRETTA STREAMING E REPLAY:",
+                ctaLink: "WWW.DIRETTA-MEDIA.IT"
+            },
+            gala: {
+                pretitle: "INVITO ESCLUSIVO",
+                mainTitle: "ANNUAL AWARDS GALA",
+                titleSize: 64,
+                subtitle: "Cerimonia di Premiazione & Serata Istituzionale di Fine Anno",
+                col1Icon: "award",
+                col1Val: "500+",
+                col1Sub: "OSPITI D'ONORE",
+                col2Icon: "calendar",
+                col2Val: "12 DICEMBRE 2026",
+                col3Icon: "map-pin",
+                col3Title: "VILLA BORGHESE",
+                col3Sub: "ROMA",
+                ctaLabel: "R.S.V.P. ENTRO IL 30 NOVEMBRE:",
+                ctaLink: "RSVP@GALA-AZIENDALE.IT"
+            },
+            summit: {
+                pretitle: "GLOBAL KEYNOTE",
+                mainTitle: "INNOVATION SUMMIT",
+                titleSize: 66,
+                subtitle: "Presentazione Strategica delle Nuove Linee Guida di Mercato",
+                col1Icon: "globe",
+                col1Val: "1.200+",
+                col1Sub: "DELEGATI",
+                col2Icon: "calendar",
+                col2Val: "18 MAGGIO 2026",
+                col3Icon: "map-pin",
+                col3Title: "FIERA MILANO CITY",
+                col3Sub: "MILANO",
+                ctaLabel: "REGISTRAZIONE E AGENDA COMPLETA:",
+                ctaLink: "WWW.INNOVATION-SUMMIT.COM"
+            }
+        };
+
+        function applyTextPreset(presetKey) {
+            const p = textPresets[presetKey];
+            if (!p) return;
+
+            document.getElementById('inputPretitle').value = p.pretitle;
+            document.getElementById('inputMainTitle').value = p.mainTitle;
+            syncTitleSize(p.titleSize);
+            document.getElementById('inputSubtitle').value = p.subtitle;
+
+            document.getElementById('selectIcon1').value = p.col1Icon;
+            document.getElementById('inputCol1Title').value = p.col1Val;
+            document.getElementById('inputCol1Sub').value = p.col1Sub;
+
+            document.getElementById('selectIcon2').value = p.col2Icon;
+            document.getElementById('inputCol2Val').value = p.col2Val;
+
+            document.getElementById('selectIcon3').value = p.col3Icon;
+            document.getElementById('inputCol3Title').value = p.col3Title;
+            document.getElementById('inputCol3Sub').value = p.col3Sub;
+
+            document.getElementById('inputCtaLabel').value = p.ctaLabel;
+            document.getElementById('inputCtaLink').value = p.ctaLink;
+
+            updateCard();
+            showToast(`Modello "${presetKey.toUpperCase()}" applicato!`);
+        }
+
         // Aggiorna testi ed elementi in tempo reale
         function updateCard() {
             // Brand & Logo
-            const showBrand = document.getElementById('checkShowBrand').checked;
-            document.getElementById('cardTopBar').style.display = showBrand ? 'flex' : 'none';
+            editorState.showBrand = document.getElementById('checkShowBrand').checked;
+            setLogoPosition(editorState.logoPosition);
+
             document.getElementById('cardBrandName').textContent = document.getElementById('inputBrandName').value;
             document.getElementById('cardBrandSub').textContent = document.getElementById('inputBrandSub').value;
 
@@ -1840,8 +2387,6 @@
             document.querySelectorAll('.pillar-icon-box').forEach(box => {
                 box.style.color = accentCol;
             });
-            const defLogo = document.querySelector('.brand-logo-default-icon');
-            if (defLogo) defLogo.style.color = mainCol;
 
             // Testi Secondari
             document.getElementById('cardSubtitle').style.color = subCol;
@@ -1977,10 +2522,21 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 editorState.customLogoUrl = e.target.result;
+                const img = document.getElementById('brandLogoImg');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                img.style.maxHeight = `${editorState.logoHeight}px`;
+                img.style.height = `${editorState.logoHeight}px`;
+
                 const container = document.getElementById('brandLogoContainer');
-                container.innerHTML = `<img src="${e.target.result}" alt="Logo" class="brand-logo-img">`;
+                container.style.display = 'flex';
+
+                const ph = document.getElementById('brandLogoEmptyPlaceholder');
+                if (ph) ph.style.display = 'none';
+
                 document.getElementById('customLogoActions').style.display = 'block';
-                showToast('Logo aziendale caricato!');
+                showToast('Logo aziendale caricato con successo!');
+                updateCard();
             };
             reader.readAsDataURL(file);
         }
@@ -1990,14 +2546,25 @@
             editorState.customLogoUrl = null;
             document.getElementById('inputLogoFile').value = '';
             document.getElementById('customLogoActions').style.display = 'none';
+
+            const img = document.getElementById('brandLogoImg');
+            img.src = '';
+            img.style.display = 'none';
+
             const container = document.getElementById('brandLogoContainer');
-            container.innerHTML = `
-                <svg class="brand-logo-default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-            `;
-            updateCardColors();
-            showToast('Logo predefinito ripristinato.');
+            const ph = document.getElementById('brandLogoEmptyPlaceholder');
+
+            if (editorState.logoDisplayMode === 'both') {
+                container.style.display = 'none';
+            } else if (editorState.logoDisplayMode === 'logo-only') {
+                container.style.display = 'flex';
+                if (ph) ph.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+            }
+
+            updateCard();
+            showToast('Logo rimosso.');
         }
 
         // Sincronizzazione editing bidirezionale inline su canvas
@@ -2028,45 +2595,48 @@
             });
         }
 
-        // Reset Completo al Template Originale
+        // Reset ai Contenuti e Grafica Predefiniti (Italiani e Professionali)
         function resetToOriginalTemplate() {
-            document.getElementById('inputBrandName').value = "PRYMATECH";
-            document.getElementById('inputBrandSub').value = "TECHNOLOGY INDUSTRIES";
-            document.getElementById('inputPretitle').value = "TECHNOLOGY";
-            document.getElementById('inputMainTitle').value = "CONFERENCE";
+            document.getElementById('inputBrandName').value = "LA TUA AZIENDA";
+            document.getElementById('inputBrandSub').value = "COMUNICAZIONE & MEDIA";
+            document.getElementById('inputPretitle').value = "SAVE THE DATE";
+            document.getElementById('inputMainTitle').value = "CONFERENZA STAMPA";
             syncTitleSize(68);
-            document.getElementById('inputSubtitle').value = "Dr. Jeremiah  •  Dr. Springfield  •  Mr. Barney";
+            document.getElementById('inputSubtitle').value = "Presentazione Ufficiale e Tavola Rotonda con la Stampa";
             document.getElementById('checkShowDivider').checked = true;
             document.getElementById('rangeDividerWidth').value = 480;
             document.getElementById('rangePillarsGap').value = 52;
 
             document.getElementById('checkShowCol1').checked = true;
-            document.getElementById('selectIcon1').value = "user";
-            document.getElementById('inputCol1Title').value = "500+";
-            document.getElementById('inputCol1Sub').value = "VISITOR";
+            document.getElementById('selectIcon1').value = "users";
+            document.getElementById('inputCol1Title').value = "350+";
+            document.getElementById('inputCol1Sub').value = "ACCREDITI STAMPA";
 
             document.getElementById('checkShowCol2').checked = true;
             document.getElementById('selectIcon2').value = "calendar";
-            document.getElementById('inputCol2Val').value = "10-14 MARCH";
+            document.getElementById('inputCol2Val').value = "28 OTTOBRE 2026";
 
             document.getElementById('checkShowCol3').checked = true;
             document.getElementById('selectIcon3').value = "map-pin";
-            document.getElementById('inputCol3Title').value = "WEST PALADIUM";
-            document.getElementById('inputCol3Sub').value = "UNITED STATES";
+            document.getElementById('inputCol3Title').value = "PALAZZO DEI CONGRESSI";
+            document.getElementById('inputCol3Sub').value = "MILANO";
 
             document.getElementById('checkShowFooter').checked = true;
-            document.getElementById('inputCtaLabel').value = "MORE INFO AT:";
-            document.getElementById('inputCtaLink').value = "WWW.PRYMATECHCONFERENCE.COM";
+            document.getElementById('inputCtaLabel').value = "ACCREDITI & INFORMAZIONI:";
+            document.getElementById('inputCtaLink').value = "WWW.EVENTO-AZIENDALE.IT";
 
             document.getElementById('selectBgMode').value = "cubes-3d";
             document.getElementById('rangeOverlayOpacity').value = 75;
 
             removeCustomLogo();
+            tryAutoLoadProfile();
+            setLogoPosition('top-left');
+            setLogoDisplayMode('both');
             changeBgMode();
             applyPresetPalette('#061124', '#ffffff', '#e2e8f0', '#cbd5e1');
             updateCard();
             setCardFormat('16:9');
-            showToast('Grafica originale Prymatech ripristinata!');
+            showToast('Contenuti e grafica predefiniti ripristinati!');
         }
 
         // ==============================================
@@ -2176,8 +2746,11 @@
 
         // Inizializzazione al caricamento
         document.addEventListener('DOMContentLoaded', () => {
+            tryAutoLoadProfile();
             renderIcons();
             setupInlineEditing();
+            setLogoPosition('top-left');
+            setLogoDisplayMode(editorState.customLogoUrl ? 'both' : 'both');
             updateCard();
             fitCanvasToViewport();
         });
