@@ -20,7 +20,7 @@
     </div>
 
     <!-- ===== TOP NAVBAR ===== -->
-    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.5rem; height: 64px; position:relative;">
+    <nav class="navbar" style="display:flex; justify-content:space-between; align-items:center; padding: 0 1.5rem; height: 64px; position:fixed; top:0; left:0; right:0; width:100%; z-index:1000;">
         <!-- LEFT: Sidebar toggle + Company Name -->
         <div class="nav-left" style="display:flex; align-items:center; gap:0.9rem;">
             <button id="btnToggleSidebar" class="sidebar-toggle" aria-label="Apri/chiudi menu" style="width:42px; height:42px; border-radius:10px; gap:5.5px;">
@@ -116,9 +116,6 @@
             <small style="display:block; text-align:center; color:var(--text-muted); margin-top:8px; font-size:0.75rem;">Transazione crittografata Stripe SSL 256-bit</small>
         </div>
     </div>
-
-    <!-- OVERLAY FOR MOBILE SIDEBAR -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
     <!-- ===== SIDEBAR ===== -->
     <aside id="sidebar" class="sidebar">
@@ -2555,30 +2552,49 @@
         const mainContent = document.getElementById('mainContent');
         const toggleBtn = document.getElementById('btnToggleSidebar');
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-            if (window.innerWidth > 900) {
-                mainContent.classList.toggle('shifted');
+        function toggleSidebar(e) {
+            if (e) e.stopPropagation();
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
             } else {
-                overlay.classList.toggle('visible', sidebar.classList.contains('open'));
+                openSidebar();
             }
+        }
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            if (overlay) overlay.classList.add('visible');
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
-            overlay.classList.remove('visible');
+            if (overlay) overlay.classList.remove('visible');
             mainContent.classList.remove('shifted');
         }
-        
-        // Initialize desktop state
-        if (window.innerWidth > 900) {
-            sidebar.classList.add('open');
-            mainContent.classList.add('shifted');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleSidebar);
         }
 
-        toggleBtn.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', () => {
-            closeSidebar();
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close menu when clicking anywhere on the page outside the sidebar
+        document.addEventListener('click', (e) => {
+            if (sidebar && sidebar.classList.contains('open')) {
+                // If clicked inside sidebar or on toggle button, do not close
+                if (!sidebar.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
+                    closeSidebar();
+                }
+            }
+        });
+
+        // Close sidebar on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+                closeSidebar();
+            }
         });
 
         // ---- PAGE NAVIGATION WITH PERSISTENCE ACROSS REFRESH ----
