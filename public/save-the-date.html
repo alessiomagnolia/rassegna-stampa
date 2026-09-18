@@ -1022,9 +1022,13 @@
             background: #38bdf8;
             opacity: 0.85;
         }
+        /* Nasconde la colonna accrediti nel template Cyber Wave: restano solo Data/Orario e Luogo */
+        #saveTheDateCanvas.template-cyber-wave #pillarCol1 {
+            display: none !important;
+        }
         #saveTheDateCanvas.template-cyber-wave .event-info-pillars {
             justify-content: flex-start;
-            gap: 16px;
+            gap: 18px;
             flex-wrap: wrap;
             width: auto;
         }
@@ -1088,14 +1092,9 @@
             opacity: 1;
             border: none;
         }
+        /* Nasconde relatori / sottotitolo per il template Chevrons 3D */
         #saveTheDateCanvas.template-chevrons .event-subtitle-speakers {
-            text-align: left;
-            font-size: 20px;
-            line-height: 1.35;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            max-width: 620px;
-            margin-bottom: 24px;
+            display: none !important;
         }
         #saveTheDateCanvas.template-chevrons .event-info-pillars {
             justify-content: flex-start;
@@ -1164,16 +1163,16 @@
             margin: 0 0 16px 0;
             max-width: 1000px;
         }
+        /* Nasconde relatori / sottotitolo per il template Editorial Glass */
         #saveTheDateCanvas.template-editorial-glass .event-subtitle-speakers {
-            font-size: 17px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.88);
-            margin-bottom: 24px;
+            display: none !important;
         }
         #saveTheDateCanvas.template-editorial-glass .event-divider {
             display: none;
+        }
+        /* Nasconde la colonna accrediti nel template Editorial Glass */
+        #saveTheDateCanvas.template-editorial-glass #pillarCol1 {
+            display: none !important;
         }
         #saveTheDateCanvas.template-editorial-glass .event-info-pillars {
             width: 100%;
@@ -1182,10 +1181,10 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 14px 24px;
+            padding: 16px 28px;
             border-radius: 8px;
-            justify-content: space-around;
-            gap: 30px;
+            justify-content: center;
+            gap: 75px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
         }
         #saveTheDateCanvas.template-editorial-glass .info-pillar {
@@ -2678,12 +2677,23 @@
             document.getElementById('valTitleSize2').textContent = `${titleSize}px`;
             mainTitle.style.fontSize = `${titleSize}px`;
 
+            // Nei template moderni (Chevrons 3D, Cyber Wave, Editorial Glass) nascondiamo accrediti e relatori
+            const isTwoColTemplate = (editorState.template === 'chevrons' || editorState.template === 'cyber-wave' || editorState.template === 'editorial-glass');
+
             const subVal = (document.getElementById('inputSubtitle').value || '').trim();
-            const showSubtitle = (editorState.template !== 'cyber-wave') && (subVal !== '');
+            const showSubtitle = !isTwoColTemplate && (subVal !== '');
             const cardSub = document.getElementById('cardSubtitle');
             if (cardSub) {
                 cardSub.textContent = document.getElementById('inputSubtitle').value;
                 cardSub.style.display = showSubtitle ? 'block' : 'none';
+            }
+
+            // Auto-ripristino intelligente se l'utente aveva inserito 'MILANO' nella colonna 2 e la data nella colonna accrediti
+            const inpCol2 = document.getElementById('inputCol2Val');
+            const inpCol1 = document.getElementById('inputCol1Title');
+            if (inpCol2 && inpCol1 && inpCol2.value.trim().toUpperCase() === 'MILANO' && (inpCol1.value.includes('2026') || inpCol1.value.includes('OTTOBRE') || inpCol1.value.includes('2025') || inpCol1.value.includes('2027'))) {
+                inpCol2.value = inpCol1.value;
+                inpCol1.value = "350+";
             }
 
             // Divisore
@@ -2700,7 +2710,7 @@
             document.getElementById('cardInfoPillars').style.gap = `${pillGap}px`;
 
             // Colonne Informative
-            const showCol1 = document.getElementById('checkShowCol1').checked && (editorState.template !== 'chevrons');
+            const showCol1 = document.getElementById('checkShowCol1').checked && !isTwoColTemplate;
             document.getElementById('pillarCol1').style.display = showCol1 ? 'flex' : 'none';
             document.getElementById('cardCol1Title').textContent = document.getElementById('inputCol1Title').value;
             document.getElementById('cardCol1Sub').textContent = document.getElementById('inputCol1Sub').value;
@@ -3077,15 +3087,16 @@
             renderTemplateBackground();
 
             // Mostra o nasconde la Colonna 1 (Accrediti) nella sidebar se Chevrons 3D
+            const isTwoCol = (tpl === 'chevrons' || tpl === 'cyber-wave' || tpl === 'editorial-glass');
             const groupCol1 = document.getElementById('groupCol1Sidebar');
             if (groupCol1) {
-                groupCol1.style.display = (tpl === 'chevrons') ? 'none' : 'block';
+                groupCol1.style.display = isTwoCol ? 'none' : 'block';
             }
 
-            // Mostra o nasconde la sezione Relatori nella sidebar se Cyber Wave
+            // Mostra o nasconde la sezione Relatori nella sidebar se template a 2 colonne
             const groupSub = document.getElementById('groupSubtitleSidebar');
             if (groupSub) {
-                groupSub.style.display = (tpl === 'cyber-wave') ? 'none' : 'block';
+                groupSub.style.display = isTwoCol ? 'none' : 'block';
             }
 
             // Mantiene il posizionamento del logo e aggiorna la card
