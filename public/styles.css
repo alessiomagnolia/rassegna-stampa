@@ -3646,7 +3646,7 @@ html {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 3.5rem;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .hero-text-col {
@@ -3736,6 +3736,8 @@ html {
 .hero-auth-col {
     display: flex;
     justify-content: center;
+    align-items: flex-start;
+    align-self: flex-start;
 }
 
 .hero-auth-col .auth-container {
