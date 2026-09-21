@@ -115,3 +115,130 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 });
+
+// ==========================================
+// GESTIONE UNIVERSALE CHIUSURA FINESTRE MODALI (CLICK-OUTSIDE & ESCAPE)
+// ==========================================
+(function initModalClickOutside() {
+    let modalMouseDownTarget = null;
+
+    // Registra dove è iniziato il clic del mouse
+    document.addEventListener('mousedown', (e) => {
+        modalMouseDownTarget = e.target;
+    }, true);
+
+    // Quando il mouse viene rilasciato/cliccato all'esterno del contenuto del modal
+    document.addEventListener('click', (e) => {
+        const overlay = e.target.closest ? e.target.closest('.modal-overlay') : null;
+        if (!overlay) return;
+
+        // Se il clic è avvenuto direttamente sullo sfondo/overlay e NON dentro il box .modal-content
+        const clickedInsideContent = e.target.closest('.modal-content');
+        const startedInsideContent = modalMouseDownTarget && modalMouseDownTarget.closest && modalMouseDownTarget.closest('.modal-content');
+
+        if (!clickedInsideContent && !startedInsideContent) {
+            closeSpecificModal(overlay);
+        }
+    }, true);
+
+    // Chiusura con tasto Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const visibleModals = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => {
+                if (m.classList.contains('hidden')) return false;
+                const style = window.getComputedStyle(m);
+                return style.display !== 'none' && style.visibility !== 'hidden';
+            });
+            if (visibleModals.length > 0) {
+                // Chiudi il modal visibile più in primo piano
+                closeSpecificModal(visibleModals[visibleModals.length - 1]);
+            }
+        }
+    });
+
+    function closeSpecificModal(modalEl) {
+        if (!modalEl) return;
+        const id = modalEl.id;
+
+        // 1. Funzioni dedicate di chiusura con pulizia e reset form
+        if (id === 'clientModal' && typeof window.closeClientModal === 'function') {
+            window.closeClientModal();
+            return;
+        }
+        if (id === 'checkoutModal' && typeof window.closeCheckoutModal === 'function') {
+            window.closeCheckoutModal();
+            return;
+        }
+        if (id === 'reportModal' && typeof window.closeReportModal === 'function') {
+            window.closeReportModal();
+            return;
+        }
+        if (id === 'manualEntryModal') {
+            const btn = document.getElementById('btnCloseManual');
+            if (btn) btn.click();
+            else {
+                modalEl.classList.add('hidden');
+                modalEl.style.display = 'none';
+            }
+            return;
+        }
+        if (id === 'multiLinkModal' && typeof window.closeMultiLinkModal === 'function') {
+            window.closeMultiLinkModal();
+            return;
+        }
+        if (id === 'allLinksModal' && typeof window.closeAllLinksModal === 'function') {
+            window.closeAllLinksModal();
+            return;
+        }
+        if (id === 'logoArchiveModal' && typeof window.closeLogoArchive === 'function') {
+            window.closeLogoArchive();
+            return;
+        }
+        if (id === 'morningDigestModal' && typeof window.closeMorningDigestModal === 'function') {
+            window.closeMorningDigestModal();
+            return;
+        }
+        if (id === 'shareReviewModal' && typeof window.closeShareModal === 'function') {
+            window.closeShareModal();
+            return;
+        }
+        if (id === 'addContactModal' && typeof window.closeContactModal === 'function') {
+            window.closeContactModal();
+            return;
+        }
+        if (id === 'importContactsModal' && typeof window.closeImportContactsModal === 'function') {
+            window.closeImportContactsModal();
+            return;
+        }
+        if (id === 'mailingListLaunchModal' && typeof window.closeMailingListModal === 'function') {
+            window.closeMailingListModal();
+            return;
+        }
+        if (id === 'projectTeamModal' && typeof window.closeProjectTeamModal === 'function') {
+            window.closeProjectTeamModal();
+            return;
+        }
+        if (id === 'pitchModal' && typeof window.closePitchModal === 'function') {
+            window.closePitchModal();
+            return;
+        }
+        if (id === 'downloadModal' && typeof window.closeDownloadModal === 'function') {
+            window.closeDownloadModal();
+            return;
+        }
+
+        // 2. Prova a cliccare un pulsante di chiusura interno se presente
+        const closeBtn = modalEl.querySelector(
+            '#btnClose' + id.charAt(0).toUpperCase() + id.slice(1) + 
+            ', #btnCloseManual, button[onclick*="close"], button.btn-icon'
+        );
+        if (closeBtn && typeof closeBtn.click === 'function') {
+            closeBtn.click();
+            return;
+        }
+
+        // 3. Fallback: nascondi direttamente l'overlay
+        modalEl.classList.add('hidden');
+        modalEl.style.display = 'none';
+    }
+})();
