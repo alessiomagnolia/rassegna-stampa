@@ -11,6 +11,9 @@ Disallow: /editor.html
 Disallow: /admin.html
 Disallow: /press.html
 Disallow: /linkedin.html
+Disallow: /save-the-date.html
+Disallow: /locandine.html
+Disallow: /accept-invite.html
 
 # Protect backend API endpoints and uploads
 Disallow: /api/
