@@ -2908,7 +2908,11 @@ window.removeClientFormLogo = function() {
     if (logoPrev) logoPrev.src = '';
 };
 
+let isSavingClient = false;
+
 window.saveClientFromForm = async function() {
+    if (isSavingClient) return;
+
     const id = document.getElementById('clientId').value;
     const name = document.getElementById('clientNameInput').value.trim();
     const keywords = document.getElementById('clientKeywordsInput').value.trim();
@@ -2917,54 +2921,70 @@ window.saveClientFromForm = async function() {
 
     if (!name) return showToast('Inserisci il nome del cliente', 'warning');
 
-    const payload = {
-        id: id || Date.now(),
-        name,
-        keywords,
-        tone_of_voice,
-        notes,
-        logo_base64: clientFormLogoBase64 || ''
-    };
+    isSavingClient = true;
+    const saveBtn = document.getElementById('btnSaveClient');
+    const prevText = saveBtn ? saveBtn.textContent : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Salvataggio...';
+    }
 
-    if (state.token) {
-        try {
-            let res;
-            if (id) {
-                res = await apiCall('PUT', `/api/clients/${id}`, payload);
-                showToast('Cliente aggiornato!', 'success');
-            } else {
-                res = await apiCall('POST', '/api/clients', payload);
-                showToast('Nuovo cliente creato!', 'success');
+    try {
+        const payload = {
+            id: id || Date.now(),
+            name,
+            keywords,
+            tone_of_voice,
+            notes,
+            logo_base64: clientFormLogoBase64 || ''
+        };
+
+        if (state.token) {
+            try {
+                let res;
+                if (id) {
+                    res = await apiCall('PUT', `/api/clients/${id}`, payload);
+                    showToast('Cliente aggiornato!', 'success');
+                } else {
+                    res = await apiCall('POST', '/api/clients', payload);
+                    showToast('Nuovo cliente creato!', 'success');
+                }
+                resetClientForm();
+                await loadClients();
+                if (res.client) applyActiveClient(res.client.id);
+                return;
+            } catch (err) {
+                console.log('Salvataggio API client fallito, uso memoria locale:', err);
             }
-            resetClientForm();
-            await loadClients();
-            if (res.client) applyActiveClient(res.client.id);
-            return;
-        } catch (err) {
-            console.log('Salvataggio API client fallito, uso memoria locale:', err);
+        }
+
+        // Local Storage Fallback
+        let localList = localStorage.getItem('rs_local_clients');
+        localList = localList ? JSON.parse(localList) : [];
+
+        if (id) {
+            const idx = localList.findIndex(c => c.id == id);
+            if (idx !== -1) localList[idx] = payload;
+            else localList.push(payload);
+            showToast('Cliente aggiornato!', 'success');
+        } else {
+            localList.push(payload);
+            showToast('Nuovo cliente creato!', 'success');
+        }
+
+        localStorage.setItem('rs_local_clients', JSON.stringify(localList));
+        userClients = localList;
+
+        resetClientForm();
+        renderClientSelectors();
+        applyActiveClient(payload.id);
+    } finally {
+        isSavingClient = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = prevText || 'Salva Cliente';
         }
     }
-
-    // Local Storage Fallback
-    let localList = localStorage.getItem('rs_local_clients');
-    localList = localList ? JSON.parse(localList) : [];
-
-    if (id) {
-        const idx = localList.findIndex(c => c.id == id);
-        if (idx !== -1) localList[idx] = payload;
-        else localList.push(payload);
-        showToast('Cliente aggiornato!', 'success');
-    } else {
-        localList.push(payload);
-        showToast('Nuovo cliente creato!', 'success');
-    }
-
-    localStorage.setItem('rs_local_clients', JSON.stringify(localList));
-    userClients = localList;
-
-    resetClientForm();
-    renderClientSelectors();
-    applyActiveClient(payload.id);
 };
 
 window.editClient = function(id) {
