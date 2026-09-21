@@ -58,7 +58,7 @@
             <!-- Team Quick Nav -->
             <button id="btnTeamNavbar" class="btn btn-outline btn-sm hide-mobile" onclick="document.querySelector('.sidebar-item[data-page=team]')?.click(); return false;" title="Il Tuo Team" style="display:flex; align-items:center; gap:6px; font-weight:700; font-size:0.82rem; border-radius:8px; padding:6px 12px; background:rgba(124,92,255,0.08); border-color:rgba(124,92,255,0.35); color:var(--text-primary); cursor:pointer;">
                 <i data-feather="users" style="width:14px;height:14px;color:var(--accent-primary);"></i>
-                <span>Team (<span id="navTeamCount">1</span>)</span>
+                <span>Team (<span id="navTeamCount">0</span>)</span>
             </button>
 
             <!-- 2. Desktop Only: Upgrade Button (Destra) -->
@@ -2851,6 +2851,15 @@
         });
 
         feather.replace();
+        // Restore cached team count immediately to avoid any flicker
+        try {
+            const cachedTeamCount = localStorage.getItem('rs_team_count');
+            const navTeamCountEl = document.getElementById('navTeamCount');
+            if (navTeamCountEl && cachedTeamCount !== null) {
+                navTeamCountEl.textContent = cachedTeamCount;
+            }
+        } catch(e){}
+
         // Initial sync of team banner on dashboard load
         setTimeout(() => {
             if (typeof window.syncHomeTeamBanner === 'function') {

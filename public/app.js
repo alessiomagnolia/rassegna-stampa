@@ -6001,6 +6001,7 @@ async function syncHomeTeamBanner() {
             const count = members.length;
 
             if (navCount) navCount.textContent = count;
+            try { localStorage.setItem('rs_team_count', String(count)); } catch(e){}
             if (teamBadge) {
                 teamBadge.textContent = count;
                 teamBadge.style.display = 'inline-flex';
@@ -6031,6 +6032,7 @@ async function syncHomeTeamBanner() {
         } else {
             // Nessun team attivo
             if (navCount) navCount.textContent = '0';
+            try { localStorage.setItem('rs_team_count', '0'); } catch(e){}
             if (teamBadge) teamBadge.style.display = 'none';
             if (nameDisplay) nameDisplay.textContent = 'Modalità Team Collaborativo';
             if (countDisplay) countDisplay.textContent = '0 membri';
