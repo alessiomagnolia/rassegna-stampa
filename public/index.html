@@ -83,7 +83,7 @@
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260914_31">
+    <link rel="stylesheet" href="styles.css?v=20260918_team_02">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body class="landing-body">
@@ -105,7 +105,7 @@
             <button id="themeToggle" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">
                 <i data-feather="moon"></i>
             </button>
-            <a href="#loginBox" class="btn btn-primary btn-sm btn-nav-cta">Accedi</a>
+            <a href="#loginBox" class="btn btn-primary btn-sm btn-nav-cta">Accedi al Team</a>
         </nav>
     </header>
 
@@ -113,34 +113,39 @@
     <section class="landing-hero">
         <div class="container landing-hero-grid">
             <div class="hero-text-col">
-                <div class="hero-pill-badge">
-                    <i data-feather="zap"></i> Piattaforma All-in-One per Media & PR
+                <div class="team-hero-pill">
+                    <span class="pulse-dot"></span>
+                    <span>Modalità Team &amp; Agenzia · Spazio Collaborativo Condiviso</span>
                 </div>
                 <h1 class="hero-headline">
-                    Tutto per i Tuoi Media: <span class="highlight-text">Rassegne Stampa</span>, Notizie e PR con l'AI
+                    Tutto per i Tuoi Media: <span class="highlight-text">Rassegne Stampa</span>, Notizie e Collaborazione in Team
                 </h1>
                 <p class="hero-subtext">
-                    Crea fascicoli PDF eleganti da semplici link, cerca notizie sul web in tempo reale e genera bozze di comunicati e post social con l'AI. Tutto in un unico tool veloce e intuitivo.
+                    Crea fascicoli PDF eleganti da semplici link, cerca notizie sul web in tempo reale, genera bozze con l'AI e collabora con la tua squadra in un unico spazio di lavoro sincronizzato.
                 </p>
                 <div class="hero-highlights">
                     <div class="highlight-item">
-                        <i data-feather="check-circle"></i>
-                        <span>Rassegne stampa in PDF nitide in pochi clic, senza lavoro manuale</span>
+                        <i data-feather="users" style="color:var(--accent-primary);"></i>
+                        <span><strong>Modalità Team &amp; Workspace Condiviso</strong>: invita colleghi, lavora a quattro mani su clienti e rassegne</span>
                     </div>
                     <div class="highlight-item">
                         <i data-feather="check-circle"></i>
-                        <span>Archivio ufficiale con centinaia di loghi di quotidiani e testate</span>
+                        <span>Rassegne stampa in PDF nitide in pochi clic, con ritaglio immagini intelligente</span>
                     </div>
                     <div class="highlight-item">
                         <i data-feather="check-circle"></i>
-                        <span>Ricerca notizie web in tempo reale e suite PR con l'AI</span>
+                        <span>Archivio ufficiale con centinaia di loghi di quotidiani e testate italiane</span>
+                    </div>
+                    <div class="highlight-item">
+                        <i data-feather="check-circle"></i>
+                        <span>Ricerca notizie web in tempo reale e suite PR con assistente AI</span>
                     </div>
                 </div>
                 <div class="hero-target-tags">
+                    <span class="target-tag" style="border-color:var(--accent-primary); color:var(--accent-primary); font-weight:700;">👥 Team &amp; Redazioni</span>
                     <span class="target-tag">Uffici Stampa</span>
                     <span class="target-tag">Agenzie PR</span>
-                    <span class="target-tag">Giornalisti</span>
-                    <span class="target-tag">Aziende & Brand</span>
+                    <span class="target-tag">Aziende &amp; Brand</span>
                 </div>
             </div>
 
@@ -149,37 +154,38 @@
                 <div class="auth-container glass-card">
                     <!-- Login Form -->
                     <form id="loginForm" class="auth-form active">
-                        <h2>Accedi alla Piattaforma</h2>
-                        <p class="auth-sub">Entra nel tuo spazio di lavoro</p>
+                        <h2>Accedi al Workspace</h2>
+                        <p class="auth-sub">Entra nello spazio di lavoro del tuo team</p>
                         <div class="input-group">
-                            <label for="loginEmail">Email professionale</label>
+                            <label for="loginEmail">Email professionale o aziendale</label>
                             <input type="email" id="loginEmail" required placeholder="tu@azienda.it o agenzia.it">
                         </div>
                         <div class="input-group">
                             <label for="loginPassword">Password</label>
                             <input type="password" id="loginPassword" required placeholder="••••••••">
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Accedi</button>
-                        <p class="switch-form">Non hai ancora un account? <a href="#" id="showRegister">Registrati subito</a></p>
+                        <button type="submit" class="btn btn-primary btn-block">Accedi al Team</button>
+                        <p class="switch-form">Non hai ancora un account? <a href="#" id="showRegister">Crea il tuo Team</a></p>
                     </form>
 
                     <!-- Register Form -->
                     <form id="registerForm" class="auth-form">
-                        <h2>Crea il tuo Account</h2>
-                        <p class="auth-sub">Inizia a gestire rassegne e contenuti con l'AI</p>
+                        <h2>Crea il tuo Team Workspace</h2>
+                        <p class="auth-sub">Attiva lo spazio di squadra per colleghi e collaboratori</p>
                         <div class="input-group">
-                            <label for="registerCompanyName">Nome Agenzia / Redazione / Azienda</label>
+                            <label for="registerCompanyName">Nome Team / Agenzia / Redazione</label>
                             <input type="text" id="registerCompanyName" placeholder="Es. Magnolia Media & PR">
+                            <small style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:3px;">Creerà lo spazio di lavoro di squadra per te e i tuoi collaboratori.</small>
                         </div>
                         <div class="input-group">
-                            <label for="registerEmail">Email</label>
+                            <label for="registerEmail">Email Amministratore</label>
                             <input type="email" id="registerEmail" required placeholder="tu@agenzia.it">
                         </div>
                         <div class="input-group">
                             <label for="registerPassword">Password</label>
                             <input type="password" id="registerPassword" required placeholder="Minimo 6 caratteri" minlength="6">
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Crea Account</button>
+                        <button type="submit" class="btn btn-primary btn-block">Attiva Workspace di Squadra</button>
                         <p class="switch-form">Hai già un account? <a href="#" id="showLogin">Accedi</a></p>
                     </form>
                 </div>
@@ -291,6 +297,11 @@
                     <div class="feature-icon-wrap"><i data-feather="file-text"></i></div>
                     <h3>Esportazione PDF Professionale</h3>
                     <p>Fascicoli editoriali nitidi con copertina personalizzata, indice automatico e layout ordinato per clienti e stakeholder.</p>
+                </div>
+                <div class="landing-feature-card" style="border: 1.5px solid var(--accent-primary); background: rgba(124,92,255,0.04);">
+                    <div class="feature-icon-wrap"><i data-feather="users" style="color:var(--accent-primary);"></i></div>
+                    <h3 style="color:var(--accent-primary);">Modalità Team &amp; Spazio Condiviso</h3>
+                    <p>Lavora a quattro mani con colleghi e collaboratori: invita membri, condividi clienti in memoria, rassegne e comunicati in tempo reale.</p>
                 </div>
             </div>
         </div>

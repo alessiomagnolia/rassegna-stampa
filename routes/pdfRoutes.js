@@ -53,7 +53,7 @@ function fetchImageAsBase64(url) {
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo, templateId, includeAnalytics } = req.body;
+        const { articles, title, clientName, clientLogo, templateId, includeAnalytics, id } = req.body;
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });
@@ -124,18 +124,37 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         
         fs.writeFileSync(outputPath, pdfBuffer);
 
-        // Generate unique share token
-        const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
-
-        // Save to history (including full articles JSON for editor reopening)
+        // Save or update in history
         const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
-        const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, req.teamId || null, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+        let finalReviewId = id ? parseInt(id, 10) : null;
+
+        if (finalReviewId) {
+            const existing = req.teamId
+                ? db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(finalReviewId, req.userId, req.teamId)
+                : db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND user_id = ?').get(finalReviewId, req.userId);
+            if (existing) {
+                const token = existing.share_token || shareToken;
+                const assignedTeamId = existing.team_id || req.teamId || null;
+                db.prepare(`
+                    UPDATE press_reviews
+                    SET title = ?, pdf_filename = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
+                    WHERE id = ?
+                `).run(reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, finalReviewId);
+            } else {
+                finalReviewId = null;
+            }
+        }
+
+        if (!finalReviewId) {
+            const info = db.prepare(`
+                INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(req.userId, req.teamId || null, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+            finalReviewId = info.lastInsertRowid;
+        }
 
         res.json({
-            id: info.lastInsertRowid,
+            id: finalReviewId,
             filename,
             downloadUrl: `/api/pdf/download/${filename}`,
             shareToken,
@@ -242,17 +261,20 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const articlesJsonStr = JSON.stringify(articles);
 
         if (id) {
-            const existing = db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
+            const existing = req.teamId
+                ? db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(id, req.userId, req.teamId)
+                : db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
             if (existing) {
                 let token = existing.share_token;
                 if (!token) {
                     token = uuidv4().replace(/-/g, '').slice(0, 16);
                 }
+                const assignedTeamId = existing.team_id || req.teamId || null;
                 db.prepare(`
                     UPDATE press_reviews 
-                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?
-                    WHERE id = ? AND user_id = ?
-                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, id, req.userId);
+                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
+                    WHERE id = ?
+                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, id);
 
                 return res.json({
                     id: existing.id,
@@ -293,7 +315,9 @@ router.post('/archive', authMiddleware, async (req, res) => {
 router.post('/share/:id', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        const review = db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+        const review = req.teamId
+            ? db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(req.params.id, req.userId, req.teamId)
+            : db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
         if (!review) return res.status(404).json({ error: 'Rassegna non trovata.' });
 
         let token = review.share_token;

@@ -48,7 +48,15 @@ function getTransporter() {
     });
 }
 
-function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
+function buildEmailHtml(inviterName, teamName, inviteLink, todayStr, projectName = null) {
+    const headerTitle = projectName ? 'Invito a collaborare sul progetto' : 'Sei stato invitato a collaborare';
+    const introText = projectName
+        ? `<strong>${inviterName}</strong> ti ha invitato a collaborare al progetto <strong>"${projectName}"</strong> nel team <strong>${teamName}</strong> sulla piattaforma Rassegna Stampa.`
+        : `<strong>${inviterName}</strong> ti ha invitato a far parte del team <strong>${teamName}</strong> sulla piattaforma Rassegna Stampa.`;
+    const detailText = projectName
+        ? `Come collaboratore del team potrai accedere a questa rassegna, aggiungere articoli dal web, modificare impaginazione e note, ed esportare il PDF finale a quattro mani.`
+        : `Come membro del team potrai vedere e modificare le stesse rassegne stampa, clienti e comunicati dei tuoi colleghi.`;
+
     return `
 <!DOCTYPE html>
 <html lang="it">
@@ -60,23 +68,23 @@ function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
         <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
           <tr>
             <td style="background:#7c5cff;padding:28px 36px;">
-              <p style="margin:0;font-size:13px;color:#e0d9ff;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Rassegna Stampa</p>
-              <h1 style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:700;">Sei stato invitato a collaborare</h1>
+              <p style="margin:0;font-size:13px;color:#e0d9ff;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Rassegna Stampa &bull; Team Workspace</p>
+              <h1 style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:700;">${headerTitle}</h1>
             </td>
           </tr>
           <tr>
             <td style="padding:32px 36px;color:#1e293b;">
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
-                <strong>${inviterName}</strong> ti ha invitato a far parte del team <strong>${teamName}</strong> sulla piattaforma Rassegna Stampa.
+                ${introText}
               </p>
               <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.6;">
-                Come membro del team potrai vedere e modificare le stesse rassegne stampa, clienti e comunicati dei tuoi colleghi.
+                ${detailText}
               </p>
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="background:#7c5cff;border-radius:8px;">
                     <a href="${inviteLink}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.2px;">
-                      Accetta l'invito
+                      ${projectName ? 'Apri il Progetto e Collabora' : "Accetta l'invito"}
                     </a>
                   </td>
                 </tr>
@@ -93,7 +101,7 @@ function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
           <tr>
             <td style="padding:20px 36px;border-top:1px solid #e2e8f0;background:#f8fafc;">
               <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;">
-                Hai ricevuto questa email perché qualcuno ha inserito il tuo indirizzo su Rassegna Stampa.<br>
+                Hai ricevuto questa email perché sei stato invitato a collaborare su Rassegna Stampa.<br>
                 Se non ti aspettavi questo invito, puoi ignorare questa email.
               </p>
             </td>
@@ -107,12 +115,18 @@ function buildEmailHtml(inviterName, teamName, inviteLink, todayStr) {
 }
 
 /**
- * Invia l'email di invito al team.
+ * Invia l'email di invito al team (con eventuale progetto collegato).
  */
-async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink, inviterEmail) {
+async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink, inviterEmail, projectName = null) {
     const todayStr = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
-    const htmlBody = buildEmailHtml(inviterName, teamName, inviteLink, todayStr);
-    const textBody = `Sei stato invitato nel team "${teamName}" da ${inviterName}.\n\nAccetta l'invito: ${inviteLink}\n\nL'invito scade tra 7 giorni.`;
+    const htmlBody = buildEmailHtml(inviterName, teamName, inviteLink, todayStr, projectName);
+    const textBody = projectName
+        ? `Sei stato invitato a collaborare al progetto "${projectName}" nel team "${teamName}" da ${inviterName}.\n\nAccetta l'invito e apri il progetto: ${inviteLink}\n\nL'invito scade tra 7 giorni.`
+        : `Sei stato invitato nel team "${teamName}" da ${inviterName}.\n\nAccetta l'invito: ${inviteLink}\n\nL'invito scade tra 7 giorni.`;
+
+    const subject = projectName
+        ? `${inviterName} ti ha invitato a collaborare al progetto "${projectName}"`
+        : `${inviterName} ti ha invitato nel team "${teamName}"`;
 
     // 1. Resend REST API (porta 443 HTTPS - compatibile con tutti i piani Render)
     if (process.env.RESEND_API_KEY) {
@@ -123,7 +137,7 @@ async function sendInviteEmail(toEmail, inviterName, teamName, inviteLink, invit
             const payload = {
                 from: fromSender,
                 to: [toEmail],
-                subject: `${inviterName} ti ha invitato nel team "${teamName}"`,
+                subject,
                 html: htmlBody,
                 text: textBody,
             };

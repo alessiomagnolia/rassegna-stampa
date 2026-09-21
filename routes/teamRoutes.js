@@ -149,24 +149,61 @@ router.get('/mine', authMiddleware, (req, res) => {
  */
 router.post('/invite', authMiddleware, async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, projectId, projectName } = req.body;
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
             return res.status(400).json({ error: 'Inserisci un indirizzo email valido.' });
         }
 
         const db = getDb();
 
-        // Verifica che l'utente sia un owner
-        const membership = db.prepare(
-            "SELECT team_id, role FROM team_members WHERE user_id = ? AND role = 'owner'"
+        // 1. Verifica appartenenza o crea automaticamente il team se non esiste ancora
+        let membership = db.prepare(
+            "SELECT team_id, role FROM team_members WHERE user_id = ?"
         ).get(req.userId);
 
+        let teamId;
+        let isOwner = false;
+
         if (!membership) {
+            // Auto-crea il team per l'utente al primo invito
+            const user = db.prepare('SELECT company_name, email FROM users WHERE id = ?').get(req.userId);
+            const teamName = (user?.company_name && user.company_name !== 'La Tua Azienda')
+                ? `Team ${user.company_name}`
+                : 'Il Mio Team';
+            
+            const teamInfo = db.prepare(
+                'INSERT INTO teams (name, owner_user_id) VALUES (?, ?)'
+            ).run(teamName, req.userId);
+            teamId = teamInfo.lastInsertRowid;
+
+            db.prepare(
+                "INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')"
+            ).run(teamId, req.userId);
+
+            membership = { team_id: teamId, role: 'owner' };
+            isOwner = true;
+        } else {
+            teamId = membership.team_id;
+            isOwner = (membership.role === 'owner');
+        }
+
+        if (!isOwner) {
             return res.status(403).json({ error: 'Solo il proprietario del team può inviare inviti.' });
         }
 
-        const teamId = membership.team_id;
-        const team   = db.prepare('SELECT * FROM teams WHERE id = ?').get(teamId);
+        // 2. Se un projectId (id della rassegna) è specificato, associalo al team se non lo è già
+        let finalProjectTitle = projectName || '';
+        if (projectId) {
+            const review = db.prepare('SELECT id, title, team_id FROM press_reviews WHERE id = ?').get(projectId);
+            if (review) {
+                finalProjectTitle = review.title || finalProjectTitle;
+                if (!review.team_id || review.team_id !== teamId) {
+                    db.prepare('UPDATE press_reviews SET team_id = ? WHERE id = ?').run(teamId, projectId);
+                }
+            }
+        }
+
+        const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(teamId);
         const inviter = db.prepare('SELECT company_name, email FROM users WHERE id = ?').get(req.userId);
 
         const invitedEmail = email.trim().toLowerCase();
@@ -179,7 +216,12 @@ router.post('/invite', authMiddleware, async (req, res) => {
         `).get(teamId, invitedEmail);
 
         if (alreadyMember) {
-            return res.status(400).json({ error: 'Questo utente fa già parte del team.' });
+            return res.json({
+                success: true,
+                alreadyMember: true,
+                teamName: team.name,
+                message: `L'utente ${invitedEmail} fa già parte del tuo team "${team.name}" ed ha accesso a questo progetto!`
+            });
         }
 
         // Cancella eventuali inviti precedenti non accettati per la stessa email
@@ -196,7 +238,10 @@ router.post('/invite', authMiddleware, async (req, res) => {
             VALUES (?, ?, ?, ?, ?)
         `).run(teamId, invitedEmail, token, req.userId, expiresAt);
 
-        const inviteLink = buildInviteLink(req, token);
+        let inviteLink = buildInviteLink(req, token);
+        if (projectId) {
+            inviteLink += `&project=${projectId}`;
+        }
 
         // Tentativo di invio email (non bloccante)
         let emailSent = false;
@@ -207,7 +252,8 @@ router.post('/invite', authMiddleware, async (req, res) => {
                 inviter.company_name || inviter.email,
                 team.name,
                 inviteLink,
-                inviter.email
+                inviter.email,
+                finalProjectTitle
             );
         } catch (emailErr) {
             emailError = emailErr.message || 'Errore connessione SMTP';
@@ -219,13 +265,126 @@ router.post('/invite', authMiddleware, async (req, res) => {
             inviteLink,
             emailSent,
             emailError,
+            teamId,
+            teamName: team.name,
+            projectTitle: finalProjectTitle,
             message: emailSent
-                ? `Invito inviato via email a ${invitedEmail}.`
-                : (emailError ? `Impossibile spedire l'email (${emailError}). Copia il link di seguito:` : `Link di invito generato. Copialo e invialo a ${invitedEmail}.`)
+                ? `Invito inviato con successo via email a ${invitedEmail}!`
+                : (emailError ? `Impossibile spedire l'email (${emailError}). Copia il link di seguito per invitare il tuo collega:` : `Link di invito generato. Copialo e invialo a ${invitedEmail}.`)
         });
     } catch (error) {
         console.error('Errore invito team:', error);
         res.status(500).json({ error: 'Impossibile generare l\'invito.' });
+    }
+});
+
+/**
+ * GET /api/teams/project/:id/collaborators
+ * Dettagli del progetto e membri del team che hanno accesso.
+ */
+router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
+    try {
+        const projectId = parseInt(req.params.id);
+        const db = getDb();
+
+        const review = db.prepare(`
+            SELECT pr.id, pr.title, pr.client_name, pr.team_id, pr.user_id, pr.created_at,
+                   u.email as creator_email, u.company_name as creator_name
+            FROM press_reviews pr
+            LEFT JOIN users u ON u.id = pr.user_id
+            WHERE pr.id = ?
+        `).get(projectId);
+
+        if (!review) {
+            return res.status(404).json({ error: 'Progetto non trovato.' });
+        }
+
+        // Verifica che l'utente abbia accesso al progetto
+        const hasAccess = (review.user_id === req.userId) || (req.teamId && review.team_id === req.teamId);
+        if (!hasAccess) {
+            return res.status(403).json({ error: 'Non hai i permessi per visualizzare questo progetto.' });
+        }
+
+        let collaborators = [];
+        let teamName = null;
+
+        if (review.team_id) {
+            const team = db.prepare('SELECT name FROM teams WHERE id = ?').get(review.team_id);
+            if (team) teamName = team.name;
+
+            collaborators = db.prepare(`
+                SELECT tm.user_id, tm.role, u.email, u.company_name
+                FROM team_members tm
+                JOIN users u ON u.id = tm.user_id
+                WHERE tm.team_id = ?
+                ORDER BY tm.role DESC, tm.joined_at ASC
+            `).all(review.team_id);
+        } else {
+            // Progetto personale non ancora associato a un team
+            collaborators = [{
+                user_id: review.user_id,
+                role: 'owner',
+                email: review.creator_email,
+                company_name: review.creator_name
+            }];
+        }
+
+        res.json({
+            success: true,
+            project: {
+                id: review.id,
+                title: review.title,
+                clientName: review.client_name,
+                teamId: review.team_id,
+                isShared: !!review.team_id,
+                teamName,
+                isCreator: review.user_id === req.userId
+            },
+            collaborators
+        });
+    } catch (error) {
+        console.error('Errore recupero collaboratori progetto:', error);
+        res.status(500).json({ error: 'Impossibile recuperare i collaboratori.' });
+    }
+});
+
+/**
+ * POST /api/teams/project/:id/share
+ * Condivide un progetto con il team dell'utente corrente (o lo crea al volo)
+ */
+router.post('/project/:id/share', authMiddleware, (req, res) => {
+    try {
+        const projectId = parseInt(req.params.id);
+        const db = getDb();
+
+        const review = db.prepare('SELECT * FROM press_reviews WHERE id = ?').get(projectId);
+        if (!review) {
+            return res.status(404).json({ error: 'Progetto non trovato.' });
+        }
+
+        let teamId = req.teamId;
+        if (!teamId) {
+            const user = db.prepare('SELECT company_name, email FROM users WHERE id = ?').get(req.userId);
+            const teamName = (user?.company_name && user.company_name !== 'La Tua Azienda')
+                ? `Team ${user.company_name}`
+                : 'Il Mio Team';
+            
+            const teamInfo = db.prepare(
+                'INSERT INTO teams (name, owner_user_id) VALUES (?, ?)'
+            ).run(teamName, req.userId);
+            teamId = teamInfo.lastInsertRowid;
+
+            db.prepare(
+                "INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')"
+            ).run(teamId, req.userId);
+        }
+
+        db.prepare('UPDATE press_reviews SET team_id = ? WHERE id = ?').run(teamId, projectId);
+
+        res.json({ success: true, teamId, message: 'Progetto condiviso con successo con il tuo team!' });
+    } catch (error) {
+        console.error('Errore condivisione progetto con team:', error);
+        res.status(500).json({ error: 'Impossibile condividere il progetto.' });
     }
 });
 

@@ -1394,7 +1394,7 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
                         ${dateMetaHtml}
                         <span><i data-feather="file-text" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'}</span>
                         ${clientBadgeHtml}
-                        ${item.team_id ? `<span style="font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:1px 6px; border-radius:4px;">Condiviso nel Team</span>` : ''}
+                        ${item.team_id ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--accent-primary); background:rgba(124,92,255,0.12); padding:2px 8px; border-radius:6px; font-weight:600;"><i data-feather="users" style="width:11px;height:11px;"></i> Progetto Team</span>` : `<span style="font-size:0.75rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:6px;">Personale</span>`}
                     </div>
                 </div>
             </div>
@@ -1405,7 +1405,10 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
                 <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})" title="Riapri per modificare">
                     <i data-feather="edit-2" style="width:14px;height:14px;margin-right:4px;"></i> Modifica
                 </button>
-                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" title="Condividi rassegna">
+                <button class="btn btn-outline btn-sm" onclick="openProjectTeamModal(${item.id})" title="Lavora in team su questo progetto" style="border-color:rgba(124,92,255,0.45); color:var(--accent-primary); font-weight:600; background:rgba(124,92,255,0.06);">
+                    <i data-feather="users" style="width:13px;height:13px;margin-right:4px;"></i> Team
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" title="Condividi rassegna con cliente">
                     <i data-feather="share-2" style="width:14px;height:14px;"></i>
                 </button>
                 <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" title="Briefing Esecutivo AI">
@@ -1751,6 +1754,7 @@ async function reopenFromHistory(reviewId) {
             const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
             if (rassegnaNav) rassegnaNav.click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (typeof refreshProjectModalData === 'function') refreshProjectModalData(data.id);
             showToast('Rassegna riaperta per la modifica!', 'success');
         } else {
             showToast('Nessun articolo trovato in questa rassegna.', 'warning');
@@ -1875,6 +1879,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.removeItem('rs_draft_review_id');
                 }
             }
+        }
+        
+        // ── Auto-open team project if redirected from accept-invite ──
+        const autoProject = localStorage.getItem('rs_open_review');
+        if (autoProject) {
+            localStorage.removeItem('rs_open_review');
+            setTimeout(() => {
+                reopenFromHistory(parseInt(autoProject, 10));
+                showToast('Progetto condiviso del team aperto con successo!', 'success');
+            }, 350);
+        } else if (state.currentReviewId) {
+            setTimeout(() => {
+                if (typeof refreshProjectModalData === 'function') {
+                    refreshProjectModalData(state.currentReviewId);
+                }
+            }, 350);
         }
         
         document.getElementById('btnLogout').addEventListener('click', () => {
@@ -5607,6 +5627,7 @@ async function loadTeamPage() {
             renderTeamCreation(container);
         }
         if (window.feather) feather.replace();
+        if (typeof syncHomeTeamBanner === 'function') syncHomeTeamBanner();
     } catch (e) {
         container.innerHTML = `<div style="text-align:center; padding: 2rem 0; color: var(--danger-color, #dc2626); font-size: 0.875rem;">
             Errore di connessione durante il recupero del team.
@@ -5932,6 +5953,384 @@ async function teamDissolve() {
     }
 }
 window.teamDissolve = teamDissolve;
+
+/**
+ * Sincronizza il banner Team nella Home e il contatore nella Navbar
+ */
+async function syncHomeTeamBanner() {
+    const token = (typeof state !== 'undefined' && state.token) || localStorage.getItem('rs_token');
+    if (!token) return;
+
+    try {
+        const res = await fetch('/api/teams/mine', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const navCount = document.getElementById('navTeamCount');
+        const teamBadge = document.getElementById('teamBadge');
+        const nameDisplay = document.getElementById('homeTeamNameDisplay');
+        const countDisplay = document.getElementById('homeMemberCountText');
+        const avatarStack = document.getElementById('homeTeamAvatarStack');
+        const descDisplay = document.getElementById('homeTeamDescription');
+
+        if (data.team) {
+            const team = data.team;
+            const members = Array.isArray(team.members) ? team.members : [];
+            const count = members.length;
+
+            if (navCount) navCount.textContent = count;
+            if (teamBadge) {
+                teamBadge.textContent = count;
+                teamBadge.style.display = 'inline-flex';
+            }
+            if (nameDisplay) nameDisplay.textContent = team.name || 'Team Workspace';
+            if (countDisplay) {
+                countDisplay.textContent = `${count} membr${count === 1 ? 'o' : 'i'} attiv${count === 1 ? 'o' : 'i'}`;
+            }
+            if (descDisplay) {
+                if (count > 1) {
+                    descDisplay.textContent = `Spazio collaborativo attivo con ${count} membri. Clienti, comunicati e rassegne sono sincronizzati.`;
+                } else {
+                    descDisplay.textContent = `Workspace "${team.name}" pronto. Invita colleghi o redattori per lavorare insieme a quattro mani.`;
+                }
+            }
+            if (avatarStack) {
+                const maxShow = 4;
+                const slice = members.slice(0, maxShow);
+                let stackHtml = slice.map(m => {
+                    const initials = (m.company_name || m.email || 'TU').slice(0, 2).toUpperCase();
+                    return `<div class="team-avatar" title="${escapeHtml(m.company_name || m.email)}">${initials}</div>`;
+                }).join('');
+                if (members.length > maxShow) {
+                    stackHtml += `<div class="team-avatar avatar-more">+${members.length - maxShow}</div>`;
+                }
+                avatarStack.innerHTML = stackHtml;
+            }
+        } else {
+            // Nessun team attivo
+            if (navCount) navCount.textContent = '0';
+            if (teamBadge) teamBadge.style.display = 'none';
+            if (nameDisplay) nameDisplay.textContent = 'Modalità Team Collaborativo';
+            if (countDisplay) countDisplay.textContent = '0 membri';
+            if (descDisplay) {
+                descDisplay.textContent = 'Crea il tuo Team o invita colleghi per lavorare insieme sulle stesse rassegne stampa, contatti media e comunicati.';
+            }
+            if (avatarStack) {
+                avatarStack.innerHTML = `<div class="team-avatar" style="background:#4a5568;" title="Nessun team attivo">+</div>`;
+            }
+        }
+        if (window.feather) feather.replace();
+    } catch (e) {
+        console.warn('syncHomeTeamBanner error:', e);
+    }
+}
+window.syncHomeTeamBanner = syncHomeTeamBanner;
+
+/** Helper rapido per aprire la sezione Team e mettere a fuoco l'invito */
+window.openTeamInviteQuick = function() {
+    if (typeof window.showDashboardPage === 'function') {
+        window.showDashboardPage('team', true);
+    } else {
+        const teamLink = document.querySelector('.sidebar-item[data-page="team"]');
+        if (teamLink) teamLink.click();
+    }
+    setTimeout(() => {
+        const inviteInput = document.getElementById('teamInviteEmail') || document.getElementById('teamNameInput');
+        if (inviteInput) {
+            inviteInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            inviteInput.focus();
+        }
+    }, 280);
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  COLLABORAZIONE PROGETTO IN TEAM (LAVORO A QUATTRO MANI SULLA STESSA RASSEGNA)
+// ══════════════════════════════════════════════════════════════════════════════
+
+let currentProjectModalReviewId = null;
+
+/**
+ * Apre il modal per collaborare e invitare colleghi su uno specifico progetto / rassegna
+ */
+async function openProjectTeamModal(reviewId) {
+    currentProjectModalReviewId = reviewId || state.currentReviewId;
+    const modal = document.getElementById('projectTeamModal');
+    if (!modal) return;
+
+    // Reset campi e messaggi
+    const emailInput = document.getElementById('projectInviteEmailInput');
+    const msgEl = document.getElementById('projectInviteResultMsg');
+    const linkBox = document.getElementById('projectInviteLinkBox');
+    if (emailInput) emailInput.value = '';
+    if (msgEl) { msgEl.style.display = 'none'; msgEl.textContent = ''; }
+    if (linkBox) linkBox.style.display = 'none';
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    await refreshProjectModalData(currentProjectModalReviewId);
+    if (window.feather) feather.replace();
+}
+window.openProjectTeamModal = openProjectTeamModal;
+
+/**
+ * Apre il modal di collaborazione per la rassegna attualmente aperta in editor
+ */
+async function openCurrentProjectTeamModal() {
+    if (!state.currentReviewId) {
+        // Se ci sono articoli o un titolo, salviamo la bozza per ottenere un reviewId univoco
+        showToast('Inizializzazione spazio collaborativo per questa rassegna...', 'info');
+        const title = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+
+        try {
+            const saveRes = await apiCall('POST', '/api/pdf/archive', {
+                articles: state.articles || [],
+                title,
+                clientName,
+                clientLogo: state.clientLogoBase64
+            });
+            if (saveRes && saveRes.id) {
+                state.currentReviewId = saveRes.id;
+                sessionStorage.setItem('rs_draft_review_id', saveRes.id);
+                loadHistory();
+            }
+        } catch (e) {
+            console.warn('Errore salvataggio preliminare bozza:', e);
+        }
+    }
+
+    await openProjectTeamModal(state.currentReviewId);
+}
+window.openCurrentProjectTeamModal = openCurrentProjectTeamModal;
+
+/**
+ * Ricarica i dati del progetto e la lista dei collaboratori nel modal
+ */
+async function refreshProjectModalData(reviewId) {
+    const titleEl = document.getElementById('projectModalTitle');
+    const clientBadgeEl = document.getElementById('projectModalClientName');
+    const statusEl = document.getElementById('projectModalSharingStatus');
+    const countEl = document.getElementById('projectModalMemberCount');
+    const listEl = document.getElementById('projectModalCollaboratorsList');
+
+    if (!reviewId) {
+        if (titleEl) titleEl.textContent = document.getElementById('rassegnaTitle')?.value.trim() || 'Nuova Rassegna Stampa';
+        if (clientBadgeEl) clientBadgeEl.textContent = document.getElementById('clientName')?.value.trim() || 'Nessun Cliente';
+        if (statusEl) statusEl.innerHTML = '<span style="color:var(--text-muted);">Bozza locale &bull; Invita colleghi per iniziare a collaborare</span>';
+        if (countEl) countEl.textContent = '1 persona';
+        if (listEl) {
+            listEl.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">TU</div>
+                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Tu (Autore)</span>
+                    </div>
+                    <span style="font-size:0.72rem; color:var(--accent-primary); font-weight:700; background:rgba(124,92,255,0.1); padding:2px 8px; border-radius:4px;">Proprietario</span>
+                </div>`;
+        }
+        return;
+    }
+
+    try {
+        const token = state.token || localStorage.getItem('rs_token');
+        const res = await fetch(`/api/teams/project/${reviewId}/collaborators`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (titleEl) titleEl.textContent = data.project.title || 'Rassegna Stampa';
+        if (clientBadgeEl) clientBadgeEl.textContent = data.project.clientName || 'Nessun Cliente';
+
+        if (statusEl) {
+            if (data.project.isShared) {
+                statusEl.innerHTML = `<span style="color:#00c853; font-weight:700;">Condiviso nel ${escapeHtml(data.project.teamName || 'Team')} &bull; Accesso Collaborativo</span>`;
+            } else {
+                statusEl.innerHTML = `<span style="color:var(--text-muted);">Progetto Personale &bull; Non ancora condiviso</span>`;
+            }
+        }
+
+        const collabs = data.collaborators || [];
+        if (countEl) countEl.textContent = `${collabs.length} collaborator${collabs.length === 1 ? 'e' : 'i'}`;
+
+        if (listEl) {
+            listEl.innerHTML = collabs.map(c => {
+                const initials = (c.company_name || c.email || 'TU').slice(0, 2).toUpperCase();
+                const isMe = c.user_id === (state.user?.id || (jwt_decode_id()));
+                const roleBadge = c.role === 'owner' ? 'Proprietario' : 'Collaboratore';
+                return `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.85rem;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">${initials}</div>
+                        <div>
+                            <div style="font-weight:600; color:var(--text-primary); font-size:0.85rem;">${escapeHtml(c.company_name || c.email)} ${isMe ? '<span style="font-size:0.72rem; color:var(--text-muted);">(tu)</span>' : ''}</div>
+                            <div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(c.email)}</div>
+                        </div>
+                    </div>
+                    <span style="font-size:0.72rem; color:var(--accent-primary); font-weight:700; background:rgba(124,92,255,0.1); padding:2px 8px; border-radius:4px;">${roleBadge}</span>
+                </div>`;
+            }).join('');
+        }
+
+        updateProjectCollabStrip(data.project, collabs);
+
+    } catch (e) {
+        console.warn('Errore refreshProjectModalData:', e);
+    }
+}
+window.refreshProjectModalData = refreshProjectModalData;
+
+/** Helper per estrarre user_id da token JWT se state.user è null */
+function jwt_decode_id() {
+    try {
+        const token = state.token || localStorage.getItem('rs_token');
+        if (!token) return null;
+        const base64 = token.split('.')[1];
+        const payload = JSON.parse(atob(base64));
+        return payload.userId || null;
+    } catch(e) { return null; }
+}
+
+/**
+ * Invia l'invito a un nuovo collega per collaborare a questo progetto
+ */
+async function sendProjectTeamInvite() {
+    const input = document.getElementById('projectInviteEmailInput');
+    const msgEl = document.getElementById('projectInviteResultMsg');
+    const btn = document.getElementById('btnSendProjectInvite');
+    const linkBox = document.getElementById('projectInviteLinkBox');
+    const linkInput = document.getElementById('projectDirectInviteLinkInput');
+
+    if (!input) return;
+    const email = input.value.trim();
+    if (!email || !email.includes('@')) {
+        if (msgEl) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = 'var(--danger-color, #dc2626)';
+            msgEl.textContent = 'Inserisci un indirizzo email valido.';
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Invio invito...';
+    }
+    if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = 'var(--text-muted)';
+        msgEl.textContent = 'Generazione invito al progetto in corso...';
+    }
+
+    const token = state.token || localStorage.getItem('rs_token');
+    const projectName = document.getElementById('projectModalTitle')?.textContent || document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
+
+    try {
+        const res = await fetch('/api/teams/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+                email,
+                projectId: currentProjectModalReviewId || state.currentReviewId,
+                projectName
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            input.value = '';
+            msgEl.style.display = 'block';
+            msgEl.style.color = 'var(--success-color, #16a34a)';
+            msgEl.innerHTML = `Invito inviato con successo! Il tuo collega potrà registrarsi o accedere e troverà subito questo progetto condiviso.`;
+
+            if (data.inviteLink && linkBox && linkInput) {
+                linkInput.value = data.inviteLink;
+                linkBox.style.display = 'block';
+            }
+
+            // Ricarica la lista collaboratori e la home team banner
+            await refreshProjectModalData(currentProjectModalReviewId || state.currentReviewId);
+            if (typeof syncHomeTeamBanner === 'function') syncHomeTeamBanner();
+            if (typeof loadHistory === 'function') loadHistory();
+        } else {
+            msgEl.style.display = 'block';
+            msgEl.style.color = 'var(--danger-color, #dc2626)';
+            msgEl.textContent = data.error || 'Impossibile inviare l\'invito.';
+        }
+    } catch (e) {
+        if (msgEl) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = 'var(--danger-color, #dc2626)';
+            msgEl.textContent = 'Errore di connessione durante l\'invio dell\'invito.';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="mail" style="width:14px;height:14px;"></i> Invia Invito';
+            if (window.feather) feather.replace();
+        }
+    }
+}
+window.sendProjectTeamInvite = sendProjectTeamInvite;
+
+/** Copia il link diretto di invito al progetto negli appunti */
+window.copyProjectInviteLink = function() {
+    const input = document.getElementById('projectDirectInviteLinkInput');
+    const btn = document.getElementById('btnCopyProjectInviteLink');
+    if (!input || !input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = 'Copiato!';
+            setTimeout(() => { btn.textContent = original; }, 2000);
+        }
+        showToast('Link di invito al progetto copiato negli appunti!', 'success');
+    }).catch(() => showToast('Errore durante la copia del link', 'error'));
+};
+
+/** Chiude il modal di collaborazione progetto */
+window.closeProjectTeamModal = function() {
+    const modal = document.getElementById('projectTeamModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+};
+
+/**
+ * Aggiorna la barra orizzontale di stato team presente sopra la rassegna in corso
+ */
+function updateProjectCollabStrip(project, collaborators = []) {
+    const strip = document.getElementById('projectCollabStrip');
+    if (!strip) return;
+
+    const badgeText = document.getElementById('projectCollabStatusText');
+    const desc = document.getElementById('projectCollabDesc');
+    const avatarStack = document.getElementById('projectCollabAvatarStack');
+
+    if (project && project.isShared) {
+        if (badgeText) badgeText.textContent = project.teamName ? `Progetto ${project.teamName}` : 'Progetto di Team';
+        if (desc) desc.textContent = 'Spazio collaborativo: qualsiasi modifica apportata da te o dai tuoi colleghi è sincronizzata.';
+    } else {
+        if (badgeText) badgeText.textContent = 'Progetto Personale';
+        if (desc) desc.textContent = 'Clicca "Invita sul Progetto" per iniziare a lavorare a quattro mani con un collega.';
+    }
+
+    if (avatarStack && collaborators.length > 0) {
+        const slice = collaborators.slice(0, 4);
+        let stackHtml = slice.map(c => {
+            const inits = (c.company_name || c.email || 'TU').slice(0, 2).toUpperCase();
+            return `<div class="team-avatar" title="${escapeHtml(c.company_name || c.email)}">${inits}</div>`;
+        }).join('');
+        if (collaborators.length > 4) {
+            stackHtml += `<div class="team-avatar avatar-more">+${collaborators.length - 4}</div>`;
+        }
+        avatarStack.innerHTML = stackHtml;
+    }
+}
+window.updateProjectCollabStrip = updateProjectCollabStrip;
 
 // ==========================================================================
 // --- MODULO REPORT PERIODICI & COVERAGE BOOK ---

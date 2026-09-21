@@ -248,6 +248,9 @@
             <div class="invite-info">
                 <div class="team-name" id="teamNameDisplay"></div>
                 <div class="inviter">Invitato da <strong id="inviterDisplay"></strong></div>
+                <div id="projectBadgeNote" style="display:none; margin-top:8px; padding:6px 10px; background:rgba(124,92,255,0.08); border-radius:6px; border:1px solid rgba(124,92,255,0.25); font-size:12px; color:#6d28d9; font-weight:600;">
+                    👥 Progetto: <span id="projectBadgeTitle">Rassegna Stampa Condivisa</span>
+                </div>
                 <div class="expires" id="expiresDisplay"></div>
             </div>
 
@@ -426,21 +429,33 @@
         }
     }
 
+    const projectParam = new URLSearchParams(window.location.search).get('project');
+
     function showSuccess(msg) {
         document.getElementById('tabLogin').style.display = 'none';
         document.getElementById('tabRegister').style.display = 'none';
         document.querySelectorAll('.tabs').forEach(t => t.style.display = 'none');
         document.getElementById('successMsg').textContent = msg;
         document.getElementById('successBox').style.display = 'block';
-        document.getElementById('redirectNote').style.display = 'block';
 
-        // Redirect alla dashboard dopo 2.5 secondi
-        setTimeout(() => { window.location.href = '/dashboard.html'; }, 2500);
+        if (projectParam) {
+            try { localStorage.setItem('rs_open_review', projectParam); } catch(e){}
+            document.getElementById('redirectNote').textContent = 'Reindirizzamento al progetto condiviso con il tuo team...';
+            document.getElementById('redirectNote').style.display = 'block';
+            setTimeout(() => { window.location.href = '/dashboard.html#rassegna'; }, 2000);
+        } else {
+            document.getElementById('redirectNote').style.display = 'block';
+            setTimeout(() => { window.location.href = '/dashboard.html'; }, 2200);
+        }
     }
 
     // Init: verifica il token all'avvio
     (async function init() {
         inviteToken = getToken();
+        if (projectParam) {
+            try { localStorage.setItem('rs_open_review', projectParam); } catch(e){}
+        }
+
         if (!inviteToken) {
             document.getElementById('loader').style.display = 'none';
             document.getElementById('invalidMsg').style.display = 'block';
@@ -465,6 +480,11 @@
 
             document.getElementById('teamNameDisplay').textContent = inviteData.teamName;
             document.getElementById('inviterDisplay').textContent  = inviteData.inviterName;
+
+            if (projectParam) {
+                const badge = document.getElementById('projectBadgeNote');
+                if (badge) badge.style.display = 'block';
+            }
 
             const exp = new Date(inviteData.expiresAt).toLocaleDateString('it-IT', {
                 day: '2-digit', month: 'long', year: 'numeric'
