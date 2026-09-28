@@ -252,13 +252,11 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
 router.post('/archive', authMiddleware, async (req, res) => {
     try {
         const { id, articles, title, clientName, clientLogo } = req.body;
-        if (!articles || !Array.isArray(articles) || articles.length === 0) {
-            return res.status(400).json({ error: 'Fornisci almeno un articolo per archiviare la rassegna.' });
-        }
+        const reviewArticles = Array.isArray(articles) ? articles : [];
 
         const reviewTitle = title || 'Rassegna Stampa Archiviata';
         const db = getDb();
-        const articlesJsonStr = JSON.stringify(articles);
+        const articlesJsonStr = JSON.stringify(reviewArticles);
 
         if (id) {
             const existing = req.teamId
@@ -274,7 +272,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
                     UPDATE press_reviews 
                     SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
                     WHERE id = ?
-                `).run(reviewTitle, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, id);
+                `).run(reviewTitle, reviewArticles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, id);
 
                 return res.json({
                     id: existing.id,
@@ -292,7 +290,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const info = db.prepare(`
             INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(req.userId, req.teamId || null, reviewTitle, placeholderFilename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+        `).run(req.userId, req.teamId || null, reviewTitle, placeholderFilename, reviewArticles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
             id: info.lastInsertRowid,

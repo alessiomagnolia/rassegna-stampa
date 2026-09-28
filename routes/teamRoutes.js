@@ -188,7 +188,10 @@ router.post('/invite', authMiddleware, async (req, res) => {
         }
 
         if (!isOwner) {
-            return res.status(403).json({ error: 'Solo il proprietario del team può inviare inviti.' });
+            const userInTeam = db.prepare('SELECT id FROM team_members WHERE team_id = ? AND user_id = ?').get(teamId, req.userId);
+            if (!userInTeam) {
+                return res.status(403).json({ error: 'Non hai i permessi per inviare inviti in questo team.' });
+            }
         }
 
         // 2. Se un projectId (id della rassegna) è specificato, associalo al team se non lo è già

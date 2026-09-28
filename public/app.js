@@ -6101,9 +6101,11 @@ window.openProjectTeamModal = openProjectTeamModal;
  * Apre il modal di collaborazione per la rassegna attualmente aperta in editor
  */
 async function openCurrentProjectTeamModal() {
+    // 1. Apri subito il modal per dare riscontro immediato al clic dell'utente
+    openProjectTeamModal(state.currentReviewId);
+
+    // 2. Se non abbiamo ancora salvato la rassegna come bozza nel DB, salviamola per generare l'ID univoco
     if (!state.currentReviewId) {
-        // Se ci sono articoli o un titolo, salviamo la bozza per ottenere un reviewId univoco
-        showToast('Inizializzazione spazio collaborativo per questa rassegna...', 'info');
         const title = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
         const clientName = document.getElementById('clientName')?.value.trim() || '';
 
@@ -6116,15 +6118,15 @@ async function openCurrentProjectTeamModal() {
             });
             if (saveRes && saveRes.id) {
                 state.currentReviewId = saveRes.id;
+                currentProjectModalReviewId = saveRes.id;
                 sessionStorage.setItem('rs_draft_review_id', saveRes.id);
-                loadHistory();
+                await refreshProjectModalData(saveRes.id);
+                if (typeof loadHistory === 'function') loadHistory();
             }
         } catch (e) {
-            console.warn('Errore salvataggio preliminare bozza:', e);
+            console.warn('Errore salvataggio preliminare bozza per team:', e);
         }
     }
-
-    await openProjectTeamModal(state.currentReviewId);
 }
 window.openCurrentProjectTeamModal = openCurrentProjectTeamModal;
 
@@ -6251,6 +6253,27 @@ async function sendProjectTeamInvite() {
     const projectName = document.getElementById('projectModalTitle')?.textContent || document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
 
     try {
+        // Se non abbiamo ancora un reviewId salvato nel DB, salviamo al volo la bozza
+        if (!currentProjectModalReviewId && !state.currentReviewId) {
+            try {
+                const title = projectName || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+                const clientName = document.getElementById('clientName')?.value.trim() || '';
+                const saveRes = await apiCall('POST', '/api/pdf/archive', {
+                    articles: state.articles || [],
+                    title,
+                    clientName,
+                    clientLogo: state.clientLogoBase64
+                });
+                if (saveRes && saveRes.id) {
+                    state.currentReviewId = saveRes.id;
+                    currentProjectModalReviewId = saveRes.id;
+                    sessionStorage.setItem('rs_draft_review_id', saveRes.id);
+                }
+            } catch(eSave) {
+                console.warn('Auto-salvataggio bozza prima di invito:', eSave);
+            }
+        }
+
         const res = await fetch('/api/teams/invite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -6266,7 +6289,7 @@ async function sendProjectTeamInvite() {
             input.value = '';
             msgEl.style.display = 'block';
             msgEl.style.color = 'var(--success-color, #16a34a)';
-            msgEl.innerHTML = `Invito inviato con successo! Il tuo collega potrà registrarsi o accedere e troverà subito questo progetto condiviso.`;
+            msgEl.innerHTML = data.message ? escapeHtml(data.message) : `Invito inviato con successo! Il tuo collega potrà registrarsi o accedere e troverà subito questo progetto condiviso.`;
 
             if (data.inviteLink && linkBox && linkInput) {
                 linkInput.value = data.inviteLink;
