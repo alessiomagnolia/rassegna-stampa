@@ -288,15 +288,16 @@ function buildClassicHTML(articles, options) {
             z-index: -1;
         }
         .cover-top {
-            height: 60mm; display: flex;
+            min-height: 40mm; max-height: 55mm; display: flex;
             align-items: flex-start; justify-content: center;
+            margin-bottom: 4mm;
         }
-        .client-logo { max-width: 150mm; max-height: 50mm; object-fit: contain; }
+        .client-logo { max-width: 160mm; max-height: 48mm; object-fit: contain; }
         .cover-center {
             position: relative; flex: 1;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            margin: 0 15mm; padding: 20mm 0;
+            margin: -15mm 15mm 0 15mm; padding: 0 0 25mm 0;
         }
         .cover-title { font-size: 38pt; font-weight: 700; color: #1a1a2e; margin-bottom: 8mm; line-height: 1.2; }
         .cover-subtitle { font-size: 18pt; color: #555; margin-bottom: 6mm; font-family: 'Times New Roman', Times, serif; font-style: italic; }
@@ -399,7 +400,9 @@ function buildClassicHTML(articles, options) {
         const showBottomAgencyLogo = (clientLogo && userLogo);
 
         const finalDateStr = options.customCoverDate || dateStr;
-        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const defaultLogoPx = 140;
+        const finalLogoSize = options.customLogoSize || defaultLogoPx;
+        const logoStyle = `max-height:${finalLogoSize}px;`;
         const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
         const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
         const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';
@@ -541,9 +544,9 @@ function buildModernHTML(articles, options) {
             padding: 20mm; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             color: #ffffff; text-align: center; position: relative; z-index: 1;
         }
-        .cover-top { height: 55mm; display: flex; align-items: flex-start; justify-content: center; }
-        .client-logo-m { max-width: 140mm; max-height: 45mm; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3)); }
-        .cover-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .cover-top { min-height: 40mm; max-height: 55mm; display: flex; align-items: flex-start; justify-content: center; margin-bottom: 4mm; }
+        .client-logo-m { max-width: 160mm; max-height: 48mm; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3)); }
+        .cover-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: -15mm 15mm 0 15mm; padding: 0 0 25mm 0; }
         .cover-badge-m { display: inline-block; padding: 6px 16px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 30px; font-size: 10pt; font-weight: 600; color: #818cf8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8mm; }
         .cover-title-m { font-size: 34pt; font-weight: 800; color: #ffffff; margin-bottom: 6mm; line-height: 1.15; letter-spacing: -0.5px; }
         .cover-subtitle-m { font-size: 16pt; color: #94a3b8; font-weight: 400; }
@@ -610,7 +613,9 @@ function buildModernHTML(articles, options) {
         const subtitleText = clientName || agencyName || '';
         const showBottomAgencyLogo = (clientLogo && userLogo);
         const finalDateStr = options.customCoverDate || dateStr;
-        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const defaultLogoPx = 140;
+        const finalLogoSize = options.customLogoSize || defaultLogoPx;
+        const logoStyle = `max-height:${finalLogoSize}px;`;
         const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
         const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
         const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';
@@ -721,9 +726,9 @@ function buildMinimalHTML(articles, options) {
             padding: 22mm; background: #faf9f6; text-align: center; position: relative;
             border: 1px solid #e7e5e4; margin: 0;
         }
-        .cover-top-e { height: 50mm; display: flex; align-items: flex-start; justify-content: center; }
-        .client-logo-e { max-width: 140mm; max-height: 45mm; object-fit: contain; }
-        .cover-center-e { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .cover-top-e { min-height: 38mm; max-height: 50mm; display: flex; align-items: flex-start; justify-content: center; margin-bottom: 4mm; }
+        .client-logo-e { max-width: 150mm; max-height: 45mm; object-fit: contain; }
+        .cover-center-e { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: -15mm 15mm 0 15mm; padding: 0 0 25mm 0; }
         .cover-rule-top { width: 100%; border-top: 2px solid #1c1917; border-bottom: 1px solid #1c1917; height: 4px; margin-bottom: 10mm; }
         .cover-title-e { font-family: 'Playfair Display', Georgia, serif; font-size: 36pt; font-weight: 700; color: #1c1917; margin-bottom: 6mm; line-height: 1.2; }
         .cover-subtitle-e { font-size: 15pt; color: #78716c; font-style: italic; font-family: 'Playfair Display', serif; }
@@ -788,7 +793,9 @@ function buildMinimalHTML(articles, options) {
         const subtitleText = clientName || agencyName || '';
         const showBottomAgencyLogo = (clientLogo && userLogo);
         const finalDateStr = options.customCoverDate || dateStr;
-        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const defaultLogoPx = 140;
+        const finalLogoSize = options.customLogoSize || defaultLogoPx;
+        const logoStyle = `max-height:${finalLogoSize}px;`;
         const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
         const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
         const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';

@@ -594,11 +594,11 @@
             padding: 7.5% 7.5%;
             text-align: center;
         }
-        .pdf-cover-top { height: 22%; display: flex; align-items: flex-start; justify-content: center; }
-        .pdf-cover-client-logo { max-width: 60%; max-height: 100%; object-fit: contain; }
-        .pdf-cover-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .pdf-cover-title { font-size: clamp(14px, 3.5vw, 38pt); font-weight: 700; color: #1a1a2e; margin-bottom: 3%; line-height: 1.2; }
-        .pdf-cover-decor { width: 12%; height: 3px; background: linear-gradient(90deg, #7c5cff, #00d4aa); margin: 3% auto 4%; border-radius: 2px; }
+        .pdf-cover-top { height: 18%; display: flex; align-items: flex-start; justify-content: center; }
+        .pdf-cover-client-logo { max-width: 65%; max-height: 100%; object-fit: contain; }
+        .pdf-cover-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: -5%; padding-bottom: 8%; }
+        .pdf-cover-title { font-size: clamp(14px, 3.5vw, 38pt); font-weight: 700; color: #1a1a2e; margin-bottom: 2.5%; line-height: 1.2; }
+        .pdf-cover-decor { width: 12%; height: 3px; background: linear-gradient(90deg, #7c5cff, #00d4aa); margin: 2.5% auto 3%; border-radius: 2px; }
         .pdf-cover-subtitle { font-size: clamp(8px, 1.8vw, 18pt); color: #555; font-family: 'Times New Roman', Times, serif; font-style: italic; margin-bottom: 2%; }
         .pdf-cover-date { font-size: clamp(6px, 1.3vw, 14pt); color: #888; letter-spacing: 2px; text-transform: uppercase; }
         .pdf-cover-agency-logo { max-width: 25%; max-height: 100%; object-fit: contain; }
@@ -1229,11 +1229,11 @@
                         <div class="slider-control-group" id="editCoverLogoSizeGroup" style="margin-top:12px;">
                             <div class="slider-label-row">
                                 <span>Dimensione Logo</span>
-                                <span id="editCoverLogoSizeBadge" class="val-badge">75px</span>
+                                <span id="editCoverLogoSizeBadge" class="val-badge">140px</span>
                             </div>
                             <div class="slider-inputs-row">
                                 <button type="button" class="btn-step-sm" id="btnEditCoverLogoMinus" title="Riduci logo">−</button>
-                                <input type="range" class="range-slider-custom" id="editCoverLogoSizeSlider" min="30" max="180" step="2" value="75">
+                                <input type="range" class="range-slider-custom" id="editCoverLogoSizeSlider" min="40" max="240" step="5" value="140">
                                 <button type="button" class="btn-step-sm" id="btnEditCoverLogoPlus" title="Aumenta logo">+</button>
                             </div>
                         </div>
@@ -2184,8 +2184,8 @@ function renderCoverPreview() {
     const today = new Date();
     const defaultDateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
     const dateStr = options.customCoverDate || defaultDateStr;
-    const logoSize = options.customLogoSize || 75;
-    const logoStyle = `max-height:${logoSize}px; height:${logoSize}px; object-fit:contain;`;
+    const logoSize = options.customLogoSize || 140;
+    const logoStyle = `max-height:${logoSize}px; height:${logoSize}px; max-width:65%; object-fit:contain;`;
     const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}px;` : '';
     const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}px;` : '';
     const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}px;` : '';
@@ -2362,7 +2362,7 @@ function fillCoverForm() {
     if (dSlider) dSlider.value = dateSize;
     if (dBadge) dBadge.textContent = `${dateSize}px`;
 
-    const logoSize = options.customLogoSize || 75;
+    const logoSize = options.customLogoSize || 140;
     const lSlider = document.getElementById('editCoverLogoSizeSlider');
     const lBadge = document.getElementById('editCoverLogoSizeBadge');
     if (lSlider) lSlider.value = logoSize;
@@ -2829,7 +2829,7 @@ function selectPreviewElement(el, scrollDrawer = true) {
             currentVal = (options.customCoverDateSize || 12) + 'px';
             if (imgTools) imgTools.style.display = 'inline-flex';
         } else if (type === 'cover_logo') {
-            currentVal = (options.customLogoSize || 75) + 'px';
+            currentVal = (options.customLogoSize || 140) + 'px';
             if (imgTools) imgTools.style.display = 'inline-flex';
         } else if (type === 'cover_agency') {
             currentVal = '11px';
@@ -3018,8 +3018,8 @@ function changeSelectedElementSize(delta) {
             const barVal = document.getElementById('selBarValue');
             if (barVal) barVal.textContent = val + 'px';
         } else if (type === 'cover_logo') {
-            let val = (options.customLogoSize || 75) + (delta * 5);
-            val = Math.max(30, Math.min(180, Math.round(val)));
+            let val = (options.customLogoSize || 140) + (delta * 5);
+            val = Math.max(40, Math.min(240, Math.round(val)));
             options.customLogoSize = val;
             selectedPreviewElem.style.maxHeight = val + 'px';
             selectedPreviewElem.style.height = val + 'px';
@@ -3570,14 +3570,14 @@ function initEvents() {
     document.getElementById('btnEditCoverLogoMinus')?.addEventListener('click', () => {
         const slider = document.getElementById('editCoverLogoSizeSlider');
         if (!slider) return;
-        slider.value = Math.max(30, parseInt(slider.value) - 5);
+        slider.value = Math.max(40, parseInt(slider.value) - 5);
         document.getElementById('editCoverLogoSizeBadge').textContent = `${slider.value}px`;
         syncLiveCoverPreview();
     });
     document.getElementById('btnEditCoverLogoPlus')?.addEventListener('click', () => {
         const slider = document.getElementById('editCoverLogoSizeSlider');
         if (!slider) return;
-        slider.value = Math.min(180, parseInt(slider.value) + 5);
+        slider.value = Math.min(240, parseInt(slider.value) + 5);
         document.getElementById('editCoverLogoSizeBadge').textContent = `${slider.value}px`;
         syncLiveCoverPreview();
     });
