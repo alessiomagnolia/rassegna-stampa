@@ -104,16 +104,29 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             return updated;
         }));
 
+        let resolvedClientLogo = clientLogo || null;
+        if (resolvedClientLogo && !resolvedClientLogo.startsWith('data:')) {
+            try {
+                resolvedClientLogo = await fetchImageAsBase64(resolvedClientLogo);
+            } catch(e) {}
+        }
+
         const finalUserName = userName || user?.company_name || '';
 
         const options = {
             title: reviewTitle,
             userName: finalUserName,
             clientName: clientName || null,
-            clientLogo: clientLogo || null,
+            clientLogo: resolvedClientLogo,
             userLogo: userLogoBase64,
             templateId: templateId || 'classic',
-            includeAnalytics: !!includeAnalytics
+            includeAnalytics: !!includeAnalytics,
+            customLogoSize: req.body.customLogoSize || null,
+            customCoverTitleSize: req.body.customCoverTitleSize || null,
+            customCoverSubtitleSize: req.body.customCoverSubtitleSize || null,
+            customCoverDateSize: req.body.customCoverDateSize || null,
+            customCoverCenterOffsetY: req.body.customCoverCenterOffsetY || null,
+            customCoverDate: req.body.customCoverDate || null
         };
 
         console.log(`[PDF] Generazione in corso per ${resolvedArticles.length} articoli...`);

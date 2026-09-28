@@ -398,18 +398,25 @@ function buildClassicHTML(articles, options) {
         const subtitleText = clientName || agencyName || '';
         const showBottomAgencyLogo = (clientLogo && userLogo);
 
+        const finalDateStr = options.customCoverDate || dateStr;
+        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
+        const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
+        const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';
+        const centerStyle = options.customCoverCenterOffsetY ? `transform: translateY(${options.customCoverCenterOffsetY}px);` : '';
+
         html += `
     <div class="page cover-page">
         <div class="cover-bg-orb-1"></div>
         <div class="cover-bg-orb-2"></div>
         <div class="cover-top">
-            ${topLogo ? `<img src="${topLogo}" class="client-logo" alt="Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo" style="${logoStyle}" alt="Logo">` : ''}
         </div>
-        <div class="cover-center">
-            <div class="cover-title">${title}</div>
+        <div class="cover-center" style="${centerStyle}">
+            <div class="cover-title" style="${titleStyle}">${title}</div>
             <div class="cover-decor"></div>
-            ${subtitleText ? `<div class="cover-subtitle">${subtitleText}</div>` : ''}
-            <div class="cover-date">${dateStr}</div>
+            ${subtitleText ? `<div class="cover-subtitle" style="${subtitleStyle}">${subtitleText}</div>` : ''}
+            <div class="cover-date" style="${dateStyle}">${finalDateStr}</div>
         </div>
         <div class="cover-bottom">
             ${showBottomAgencyLogo ? `<img src="${userLogo}" class="agency-logo" alt="Agency Logo">` : ''}
@@ -602,16 +609,23 @@ function buildModernHTML(articles, options) {
         const topLogo = clientLogo || userLogo || null;
         const subtitleText = clientName || agencyName || '';
         const showBottomAgencyLogo = (clientLogo && userLogo);
+        const finalDateStr = options.customCoverDate || dateStr;
+        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
+        const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
+        const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';
+        const centerStyle = options.customCoverCenterOffsetY ? `transform: translateY(${options.customCoverCenterOffsetY}px);` : '';
+
         return `
     <div class="page cover-page">
         <div class="cover-top">
-            ${topLogo ? `<img src="${topLogo}" class="client-logo-m" alt="Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo-m" style="${logoStyle}" alt="Logo">` : ''}
         </div>
-        <div class="cover-center">
+        <div class="cover-center" style="${centerStyle}">
             <div class="cover-badge-m">Rassegna Stampa</div>
-            <div class="cover-title-m">${title}</div>
-            ${subtitleText ? `<div class="cover-subtitle-m">${subtitleText}</div>` : ''}
-            <div class="cover-date-m">${dateStr}</div>
+            <div class="cover-title-m" style="${titleStyle}">${title}</div>
+            ${subtitleText ? `<div class="cover-subtitle-m" style="${subtitleStyle}">${subtitleText}</div>` : ''}
+            <div class="cover-date-m" style="${dateStyle}">${finalDateStr}</div>
         </div>
         <div class="cover-bottom" style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3mm;">
             ${showBottomAgencyLogo ? `<img src="${userLogo}" style="max-height:22mm; filter:brightness(0) invert(1);" alt="Agency Logo">` : ''}
@@ -773,17 +787,24 @@ function buildMinimalHTML(articles, options) {
         const topLogo = clientLogo || userLogo || null;
         const subtitleText = clientName || agencyName || '';
         const showBottomAgencyLogo = (clientLogo && userLogo);
+        const finalDateStr = options.customCoverDate || dateStr;
+        const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+        const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}pt;` : '';
+        const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}pt;` : '';
+        const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}pt;` : '';
+        const centerStyle = options.customCoverCenterOffsetY ? `transform: translateY(${options.customCoverCenterOffsetY}px);` : '';
+
         return `
     <div class="page cover-page-e">
         <div class="cover-top-e">
-            ${topLogo ? `<img src="${topLogo}" class="client-logo-e" alt="Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo-e" style="${logoStyle}" alt="Logo">` : ''}
         </div>
-        <div class="cover-center-e">
+        <div class="cover-center-e" style="${centerStyle}">
             <div class="cover-rule-top"></div>
-            <div class="cover-title-e">${title}</div>
-            ${subtitleText ? `<div class="cover-subtitle-e">${subtitleText}</div>` : ''}
+            <div class="cover-title-e" style="${titleStyle}">${title}</div>
+            ${subtitleText ? `<div class="cover-subtitle-e" style="${subtitleStyle}">${subtitleText}</div>` : ''}
             <div class="cover-rule-bottom"></div>
-            <div class="cover-date-e">${dateStr}</div>
+            <div class="cover-date-e" style="${dateStyle}">${finalDateStr}</div>
         </div>
         <div class="cover-bottom-e" style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3mm;">
             ${showBottomAgencyLogo ? `<img src="${userLogo}" style="max-height:20mm;" alt="Logo Agenzia">` : ''}

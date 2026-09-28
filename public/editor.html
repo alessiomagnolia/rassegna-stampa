@@ -952,10 +952,13 @@
     <!-- RIGHT DRAWER: Edit Panel (Fixed at right: 0) -->
     <div class="edit-panel hide-mobile" id="editPanel">
         <div class="edit-panel-header">
-            <h3><i data-feather="sliders" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;color:#7c5cff;"></i> Modifica Articolo</h3>
+            <h3><i data-feather="sliders" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;color:#7c5cff;"></i> <span id="editPanelTitleText">Modifica Articolo</span></h3>
             <button type="button" class="btn-icon" id="btnCloseEditPanel" onclick="closeEditPanel()" title="Chiudi pannello (Esc)"><i data-feather="x"></i></button>
         </div>
         <div class="edit-panel-body" id="editPanelBody">
+
+            <!-- ARTICLE EDIT SECTIONS -->
+            <div id="articleEditSections">
 
             <!-- SECTION 1: CONTENUTI ARTICOLO -->
             <div class="edit-section-card" id="editCardContent">
@@ -1167,6 +1170,133 @@
                             <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Usa sfondo scuro (#1a1a2e) per loghi bianchi</div>
                         </div>
                         <div id="darkHeaderPreviewSwatch" style="margin-left:auto; width:28px; height:28px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); flex-shrink:0; transition:background 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            </div><!-- closes articleEditSections -->
+
+            <!-- COVER EDIT SECTIONS (ACTIVE WHEN ON COVER PAGE) -->
+            <div id="coverEditSections" style="display:none;">
+                <!-- COVER SECTION 1: DATI TESTUALI -->
+                <div class="edit-section-card" id="editCardCoverContent">
+                    <div class="edit-section-card-title">
+                        <i data-feather="file-text" style="width:15px;height:15px;"></i>
+                        <span>Testi di Copertina</span>
+                    </div>
+                    <div class="edit-field">
+                        <label>Titolo Rassegna Stampa *</label>
+                        <input type="text" id="editCoverTitle" placeholder="es. Rassegna Stampa UGL">
+                    </div>
+                    <div class="edit-field">
+                        <label>Sottotitolo / Nome Cliente / Persona</label>
+                        <input type="text" id="editCoverSubtitle" placeholder="es. Paolo Capone o Azienda Cliente">
+                    </div>
+                    <div class="edit-field">
+                        <label>Data Copertina</label>
+                        <input type="text" id="editCoverDate" placeholder="es. 28/09/2026 (lascia vuoto per data odierna)">
+                    </div>
+                    <div class="edit-field">
+                        <label>Dicitura &quot;A cura di&quot; / Nome Azienda</label>
+                        <input type="text" id="editCoverAgencyName" placeholder="es. Ufficio Stampa o Nome Azienda">
+                    </div>
+                </div>
+
+                <!-- COVER SECTION 2: LOGO COPERTINA -->
+                <div class="edit-section-card" id="editCardCoverLogo">
+                    <div class="edit-section-card-title">
+                        <i data-feather="image" style="width:15px;height:15px;"></i>
+                        <span>Logo Principale di Copertina</span>
+                    </div>
+                    <div class="edit-field">
+                        <label>Logo Cliente / Testata Copertina</label>
+                        <div id="editCoverLogoPreviewContainer" class="hidden">
+                            <img id="editCoverLogoPreview" class="edit-logo-preview" src="" alt="Logo Copertina">
+                            <button type="button" class="edit-remove-btn" onclick="removeCoverLogo()"><i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi logo</button>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-primary btn-sm" id="btnOpenCoverLogoArchive" onclick="openEditorLogoArchive()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
+                                <i data-feather="archive" style="width:14px;height:14px;"></i>
+                                <span>Archivio loghi</span>
+                            </button>
+                            <input type="file" id="editCoverLogoInput" accept="image/*" class="hidden">
+                            <label for="editCoverLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;" title="Carica un file immagine dal tuo dispositivo">
+                                <i data-feather="upload" style="width:14px;height:14px;"></i>
+                                <span>Carica file</span>
+                            </label>
+                        </div>
+
+                        <!-- Dimensione Logo Slider -->
+                        <div class="slider-control-group" id="editCoverLogoSizeGroup" style="margin-top:12px;">
+                            <div class="slider-label-row">
+                                <span>Dimensione Logo</span>
+                                <span id="editCoverLogoSizeBadge" class="val-badge">75px</span>
+                            </div>
+                            <div class="slider-inputs-row">
+                                <button type="button" class="btn-step-sm" id="btnEditCoverLogoMinus" title="Riduci logo">−</button>
+                                <input type="range" class="range-slider-custom" id="editCoverLogoSizeSlider" min="30" max="180" step="2" value="75">
+                                <button type="button" class="btn-step-sm" id="btnEditCoverLogoPlus" title="Aumenta logo">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COVER SECTION 3: DIMENSIONI TESTI (LIVE) -->
+                <div class="edit-section-card" id="editCardCoverSizes">
+                    <div class="edit-section-card-title">
+                        <i data-feather="type" style="width:15px;height:15px;"></i>
+                        <span>Dimensioni &amp; Posizione</span>
+                    </div>
+
+                    <!-- Dimensione Titolo Copertina -->
+                    <div class="slider-control-group">
+                        <div class="slider-label-row">
+                            <span>Dimensione Titolo Copertina</span>
+                            <span id="editCoverTitleSizeBadge" class="val-badge">36px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverTitleMinus">−</button>
+                            <input type="range" class="range-slider-custom" id="editCoverTitleSizeSlider" min="16" max="64" step="1" value="36">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverTitlePlus">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Dimensione Sottotitolo / Cliente -->
+                    <div class="slider-control-group">
+                        <div class="slider-label-row">
+                            <span>Dimensione Sottotitolo</span>
+                            <span id="editCoverSubtitleSizeBadge" class="val-badge">16px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverSubtitleMinus">−</button>
+                            <input type="range" class="range-slider-custom" id="editCoverSubtitleSizeSlider" min="10" max="36" step="1" value="16">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverSubtitlePlus">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Dimensione Data -->
+                    <div class="slider-control-group">
+                        <div class="slider-label-row">
+                            <span>Dimensione Data</span>
+                            <span id="editCoverDateSizeBadge" class="val-badge">12px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverDateMinus">−</button>
+                            <input type="range" class="range-slider-custom" id="editCoverDateSizeSlider" min="8" max="26" step="1" value="12">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverDatePlus">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Spostamento Verticale Centro Copertina -->
+                    <div class="slider-control-group">
+                        <div class="slider-label-row">
+                            <span>Posizione Verticale Contenuto</span>
+                            <span id="editCoverOffsetYBadge" class="val-badge">0px</span>
+                        </div>
+                        <div class="slider-inputs-row">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverOffsetYMinus" title="Sposta su">▲</button>
+                            <input type="range" class="range-slider-custom" id="editCoverOffsetYSlider" min="-100" max="100" step="5" value="0">
+                            <button type="button" class="btn-step-sm" id="btnEditCoverOffsetYPlus" title="Sposta giù">▼</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1721,29 +1851,53 @@ function selectPage(idx) {
     if (idx === -1) {
         // Cover
         previewEl.innerHTML = renderCoverPreview();
-        if (editBtn) editBtn.style.display = 'none';
+        if (editBtn) {
+            editBtn.style.display = 'inline-flex';
+            editBtn.innerHTML = '<i data-feather="edit-3" style="width:15px;height:15px;"></i><span>MODIFICA COPERTINA</span>';
+        }
+        const panel = document.getElementById('editPanel');
+        if (panel && panel.classList.contains('open')) {
+            fillCoverForm();
+        }
     } else if (idx === -2) {
         // KPI Report
         previewEl.innerHTML = renderKpiPreview();
         if (editBtn) editBtn.style.display = 'none';
+        const panel = document.getElementById('editPanel');
+        if (panel && panel.classList.contains('open')) {
+            closeEditPanel();
+        }
     } else {
         previewEl.innerHTML = renderArticlePreview(articles[idx], pageNum, totalPages);
-        if (editBtn) editBtn.style.display = 'inline-flex';
+        if (editBtn) {
+            editBtn.style.display = 'inline-flex';
+            editBtn.innerHTML = '<i data-feather="edit-3" style="width:15px;height:15px;"></i><span>MODIFICA L\'ARTICOLO</span>';
+        }
+        const panel = document.getElementById('editPanel');
+        if (panel && panel.classList.contains('open')) {
+            fillEditForm(idx);
+        }
         const visualImg = previewEl.querySelector('.pdf-main-visual');
         if (visualImg && articles[idx].imageBase64) {
             enableDesktopImageDrag(visualImg);
         }
     }
+    if (window.feather) feather.replace();
 
     // Apply preview zoom to newly rendered page
     if (typeof applyPreviewZoom === 'function') {
         applyPreviewZoom();
     }
 
-    // Desktop: Update Desktop Drawer data if an article is selected
+    // Desktop: Update Desktop Drawer data if an article or cover is selected
     if (idx >= 0 && typeof populateEditForm === 'function') {
         populateEditForm(idx);
-    } else if (idx < 0 && typeof closeEditPanel === 'function') {
+    } else if (idx === -1) {
+        const panel = document.getElementById('editPanel');
+        if (panel && panel.classList.contains('open') && typeof fillCoverForm === 'function') {
+            fillCoverForm();
+        }
+    } else if (idx === -2 && typeof closeEditPanel === 'function') {
         closeEditPanel();
     }
 
@@ -2028,11 +2182,15 @@ function renderKpiPreview() {
 
 function renderCoverPreview() {
     const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-    const logoStyle = options.customLogoSize ? `max-height:${options.customLogoSize}px;` : '';
+    const defaultDateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+    const dateStr = options.customCoverDate || defaultDateStr;
+    const logoSize = options.customLogoSize || 75;
+    const logoStyle = `max-height:${logoSize}px; height:${logoSize}px; object-fit:contain;`;
     const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}px;` : '';
     const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}px;` : '';
     const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}px;` : '';
+    const centerOffsetY = options.customCoverCenterOffsetY || 0;
+    const centerStyle = centerOffsetY ? `transform: translateY(${centerOffsetY}px);` : '';
 
     const topLogo = options.clientLogo || options.userLogo || '';
     const agencyName = (options.userName && options.userName !== 'Utente') ? options.userName : '';
@@ -2042,15 +2200,15 @@ function renderCoverPreview() {
     return `
     <div class="pdf-cover-preview">
         <div class="pdf-cover-top">
-            ${topLogo ? `<img src="${topLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Copertina">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Copertina">` : `<div class="pdf-cover-client-logo-placeholder pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" onclick="openDrawerForSelectedElement()" style="border: 1.5px dashed rgba(124, 92, 255, 0.45); border-radius: 8px; padding: 8px 16px; font-size: 0.78rem; color: #888; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select:none;"><i data-feather="image" style="width:13px;height:13px;color:#7c5cff;"></i><span>Aggiungi Logo Copertina</span></div>`}
         </div>
-        <div class="pdf-cover-center">
-            <div class="pdf-cover-title pdf-resize-selectable" data-elem-name="Titolo Copertina" style="${titleStyle}">${escHtml(options.title || 'Rassegna Stampa')}</div>
+        <div class="pdf-cover-center" style="${centerStyle}">
+            <div class="pdf-cover-title pdf-resize-selectable" data-elem-type="cover_title" data-elem-name="Titolo Copertina" style="${titleStyle}">${escHtml(options.title || 'Rassegna Stampa')}</div>
             <div class="pdf-cover-decor"></div>
-            ${subtitleText ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(subtitleText)}</div>` : ''}
-            <div class="pdf-cover-date pdf-resize-selectable" data-elem-name="Data Copertina" style="${dateStyle}">${dateStr}</div>
+            ${subtitleText ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-type="cover_subtitle" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(subtitleText)}</div>` : ''}
+            <div class="pdf-cover-date pdf-resize-selectable" data-elem-type="cover_date" data-elem-name="Data Copertina" style="${dateStyle}">${escHtml(dateStr)}</div>
         </div>
-        <div class="pdf-cover-bottom" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+        <div class="pdf-cover-bottom pdf-resize-selectable" data-elem-type="cover_agency" data-elem-name="A cura di / Logo" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
             ${showBottomAgencyLogo ? `<img src="${options.userLogo}" style="max-height:22mm; max-width:50mm; object-fit:contain;" alt="Logo Agenzia">` : ''}
             ${agencyName ? `<div style="font-size:0.75rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">A cura di: ${escHtml(agencyName)}</div>` : ''}
         </div>
@@ -2163,11 +2321,164 @@ function initSortable() {
 let editingIdx = -1;
 let _liveSyncDebounce = null;
 
+function fillCoverForm() {
+    editingIdx = -1;
+    const headerTitle = document.getElementById('editPanelTitleText');
+    if (headerTitle) headerTitle.textContent = 'Modifica Copertina';
+
+    const artSections = document.getElementById('articleEditSections');
+    const covSections = document.getElementById('coverEditSections');
+    if (artSections) artSections.style.display = 'none';
+    if (covSections) covSections.style.display = 'block';
+
+    const titleInput = document.getElementById('editCoverTitle');
+    if (titleInput) titleInput.value = options.title || '';
+
+    const subInput = document.getElementById('editCoverSubtitle');
+    if (subInput) subInput.value = options.clientName || '';
+
+    const dateInput = document.getElementById('editCoverDate');
+    if (dateInput) dateInput.value = options.customCoverDate || '';
+
+    const agencyInput = document.getElementById('editCoverAgencyName');
+    if (agencyInput) agencyInput.value = (options.userName && options.userName !== 'Utente') ? options.userName : '';
+
+    // Sliders
+    const titleSize = options.customCoverTitleSize || 36;
+    const tSlider = document.getElementById('editCoverTitleSizeSlider');
+    const tBadge = document.getElementById('editCoverTitleSizeBadge');
+    if (tSlider) tSlider.value = titleSize;
+    if (tBadge) tBadge.textContent = `${titleSize}px`;
+
+    const subSize = options.customCoverSubtitleSize || 16;
+    const sSlider = document.getElementById('editCoverSubtitleSizeSlider');
+    const sBadge = document.getElementById('editCoverSubtitleSizeBadge');
+    if (sSlider) sSlider.value = subSize;
+    if (sBadge) sBadge.textContent = `${subSize}px`;
+
+    const dateSize = options.customCoverDateSize || 12;
+    const dSlider = document.getElementById('editCoverDateSizeSlider');
+    const dBadge = document.getElementById('editCoverDateSizeBadge');
+    if (dSlider) dSlider.value = dateSize;
+    if (dBadge) dBadge.textContent = `${dateSize}px`;
+
+    const logoSize = options.customLogoSize || 75;
+    const lSlider = document.getElementById('editCoverLogoSizeSlider');
+    const lBadge = document.getElementById('editCoverLogoSizeBadge');
+    if (lSlider) lSlider.value = logoSize;
+    if (lBadge) lBadge.textContent = `${logoSize}px`;
+
+    const offsetY = options.customCoverCenterOffsetY || 0;
+    const oSlider = document.getElementById('editCoverOffsetYSlider');
+    const oBadge = document.getElementById('editCoverOffsetYBadge');
+    if (oSlider) oSlider.value = offsetY;
+    if (oBadge) oBadge.textContent = (offsetY > 0 ? `+${offsetY}px` : `${offsetY}px`);
+
+    // Cover Logo
+    const topLogo = options.clientLogo || options.userLogo || '';
+    const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
+    const logoPrev = document.getElementById('editCoverLogoPreview');
+    if (logoPrev && logoPrevCont) {
+        if (topLogo) {
+            logoPrev.src = topLogo;
+            logoPrevCont.classList.remove('hidden');
+        } else {
+            logoPrev.src = '';
+            logoPrevCont.classList.add('hidden');
+        }
+    }
+
+    if (window.feather) feather.replace();
+}
+
+function syncLiveCoverPreview() {
+    const titleVal = document.getElementById('editCoverTitle')?.value ?? options.title ?? 'Rassegna Stampa';
+    const subtitleVal = document.getElementById('editCoverSubtitle')?.value ?? options.clientName ?? '';
+    const dateVal = document.getElementById('editCoverDate')?.value ?? '';
+    const agencyVal = document.getElementById('editCoverAgencyName')?.value ?? '';
+
+    const titleSize = parseInt(document.getElementById('editCoverTitleSizeSlider')?.value);
+    const subtitleSize = parseInt(document.getElementById('editCoverSubtitleSizeSlider')?.value);
+    const dateSize = parseInt(document.getElementById('editCoverDateSizeSlider')?.value);
+    const logoSize = parseInt(document.getElementById('editCoverLogoSizeSlider')?.value);
+    const offsetY = parseInt(document.getElementById('editCoverOffsetYSlider')?.value);
+
+    options.title = titleVal;
+    options.clientName = subtitleVal;
+    options.customCoverDate = dateVal;
+    if (agencyVal) options.userName = agencyVal;
+
+    if (!isNaN(titleSize) && titleSize > 0) options.customCoverTitleSize = titleSize;
+    if (!isNaN(subtitleSize) && subtitleSize > 0) options.customCoverSubtitleSize = subtitleSize;
+    if (!isNaN(dateSize) && dateSize > 0) options.customCoverDateSize = dateSize;
+    if (!isNaN(logoSize) && logoSize > 0) options.customLogoSize = logoSize;
+    if (!isNaN(offsetY)) options.customCoverCenterOffsetY = offsetY;
+
+    // Sincronizza l'input titolo nella barra superiore se presente
+    const navTitle = document.getElementById('editorTitle');
+    if (navTitle && titleVal) navTitle.value = titleVal;
+
+    // Ridisegna la copertina in tempo reale
+    const previewEl = document.getElementById('pagePreviewContent');
+    if (previewEl && selectedIdx === -1) {
+        previewEl.innerHTML = renderCoverPreview();
+        if (typeof applyPreviewZoom === 'function') {
+            applyPreviewZoom();
+        }
+        if (selectedPreviewElemType) {
+            const reSel = previewEl.querySelector(`[data-elem-type="${selectedPreviewElemType}"]`);
+            if (reSel) {
+                selectedPreviewElem = reSel;
+                reSel.classList.add('pdf-element-selected');
+                positionSelectionToolbar(reSel);
+            }
+        }
+    }
+
+    // Aggiorna titolo miniatura copertina nella barra laterale sinistra
+    const coverThumb = document.querySelector('[data-cover-page] .page-thumb-title');
+    if (coverThumb) coverThumb.textContent = titleVal;
+
+    // Salva con debounce
+    clearTimeout(_liveSyncDebounce);
+    _liveSyncDebounce = setTimeout(() => {
+        pushUndoState();
+        try {
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+        } catch(e) {}
+    }, 500);
+}
+
+function removeCoverLogo() {
+    options.clientLogo = null;
+    options.userLogo = null;
+    const cont = document.getElementById('editCoverLogoPreviewContainer');
+    if (cont) cont.classList.add('hidden');
+    const prev = document.getElementById('editCoverLogoPreview');
+    if (prev) prev.src = '';
+    syncLiveCoverPreview();
+}
+window.fillCoverForm = fillCoverForm;
+window.syncLiveCoverPreview = syncLiveCoverPreview;
+window.removeCoverLogo = removeCoverLogo;
+
 function fillEditForm(idx) {
+    if (idx === -1) {
+        fillCoverForm();
+        return;
+    }
     if (idx < 0 || idx >= articles.length) return;
     editingIdx = idx;
     const art = articles[idx];
     if (!art) return;
+
+    const headerTitle = document.getElementById('editPanelTitleText');
+    if (headerTitle) headerTitle.textContent = 'Modifica Articolo';
+
+    const artSections = document.getElementById('articleEditSections');
+    const covSections = document.getElementById('coverEditSections');
+    if (artSections) artSections.style.display = 'block';
+    if (covSections) covSections.style.display = 'none';
 
     // Content fields
     const titleEl = document.getElementById('editTitle');
@@ -2363,11 +2674,17 @@ window.setDrawerImagePosition = setDrawerImagePosition;
 
 function openEditPanel(idx) {
     if (window.innerWidth <= 900) return;
-    const targetIdx = (idx !== undefined && idx >= 0) ? idx : (selectedIdx >= 0 ? selectedIdx : 0);
-    if (selectedIdx !== targetIdx && articles.length > targetIdx) {
-        selectPage(targetIdx);
+    const targetIdx = (idx !== undefined) ? idx : (selectedIdx !== undefined ? selectedIdx : 0);
+    if (selectedIdx !== targetIdx) {
+        if (targetIdx === -1 || (targetIdx >= 0 && articles.length > targetIdx)) {
+            selectPage(targetIdx);
+        }
     }
-    fillEditForm(targetIdx);
+    if (targetIdx === -1) {
+        fillCoverForm();
+    } else {
+        fillEditForm(targetIdx);
+    }
 
     const panel = document.getElementById('editPanel');
     if (panel) panel.classList.add('open');
@@ -2416,7 +2733,7 @@ function toggleEditPanel() {
     if (panel && panel.classList.contains('open')) {
         closeEditPanel();
     } else {
-        openEditPanel(selectedIdx >= 0 ? selectedIdx : 0);
+        openEditPanel(selectedIdx !== undefined ? selectedIdx : 0);
     }
 }
 window.openEditPanel = openEditPanel;
@@ -2491,9 +2808,7 @@ function selectPreviewElement(el, scrollDrawer = true) {
     const type = el.dataset.elemType || '';
     selectedPreviewElemType = type;
     const name = el.dataset.elemName || 'Elemento';
-    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
-    const art = articles[idx];
-    if (!art) return;
+    const isCover = type.startsWith('cover_') || selectedIdx === -1;
 
     const toolbar = document.getElementById('previewSelectionToolbar');
     const titleEl = document.getElementById('selBarTitle');
@@ -2503,24 +2818,47 @@ function selectPreviewElement(el, scrollDrawer = true) {
     if (titleEl) titleEl.textContent = name;
 
     let currentVal = '';
-    if (type === 'title') {
-        currentVal = (art.customTitleSize || 20) + 'px';
-        if (imgTools) imgTools.style.display = 'none';
-    } else if (type === 'excerpt') {
-        currentVal = (art.customTextSize || 11) + 'px';
-        if (imgTools) imgTools.style.display = 'none';
-    } else if (type === 'source') {
-        currentVal = (art.customSourceSize || 13) + 'px';
-        if (imgTools) imgTools.style.display = 'none';
-    } else if (type === 'source_name') {
-        currentVal = (art.customSourceNameSize || 16) + 'px';
-        if (imgTools) imgTools.style.display = 'none';
-    } else if (type === 'image') {
-        currentVal = ((art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320) + 'px';
-        if (imgTools) imgTools.style.display = 'inline-flex';
-    } else if (type === 'logo') {
-        currentVal = (art.customLogoHeight || 38) + 'px';
-        if (imgTools) imgTools.style.display = 'none';
+    if (isCover) {
+        if (type === 'cover_title') {
+            currentVal = (options.customCoverTitleSize || 36) + 'px';
+            if (imgTools) imgTools.style.display = 'inline-flex';
+        } else if (type === 'cover_subtitle') {
+            currentVal = (options.customCoverSubtitleSize || 16) + 'px';
+            if (imgTools) imgTools.style.display = 'inline-flex';
+        } else if (type === 'cover_date') {
+            currentVal = (options.customCoverDateSize || 12) + 'px';
+            if (imgTools) imgTools.style.display = 'inline-flex';
+        } else if (type === 'cover_logo') {
+            currentVal = (options.customLogoSize || 75) + 'px';
+            if (imgTools) imgTools.style.display = 'inline-flex';
+        } else if (type === 'cover_agency') {
+            currentVal = '11px';
+            if (imgTools) imgTools.style.display = 'none';
+        }
+    } else {
+        const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+        const art = articles[idx];
+        if (!art) return;
+
+        if (type === 'title') {
+            currentVal = (art.customTitleSize || 20) + 'px';
+            if (imgTools) imgTools.style.display = 'none';
+        } else if (type === 'excerpt') {
+            currentVal = (art.customTextSize || 11) + 'px';
+            if (imgTools) imgTools.style.display = 'none';
+        } else if (type === 'source') {
+            currentVal = (art.customSourceSize || 13) + 'px';
+            if (imgTools) imgTools.style.display = 'none';
+        } else if (type === 'source_name') {
+            currentVal = (art.customSourceNameSize || 16) + 'px';
+            if (imgTools) imgTools.style.display = 'none';
+        } else if (type === 'image') {
+            currentVal = ((art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260) ? art.customImageHeight : 320) + 'px';
+            if (imgTools) imgTools.style.display = 'inline-flex';
+        } else if (type === 'logo') {
+            currentVal = (art.customLogoHeight || 38) + 'px';
+            if (imgTools) imgTools.style.display = 'none';
+        }
     }
     if (valEl) valEl.textContent = currentVal;
 
@@ -2575,6 +2913,12 @@ function highlightDrawerSectionForType(type) {
         cardId = 'editCardImage';
     } else if (type === 'logo') {
         cardId = 'editCardHeader';
+    } else if (type === 'cover_title' || type === 'cover_subtitle' || type === 'cover_date') {
+        cardId = 'editCardCoverSizes';
+    } else if (type === 'cover_logo') {
+        cardId = 'editCardCoverLogo';
+    } else if (type === 'cover_agency') {
+        cardId = 'editCardCoverContent';
     }
     if (!cardId) return;
     const card = document.getElementById(cardId);
@@ -2591,7 +2935,8 @@ function highlightDrawerSectionForType(type) {
 }
 
 function openDrawerForSelectedElement() {
-    const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    const isCover = selectedIdx === -1 || (selectedPreviewElemType && selectedPreviewElemType.startsWith('cover_'));
+    const idx = isCover ? -1 : ((editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0));
     openEditPanel(idx);
     if (selectedPreviewElemType) {
         setTimeout(() => highlightDrawerSectionForType(selectedPreviewElemType), 150);
@@ -2599,6 +2944,33 @@ function openDrawerForSelectedElement() {
 }
 
 function adjustSelectedImagePos(deltaPercent) {
+    if (selectedIdx === -1 || (selectedPreviewElemType && selectedPreviewElemType.startsWith('cover_'))) {
+        let cur = options.customCoverCenterOffsetY || 0;
+        let next = Math.max(-150, Math.min(150, cur + (deltaPercent * 2)));
+        options.customCoverCenterOffsetY = next;
+
+        const centerEl = document.querySelector('#pagePreviewContent .pdf-cover-center');
+        if (centerEl) {
+            centerEl.style.transform = `translateY(${next}px)`;
+        }
+        const oSlider = document.getElementById('editCoverOffsetYSlider');
+        const oBadge = document.getElementById('editCoverOffsetYBadge');
+        if (oSlider) oSlider.value = next;
+        if (oBadge) oBadge.textContent = next > 0 ? `+${next}px` : `${next}px`;
+
+        setTimeout(() => {
+            if (selectedPreviewElem) positionSelectionToolbar(selectedPreviewElem);
+        }, 20);
+
+        clearTimeout(_liveSyncDebounce);
+        _liveSyncDebounce = setTimeout(() => {
+            pushUndoState();
+            try {
+                localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            } catch(e) {}
+        }, 500);
+        return;
+    }
     const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
     if (idx < 0 || !articles[idx]) return;
     const art = articles[idx];
@@ -2609,6 +2981,70 @@ function adjustSelectedImagePos(deltaPercent) {
 function changeSelectedElementSize(delta) {
     if (!selectedPreviewElem) return;
     const type = selectedPreviewElem.dataset.elemType || selectedPreviewElemType;
+    const isCover = (type && type.startsWith('cover_')) || selectedIdx === -1;
+
+    if (isCover) {
+        if (type === 'cover_title') {
+            let val = (options.customCoverTitleSize || 36) + (delta * 2);
+            val = Math.max(18, Math.min(64, Math.round(val)));
+            options.customCoverTitleSize = val;
+            selectedPreviewElem.style.fontSize = val + 'px';
+            const slider = document.getElementById('editCoverTitleSizeSlider');
+            if (slider) slider.value = val;
+            const badge = document.getElementById('editCoverTitleSizeBadge');
+            if (badge) badge.textContent = val + 'px';
+            const barVal = document.getElementById('selBarValue');
+            if (barVal) barVal.textContent = val + 'px';
+        } else if (type === 'cover_subtitle') {
+            let val = (options.customCoverSubtitleSize || 16) + delta;
+            val = Math.max(12, Math.min(36, Math.round(val)));
+            options.customCoverSubtitleSize = val;
+            selectedPreviewElem.style.fontSize = val + 'px';
+            const slider = document.getElementById('editCoverSubtitleSizeSlider');
+            if (slider) slider.value = val;
+            const badge = document.getElementById('editCoverSubtitleSizeBadge');
+            if (badge) badge.textContent = val + 'px';
+            const barVal = document.getElementById('selBarValue');
+            if (barVal) barVal.textContent = val + 'px';
+        } else if (type === 'cover_date') {
+            let val = (options.customCoverDateSize || 12) + delta;
+            val = Math.max(9, Math.min(24, Math.round(val)));
+            options.customCoverDateSize = val;
+            selectedPreviewElem.style.fontSize = val + 'px';
+            const slider = document.getElementById('editCoverDateSizeSlider');
+            if (slider) slider.value = val;
+            const badge = document.getElementById('editCoverDateSizeBadge');
+            if (badge) badge.textContent = val + 'px';
+            const barVal = document.getElementById('selBarValue');
+            if (barVal) barVal.textContent = val + 'px';
+        } else if (type === 'cover_logo') {
+            let val = (options.customLogoSize || 75) + (delta * 5);
+            val = Math.max(30, Math.min(180, Math.round(val)));
+            options.customLogoSize = val;
+            selectedPreviewElem.style.maxHeight = val + 'px';
+            selectedPreviewElem.style.height = val + 'px';
+            const slider = document.getElementById('editCoverLogoSizeSlider');
+            if (slider) slider.value = val;
+            const badge = document.getElementById('editCoverLogoSizeBadge');
+            if (badge) badge.textContent = val + 'px';
+            const barVal = document.getElementById('selBarValue');
+            if (barVal) barVal.textContent = val + 'px';
+        }
+
+        setTimeout(() => {
+            if (selectedPreviewElem) positionSelectionToolbar(selectedPreviewElem);
+        }, 20);
+
+        clearTimeout(_liveSyncDebounce);
+        _liveSyncDebounce = setTimeout(() => {
+            pushUndoState();
+            try {
+                localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            } catch(e) {}
+        }, 500);
+        return;
+    }
+
     const idx = (editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
     if (idx < 0 || !articles[idx]) return;
     const art = articles[idx];
@@ -2857,6 +3293,33 @@ function renderEditorLogoGrid() {
 }
 
 async function selectEditorLogo(url, name) {
+    const isCover = (editingIdx === -1 && selectedIdx === -1) || selectedIdx === -1;
+    if (isCover) {
+        try {
+            const b64 = await resolveLogoUrlToBase64(url);
+            options.clientLogo = b64 || url;
+
+            const logoPrev = document.getElementById('editCoverLogoPreview');
+            if (logoPrev) logoPrev.src = options.clientLogo;
+            const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
+            if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+
+            syncLiveCoverPreview();
+
+            try {
+                localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            } catch(e) {}
+
+            if (window.feather) feather.replace();
+            closeEditorLogoArchive();
+            showToast(`Logo ${name ? '"' + name + '" ' : ''}impostato per la copertina!`, 'success');
+        } catch(err) {
+            console.error('Errore selezione logo copertina dall\'archivio:', err);
+            showToast("Errore durante l'applicazione del logo", 'error');
+        }
+        return;
+    }
+
     let targetIdx = editingIdx >= 0 ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
     if (targetIdx < 0 || !articles[targetIdx]) return;
 
@@ -2939,7 +3402,13 @@ async function generateAndDownload() {
                 userName: options.userName || '',
                 userLogo: options.userLogo || '',
                 templateId: options.templateId || 'classic',
-                includeAnalytics: !!options.includeAnalytics
+                includeAnalytics: !!options.includeAnalytics,
+                customLogoSize: options.customLogoSize,
+                customCoverTitleSize: options.customCoverTitleSize,
+                customCoverSubtitleSize: options.customCoverSubtitleSize,
+                customCoverDateSize: options.customCoverDateSize,
+                customCoverCenterOffsetY: options.customCoverCenterOffsetY,
+                customCoverDate: options.customCoverDate
             })
         });
         const data = await res.json();
@@ -3030,6 +3499,136 @@ function initEvents() {
     });
     const typeSelect = document.getElementById('editSourceType');
     if (typeSelect) typeSelect.addEventListener('change', syncLivePreview);
+
+    // Live sync on cover inputs
+    ['editCoverTitle', 'editCoverSubtitle', 'editCoverDate', 'editCoverAgencyName'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncLiveCoverPreview);
+    });
+
+    // Cover Title Size controls
+    document.getElementById('btnEditCoverTitleMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverTitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(18, parseInt(slider.value) - 2);
+        document.getElementById('editCoverTitleSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('btnEditCoverTitlePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverTitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(64, parseInt(slider.value) + 2);
+        document.getElementById('editCoverTitleSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('editCoverTitleSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editCoverTitleSizeBadge').textContent = `${e.target.value}px`;
+        syncLiveCoverPreview();
+    });
+
+    // Cover Subtitle Size controls
+    document.getElementById('btnEditCoverSubtitleMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverSubtitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(12, parseInt(slider.value) - 1);
+        document.getElementById('editCoverSubtitleSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('btnEditCoverSubtitlePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverSubtitleSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(36, parseInt(slider.value) + 1);
+        document.getElementById('editCoverSubtitleSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('editCoverSubtitleSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editCoverSubtitleSizeBadge').textContent = `${e.target.value}px`;
+        syncLiveCoverPreview();
+    });
+
+    // Cover Date Size controls
+    document.getElementById('btnEditCoverDateMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverDateSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(9, parseInt(slider.value) - 1);
+        document.getElementById('editCoverDateSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('btnEditCoverDatePlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverDateSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(24, parseInt(slider.value) + 1);
+        document.getElementById('editCoverDateSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('editCoverDateSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editCoverDateSizeBadge').textContent = `${e.target.value}px`;
+        syncLiveCoverPreview();
+    });
+
+    // Cover Logo Size controls
+    document.getElementById('btnEditCoverLogoMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverLogoSizeSlider');
+        if (!slider) return;
+        slider.value = Math.max(30, parseInt(slider.value) - 5);
+        document.getElementById('editCoverLogoSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('btnEditCoverLogoPlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverLogoSizeSlider');
+        if (!slider) return;
+        slider.value = Math.min(180, parseInt(slider.value) + 5);
+        document.getElementById('editCoverLogoSizeBadge').textContent = `${slider.value}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('editCoverLogoSizeSlider')?.addEventListener('input', (e) => {
+        document.getElementById('editCoverLogoSizeBadge').textContent = `${e.target.value}px`;
+        syncLiveCoverPreview();
+    });
+
+    // Cover Offset Y controls
+    document.getElementById('btnEditCoverOffsetYMinus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverOffsetYSlider');
+        if (!slider) return;
+        slider.value = Math.max(-150, parseInt(slider.value) - 10);
+        const val = parseInt(slider.value);
+        document.getElementById('editCoverOffsetYBadge').textContent = val > 0 ? `+${val}px` : `${val}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('btnEditCoverOffsetYPlus')?.addEventListener('click', () => {
+        const slider = document.getElementById('editCoverOffsetYSlider');
+        if (!slider) return;
+        slider.value = Math.min(150, parseInt(slider.value) + 10);
+        const val = parseInt(slider.value);
+        document.getElementById('editCoverOffsetYBadge').textContent = val > 0 ? `+${val}px` : `${val}px`;
+        syncLiveCoverPreview();
+    });
+    document.getElementById('editCoverOffsetYSlider')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        document.getElementById('editCoverOffsetYBadge').textContent = val > 0 ? `+${val}px` : `${val}px`;
+        syncLiveCoverPreview();
+    });
+
+    // Direct Cover Logo File Input
+    document.getElementById('editCoverLogoInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const b64 = await fileToBase64(file);
+            options.clientLogo = b64;
+            const logoPrev = document.getElementById('editCoverLogoPreview');
+            if (logoPrev) logoPrev.src = b64;
+            const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
+            if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+            syncLiveCoverPreview();
+            if (window.feather) feather.replace();
+            showToast('Logo copertina caricato!', 'success');
+            e.target.value = '';
+        } catch(err) {
+            console.error(err);
+            showToast('Errore nel caricamento logo copertina', 'error');
+        }
+    });
 
     // Title Size controls
     document.getElementById('btnEditTitleSizeMinus')?.addEventListener('click', () => {
@@ -3166,6 +3765,33 @@ function initEvents() {
     document.getElementById('modalLogoUploadInput')?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        const isCover = (editingIdx === -1 && selectedIdx === -1) || selectedIdx === -1;
+        if (isCover) {
+            try {
+                const b64 = await fileToBase64(file);
+                options.clientLogo = b64;
+                const logoPrev = document.getElementById('editCoverLogoPreview');
+                if (logoPrev) logoPrev.src = b64;
+                const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
+                if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+
+                syncLiveCoverPreview();
+
+                try {
+                    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+                } catch(err) {}
+
+                if (window.feather) feather.replace();
+                closeEditorLogoArchive();
+                showToast('Logo copertina caricato dal PC!', 'success');
+                e.target.value = '';
+            } catch(err) {
+                console.error(err);
+                showToast('Errore caricamento logo copertina', 'error');
+            }
+            return;
+        }
+
         let targetIdx = editingIdx >= 0 ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
         if (targetIdx < 0 || !articles[targetIdx]) return;
         try {
