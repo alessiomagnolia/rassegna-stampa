@@ -308,6 +308,25 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
             return res.status(403).json({ error: 'Non hai i permessi per visualizzare questo progetto.' });
         }
 
+        // Se la rassegna non è ancora associata a un team, la associamo al team dell'utente (o ne creiamo uno)
+        let teamId = review.team_id;
+        if (!teamId) {
+            let membership = db.prepare('SELECT team_id FROM team_members WHERE user_id = ?').get(req.userId);
+            if (!membership) {
+                const user = db.prepare('SELECT company_name, email FROM users WHERE id = ?').get(req.userId);
+                const tName = (user?.company_name && user.company_name !== 'La Tua Azienda')
+                    ? `Team ${user.company_name}`
+                    : 'Il Mio Team';
+                const teamInfo = db.prepare('INSERT INTO teams (name, owner_user_id) VALUES (?, ?)').run(tName, req.userId);
+                teamId = teamInfo.lastInsertRowid;
+                db.prepare("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')").run(teamId, req.userId);
+            } else {
+                teamId = membership.team_id;
+            }
+            db.prepare('UPDATE press_reviews SET team_id = ? WHERE id = ?').run(teamId, projectId);
+            review.team_id = teamId;
+        }
+
         let collaborators = [];
         let teamName = null;
 
@@ -332,6 +351,30 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
             }];
         }
 
+        // Genera o recupera token di invito diretto attivo per questo team e progetto
+        let inviteToken;
+        const activeInvite = db.prepare(`
+            SELECT token FROM team_invites 
+            WHERE team_id = ? AND expires_at > datetime('now') AND invited_email = 'link_diretto'
+            ORDER BY id DESC LIMIT 1
+        `).get(review.team_id);
+
+        if (activeInvite) {
+            inviteToken = activeInvite.token;
+        } else {
+            inviteToken = generateInviteToken();
+            const expiresAt = expiresAt7Days();
+            db.prepare(`
+                INSERT INTO team_invites (team_id, invited_email, token, invited_by, expires_at)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(review.team_id, 'link_diretto', inviteToken, req.userId, expiresAt);
+        }
+
+        let inviteLink = buildInviteLink(req, inviteToken);
+        if (projectId) {
+            inviteLink += `&project=${projectId}`;
+        }
+
         res.json({
             success: true,
             project: {
@@ -343,7 +386,8 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
                 teamName,
                 isCreator: review.user_id === req.userId
             },
-            collaborators
+            collaborators,
+            inviteLink
         });
     } catch (error) {
         console.error('Errore recupero collaboratori progetto:', error);
@@ -431,7 +475,7 @@ router.get('/invite/:token', (req, res) => {
             return res.status(404).json({ error: 'Invito non trovato o non valido.' });
         }
 
-        if (invite.accepted) {
+        if (invite.accepted && invite.invited_email !== 'link_diretto') {
             return res.status(410).json({ error: 'Questo invito è già stato accettato.' });
         }
 
@@ -472,7 +516,7 @@ router.post('/invite/:token/accept', authMiddleware, (req, res) => {
         if (!invite) {
             return res.status(404).json({ error: 'Invito non trovato o non valido.' });
         }
-        if (invite.accepted) {
+        if (invite.accepted && invite.invited_email !== 'link_diretto') {
             return res.status(410).json({ error: 'Questo invito è già stato accettato.' });
         }
         if (new Date(invite.expires_at) < new Date()) {
@@ -481,11 +525,15 @@ router.post('/invite/:token/accept', authMiddleware, (req, res) => {
 
         // Verifica che l'utente non sia già in un team
         const existingMembership = db.prepare(
-            'SELECT id FROM team_members WHERE user_id = ?'
+            'SELECT id, team_id FROM team_members WHERE user_id = ?'
         ).get(req.userId);
 
         if (existingMembership) {
-            return res.status(400).json({ error: 'Fai già parte di un team. Abbandonalo prima di accettare un nuovo invito.' });
+            if (existingMembership.team_id === invite.team_id) {
+                const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(invite.team_id);
+                return res.json({ success: true, team, message: `Fai già parte del team "${team.name}"!` });
+            }
+            return res.status(400).json({ error: 'Fai già parte di un altro team. Abbandonalo prima di accettare un nuovo invito.' });
         }
 
         // Aggiunge l'utente come membro del team
@@ -493,8 +541,10 @@ router.post('/invite/:token/accept', authMiddleware, (req, res) => {
             "INSERT OR IGNORE INTO team_members (team_id, user_id, role) VALUES (?, ?, 'member')"
         ).run(invite.team_id, req.userId);
 
-        // Segna l'invito come accettato
-        db.prepare('UPDATE team_invites SET accepted = 1 WHERE id = ?').run(invite.id);
+        // Segna l'invito come accettato solo se inviato a specifica email
+        if (invite.invited_email !== 'link_diretto') {
+            db.prepare('UPDATE team_invites SET accepted = 1 WHERE id = ?').run(invite.id);
+        }
 
         const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(invite.team_id);
 

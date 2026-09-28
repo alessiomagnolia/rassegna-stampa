@@ -6085,9 +6085,13 @@ async function openProjectTeamModal(reviewId) {
     const emailInput = document.getElementById('projectInviteEmailInput');
     const msgEl = document.getElementById('projectInviteResultMsg');
     const linkBox = document.getElementById('projectInviteLinkBox');
+    const linkInput = document.getElementById('projectDirectInviteLinkInput');
     if (emailInput) emailInput.value = '';
     if (msgEl) { msgEl.style.display = 'none'; msgEl.textContent = ''; }
-    if (linkBox) linkBox.style.display = 'none';
+    if (linkBox) linkBox.style.display = 'block';
+    if (linkInput && (!linkInput.value || linkInput.value.includes('corso') || linkInput.value.includes('Inizializzazione'))) {
+        linkInput.value = 'Generazione link di accesso in corso...';
+    }
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -6139,6 +6143,8 @@ async function refreshProjectModalData(reviewId) {
     const statusEl = document.getElementById('projectModalSharingStatus');
     const countEl = document.getElementById('projectModalMemberCount');
     const listEl = document.getElementById('projectModalCollaboratorsList');
+    const linkBox = document.getElementById('projectInviteLinkBox');
+    const linkInput = document.getElementById('projectDirectInviteLinkInput');
 
     if (!reviewId) {
         if (titleEl) titleEl.textContent = document.getElementById('rassegnaTitle')?.value.trim() || 'Nuova Rassegna Stampa';
@@ -6155,6 +6161,8 @@ async function refreshProjectModalData(reviewId) {
                     <span style="font-size:0.72rem; color:var(--accent-primary); font-weight:700; background:rgba(124,92,255,0.1); padding:2px 8px; border-radius:4px;">Proprietario</span>
                 </div>`;
         }
+        if (linkBox) linkBox.style.display = 'block';
+        if (linkInput) linkInput.value = 'Inizializzazione link di accesso al progetto...';
         return;
     }
 
@@ -6197,6 +6205,12 @@ async function refreshProjectModalData(reviewId) {
                     <span style="font-size:0.72rem; color:var(--accent-primary); font-weight:700; background:rgba(124,92,255,0.1); padding:2px 8px; border-radius:4px;">${roleBadge}</span>
                 </div>`;
             }).join('');
+        }
+
+        // Popola sempre il link di accesso diretto non appena disponibile
+        if (linkBox) linkBox.style.display = 'block';
+        if (data.inviteLink && linkInput) {
+            linkInput.value = data.inviteLink;
         }
 
         updateProjectCollabStrip(data.project, collabs);
@@ -6325,14 +6339,18 @@ window.sendProjectTeamInvite = sendProjectTeamInvite;
 window.copyProjectInviteLink = function() {
     const input = document.getElementById('projectDirectInviteLinkInput');
     const btn = document.getElementById('btnCopyProjectInviteLink');
-    if (!input || !input.value) return;
+    if (!input || !input.value || input.value.includes('corso') || input.value.includes('Inizializzazione')) return;
     navigator.clipboard.writeText(input.value).then(() => {
         if (btn) {
-            const original = btn.textContent;
-            btn.textContent = 'Copiato!';
-            setTimeout(() => { btn.textContent = original; }, 2000);
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i data-feather="check" style="width:13px;height:13px;"></i> Copiato!';
+            if (window.feather) feather.replace();
+            setTimeout(() => { 
+                btn.innerHTML = original; 
+                if (window.feather) feather.replace();
+            }, 2000);
         }
-        showToast('Link di invito al progetto copiato negli appunti!', 'success');
+        showToast('Link di accesso diretto al progetto copiato negli appunti!', 'success');
     }).catch(() => showToast('Errore durante la copia del link', 'error'));
 };
 

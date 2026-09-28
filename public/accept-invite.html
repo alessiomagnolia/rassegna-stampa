@@ -492,7 +492,7 @@
             document.getElementById('expiresDisplay').textContent = `Invito valido fino al ${exp}`;
 
             // Pre-compila l'email se nel link
-            if (inviteData.invitedEmail) {
+            if (inviteData.invitedEmail && inviteData.invitedEmail.includes('@')) {
                 document.getElementById('loginEmail').value    = inviteData.invitedEmail;
                 document.getElementById('regEmail').value      = inviteData.invitedEmail;
             }
