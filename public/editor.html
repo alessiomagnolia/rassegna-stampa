@@ -1093,6 +1093,7 @@
             cursor: grab;
             z-index: 5;
             border: 1px solid rgba(255, 255, 255, 0.15);
+            pointer-events: none;
         }
         .grid-page-card:hover .grid-card-drag-indicator {
             opacity: 1;
@@ -1166,9 +1167,21 @@
             cursor: not-allowed;
         }
 
+        .grid-card-draggable {
+            cursor: grab !important;
+        }
+        .grid-card-draggable:active {
+            cursor: grabbing !important;
+        }
+        .grid-sorting-active .grid-page-card {
+            transition: none !important;
+        }
+
         /* SortableJS Ghost / Dragging Styling */
         .grid-card-ghost {
             opacity: 0.25 !important;
+            border: 2px dashed #7c5cff !important;
+            border-radius: 8px !important;
             transform: scale(0.95);
         }
         .grid-card-chosen {
@@ -1176,6 +1189,15 @@
             z-index: 50;
         }
         .grid-card-drag {
+            cursor: grabbing !important;
+        }
+        .sortable-fallback {
+            opacity: 0.96 !important;
+            transform: scale(1.04) rotate(1.2deg) !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 0 2px #7c5cff !important;
+            border-radius: 8px !important;
+            z-index: 100060 !important;
+            pointer-events: none !important;
             cursor: grabbing !important;
         }
 
@@ -2683,6 +2705,7 @@ function initSortable() {
 // CANVA STYLE PAGES GRID VIEW & SLIDE SORTER
 // ============================================================
 let _gridSortable = null;
+let _isDraggingGridCard = false;
 let _gridResizeObserver = null;
 
 function updateGridThumbnailScales() {
@@ -2825,6 +2848,7 @@ function renderGridPages() {
         `;
 
         card.addEventListener('click', (e) => {
+            if (_isDraggingGridCard) return;
             const btnMove = e.target.closest('.btn-grid-move');
             if (btnMove) {
                 e.stopPropagation();
@@ -2845,6 +2869,8 @@ function renderGridPages() {
 
     if (window.feather) feather.replace();
     requestAnimationFrame(updateGridThumbnailScales);
+    updateGridThumbnailScales();
+    initGridSortable();
 }
 
 function moveArticleInGrid(fromIdx, toIdx) {
@@ -2855,6 +2881,10 @@ function moveArticleInGrid(fromIdx, toIdx) {
     if (selectedIdx === fromIdx) selectedIdx = toIdx;
     else if (selectedIdx > fromIdx && selectedIdx <= toIdx) selectedIdx--;
     else if (selectedIdx < fromIdx && selectedIdx >= toIdx) selectedIdx++;
+
+    try {
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    } catch(e) {}
 
     pushUndoState();
     renderPagesList();
@@ -2867,38 +2897,63 @@ function initGridSortable() {
     if (!container || typeof Sortable === 'undefined') return;
 
     if (_gridSortable) {
-        _gridSortable.destroy();
+        try { _gridSortable.destroy(); } catch(e) {}
         _gridSortable = null;
     }
 
     _gridSortable = Sortable.create(container, {
         draggable: '.grid-card-draggable',
-        handle: '.grid-page-thumb-box',
-        animation: 250,
+        filter: '.btn-grid-move, .grid-card-locked',
+        preventOnFilter: false,
+        animation: 200,
+        forceFallback: true,
+        fallbackClass: 'sortable-fallback',
+        fallbackTolerance: 3,
         ghostClass: 'grid-card-ghost',
         chosenClass: 'grid-card-chosen',
         dragClass: 'grid-card-drag',
-        delay: 50,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 4,
+        delay: 0,
+        touchStartThreshold: 3,
+        onMove: function(evt) {
+            // Prevent dragging before locked cards (Cover, KPI)
+            if (evt.related && evt.related.classList.contains('grid-card-locked')) {
+                return false;
+            }
+            return true;
+        },
+        onStart: function(evt) {
+            _isDraggingGridCard = true;
+            document.body.classList.add('grid-sorting-active');
+        },
         onEnd: function(evt) {
+            document.body.classList.remove('grid-sorting-active');
+            setTimeout(() => {
+                _isDraggingGridCard = false;
+            }, 140);
+
             const cards = Array.from(container.querySelectorAll('.grid-card-draggable'));
             if (!cards.length) return;
-            const newArticles = cards.map(c => articles[parseInt(c.dataset.articleIdx, 10)]);
 
-            articles.length = 0;
-            articles.push(...newArticles);
+            const newArticles = cards.map(c => articles[parseInt(c.dataset.articleIdx, 10)]).filter(Boolean);
+            if (newArticles.length === articles.length) {
+                articles.length = 0;
+                articles.push(...newArticles);
 
-            const draggedOrigIdx = parseInt(evt.item.dataset.articleIdx, 10);
-            const newPos = cards.indexOf(evt.item);
-            if (selectedIdx === draggedOrigIdx && newPos >= 0) {
-                selectedIdx = newPos;
+                const draggedOrigIdx = parseInt(evt.item.dataset.articleIdx, 10);
+                const newPos = cards.indexOf(evt.item);
+                if (selectedIdx === draggedOrigIdx && newPos >= 0) {
+                    selectedIdx = newPos;
+                }
+
+                try {
+                    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+                } catch(e) {}
+
+                pushUndoState();
+                renderPagesList();
+                renderGridPages();
+                showToast('Ordine pagine aggiornato', 'success');
             }
-
-            pushUndoState();
-            renderPagesList();
-            renderGridPages();
-            showToast('Ordine pagine aggiornato', 'success');
         }
     });
 }
