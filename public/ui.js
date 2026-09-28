@@ -194,6 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.closeLogoArchive();
             return;
         }
+        if (id === 'editorLogoArchiveModal' && typeof window.closeEditorLogoArchive === 'function') {
+            window.closeEditorLogoArchive();
+            return;
+        }
         if (id === 'morningDigestModal' && typeof window.closeMorningDigestModal === 'function') {
             window.closeMorningDigestModal();
             return;

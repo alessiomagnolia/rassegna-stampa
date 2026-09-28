@@ -781,6 +781,113 @@
         }
         .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); border-color: var(--accent-primary); }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: white; }
+
+        /* Editor Logo Archive Modal */
+        #editorLogoArchiveModal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 7, 15, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #editorLogoArchiveModal.hidden { display: none !important; }
+        .editor-logo-modal-box {
+            width: 95%; max-width: 640px; max-height: 85vh;
+            display: flex; flex-direction: column;
+            padding: 1.5rem; border-radius: 16px;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+            color: #f8fafc;
+            animation: slideUp 0.25s ease-out;
+            box-sizing: border-box;
+        }
+        .editor-logo-cat-pills {
+            display: flex; gap: 6px; overflow-x: auto;
+            padding-bottom: 4px; margin-bottom: 0.75rem;
+            scrollbar-width: thin;
+        }
+        .editor-logo-cat-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.18s ease;
+            user-select: none;
+        }
+        .editor-logo-cat-pill:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .editor-logo-cat-pill.active {
+            background: var(--accent-primary, #7c5cff);
+            border-color: var(--accent-primary, #7c5cff);
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(124, 92, 255, 0.35);
+        }
+        .editor-logo-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 105px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        .editor-logo-card:hover {
+            border-color: var(--accent-primary, #7c5cff);
+            background: rgba(124, 92, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+        .editor-logo-img-wrapper {
+            width: 100%;
+            height: 48px;
+            background: #ffffff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .editor-logo-img-wrapper img {
+            max-width: 100%;
+            max-height: 40px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        .editor-logo-name {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            line-height: 1.25;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -1021,8 +1128,17 @@
                         <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
                         <button type="button" class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi logo</button>
                     </div>
-                    <input type="file" id="editLogoInput" accept="image/*" class="hidden">
-                    <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer;margin-top:6px;display:inline-block;"><i data-feather="image" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Carica / Cambia logo</label>
+                    <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-primary btn-sm" id="btnOpenEditorLogoArchive" onclick="openEditorLogoArchive()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
+                            <i data-feather="archive" style="width:14px;height:14px;"></i>
+                            <span>Archivio loghi</span>
+                        </button>
+                        <input type="file" id="editLogoInput" accept="image/*" class="hidden">
+                        <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;" title="Carica un file immagine dal tuo dispositivo">
+                            <i data-feather="upload" style="width:14px;height:14px;"></i>
+                            <span>Carica file</span>
+                        </label>
+                    </div>
 
                     <!-- Logo Size Slider -->
                     <div class="slider-control-group" id="editLogoSizeGroup" style="margin-top:10px; display:none;">
@@ -1227,7 +1343,15 @@
     </div>
     <div class="field-group" style="margin-bottom:1rem;">
         <label style="color:white; font-size:0.8rem; font-weight:600;">Logo Testata Giornalistica</label>
-        <input type="file" id="mMediaLogoInput" accept="image/*" style="width:100%; color:white;">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="closePdfSheets(); openEditorLogoArchive();" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600;">
+                <i data-feather="archive" style="width:14px;height:14px;"></i> Archivio loghi
+            </button>
+            <label for="mMediaLogoInput" class="btn btn-outline btn-sm" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; margin:0;">
+                <i data-feather="upload" style="width:14px;height:14px;"></i> Carica file
+            </label>
+        </div>
+        <input type="file" id="mMediaLogoInput" accept="image/*" style="display:none;">
     </div>
 </div>
 
@@ -1299,6 +1423,56 @@
     <span id="cardElementSizeLabel" style="font-size: 0.78rem; font-weight: 600;">Dimensione</span>
     <button type="button" class="btn btn-sm btn-outline" onclick="changePdfElementSize(1)" style="padding: 2px 8px; border-radius: 50%; color: white; background: rgba(255,255,255,0.1);">+</button>
     <button type="button" class="btn btn-sm btn-outline" onclick="deselectPdfElement()" style="padding: 2px 6px; border: none; color: #ff4757; font-weight: bold; margin-left: 4px;">✕</button>
+</div>
+
+<!-- Editor Logo Archive Modal -->
+<div id="editorLogoArchiveModal" class="modal-overlay hidden">
+    <div class="modal-content editor-logo-modal-box">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(124, 92, 255, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-primary, #7c5cff);">
+                    <i data-feather="archive" style="width: 19px; height: 19px;"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #fff;">Archivio Loghi Testate</h3>
+                    <p style="margin: 0; font-size: 0.78rem; color: #94a3b8;">Seleziona il logo ufficiale della testata per questo articolo</p>
+                </div>
+            </div>
+            <button type="button" class="btn-icon" onclick="closeEditorLogoArchive()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1;" title="Chiudi">&times;</button>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="margin-bottom: 0.75rem; flex-shrink: 0;">
+            <input type="text" id="editorLogoSearchInput" placeholder="🔍 Cerca testata (es. Corriere, Sole 24 Ore, Ansa, Repubblica...)" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-size: 0.9rem; outline: none;">
+        </div>
+
+        <!-- Category Pills -->
+        <div id="editorLogoCategoryPills" class="editor-logo-cat-pills">
+            <button type="button" class="editor-logo-cat-pill active" onclick="filterEditorLogoCategory('all', this)">Tutti</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('nazionale', this)">Nazionali</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('economico', this)">Economia</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('agenzia', this)">Agenzie</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('locale', this)">Locali</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('broadcast', this)">TV / Radio</button>
+            <button type="button" class="editor-logo-cat-pill" onclick="filterEditorLogoCategory('sport', this)">Sport</button>
+        </div>
+
+        <!-- Logos Grid -->
+        <div id="editorLogoGrid" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding: 4px; min-height: 220px; max-height: 380px;">
+            <!-- Injected dynamically -->
+        </div>
+
+        <!-- Footer: Upload custom logo if not found -->
+        <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; font-size: 0.82rem; color: #94a3b8;">
+            <span>Non trovi la testata che cerchi?</span>
+            <input type="file" id="modalLogoUploadInput" accept="image/*" class="hidden">
+            <label for="modalLogoUploadInput" class="btn btn-outline btn-sm" style="cursor: pointer; margin: 0; font-size: 0.8rem; padding: 5px 12px; display: inline-flex; align-items: center; gap: 5px;">
+                <i data-feather="upload" style="width: 12px; height: 12px;"></i>
+                <span>Carica dal PC</span>
+            </label>
+        </div>
+    </div>
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
@@ -2551,8 +2725,194 @@ function removeEditLogo() {
     if (logoPrevCont) logoPrevCont.classList.add('hidden');
     const logoPrev = document.getElementById('editLogoPreview');
     if (logoPrev) logoPrev.src = '';
+    const lGroup = document.getElementById('editLogoSizeGroup');
+    if (lGroup) lGroup.style.display = 'none';
     syncLivePreview();
 }
+
+// ============================================================
+// LOGO ARCHIVE (MODIFICA TESTATA)
+// ============================================================
+let editorLogoArchiveData = [];
+let activeEditorLogoCategory = 'all';
+
+async function resolveLogoUrlToBase64(url) {
+    if (!url) return null;
+    if (url.startsWith('data:')) return url;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Fetch failed');
+        const blob = await res.blob();
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        console.warn('[Editor] Fallback a url grezzo per logo:', e);
+        return url;
+    }
+}
+
+function openEditorLogoArchive() {
+    const modal = document.getElementById('editorLogoArchiveModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    const searchInput = document.getElementById('editorLogoSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        setTimeout(() => searchInput.focus(), 80);
+    }
+    activeEditorLogoCategory = 'all';
+    updateEditorLogoCategoryPills();
+
+    if (!editorLogoArchiveData || editorLogoArchiveData.length === 0) {
+        fetch('/assets/logos.json?v=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                editorLogoArchiveData = data;
+                renderEditorLogoGrid();
+            })
+            .catch(err => {
+                console.error('Errore caricamento archivio loghi:', err);
+                renderEditorLogoGrid();
+            });
+    } else {
+        renderEditorLogoGrid();
+    }
+    if (window.feather) feather.replace();
+}
+
+function closeEditorLogoArchive() {
+    const modal = document.getElementById('editorLogoArchiveModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+
+function filterEditorLogoCategory(cat, btn) {
+    activeEditorLogoCategory = cat;
+    document.querySelectorAll('#editorLogoCategoryPills .editor-logo-cat-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderEditorLogoGrid();
+}
+
+function updateEditorLogoCategoryPills() {
+    document.querySelectorAll('#editorLogoCategoryPills .editor-logo-cat-pill').forEach(b => {
+        if (b.getAttribute('onclick')?.includes(`'${activeEditorLogoCategory}'`)) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+}
+
+function renderEditorLogoGrid() {
+    const grid = document.getElementById('editorLogoGrid');
+    if (!grid) return;
+
+    const searchTerm = (document.getElementById('editorLogoSearchInput')?.value || '').toLowerCase().trim();
+    let filtered = editorLogoArchiveData || [];
+
+    if (activeEditorLogoCategory && activeEditorLogoCategory !== 'all') {
+        filtered = filtered.filter(l => (l.category || '').toLowerCase() === activeEditorLogoCategory);
+    }
+    if (searchTerm) {
+        filtered = filtered.filter(l => (l.name || '').toLowerCase().includes(searchTerm));
+    }
+
+    grid.innerHTML = '';
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #94a3b8;">
+                <p style="font-size: 1.1rem; margin-bottom: 6px;">🔍 Nessuna testata trovata</p>
+                <p style="font-size: 0.82rem; color: #64748b;">Prova con un altro termine di ricerca oppure carica il logo direttamente dal tuo computer.</p>
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(logo => {
+        const card = document.createElement('div');
+        card.className = 'editor-logo-card';
+        card.title = `Clicca per impostare il logo di ${logo.name}`;
+        card.onclick = () => selectEditorLogo(logo.url, logo.name);
+
+        const imgSrc = (logo.url && (logo.url.startsWith('/') || logo.url.startsWith('data:')))
+            ? logo.url
+            : (logo.url ? `/api/proxy-image?url=${encodeURIComponent(logo.url)}` : '');
+
+        card.innerHTML = `
+            <div class="editor-logo-img-wrapper">
+                <img src="${imgSrc}" alt="${logo.name}" loading="lazy" onerror="this.parentElement.style.background='rgba(255,255,255,0.05)'; this.style.display='none';">
+            </div>
+            <span class="editor-logo-name">${logo.name}</span>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+async function selectEditorLogo(url, name) {
+    let targetIdx = editingIdx >= 0 ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+    if (targetIdx < 0 || !articles[targetIdx]) return;
+
+    try {
+        const b64 = await resolveLogoUrlToBase64(url);
+        articles[targetIdx].logoBase64 = b64 || url;
+
+        // Se il nome fonte è vuoto o generico, aggiornalo con il nome della testata
+        if (name && (!articles[targetIdx].source_name || articles[targetIdx].source_name === 'Fonte' || articles[targetIdx].source_name === 'Web')) {
+            articles[targetIdx].source_name = name;
+            const srcInput = document.getElementById('editSourceName');
+            if (srcInput) srcInput.value = name;
+            const mSrcInput = document.getElementById('mSourceName');
+            if (mSrcInput) mSrcInput.value = name;
+        }
+
+        // Aggiorna drawer elementi se aperto
+        const logoPrev = document.getElementById('editLogoPreview');
+        if (logoPrev) logoPrev.src = articles[targetIdx].logoBase64;
+        const logoPrevCont = document.getElementById('editLogoPreviewContainer');
+        if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+        const lGroup = document.getElementById('editLogoSizeGroup');
+        if (lGroup) lGroup.style.display = 'block';
+
+        // Aggiorna preview canvas
+        if (editingIdx >= 0) {
+            syncLivePreview();
+        } else {
+            selectPage(targetIdx);
+        }
+
+        // Aggiorna nome fonte nel pannello sinistro miniature
+        const thumbEl = document.querySelector(`.pages-panel [data-idx="${targetIdx}"]`);
+        if (thumbEl && name) {
+            const thumbSource = thumbEl.querySelector('.page-thumb-source');
+            if (thumbSource) thumbSource.textContent = articles[targetIdx].source_name || name;
+        }
+
+        // Salva stato
+        try {
+            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+        } catch(e) {}
+
+        if (window.feather) feather.replace();
+        closeEditorLogoArchive();
+        showToast(`Logo ${name ? '"' + name + '" ' : ''}impostato con successo!`, 'success');
+    } catch(err) {
+        console.error('Errore selezione logo dall\'archivio:', err);
+        showToast("Errore durante l'applicazione del logo", 'error');
+    }
+}
+
+window.openEditorLogoArchive = openEditorLogoArchive;
+window.closeEditorLogoArchive = closeEditorLogoArchive;
+window.filterEditorLogoCategory = filterEditorLogoCategory;
+window.selectEditorLogo = selectEditorLogo;
 
 // ============================================================
 // GENERATE PDF
@@ -2790,9 +3150,51 @@ function initEvents() {
         if (logoPrev) logoPrev.src = b64;
         const logoPrevCont = document.getElementById('editLogoPreviewContainer');
         if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+        const lGroup = document.getElementById('editLogoSizeGroup');
+        if (lGroup) lGroup.style.display = 'block';
         syncLivePreview();
         if (window.feather) feather.replace();
         e.target.value = '';
+    });
+
+    // Logo search input in modal
+    document.getElementById('editorLogoSearchInput')?.addEventListener('input', () => {
+        renderEditorLogoGrid();
+    });
+
+    // Logo upload from modal
+    document.getElementById('modalLogoUploadInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        let targetIdx = editingIdx >= 0 ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0);
+        if (targetIdx < 0 || !articles[targetIdx]) return;
+        try {
+            const b64 = await fileToBase64(file);
+            articles[targetIdx].logoBase64 = b64;
+            const logoPrev = document.getElementById('editLogoPreview');
+            if (logoPrev) logoPrev.src = b64;
+            const logoPrevCont = document.getElementById('editLogoPreviewContainer');
+            if (logoPrevCont) logoPrevCont.classList.remove('hidden');
+            const lGroup = document.getElementById('editLogoSizeGroup');
+            if (lGroup) lGroup.style.display = 'block';
+
+            if (editingIdx >= 0) {
+                syncLivePreview();
+            } else {
+                selectPage(targetIdx);
+            }
+
+            try {
+                localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            } catch(err) {}
+
+            closeEditorLogoArchive();
+            showToast('Logo caricato dal PC!', 'success');
+            e.target.value = '';
+        } catch(err) {
+            console.error(err);
+            showToast('Errore caricamento logo', 'error');
+        }
     });
 
     // Dark header toggle live swatch
