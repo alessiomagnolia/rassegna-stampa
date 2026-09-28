@@ -888,6 +888,312 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        /* ============ CANVA STYLE PAGES GRID VIEW ============ */
+        .grid-view-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100050;
+            background: #090a16;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #efece5;
+            animation: gridFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes gridFadeIn {
+            from { opacity: 0; transform: scale(0.985); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .grid-view-header {
+            height: 56px;
+            min-height: 56px;
+            padding: 0 1.25rem;
+            background: #0f1023;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .grid-view-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .grid-view-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .grid-view-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        .grid-view-counter {
+            background: rgba(124, 92, 255, 0.2);
+            color: #a78bfa;
+            border: 1px solid rgba(124, 92, 255, 0.35);
+            padding: 2px 9px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .grid-view-header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-view-instruction {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px 14px;
+            border-radius: 20px;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .grid-view-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .grid-size-selector {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-grid-size {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-grid-size:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .btn-grid-size.active {
+            color: #fff;
+            background: #7c5cff;
+            box-shadow: 0 1px 4px rgba(124, 92, 255, 0.4);
+        }
+
+        .grid-view-body {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 2rem 2rem 4rem 2rem;
+            background: radial-gradient(circle at 50% 20%, rgba(124, 92, 255, 0.04) 0%, transparent 60%), #090a16;
+        }
+
+        .grid-pages-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-w, 220px), 1fr));
+            gap: 2rem 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        /* Page Card */
+        .grid-page-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .grid-page-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Thumbnail Box */
+        .grid-page-thumb-box {
+            width: 100%;
+            aspect-ratio: 210 / 297;
+            background: #ffffff;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .grid-page-card:hover .grid-page-thumb-box {
+            border-color: rgba(124, 92, 255, 0.7);
+            box-shadow: 0 12px 32px rgba(124, 92, 255, 0.25), 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .grid-page-card.active .grid-page-thumb-box {
+            border-color: #7c5cff !important;
+            box-shadow: 0 0 0 2px #7c5cff, 0 12px 36px rgba(124, 92, 255, 0.45) !important;
+        }
+
+        /* Scaled High-Fidelity Content Container */
+        .grid-page-thumb-content {
+            width: 794px;
+            height: 1123px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top left;
+            pointer-events: none;
+            background: white;
+        }
+
+        /* Card Drag Handle & Overlay */
+        .grid-card-drag-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(15, 16, 35, 0.85);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            cursor: grab;
+            z-index: 5;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .grid-page-card:hover .grid-card-drag-indicator {
+            opacity: 1;
+        }
+
+        /* Card Bottom Info (Page Number + Badge) */
+        .grid-page-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .grid-page-num {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1px 8px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .grid-page-tag {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+            font-weight: 500;
+        }
+
+        /* Quick Action Reorder Arrows on Card */
+        .grid-page-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            margin-left: 2px;
+        }
+        .grid-page-card:hover .grid-page-quick-actions {
+            opacity: 1;
+        }
+
+        .btn-grid-move {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ccc;
+            border-radius: 4px;
+            width: 20px;
+            height: 20px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .btn-grid-move:hover:not(:disabled) {
+            background: #7c5cff;
+            color: #fff;
+            border-color: #7c5cff;
+        }
+        .btn-grid-move:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+
+        /* SortableJS Ghost / Dragging Styling */
+        .grid-card-ghost {
+            opacity: 0.25 !important;
+            transform: scale(0.95);
+        }
+        .grid-card-chosen {
+            transform: scale(1.04) !important;
+            z-index: 50;
+        }
+        .grid-card-drag {
+            cursor: grabbing !important;
+        }
+
+        @media (max-width: 900px) {
+            .grid-view-body {
+                padding: 1rem 1rem 3rem 1rem;
+            }
+            .grid-pages-container {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1rem 0.75rem !important;
+            }
+            .grid-page-quick-actions {
+                opacity: 1 !important;
+            }
+            .grid-card-drag-indicator {
+                opacity: 0.8 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -903,6 +1209,10 @@
         <span id="editorArticleCount" class="editor-article-count hide-mobile">0 articoli</span>
     </div>
     <div class="editor-nav-right" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:0.4rem; align-items:center; flex:0 0 auto;">
+        <button type="button" class="btn btn-outline btn-sm" id="btnTopGridView" onclick="toggleGridView()" title="Visualizzazione a Griglia di tutte le pagine (stile Canva)" style="display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:6px 10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c5cff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span class="hide-mobile">Vista Griglia</span>
+        </button>
         <button type="button" class="btn btn-outline btn-sm" onclick="saveRassegnaToArchive()" title="Salva in Archivio" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:6px 10px;">
             <i data-feather="archive" style="width:15px;height:15px;"></i> <span class="hide-mobile">Archivia</span>
         </button>
@@ -927,6 +1237,10 @@
 <!-- SUB-HEADER TITLE BAR (Mobile Only, Centered at Top Under Navbar) -->
 <div class="editor-sub-header show-mobile-flex" style="gap:8px; justify-content:space-between;">
     <input type="text" id="editorTitleMobile" class="editor-title-input-mobile" placeholder="Titolo della Rassegna..." oninput="syncMobileTitle(this.value)" style="flex:1; min-width:0;">
+    <button type="button" class="btn btn-outline btn-sm" onclick="toggleGridView()" title="Vista Griglia" style="padding:3px 7px; font-size:0.75rem; color:#a78bfa; border-color:rgba(124,92,255,0.3); display:inline-flex; align-items:center; gap:3px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Griglia</span>
+    </button>
     <span id="editorArticleCountMobile" style="font-size:0.75rem; color:rgba(255,255,255,0.7); font-weight:600; white-space:nowrap; padding: 4px 8px; background: rgba(255,255,255,0.08); border-radius: 12px;">0 pag.</span>
 </div>
 <!-- MOBILE PAGE INDICATOR (shown above the preview) -->
@@ -942,7 +1256,13 @@
 
     <!-- LEFT: Pages List -->
     <aside class="pages-panel">
-        <div class="pages-panel-label">Pagine</div>
+        <div class="pages-panel-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Pagine</span>
+            <button type="button" class="btn-icon-subtle" onclick="openGridView()" title="Visualizzazione a griglia (stile Canva)" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#a78bfa; padding:2px 7px; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px; font-family:inherit;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Griglia</span>
+            </button>
+        </div>
         <div id="pagesList"><!-- injected --></div>
     </aside>
 
@@ -1323,6 +1643,10 @@
             <button type="button" class="btn-zoom-pill" onclick="resetPreviewZoom()" title="Reimposta 100%">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             </button>
+            <div style="width:1px; height:15px; background:rgba(255,255,255,0.18); margin:0 3px;"></div>
+            <button type="button" class="btn-zoom-pill" onclick="toggleGridView()" title="Visualizzazione a Griglia (stile Canva)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
         </div>
 
         <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
@@ -1408,6 +1732,10 @@
     <div class="canva-sheet-handle"></div>
     <div class="canva-sheet-header">
         <span class="canva-sheet-title">Pagine & Articoli</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePdfSheets(); openGridView();" style="padding:2px 8px; font-size:0.75rem; color:#a78bfa; border-color:rgba(124,92,255,0.4); display:inline-flex; align-items:center; gap:4px; margin-left:auto; margin-right:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Griglia</span>
+        </button>
         <button type="button" class="canva-sheet-close-btn" onclick="closePdfSheets()" title="Chiudi">✕</button>
     </div>
     <div id="mobilePagesList" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -1548,7 +1876,7 @@
 </div>
 
 <!-- FLOATING SIZE PILL FOR TOUCH RESIZING -->
-<div id="cardElementSizeBar" class="card-element-size-bar hidden" style="position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%); z-index: 99998; background: #0b1120; border: 1px solid rgba(124,92,255,0.6); padding: 4px 12px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; color: white;">
+<div id="cardElementSizeBar" class="card-element-size-bar hidden" style="position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%); z-index: 99998; background: #0b1120; border: 1px solid rgba(124,92,255,0.6); padding: 4px 12px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); display: none; align-items: center; gap: 8px; color: white;">
     <button type="button" class="btn btn-sm btn-outline" onclick="changePdfElementSize(-1)" style="padding: 2px 8px; border-radius: 50%; color: white; background: rgba(255,255,255,0.1);">−</button>
     <span id="cardElementSizeLabel" style="font-size: 0.78rem; font-weight: 600;">Dimensione</span>
     <button type="button" class="btn btn-sm btn-outline" onclick="changePdfElementSize(1)" style="padding: 2px 8px; border-radius: 50%; color: white; background: rgba(255,255,255,0.1);">+</button>
@@ -1601,6 +1929,42 @@
                 <i data-feather="upload" style="width: 12px; height: 12px;"></i>
                 <span>Carica dal PC</span>
             </label>
+        </div>
+    </div>
+</div>
+<!-- PAGES GRID VIEW MODAL (CANVA STYLE SLIDE SORTER) -->
+<div id="pagesGridViewModal" class="grid-view-modal" style="display:none;">
+    <div class="grid-view-header">
+        <div class="grid-view-header-left">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeGridView()" title="Torna all'Editor (Esc)" style="display:inline-flex; align-items:center; gap:5px; padding:6px 12px;">
+                <i data-feather="arrow-left" style="width:14px;height:14px;"></i>
+                <span>Torna all'Editor</span>
+            </button>
+            <div class="grid-view-title-group">
+                <span class="grid-view-title">Tutte le Pagine</span>
+                <span class="grid-view-counter" id="gridViewCounter">0 pagine</span>
+            </div>
+        </div>
+        <div class="grid-view-header-center hide-mobile">
+            <span class="grid-view-instruction">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                <span>Trascina le pagine per riordinarle &bull; Clicca su una pagina per aprirla</span>
+            </span>
+        </div>
+        <div class="grid-view-header-right">
+            <div class="grid-size-selector hide-mobile" title="Dimensione miniature">
+                <button type="button" class="btn-grid-size" data-size="small" onclick="setGridCardSize('small')" title="Miniature piccole">S</button>
+                <button type="button" class="btn-grid-size active" data-size="medium" onclick="setGridCardSize('medium')" title="Miniature medie">M</button>
+                <button type="button" class="btn-grid-size" data-size="large" onclick="setGridCardSize('large')" title="Miniature grandi">L</button>
+            </div>
+            <button type="button" class="btn-icon" onclick="closeGridView()" title="Chiudi vista griglia (Esc)" style="color:#aaa; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center;">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+    </div>
+    <div class="grid-view-body" id="gridViewBody">
+        <div class="grid-pages-container" id="gridPagesContainer">
+            <!-- Injected dynamically -->
         </div>
     </div>
 </div>
@@ -2314,6 +2678,278 @@ function initSortable() {
         });
     }
 }
+
+// ============================================================
+// CANVA STYLE PAGES GRID VIEW & SLIDE SORTER
+// ============================================================
+let _gridSortable = null;
+let _gridResizeObserver = null;
+
+function updateGridThumbnailScales() {
+    const boxes = document.querySelectorAll('.grid-page-thumb-box');
+    boxes.forEach(box => {
+        const w = box.clientWidth;
+        if (w > 0) {
+            const scale = w / 794;
+            const content = box.querySelector('.grid-page-thumb-content');
+            if (content) {
+                content.style.transform = `scale(${scale})`;
+            }
+        }
+    });
+}
+
+function setupGridResizeObserver() {
+    if (_gridResizeObserver) {
+        _gridResizeObserver.disconnect();
+        _gridResizeObserver = null;
+    }
+    const container = document.getElementById('gridPagesContainer');
+    if (!container || !window.ResizeObserver) return;
+    _gridResizeObserver = new ResizeObserver(() => {
+        updateGridThumbnailScales();
+    });
+    _gridResizeObserver.observe(container);
+}
+
+function setGridCardSize(size) {
+    const container = document.getElementById('gridPagesContainer');
+    if (!container) return;
+    document.querySelectorAll('.btn-grid-size').forEach(b => {
+        b.classList.toggle('active', b.dataset.size === size);
+    });
+    const widthMap = { small: '165px', medium: '225px', large: '285px' };
+    container.style.setProperty('--grid-card-w', widthMap[size] || '225px');
+    try { localStorage.setItem('rs_grid_size', size); } catch(e){}
+    requestAnimationFrame(updateGridThumbnailScales);
+}
+
+function renderGridPages() {
+    const container = document.getElementById('gridPagesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const total = articles.length;
+    const baseOffset = (hasCover ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
+    const totalPages = total + baseOffset;
+
+    const counterEl = document.getElementById('gridViewCounter');
+    if (counterEl) {
+        counterEl.textContent = `${totalPages} pagin${totalPages === 1 ? 'a' : 'e'}`;
+    }
+
+    let currentPageNumber = 1;
+
+    // 1. Cover Card (if hasCover)
+    if (hasCover) {
+        const pageNum = currentPageNumber++;
+        const card = document.createElement('div');
+        card.className = 'grid-page-card grid-card-locked' + (selectedIdx === -1 ? ' active' : '');
+        card.dataset.pageType = 'cover';
+        card.dataset.pageIdx = '-1';
+        card.title = 'Clicca per aprire la Copertina';
+        card.innerHTML = `
+            <div class="grid-page-thumb-box">
+                <div class="grid-page-thumb-content">
+                    ${renderCoverPreview()}
+                </div>
+            </div>
+            <div class="grid-page-info">
+                <span class="grid-page-num">${pageNum}</span>
+                <span class="grid-page-tag" title="Copertina">Copertina</span>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            selectPage(-1);
+            closeGridView();
+        });
+        container.appendChild(card);
+    }
+
+    // 2. KPI Report Card (if options.includeAnalytics)
+    if (options.includeAnalytics) {
+        const pageNum = currentPageNumber++;
+        const card = document.createElement('div');
+        card.className = 'grid-page-card grid-card-locked' + (selectedIdx === -2 ? ' active' : '');
+        card.dataset.pageType = 'kpi';
+        card.dataset.pageIdx = '-2';
+        card.title = 'Clicca per aprire il Report KPI';
+        card.innerHTML = `
+            <div class="grid-page-thumb-box">
+                <div class="grid-page-thumb-content">
+                    ${renderKpiPreview()}
+                </div>
+            </div>
+            <div class="grid-page-info">
+                <span class="grid-page-num">${pageNum}</span>
+                <span class="grid-page-tag" title="Report KPI">Report KPI</span>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            selectPage(-2);
+            closeGridView();
+        });
+        container.appendChild(card);
+    }
+
+    // 3. Articles Cards (Draggable & Reorderable)
+    articles.forEach((art, idx) => {
+        const pageNum = currentPageNumber++;
+        const card = document.createElement('div');
+        card.className = 'grid-page-card grid-card-draggable' + (selectedIdx === idx ? ' active' : '');
+        card.dataset.pageType = 'article';
+        card.dataset.pageIdx = idx;
+        card.dataset.articleIdx = idx;
+        card.title = 'Trascina per spostare o clicca per modificare';
+
+        const isFirst = idx === 0;
+        const isLast = idx === articles.length - 1;
+
+        card.innerHTML = `
+            <div class="grid-page-thumb-box">
+                <div class="grid-card-drag-indicator" title="Trascina per riordinare">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                </div>
+                <div class="grid-page-thumb-content">
+                    ${renderArticlePreview(art, pageNum, totalPages)}
+                </div>
+            </div>
+            <div class="grid-page-info">
+                <span class="grid-page-num">${pageNum}</span>
+                <span class="grid-page-tag" title="${escHtml(art.source_name || art.title || '')}">${escHtml(art.source_name || art.title || 'Articolo')}</span>
+                <div class="grid-page-quick-actions">
+                    <button type="button" class="btn-grid-move btn-grid-move-prev" data-idx="${idx}" title="Sposta prima" ${isFirst ? 'disabled' : ''}>◀</button>
+                    <button type="button" class="btn-grid-move btn-grid-move-next" data-idx="${idx}" title="Sposta dopo" ${isLast ? 'disabled' : ''}>▶</button>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', (e) => {
+            const btnMove = e.target.closest('.btn-grid-move');
+            if (btnMove) {
+                e.stopPropagation();
+                const curIdx = parseInt(btnMove.dataset.idx, 10);
+                if (btnMove.classList.contains('btn-grid-move-prev')) {
+                    moveArticleInGrid(curIdx, curIdx - 1);
+                } else if (btnMove.classList.contains('btn-grid-move-next')) {
+                    moveArticleInGrid(curIdx, curIdx + 1);
+                }
+                return;
+            }
+            selectPage(idx);
+            closeGridView();
+        });
+
+        container.appendChild(card);
+    });
+
+    if (window.feather) feather.replace();
+    requestAnimationFrame(updateGridThumbnailScales);
+}
+
+function moveArticleInGrid(fromIdx, toIdx) {
+    if (fromIdx < 0 || toIdx < 0 || fromIdx >= articles.length || toIdx >= articles.length || fromIdx === toIdx) return;
+    const [moved] = articles.splice(fromIdx, 1);
+    articles.splice(toIdx, 0, moved);
+
+    if (selectedIdx === fromIdx) selectedIdx = toIdx;
+    else if (selectedIdx > fromIdx && selectedIdx <= toIdx) selectedIdx--;
+    else if (selectedIdx < fromIdx && selectedIdx >= toIdx) selectedIdx++;
+
+    pushUndoState();
+    renderPagesList();
+    renderGridPages();
+    showToast('Ordine pagine aggiornato', 'success');
+}
+
+function initGridSortable() {
+    const container = document.getElementById('gridPagesContainer');
+    if (!container || typeof Sortable === 'undefined') return;
+
+    if (_gridSortable) {
+        _gridSortable.destroy();
+        _gridSortable = null;
+    }
+
+    _gridSortable = Sortable.create(container, {
+        draggable: '.grid-card-draggable',
+        handle: '.grid-page-thumb-box',
+        animation: 250,
+        ghostClass: 'grid-card-ghost',
+        chosenClass: 'grid-card-chosen',
+        dragClass: 'grid-card-drag',
+        delay: 50,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 4,
+        onEnd: function(evt) {
+            const cards = Array.from(container.querySelectorAll('.grid-card-draggable'));
+            if (!cards.length) return;
+            const newArticles = cards.map(c => articles[parseInt(c.dataset.articleIdx, 10)]);
+
+            articles.length = 0;
+            articles.push(...newArticles);
+
+            const draggedOrigIdx = parseInt(evt.item.dataset.articleIdx, 10);
+            const newPos = cards.indexOf(evt.item);
+            if (selectedIdx === draggedOrigIdx && newPos >= 0) {
+                selectedIdx = newPos;
+            }
+
+            pushUndoState();
+            renderPagesList();
+            renderGridPages();
+            showToast('Ordine pagine aggiornato', 'success');
+        }
+    });
+}
+
+function openGridView() {
+    const modal = document.getElementById('pagesGridViewModal');
+    if (!modal) return;
+
+    if (typeof deselectPreviewElement === 'function') {
+        deselectPreviewElement();
+    }
+    if (typeof deselectPdfElement === 'function') {
+        deselectPdfElement();
+    }
+    if (typeof closeEditPanel === 'function') {
+        closeEditPanel();
+    }
+    if (typeof closePdfSheets === 'function') {
+        closePdfSheets();
+    }
+
+    let savedSize = 'medium';
+    try { savedSize = localStorage.getItem('rs_grid_size') || 'medium'; } catch(e){}
+    setGridCardSize(savedSize);
+
+    modal.style.display = 'flex';
+    renderGridPages();
+    initGridSortable();
+    setupGridResizeObserver();
+}
+
+function closeGridView() {
+    const modal = document.getElementById('pagesGridViewModal');
+    if (modal) modal.style.display = 'none';
+    if (_gridResizeObserver) {
+        _gridResizeObserver.disconnect();
+        _gridResizeObserver = null;
+    }
+}
+
+function toggleGridView() {
+    const modal = document.getElementById('pagesGridViewModal');
+    if (modal && modal.style.display !== 'none') {
+        closeGridView();
+    } else {
+        openGridView();
+    }
+}
+window.openGridView = openGridView;
+window.closeGridView = closeGridView;
+window.toggleGridView = toggleGridView;
 
 // ============================================================
 // EDIT PANEL (DESKTOP RIGHT DOCKED DRAWER)
@@ -4393,6 +5029,11 @@ function initDesktopToolbar() {
             e.preventDefault();
             undoLastEdit();
         } else if (e.key === 'Escape') {
+            const gridModal = document.getElementById('pagesGridViewModal');
+            if (gridModal && gridModal.style.display !== 'none') {
+                closeGridView();
+                return;
+            }
             if (typeof closeEditPanel === 'function') closeEditPanel();
         }
     });
