@@ -42,31 +42,59 @@ async function extractLogo(url, sourceName = '') {
         const originUrl = new URL(url).origin;
         const domainHost = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
 
-        // 1. Check if a local file logo exists in /public/logos (e.g. libero.png, repubblica.png)
+        // 1. Check if a local file logo exists in /public/logos (e.g. libero.svg, repubblica.png, corriere.png)
+        const domainClean = domainHost.replace(/[^a-z0-9]/g, '');
+        const hostFirst = domainHost.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        const sourceClean = sourceName ? sourceName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+
         const candidateNames = [
-            sourceName ? sourceName.toLowerCase().replace(/[^a-z0-9]/g, '') : '',
-            domainHost.replace(/[^a-z0-9]/g, ''),
-            domainHost.split('.')[0]
+            domainClean,
+            hostFirst,
+            sourceClean
         ].filter(Boolean);
 
         const logosDir = path.join(__dirname, '..', 'public', 'logos');
         if (fs.existsSync(logosDir)) {
             const files = fs.readdirSync(logosDir);
+            let matchingFile = null;
+
+            // Step 1A: Exact match on filename without extension
             for (const targetName of candidateNames) {
-                const matchingFile = files.find(file => {
+                matchingFile = files.find(file => {
                     const ext = path.extname(file);
                     const nameWithoutExt = path.basename(file, ext).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return nameWithoutExt === targetName || nameWithoutExt.includes(targetName) || targetName.includes(nameWithoutExt);
+                    return nameWithoutExt === targetName;
                 });
+                if (matchingFile) break;
+            }
 
-                if (matchingFile) {
-                    console.log(`[Logo Extractor] Trovato logo locale per: ${sourceName || domainHost} (${matchingFile})`);
-                    const filePath = path.join(logosDir, matchingFile);
-                    const buffer = fs.readFileSync(filePath);
-                    const ext = path.extname(matchingFile).toLowerCase();
-                    const contentType = ext === '.svg' ? 'image/svg+xml' : (ext === '.png' ? 'image/png' : 'image/jpeg');
-                    return `data:${contentType};base64,${buffer.toString('base64')}`;
+            // Step 1B: Exact alias mapping for well-known aliases (preventing false positive substring matches)
+            if (!matchingFile) {
+                const aliasMap = {
+                    'corrieredellasera': 'corriere.png',
+                    'sole24ore': 'ilsole24ore.png',
+                    'ilsole': 'ilsole24ore.png',
+                    'messaggero': 'ilmessaggero.svg',
+                    'fattoquotidiano': 'ilfattoquotidiano.svg',
+                    'lastampa': 'lastampa.png',
+                    'mattino': 'ilmattino.png',
+                    'tempo': 'iltempo.png'
+                };
+                for (const targetName of candidateNames) {
+                    if (aliasMap[targetName]) {
+                        matchingFile = files.find(f => f.toLowerCase() === aliasMap[targetName].toLowerCase());
+                        if (matchingFile) break;
+                    }
                 }
+            }
+
+            if (matchingFile) {
+                console.log(`[Logo Extractor] Trovato logo locale per: ${sourceName || domainHost} (${matchingFile})`);
+                const filePath = path.join(logosDir, matchingFile);
+                const buffer = fs.readFileSync(filePath);
+                const ext = path.extname(matchingFile).toLowerCase();
+                const contentType = ext === '.svg' ? 'image/svg+xml' : (ext === '.png' ? 'image/png' : 'image/jpeg');
+                return `data:${contentType};base64,${buffer.toString('base64')}`;
             }
         }
 

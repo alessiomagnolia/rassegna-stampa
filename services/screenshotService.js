@@ -1,3 +1,4 @@
+const fs = require('fs');
 let puppeteer = null;
 try {
     puppeteer = require('puppeteer');
@@ -11,9 +12,10 @@ async function launchBrowser() {
         throw new Error('Puppeteer non installato o non disponibile');
     }
     console.log('Avvio di Puppeteer...');
+    const chromePath = (process.env.RENDER && fs.existsSync('/usr/bin/google-chrome')) ? '/usr/bin/google-chrome' : undefined;
     return await puppeteer.launch({
         headless: 'new',
-        executablePath: process.env.RENDER ? '/usr/bin/google-chrome' : undefined,
+        executablePath: chromePath,
         args: [
             '--no-sandbox', 
             '--disable-setuid-sandbox', 

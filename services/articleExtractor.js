@@ -251,6 +251,129 @@ async function fallbackExtract(url) {
 }
 
 // ---------------------------------------------------------------
+// Bot Challenge Detection & Entities Unescaping
+// ---------------------------------------------------------------
+function decodeHtmlEntities(str) {
+    if (!str) return '';
+    return str
+        .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+        .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#8217;/g, "'")
+        .replace(/&#8220;/g, '“')
+        .replace(/&#8221;/g, '”')
+        .replace(/&#8211;/g, '–')
+        .replace(/&#8212;/g, '—');
+}
+
+function isBotChallenge(title, content) {
+    const t = (title || '').toLowerCase().trim();
+    const c = (content || '').toLowerCase().trim();
+    if (!t && !c) return false;
+
+    const challengeSnippets = [
+        'just a moment...',
+        'just a moment',
+        'attention required!',
+        'security check',
+        'access denied',
+        'ddos-guard',
+        'bot verification',
+        'checking your browser',
+        'please verify you are a human',
+        'are you a human',
+        'cloudflare',
+        '403 forbidden',
+        'shieldsquare captcha'
+    ];
+
+    if (challengeSnippets.some(cs => t === cs || t.startsWith(cs) || t.includes(cs))) return true;
+
+    if (c.includes('enable javascript and cookies to continue') ||
+        c.includes('ray id:') ||
+        c.includes('cloudflare to restrict access') ||
+        c.includes('checking if the site connection is secure') ||
+        c.includes('ddos protection by cloudflare') ||
+        c.includes('challenge-platform')) {
+        return true;
+    }
+
+    return false;
+}
+
+// ---------------------------------------------------------------
+// Tier 1.5: WordPress REST API fallback (Bypassa Cloudflare su testate WP)
+// ---------------------------------------------------------------
+async function extractWithWordPressApi(url) {
+    try {
+        const parsed = new URL(url);
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        if (pathSegments.length === 0) return null;
+
+        let slug = pathSegments[pathSegments.length - 1];
+        slug = slug.replace(/\.(html?|php)$/i, '');
+        if (!slug || slug.length < 3) return null;
+
+        const apiUrl = `${parsed.origin}/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`;
+        console.log(`[Estrattore WP-API] Tentativo WordPress REST API: ${apiUrl}`);
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(apiUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            }
+        });
+        clearTimeout(timer);
+
+        if (!res.ok) return null;
+        const posts = await res.json();
+        if (!Array.isArray(posts) || posts.length === 0) return null;
+
+        const post = posts[0];
+        const rawTitle = decodeHtmlEntities(post.title?.rendered || '').replace(/<[^>]+>/g, '').trim();
+
+        if (!rawTitle || isBotChallenge(rawTitle, '')) return null;
+
+        let imageUrl = null;
+        const media = post._embedded?.['wp:featuredmedia'];
+        if (Array.isArray(media) && media[0]?.source_url) {
+            imageUrl = media[0].source_url;
+        }
+
+        let author = null;
+        const authors = post._embedded?.author;
+        if (Array.isArray(authors) && authors[0]?.name) {
+            author = authors[0].name;
+        }
+
+        const rawExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '');
+        const rawContent = post.content?.rendered || rawExcerpt;
+
+        console.log(`[Estrattore WP-API] Successo! Trovato articolo: "${rawTitle.slice(0, 50)}"`);
+        return {
+            title: rawTitle,
+            content: rawContent,
+            description: cleanText(rawExcerpt, 120),
+            published: post.date || post.modified || null,
+            image: imageUrl,
+            author: author || null
+        };
+    } catch (e) {
+        console.log(`[Estrattore WP-API] Fallito: ${e.message}`);
+        return null;
+    }
+}
+
+// ---------------------------------------------------------------
 // Tier 3: Puppeteer DOM extraction for anti-bot / JS-rendered sites
 // ---------------------------------------------------------------
 async function extractWithPuppeteer(url) {
@@ -261,11 +384,11 @@ async function extractWithPuppeteer(url) {
         browser = await launchBrowser();
         page = await browser.newPage();
 
-        // Block heavy resources (images, media, fonts, css) to load in 1-2 seconds
+        // Block heavy resources (images, media, fonts) to load quickly
         await page.setRequestInterception(true);
         page.on('request', (req) => {
             const rt = req.resourceType();
-            if (['image', 'media', 'font', 'stylesheet'].includes(rt)) {
+            if (['image', 'media', 'font'].includes(rt)) {
                 req.abort();
             } else {
                 req.continue();
@@ -277,7 +400,7 @@ async function extractWithPuppeteer(url) {
 
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
 
-        const extracted = await page.evaluate(() => {
+        let extracted = await page.evaluate(() => {
             const getMeta = (names) => {
                 for (const name of names) {
                     const el = document.querySelector(`meta[property="${name}"], meta[name="${name}"]`);
@@ -322,7 +445,40 @@ async function extractWithPuppeteer(url) {
             };
         });
 
-        if (extracted && (extracted.title || extracted.content)) {
+        // If Puppeteer got an anti-bot challenge page, wait up to 4s for challenge to resolve
+        if (extracted && isBotChallenge(extracted.title, extracted.content)) {
+            console.log(`[Estrattore Puppeteer] Rilevato interstitial anti-bot ("${extracted.title}"), attendo risoluzione...`);
+            await new Promise(r => setTimeout(r, 4000));
+            const reTitle = await page.evaluate(() => document.title || '');
+            if (!isBotChallenge(reTitle, '')) {
+                extracted = await page.evaluate(() => {
+                    const getMeta = (names) => {
+                        for (const name of names) {
+                            const el = document.querySelector(`meta[property="${name}"], meta[name="${name}"]`);
+                            if (el && el.content && el.content.trim()) return el.content.trim();
+                        }
+                        return null;
+                    };
+                    const title = getMeta(['og:title', 'twitter:title', 'title']) || document.title || '';
+                    const description = getMeta(['og:description', 'twitter:description', 'description']) || '';
+                    const image = getMeta(['og:image', 'twitter:image:src', 'twitter:image']) || null;
+                    const author = getMeta(['author', 'article:author', 'twitter:creator']) || '';
+                    const published = getMeta(['article:published_time', 'publication_date', 'date']) || null;
+                    const selectors = ['article', '[class*="article-body"]', '[class*="entry-content"]', '[class*="post-content"]', 'main', '.content'];
+                    let bodyText = '';
+                    for (const sel of selectors) {
+                        const el = document.querySelector(sel);
+                        if (el && el.innerText && el.innerText.trim().length > 100) {
+                            bodyText = el.innerText.trim();
+                            break;
+                        }
+                    }
+                    return { title, content: bodyText || description, description, image, author, published };
+                });
+            }
+        }
+
+        if (extracted && (extracted.title || extracted.content) && !isBotChallenge(extracted.title, extracted.content)) {
             console.log(`[Estrattore Puppeteer] Successo per: ${url} -> ${extracted.title?.slice(0, 50)}`);
             return extracted;
         }
@@ -434,7 +590,7 @@ function formatDate(dateStr) {
 }
 
 // ---------------------------------------------------------------
-// Main extractor — Tier 1 (@extractus) + Tier 2 (Cheerio) + Tier 3 (Puppeteer)
+// Main extractor — Tier 1 (@extractus) + Tier 1.5 (WP REST API) + Tier 2 (Cheerio) + Tier 3 (Puppeteer)
 // ---------------------------------------------------------------
 async function extractArticle(url, options = {}) {
     let article = null;
@@ -447,44 +603,71 @@ async function extractArticle(url, options = {}) {
             console.log(`[Estrattore Tier 1] Analisi primaria: ${url}`);
             const result = await extract(url);
             if (result && (result.title || result.content)) {
-                article = result;
-                tierUsed = 'Tier 1 (@extractus)';
+                if (!isBotChallenge(result.title, result.content)) {
+                    article = result;
+                    tierUsed = 'Tier 1 (@extractus)';
+                } else {
+                    console.log(`[Estrattore Tier 1] Rilevata schermata bot/Cloudflare ("${result.title}"), provo alternative...`);
+                }
             }
         }
     } catch (primaryErr) {
-        console.log(`[Estrattore Tier 1] Primario non riuscito (${primaryErr.message}), provo Tier 2...`);
+        console.log(`[Estrattore Tier 1] Primario non riuscito (${primaryErr.message}), provo Tier alternativi...`);
     }
 
-    // 2) Tier 2: Cheerio fallback (fast HTML fetch with decompression + metadata/JSON-LD)
-    if (!article || (!article.title && !article.content)) {
+    // 2) Tier 1.5: WordPress REST API fallback (risolve siti WordPress dietro Cloudflare come corrieredelleconomia.it)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
+        try {
+            console.log(`[Estrattore Tier 1.5] Tentativo WordPress REST API per: ${url}`);
+            const wpResult = await extractWithWordPressApi(url);
+            if (wpResult && (wpResult.title || wpResult.content)) {
+                article = wpResult;
+                tierUsed = 'Tier 1.5 (WordPress REST API)';
+            }
+        } catch (wpErr) {
+            console.log(`[Estrattore Tier 1.5] WP API fallito (${wpErr.message})`);
+        }
+    }
+
+    // 3) Tier 2: Cheerio fallback (fast HTML fetch with decompression + metadata/JSON-LD)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
         try {
             console.log(`[Estrattore Tier 2] Fallback Cheerio per: ${url}`);
             const fbResult = await fallbackExtract(url);
             if (fbResult && (fbResult.title || fbResult.content)) {
-                article = fbResult;
-                tierUsed = 'Tier 2 (Cheerio)';
+                if (!isBotChallenge(fbResult.title, fbResult.content)) {
+                    article = fbResult;
+                    tierUsed = 'Tier 2 (Cheerio)';
+                } else {
+                    console.log(`[Estrattore Tier 2] Rilevata schermata bot/Cloudflare ("${fbResult.title}"), passo a Puppeteer...`);
+                }
             }
         } catch (fallbackErr) {
             console.log(`[Estrattore Tier 2] Fallback Cheerio fallito (${fallbackErr.message}), provo Tier 3...`);
         }
     }
 
-    // 3) Tier 3: Puppeteer fallback (real Chrome DOM evaluation to bypass bot challenges/JS)
-    if (!article || (!article.title && !article.content)) {
+    // 4) Tier 3: Puppeteer fallback (real Chrome DOM evaluation to bypass bot challenges/JS)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
         try {
             console.log(`[Estrattore Tier 3] Fallback Puppeteer per: ${url}`);
             const puppeteerResult = await extractWithPuppeteer(url);
             if (puppeteerResult && (puppeteerResult.title || puppeteerResult.content)) {
-                article = puppeteerResult;
-                tierUsed = 'Tier 3 (Puppeteer Chrome)';
+                if (!isBotChallenge(puppeteerResult.title, puppeteerResult.content)) {
+                    article = puppeteerResult;
+                    tierUsed = 'Tier 3 (Puppeteer Chrome)';
+                } else {
+                    console.warn(`[Estrattore Tier 3] Puppeteer ha ancora schermata bot (${puppeteerResult.title})`);
+                }
             }
         } catch (puppeteerErr) {
             console.warn(`[Estrattore Tier 3] Fallback Puppeteer non riuscito:`, puppeteerErr.message);
         }
     }
 
-    if (!article || (!article.title && !article.content && !article.description)) {
-        throw new Error(`Impossibile estrarre automaticamente i contenuti da questo sito (il sito potrebbe bloccare i bot o richiedere login).`);
+    // Final validation: reject if null, empty or STILL a bot challenge
+    if (!article || (!article.title && !article.content && !article.description) || isBotChallenge(article.title, article.content || article.description)) {
+        throw new Error(`Impossibile estrarre automaticamente i contenuti da questo sito (il sito è protetto da un blocco anti-bot/Cloudflare o richiede login). Usa l'inserimento manuale.`);
     }
 
     console.log(`[Estrattore] OK via ${tierUsed}: "${(article.title || '').slice(0, 60)}"`);
