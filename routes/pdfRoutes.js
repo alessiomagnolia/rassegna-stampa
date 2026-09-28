@@ -38,7 +38,8 @@ function fetchImageAsBase64(url) {
         }
 
         const protocol = url.startsWith('https') ? https : http;
-        protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
+        const agent = url.startsWith('https') ? new https.Agent({ rejectUnauthorized: false }) : undefined;
+        protocol.get(url, { agent, headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
             if (response.statusCode !== 200) return resolve(null);
             const chunks = [];
             response.on('data', chunk => chunks.push(chunk));

@@ -6,34 +6,82 @@ try {
 }
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
+const zlib = require('zlib');
+
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+const httpAgent = new http.Agent();
 
 // In-memory logo cache
 const logoCache = new Map();
 
 async function downloadImageAsBase64(imageUrl) {
-    if (!imageUrl) return null;
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+    if (!imageUrl || !imageUrl.startsWith('http')) return null;
 
-        const response = await fetch(imageUrl, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    // 1. Try global fetch (Node 18+)
+    if (typeof fetch === 'function') {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const response = await fetch(imageUrl, {
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                }
+            });
+            clearTimeout(timeoutId);
+            if (response.ok) {
+                const buffer = await response.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                const contentType = response.headers.get('content-type') || 'image/png';
+                return `data:${contentType};base64,${base64}`;
             }
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) return null;
-        
-        const buffer = await response.arrayBuffer();
-        const base64 = Buffer.from(buffer).toString('base64');
-        const contentType = response.headers.get('content-type') || 'image/png';
-        
-        return `data:${contentType};base64,${base64}`;
-    } catch (error) {
-        return null;
+        } catch (e) {}
     }
+
+    // 2. Fallback using Node https/http with rejectUnauthorized: false & zlib decompression
+    return new Promise((resolve) => {
+        try {
+            const lib = imageUrl.startsWith('https') ? https : http;
+            const req = lib.get(imageUrl, {
+                agent: imageUrl.startsWith('https') ? httpsAgent : httpAgent,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                    'Accept-Encoding': 'gzip, deflate, br'
+                }
+            }, (res) => {
+                if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+                    try {
+                        const redirectUrl = new URL(res.headers.location, imageUrl).href;
+                        return downloadImageAsBase64(redirectUrl).then(resolve);
+                    } catch { return resolve(null); }
+                }
+                if (res.statusCode !== 200) return resolve(null);
+
+                const encoding = (res.headers['content-encoding'] || '').toLowerCase();
+                let stream = res;
+                if (encoding === 'gzip') stream = res.pipe(zlib.createGunzip());
+                else if (encoding === 'deflate') stream = res.pipe(zlib.createInflate());
+                else if (encoding === 'br') stream = res.pipe(zlib.createBrotliDecompress());
+
+                const chunks = [];
+                stream.on('data', c => chunks.push(c));
+                stream.on('end', () => {
+                    const buf = Buffer.concat(chunks);
+                    if (!buf || buf.length < 50) return resolve(null);
+                    const contentType = res.headers['content-type'] || 'image/jpeg';
+                    resolve(`data:${contentType};base64,${buf.toString('base64')}`);
+                });
+                stream.on('error', () => resolve(null));
+            });
+            req.setTimeout(8000, () => { req.destroy(); resolve(null); });
+            req.on('error', () => resolve(null));
+        } catch(err) {
+            resolve(null);
+        }
+    });
 }
 
 async function extractLogo(url, sourceName = '') {

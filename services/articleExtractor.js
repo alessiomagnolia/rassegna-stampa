@@ -35,7 +35,7 @@ async function getCheerio() {
 // ---------------------------------------------------------------
 // Tier 2 helper: Fetch HTML with modern headers & decompression
 // ---------------------------------------------------------------
-async function fetchHtml(url) {
+async function fetchHtml(url, customHeaders = {}) {
     const modernHeaders = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -48,14 +48,15 @@ async function fetchHtml(url) {
         'Sec-Fetch-Site': 'none',
         'Sec-Fetch-User': '?1',
         'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        ...customHeaders
     };
 
     // 1. Try global fetch (Node 18+) with automatic gzip/brotli decompression
     if (typeof fetch === 'function') {
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 12000);
+            const timer = setTimeout(() => controller.abort(), 10000);
             const res = await fetch(url, {
                 signal: controller.signal,
                 redirect: 'follow',
@@ -64,7 +65,7 @@ async function fetchHtml(url) {
             clearTimeout(timer);
             if (res.ok) {
                 const text = await res.text();
-                if (text && text.length > 100) return text;
+                if (text && text.length > 50) return text;
             }
         } catch (fetchErr) {
             console.log(`[fetchHtml] Global fetch failed (${fetchErr.message}), provo con http client...`);
@@ -86,7 +87,7 @@ async function fetchHtml(url) {
             if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
                 try {
                     const redirectUrl = new URL(res.headers.location, url).href;
-                    fetchHtml(redirectUrl).then(resolve).catch(reject);
+                    fetchHtml(redirectUrl, customHeaders).then(resolve).catch(reject);
                 } catch { reject(new Error('Redirect non valido')); }
                 return;
             }
@@ -321,21 +322,38 @@ async function extractWithWordPressApi(url) {
         if (!slug || slug.length < 3) return null;
 
         const apiUrl = `${parsed.origin}/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`;
-        console.log(`[Estrattore WP-API] Tentativo WordPress REST API: ${apiUrl}`);
+        console.log(`[Estrattore WP-API] Tentativo WordPress REST API per slug: ${apiUrl}`);
 
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 6000);
-        const res = await fetch(apiUrl, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept': 'application/json'
+        let rawText = '';
+        try {
+            rawText = await fetchHtml(apiUrl, { 'Accept': 'application/json' });
+        } catch (fetchErr) {
+            console.log(`[Estrattore WP-API] Slug fetch fallito (${fetchErr.message})`);
+        }
+
+        let posts = null;
+        if (rawText) {
+            try { posts = JSON.parse(rawText); } catch {}
+        }
+
+        // Se non trovato per slug esatto, prova la ricerca per parole chiave tratte dallo slug
+        if (!Array.isArray(posts) || posts.length === 0) {
+            try {
+                const searchKeywords = slug.replace(/[-_]+/g, ' ').trim();
+                const searchApiUrl = `${parsed.origin}/wp-json/wp/v2/posts?search=${encodeURIComponent(searchKeywords)}&_embed=1`;
+                console.log(`[Estrattore WP-API] Tentativo ricerca WP: ${searchApiUrl}`);
+                const searchRaw = await fetchHtml(searchApiUrl, { 'Accept': 'application/json' });
+                if (searchRaw) {
+                    const searchPosts = JSON.parse(searchRaw);
+                    if (Array.isArray(searchPosts) && searchPosts.length > 0) {
+                        posts = searchPosts;
+                    }
+                }
+            } catch (searchErr) {
+                console.log(`[Estrattore WP-API] Ricerca WP fallita (${searchErr.message})`);
             }
-        });
-        clearTimeout(timer);
+        }
 
-        if (!res.ok) return null;
-        const posts = await res.json();
         if (!Array.isArray(posts) || posts.length === 0) return null;
 
         const post = posts[0];
@@ -345,8 +363,8 @@ async function extractWithWordPressApi(url) {
 
         let imageUrl = null;
         const media = post._embedded?.['wp:featuredmedia'];
-        if (Array.isArray(media) && media[0]?.source_url) {
-            imageUrl = media[0].source_url;
+        if (Array.isArray(media) && media[0]) {
+            imageUrl = media[0].source_url || media[0].media_details?.sizes?.large?.source_url || media[0].media_details?.sizes?.full?.source_url;
         }
 
         let author = null;
@@ -369,6 +387,76 @@ async function extractWithWordPressApi(url) {
         };
     } catch (e) {
         console.log(`[Estrattore WP-API] Fallito: ${e.message}`);
+        return null;
+    }
+}
+
+// ---------------------------------------------------------------
+// Tier 1.6: WordPress RSS Feed fallback (Bypassa Cloudflare perché i feed sono sempre pubblici)
+// ---------------------------------------------------------------
+async function extractWithWordPressRss(url) {
+    try {
+        const parsed = new URL(url);
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        if (pathSegments.length === 0) return null;
+
+        const slug = pathSegments[pathSegments.length - 1].replace(/\.(html?|php)$/i, '');
+        if (!slug || slug.length < 3) return null;
+
+        const feedCandidates = [
+            `${parsed.origin}/feed/`,
+            `${parsed.origin}/?feed=rss2`,
+            `${parsed.origin}/rss.xml`
+        ];
+
+        console.log(`[Estrattore RSS] Tentativo estrazione feed RSS per: ${slug}`);
+
+        for (const feedUrl of feedCandidates) {
+            try {
+                const xmlText = await fetchHtml(feedUrl);
+                if (!xmlText || !xmlText.includes('<item>')) continue;
+
+                const items = xmlText.split('<item>').slice(1);
+                for (const itemXml of items) {
+                    const item = itemXml.split('</item>')[0];
+                    const linkMatch = item.match(/<link>(.*?)<\/link>/is) || item.match(/<guid[^>]*>(.*?)<\/guid>/is);
+                    const itemLink = linkMatch ? linkMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').trim() : '';
+
+                    if (itemLink.includes(slug) || url.includes(itemLink) || itemLink.includes(url)) {
+                        const titleMatch = item.match(/<title>(.*?)<\/title>/is);
+                        const rawTitle = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim() : '';
+                        if (!rawTitle || isBotChallenge(rawTitle, '')) continue;
+
+                        const encMatch = item.match(/<enclosure[^>]+url=["']([^"']+)["']/i) || item.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+                        const imageUrl = encMatch ? encMatch[1].trim() : null;
+
+                        const contentMatch = item.match(/<content:encoded>(.*?)<\/content:encoded>/is) || item.match(/<description>(.*?)<\/description>/is);
+                        const rawContent = contentMatch ? contentMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').trim() : '';
+
+                        const dateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/is);
+                        const published = dateMatch ? dateMatch[1].trim() : null;
+
+                        const authorMatch = item.match(/<dc:creator>(.*?)<\/dc:creator>/is) || item.match(/<author>(.*?)<\/author>/is);
+                        const author = authorMatch ? authorMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').trim() : null;
+
+                        console.log(`[Estrattore RSS] Successo! Trovato articolo in feed RSS: "${rawTitle.slice(0, 50)}"`);
+                        return {
+                            title: decodeHtmlEntities(rawTitle),
+                            content: rawContent,
+                            description: cleanText(rawContent, 120),
+                            published,
+                            image: imageUrl,
+                            author
+                        };
+                    }
+                }
+            } catch (feedErr) {
+                console.log(`[Estrattore RSS] Feed ${feedUrl} non disponibile: ${feedErr.message}`);
+            }
+        }
+        return null;
+    } catch (e) {
+        console.log(`[Estrattore RSS] Fallito: ${e.message}`);
         return null;
     }
 }
@@ -626,6 +714,20 @@ async function extractArticle(url, options = {}) {
             }
         } catch (wpErr) {
             console.log(`[Estrattore Tier 1.5] WP API fallito (${wpErr.message})`);
+        }
+    }
+
+    // 2b) Tier 1.6: WordPress RSS Feed fallback (Cloudflare non blocca mai /feed/)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
+        try {
+            console.log(`[Estrattore Tier 1.6] Tentativo WordPress RSS Feed per: ${url}`);
+            const rssResult = await extractWithWordPressRss(url);
+            if (rssResult && (rssResult.title || rssResult.content)) {
+                article = rssResult;
+                tierUsed = 'Tier 1.6 (WordPress RSS Feed)';
+            }
+        } catch (rssErr) {
+            console.log(`[Estrattore Tier 1.6] RSS fallito (${rssErr.message})`);
         }
     }
 
