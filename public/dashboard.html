@@ -550,6 +550,42 @@
                     </div>
                 </div>
 
+                <!-- Dettagli Copertina & Intestazione (Opzionali) -->
+                <div class="rassegna-cover-meta-card">
+                    <div class="cover-meta-header" id="toggleCoverMeta" onclick="toggleCoverMetaCard()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem;">
+                            <i data-feather="sliders" style="width:15px;height:15px;color:var(--accent-primary);"></i>
+                            <span>Dati Copertina & Intestazione <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(Opzionali)</span></span>
+                        </div>
+                        <span id="coverMetaToggleIcon" style="font-size:0.75rem; color:var(--text-muted); transition: transform 0.2s;">▼</span>
+                    </div>
+                    <div id="coverMetaContent" style="margin-top:1rem; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                        <div class="input-group" style="margin:0;">
+                            <label for="rassegnaTitle" style="font-size:0.8rem; font-weight:600;">Titolo Rassegna</label>
+                            <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio" style="height:40px; font-size:0.85rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label for="clientName" style="font-size:0.8rem; font-weight:600;">Nome Cliente</label>
+                            <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A." style="height:40px; font-size:0.85rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.8rem; font-weight:600;">Logo Cliente</label>
+                            <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
+                            <label for="clientLogoInput" class="btn btn-outline btn-sm" style="display: flex; align-items:center; justify-content:center; gap:4px; height:40px; cursor: pointer; text-align: center; width:100%;"><i data-feather="image" style="width:14px;height:14px;"></i> Scegli Logo</label>
+                            <div id="clientLogoPreviewContainer" style="display:none; margin-top:8px; align-items: center; gap:8px;">
+                                <img id="clientLogoPreview" style="max-height: 36px; object-fit: contain;" src="">
+                                <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="padding:2px 6px;">Rimuovi</button>
+                            </div>
+                        </div>
+                        <div style="grid-column: 1 / -1; display:flex; align-items:center; gap:8px; margin-top:0.4rem; padding-top:0.6rem; border-top:1px solid var(--border-color);">
+                            <input type="checkbox" id="includeAnalyticsPdf" checked style="width:16px;height:16px;accent-color:var(--accent-primary);cursor:pointer;">
+                            <label for="includeAnalyticsPdf" style="font-size:0.85rem; font-weight:600; cursor:pointer; margin:0; color:var(--text-primary);">
+                                Includi Pagina KPI & Sentiment nel PDF <span style="font-weight:400; color:var(--text-muted); font-size:0.75rem;">(Executive Report di impatto per il cliente)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- HERO: Inserimento Articolo (Fulcro Principale della Pagina) -->
                 <div class="article-hero-box">
                     <div class="article-hero-header">
@@ -590,42 +626,6 @@
                         <div class="hero-sources-pill hide-mobile">
                             <i data-feather="check-circle" style="width:13px;height:13px;color:var(--success);"></i>
                             <span>Oltre 500+ testate online e agenzie supportate</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dettagli Copertina & Intestazione (Opzionali) -->
-                <div class="rassegna-cover-meta-card">
-                    <div class="cover-meta-header" id="toggleCoverMeta" onclick="toggleCoverMetaCard()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
-                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem;">
-                            <i data-feather="sliders" style="width:15px;height:15px;color:var(--accent-primary);"></i>
-                            <span>Dati Copertina & Intestazione <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(Opzionali)</span></span>
-                        </div>
-                        <span id="coverMetaToggleIcon" style="font-size:0.75rem; color:var(--text-muted); transition: transform 0.2s;">▼</span>
-                    </div>
-                    <div id="coverMetaContent" style="margin-top:1rem; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
-                        <div class="input-group" style="margin:0;">
-                            <label for="rassegnaTitle" style="font-size:0.8rem; font-weight:600;">Titolo Rassegna</label>
-                            <input type="text" id="rassegnaTitle" placeholder="Es. Rassegna Stampa del 15 Luglio" style="height:40px; font-size:0.85rem;">
-                        </div>
-                        <div class="input-group" style="margin:0;">
-                            <label for="clientName" style="font-size:0.8rem; font-weight:600;">Nome Cliente</label>
-                            <input type="text" id="clientName" placeholder="Es. Mario Rossi S.p.A." style="height:40px; font-size:0.85rem;">
-                        </div>
-                        <div class="input-group" style="margin:0;">
-                            <label style="font-size:0.8rem; font-weight:600;">Logo Cliente</label>
-                            <input type="file" id="clientLogoInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" class="hidden">
-                            <label for="clientLogoInput" class="btn btn-outline btn-sm" style="display: flex; align-items:center; justify-content:center; gap:4px; height:40px; cursor: pointer; text-align: center; width:100%;"><i data-feather="image" style="width:14px;height:14px;"></i> Scegli Logo</label>
-                            <div id="clientLogoPreviewContainer" style="display:none; margin-top:8px; align-items: center; gap:8px;">
-                                <img id="clientLogoPreview" style="max-height: 36px; object-fit: contain;" src="">
-                                <button id="btnRemoveClientLogo" class="btn btn-danger btn-sm" style="padding:2px 6px;">Rimuovi</button>
-                            </div>
-                        </div>
-                        <div style="grid-column: 1 / -1; display:flex; align-items:center; gap:8px; margin-top:0.4rem; padding-top:0.6rem; border-top:1px solid var(--border-color);">
-                            <input type="checkbox" id="includeAnalyticsPdf" checked style="width:16px;height:16px;accent-color:var(--accent-primary);cursor:pointer;">
-                            <label for="includeAnalyticsPdf" style="font-size:0.85rem; font-weight:600; cursor:pointer; margin:0; color:var(--text-primary);">
-                                Includi Pagina KPI & Sentiment nel PDF <span style="font-weight:400; color:var(--text-muted); font-size:0.75rem;">(Executive Report di impatto per il cliente)</span>
-                            </label>
                         </div>
                     </div>
                 </div>
