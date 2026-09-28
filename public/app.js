@@ -7,6 +7,7 @@ const state = {
     isExtracting: false,
     isGenerating: false,
     clientLogoBase64: null,
+    userLogoBase64: localStorage.getItem('rs_company_logo') || null,
     currentReviewId: null
 };
 
@@ -186,7 +187,7 @@ function updateProfileUI() {
     if (!user) return;
 
     // Navbar
-    const compName = user.company_name || user.email;
+    const compName = user.company_name || localStorage.getItem('rs_company_name') || user.email;
     const navCompanyEl = document.getElementById('navCompany');
     const navCompanyHeaderEl = document.getElementById('navCompanyHeader');
     if (navCompanyEl) navCompanyEl.innerText = compName;
@@ -196,40 +197,49 @@ function updateProfileUI() {
     const sidebarCompany = document.getElementById('sidebarCompany');
     if (sidebarCompany) sidebarCompany.textContent = compName;
 
-    if (user.logo_path) {
+    const activeLogoSrc = state.userLogoBase64 || user.logo_data || user.logo_path || localStorage.getItem('rs_company_logo') || '';
+    if (activeLogoSrc) {
+        state.userLogoBase64 = activeLogoSrc;
         const navLogo = document.getElementById('navLogo');
         if (navLogo) {
-            navLogo.src = user.logo_path;
+            navLogo.src = activeLogoSrc;
             navLogo.classList.remove('hidden');
         }
     }
 
     // Profile Section
     const companyInput = document.getElementById('companyName');
-    if (companyInput) companyInput.value = user.company_name || '';
+    if (companyInput) {
+        companyInput.value = user.company_name || localStorage.getItem('rs_company_name') || '';
+    }
 
     const logoPreviewContainer = document.getElementById('logoPreviewContainer');
     const dropZone = document.getElementById('dropZone');
     const logoPreview = document.getElementById('logoPreview');
 
-    if (user.logo_path && logoPreviewContainer) {
-        logoPreview.src = user.logo_path;
+    if (activeLogoSrc && logoPreviewContainer) {
+        logoPreview.src = activeLogoSrc;
         logoPreviewContainer.classList.remove('hidden');
-        dropZone.style.display = 'none';
+        if (dropZone) dropZone.style.display = 'none';
     } else if (logoPreviewContainer) {
         logoPreviewContainer.classList.add('hidden');
-        dropZone.style.display = 'block';
+        if (dropZone) dropZone.style.display = 'block';
     }
 }
 
 async function saveProfile() {
-    const companyName = document.getElementById('companyName').value;
+    const companyInput = document.getElementById('companyName');
+    if (!companyInput) return;
+    const companyName = companyInput.value.trim();
+    localStorage.setItem('rs_company_name', companyName);
     const btn = document.getElementById('btnSaveProfile');
-    const originalText = btn.innerText;
+    const originalText = btn ? btn.innerText : 'Salva Nome';
 
     try {
-        btn.disabled = true;
-        btn.innerText = 'Salvataggio...';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Salvataggio...';
+        }
         const data = await apiCall('PUT', '/api/auth/profile', { company_name: companyName });
         state.user = data.user;
         updateProfileUI();
@@ -237,13 +247,23 @@ async function saveProfile() {
     } catch (error) {
         showToast(error.message, 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerText = originalText;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
     }
 }
 
 async function handleLogoUpload(file) {
     if (!file) return;
+
+    try {
+        const b64 = await fileToBase64(file);
+        state.userLogoBase64 = b64;
+        localStorage.setItem('rs_company_logo', b64);
+        if (state.user) state.user.logo_data = b64;
+        updateProfileUI();
+    } catch(e) {}
     
     const formData = new FormData();
     formData.append('logo', file);
@@ -251,7 +271,10 @@ async function handleLogoUpload(file) {
     try {
         showToast('Upload del logo in corso...', 'info');
         const data = await apiCall('POST', '/api/auth/upload-logo', formData, true);
-        state.user.logo_path = data.logo_path;
+        if (state.user) {
+            state.user.logo_path = data.logo_path;
+            if (data.logo_data) state.user.logo_data = data.logo_data;
+        }
         updateProfileUI();
         showToast('Logo caricato con successo', 'success');
     } catch (error) {
@@ -262,7 +285,12 @@ async function handleLogoUpload(file) {
 async function removeLogo() {
     try {
         await apiCall('DELETE', '/api/auth/logo');
-        state.user.logo_path = '';
+        if (state.user) {
+            state.user.logo_path = '';
+            state.user.logo_data = '';
+        }
+        state.userLogoBase64 = null;
+        localStorage.removeItem('rs_company_logo');
         updateProfileUI();
         document.getElementById('navLogo')?.classList.add('hidden');
         showToast('Logo rimosso', 'success');
@@ -828,10 +856,21 @@ function openEditor() {
     const title    = document.getElementById('rassegnaTitle')?.value.trim() || '';
     const clientName = document.getElementById('clientName')?.value.trim() || '';
     const includeAnalytics = document.getElementById('includeAnalyticsPdf') ? document.getElementById('includeAnalyticsPdf').checked : true;
+    const companyName = document.getElementById('companyName')?.value.trim() || state.user?.company_name || localStorage.getItem('rs_company_name') || '';
+    const userLogo = state.userLogoBase64 || localStorage.getItem('rs_company_logo') || state.user?.logo_data || state.user?.logo_path || null;
+
     const editorState = {
         articles: state.articles,
         currentReviewId: state.currentReviewId || null,
-        options: { title, clientName, clientLogo: state.clientLogoBase64 || null, templateId: selectedTemplateId, includeAnalytics }
+        options: { 
+            title, 
+            clientName, 
+            clientLogo: state.clientLogoBase64 || null, 
+            userName: companyName,
+            userLogo: userLogo,
+            templateId: selectedTemplateId, 
+            includeAnalytics 
+        }
     };
     localStorage.setItem('rs_editor_state', JSON.stringify(editorState));
     window.location.href = 'editor.html';
@@ -840,8 +879,11 @@ function openEditor() {
 async function generatePDF() {
     if (state.articles.length === 0) return;
     
-    const title = document.getElementById('rassegnaTitle').value.trim();
+    const title = document.getElementById('rassegnaTitle')?.value.trim() || '';
     const clientName = document.getElementById('clientName')?.value.trim() || '';
+    const companyName = document.getElementById('companyName')?.value.trim() || state.user?.company_name || localStorage.getItem('rs_company_name') || '';
+    const userLogo = state.userLogoBase64 || localStorage.getItem('rs_company_logo') || state.user?.logo_data || null;
+
     const btn = document.getElementById('btnGeneratePDF');
     const loading = document.getElementById('generationLoading');
     
@@ -857,6 +899,8 @@ async function generatePDF() {
             title,
             clientName,
             clientLogo: state.clientLogoBase64,
+            userName: companyName,
+            userLogo: userLogo,
             templateId: selectedTemplateId,
             includeAnalytics
         });
@@ -1919,6 +1963,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         document.getElementById('btnSaveProfile')?.addEventListener('click', saveProfile);
+        document.getElementById('companyName')?.addEventListener('blur', saveProfile);
+        document.getElementById('companyName')?.addEventListener('change', saveProfile);
         document.getElementById('btnRemoveLogo')?.addEventListener('click', removeLogo);
         
         // Drag & Drop

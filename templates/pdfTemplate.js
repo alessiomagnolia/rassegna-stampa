@@ -301,9 +301,9 @@ function buildClassicHTML(articles, options) {
         .cover-title { font-size: 38pt; font-weight: 700; color: #1a1a2e; margin-bottom: 8mm; line-height: 1.2; }
         .cover-subtitle { font-size: 18pt; color: #555; margin-bottom: 6mm; font-family: 'Times New Roman', Times, serif; font-style: italic; }
         .cover-date { font-size: 14pt; color: #888; letter-spacing: 2px; text-transform: uppercase; }
-        .cover-decor { width: 30mm; height: 3px; background: linear-gradient(90deg,#7c5cff,#00d4aa); margin: 10mm auto 15mm; border-radius: 2px; }
-        .cover-bottom { height: 40mm; display: flex; align-items: flex-end; justify-content: center; }
-        .agency-logo { max-width: 40mm; max-height: 20mm; object-fit: contain; }
+        .cover-bottom { height: 40mm; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3mm; }
+        .agency-logo { max-width: 50mm; max-height: 22mm; object-fit: contain; }
+        .agency-name { font-size: 9.5pt; color: #666; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
 
         /* --- ARTICLE PAGE HEADER (default: light) --- */
         .header {
@@ -393,21 +393,27 @@ function buildClassicHTML(articles, options) {
 
     // 1. Optional Cover Page
     if (title) {
+        const agencyName = (userName && userName !== 'Utente') ? userName : '';
+        const topLogo = clientLogo || userLogo || null;
+        const subtitleText = clientName || agencyName || '';
+        const showBottomAgencyLogo = (clientLogo && userLogo);
+
         html += `
     <div class="page cover-page">
         <div class="cover-bg-orb-1"></div>
         <div class="cover-bg-orb-2"></div>
         <div class="cover-top">
-            ${clientLogo ? `<img src="${clientLogo}" class="client-logo" alt="Client Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo" alt="Logo">` : ''}
         </div>
         <div class="cover-center">
             <div class="cover-title">${title}</div>
             <div class="cover-decor"></div>
-            <div class="cover-subtitle">${clientName || ''}</div>
+            ${subtitleText ? `<div class="cover-subtitle">${subtitleText}</div>` : ''}
             <div class="cover-date">${dateStr}</div>
         </div>
         <div class="cover-bottom">
-            ${userLogo ? `<img src="${userLogo}" class="agency-logo" alt="Agency Logo">` : ''}
+            ${showBottomAgencyLogo ? `<img src="${userLogo}" class="agency-logo" alt="Agency Logo">` : ''}
+            ${agencyName ? `<div class="agency-name">A cura di: ${agencyName}</div>` : ''}
         </div>
     </div>
         `;
@@ -591,21 +597,28 @@ function buildModernHTML(articles, options) {
     </style>
 </head>
 <body>
-    ${title ? `
+    ${title ? (() => {
+        const agencyName = (userName && userName !== 'Utente') ? userName : '';
+        const topLogo = clientLogo || userLogo || null;
+        const subtitleText = clientName || agencyName || '';
+        const showBottomAgencyLogo = (clientLogo && userLogo);
+        return `
     <div class="page cover-page">
         <div class="cover-top">
-            ${clientLogo ? `<img src="${clientLogo}" class="client-logo-m" alt="Client Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo-m" alt="Logo">` : ''}
         </div>
         <div class="cover-center">
             <div class="cover-badge-m">Rassegna Stampa</div>
             <div class="cover-title-m">${title}</div>
-            <div class="cover-subtitle-m">${clientName || ''}</div>
+            ${subtitleText ? `<div class="cover-subtitle-m">${subtitleText}</div>` : ''}
             <div class="cover-date-m">${dateStr}</div>
         </div>
-        <div class="cover-bottom">
-            ${userLogo ? `<img src="${userLogo}" style="max-height:22mm; filter:brightness(0) invert(1);" alt="Agency Logo">` : ''}
+        <div class="cover-bottom" style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3mm;">
+            ${showBottomAgencyLogo ? `<img src="${userLogo}" style="max-height:22mm; filter:brightness(0) invert(1);" alt="Agency Logo">` : ''}
+            ${agencyName ? `<div style="font-size:9.5pt; color:#94a3b8; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">A cura di: ${agencyName}</div>` : ''}
         </div>
-    </div>` : ''}
+    </div>`;
+    })() : ''}
 
     ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
 
@@ -755,22 +768,29 @@ function buildMinimalHTML(articles, options) {
     </style>
 </head>
 <body>
-    ${title ? `
+    ${title ? (() => {
+        const agencyName = (userName && userName !== 'Utente') ? userName : '';
+        const topLogo = clientLogo || userLogo || null;
+        const subtitleText = clientName || agencyName || '';
+        const showBottomAgencyLogo = (clientLogo && userLogo);
+        return `
     <div class="page cover-page-e">
         <div class="cover-top-e">
-            ${clientLogo ? `<img src="${clientLogo}" class="client-logo-e" alt="Client Logo">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="client-logo-e" alt="Logo">` : ''}
         </div>
         <div class="cover-center-e">
             <div class="cover-rule-top"></div>
             <div class="cover-title-e">${title}</div>
-            <div class="cover-subtitle-e">${clientName || ''}</div>
+            ${subtitleText ? `<div class="cover-subtitle-e">${subtitleText}</div>` : ''}
             <div class="cover-rule-bottom"></div>
             <div class="cover-date-e">${dateStr}</div>
         </div>
-        <div class="cover-bottom-e">
-            ${userLogo ? `<img src="${userLogo}" style="max-height:20mm;" alt="Agency Logo">` : ''}
+        <div class="cover-bottom-e" style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3mm;">
+            ${showBottomAgencyLogo ? `<img src="${userLogo}" style="max-height:20mm;" alt="Logo Agenzia">` : ''}
+            ${agencyName ? `<div style="font-size:9.5pt; color:#78716c; font-style:italic; font-family:'Times New Roman',serif;">A cura di: ${agencyName}</div>` : ''}
         </div>
-    </div>` : ''}
+    </div>`;
+    })() : ''}
 
     ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
 

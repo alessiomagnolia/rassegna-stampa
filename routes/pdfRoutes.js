@@ -53,7 +53,7 @@ function fetchImageAsBase64(url) {
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo, templateId, includeAnalytics, id } = req.body;
+        const { articles, title, clientName, clientLogo, templateId, includeAnalytics, id, userLogo, userName } = req.body;
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });
@@ -61,11 +61,15 @@ router.post('/generate', authMiddleware, async (req, res) => {
 
         const reviewTitle = title || 'Rassegna Stampa';
         const db = getDb();
-        const user = db.prepare('SELECT company_name, logo_path FROM users WHERE id = ?').get(req.userId);
+        const user = db.prepare('SELECT company_name, logo_path, logo_data FROM users WHERE id = ?').get(req.userId);
         
-        let userLogoBase64 = null;
-        if (user && user.logo_path) {
-            const logoFilePath = path.join(__dirname, '..', user.logo_path);
+        let userLogoBase64 = userLogo || null;
+        if (!userLogoBase64 && user && user.logo_data) {
+            userLogoBase64 = user.logo_data;
+        }
+        if (!userLogoBase64 && user && user.logo_path) {
+            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
+            const logoFilePath = path.join(__dirname, '..', cleanRelPath);
             if (fs.existsSync(logoFilePath)) {
                 const ext = path.extname(logoFilePath).substring(1);
                 const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
@@ -100,9 +104,11 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             return updated;
         }));
 
+        const finalUserName = userName || user?.company_name || '';
+
         const options = {
             title: reviewTitle,
-            userName: user?.company_name || 'Utente',
+            userName: finalUserName,
             clientName: clientName || null,
             clientLogo: clientLogo || null,
             userLogo: userLogoBase64,
@@ -170,7 +176,7 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
 // Standalone Single-Page Executive KPI Report (PDF A4)
 router.post('/generate-kpi', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo, reviewId } = req.body;
+        const { articles, title, clientName, clientLogo, reviewId, userLogo, userName } = req.body;
         let resolvedArticles = articles;
         let resolvedTitle = title;
         let resolvedClientName = clientName;
@@ -200,11 +206,15 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
         const clientNameFinal = resolvedClientName || null;
         const clientLogoFinal = resolvedClientLogo || null;
         const db = getDb();
-        const user = db.prepare('SELECT company_name, logo_path FROM users WHERE id = ?').get(req.userId);
+        const user = db.prepare('SELECT company_name, logo_path, logo_data FROM users WHERE id = ?').get(req.userId);
         
-        let userLogoBase64 = null;
-        if (user && user.logo_path) {
-            const logoFilePath = path.join(__dirname, '..', user.logo_path);
+        let userLogoBase64 = userLogo || null;
+        if (!userLogoBase64 && user && user.logo_data) {
+            userLogoBase64 = user.logo_data;
+        }
+        if (!userLogoBase64 && user && user.logo_path) {
+            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
+            const logoFilePath = path.join(__dirname, '..', cleanRelPath);
             if (fs.existsSync(logoFilePath)) {
                 const ext = path.extname(logoFilePath).substring(1);
                 const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
@@ -213,9 +223,11 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
             }
         }
 
+        const finalUserName = userName || user?.company_name || '';
+
         const options = {
             title: reviewTitle,
-            userName: user?.company_name || 'Utente',
+            userName: finalUserName,
             clientName: clientNameFinal,
             clientLogo: clientLogoFinal,
             userLogo: userLogoBase64,

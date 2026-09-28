@@ -45,6 +45,11 @@ function initDatabase() {
     if (!existingCols.includes('client_logo'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN client_logo TEXT DEFAULT ''").run();
     if (!existingCols.includes('share_token'))   db.prepare("ALTER TABLE press_reviews ADD COLUMN share_token TEXT DEFAULT NULL").run();
 
+    const existingUserCols = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+    if (!existingUserCols.includes('logo_data')) {
+        db.prepare("ALTER TABLE users ADD COLUMN logo_data TEXT DEFAULT ''").run();
+    }
+
     // Create articles table (if we want to cache/store them later)
     db.prepare(`
         CREATE TABLE IF NOT EXISTS articles (

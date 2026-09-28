@@ -1859,18 +1859,26 @@ function renderCoverPreview() {
     const titleStyle = options.customCoverTitleSize ? `font-size:${options.customCoverTitleSize}px;` : '';
     const subtitleStyle = options.customCoverSubtitleSize ? `font-size:${options.customCoverSubtitleSize}px;` : '';
     const dateStyle = options.customCoverDateSize ? `font-size:${options.customCoverDateSize}px;` : '';
+
+    const topLogo = options.clientLogo || options.userLogo || '';
+    const agencyName = (options.userName && options.userName !== 'Utente') ? options.userName : '';
+    const subtitleText = options.clientName ? options.clientName : agencyName;
+    const showBottomAgencyLogo = (options.clientLogo && options.userLogo);
+
     return `
     <div class="pdf-cover-preview">
         <div class="pdf-cover-top">
-            ${options.clientLogo ? `<img src="${options.clientLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Cliente">` : ''}
+            ${topLogo ? `<img src="${topLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Copertina">` : ''}
         </div>
         <div class="pdf-cover-center">
             <div class="pdf-cover-title pdf-resize-selectable" data-elem-name="Titolo Copertina" style="${titleStyle}">${escHtml(options.title || 'Rassegna Stampa')}</div>
             <div class="pdf-cover-decor"></div>
-            ${options.clientName ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(options.clientName)}</div>` : ''}
+            ${subtitleText ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(subtitleText)}</div>` : ''}
             <div class="pdf-cover-date pdf-resize-selectable" data-elem-name="Data Copertina" style="${dateStyle}">${dateStr}</div>
         </div>
-        <div class="pdf-cover-bottom">
+        <div class="pdf-cover-bottom" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+            ${showBottomAgencyLogo ? `<img src="${options.userLogo}" style="max-height:22mm; max-width:50mm; object-fit:contain;" alt="Logo Agenzia">` : ''}
+            ${agencyName ? `<div style="font-size:0.75rem; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">A cura di: ${escHtml(agencyName)}</div>` : ''}
         </div>
     </div>`;
 }
@@ -2568,6 +2576,8 @@ async function generateAndDownload() {
                 title: title || options.title || '',
                 clientName: options.clientName || '',
                 clientLogo: options.clientLogo || '',
+                userName: options.userName || '',
+                userLogo: options.userLogo || '',
                 templateId: options.templateId || 'classic',
                 includeAnalytics: !!options.includeAnalytics
             })

@@ -126,7 +126,7 @@ router.post('/login', async (req, res) => {
 router.get('/profile', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        const user = db.prepare('SELECT id, email, company_name, logo_path, created_at FROM users WHERE id = ?').get(req.userId);
+        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, created_at FROM users WHERE id = ?').get(req.userId);
         
         if (!user) {
             return res.status(404).json({ error: 'Utente non trovato.' });
@@ -147,7 +147,7 @@ router.put('/profile', authMiddleware, (req, res) => {
         
         db.prepare('UPDATE users SET company_name = ? WHERE id = ?').run(company_name, req.userId);
         
-        const user = db.prepare('SELECT id, email, company_name, logo_path, created_at FROM users WHERE id = ?').get(req.userId);
+        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, created_at FROM users WHERE id = ?').get(req.userId);
         res.json({ user });
     } catch (error) {
         console.error('Update profile error:', error);
@@ -168,11 +168,18 @@ router.post('/upload-logo', authMiddleware, (req, res) => {
 
         try {
             const logoPath = `/uploads/${req.userId}/${req.file.filename}`;
+            const ext = path.extname(req.file.filename).substring(1);
+            const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
+            let logoBase64 = '';
+            try {
+                const fileData = fs.readFileSync(req.file.path, { encoding: 'base64' });
+                logoBase64 = `data:image/${format};base64,${fileData}`;
+            } catch(e) {}
+
             const db = getDb();
+            db.prepare('UPDATE users SET logo_path = ?, logo_data = ? WHERE id = ?').run(logoPath, logoBase64, req.userId);
             
-            db.prepare('UPDATE users SET logo_path = ? WHERE id = ?').run(logoPath, req.userId);
-            
-            res.json({ logo_path: logoPath });
+            res.json({ logo_path: logoPath, logo_data: logoBase64 });
         } catch (error) {
             console.error('Save logo path error:', error);
             res.status(500).json({ error: 'Errore nel salvataggio del logo.' });
@@ -187,7 +194,8 @@ router.delete('/logo', authMiddleware, (req, res) => {
         const user = db.prepare('SELECT logo_path FROM users WHERE id = ?').get(req.userId);
         
         if (user && user.logo_path) {
-            const fullPath = path.join(__dirname, '..', user.logo_path);
+            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
+            const fullPath = path.join(__dirname, '..', cleanRelPath);
             try {
                 if (fs.existsSync(fullPath)) {
                     fs.unlinkSync(fullPath);
@@ -197,7 +205,9 @@ router.delete('/logo', authMiddleware, (req, res) => {
                 console.warn('Delete logo: file not found on disk, cleaning DB anyway:', fsErr.message);
             }
             
-            db.prepare('UPDATE users SET logo_path = "" WHERE id = ?').run(req.userId);
+            db.prepare('UPDATE users SET logo_path = "", logo_data = "" WHERE id = ?').run(req.userId);
+        } else {
+            db.prepare('UPDATE users SET logo_path = "", logo_data = "" WHERE id = ?').run(req.userId);
         }
         
         res.json({ success: true, message: 'Logo eliminato con successo.' });
