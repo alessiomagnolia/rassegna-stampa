@@ -902,7 +902,7 @@
         }
         .pdf-page-preview.template-minimal .article-title-e {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: clamp(9px, 2.2vw, 20pt);
+            font-size: 28px;
             font-weight: 700;
             color: #1c1917;
             line-height: 1.25;
@@ -3003,7 +3003,12 @@ function renderArticlePreview(art, pageNum, totalPages) {
     const hdBadgeBg = art.darkHeader ? '#2a2a3e' : '';
     const hdBadgeColor = art.darkHeader ? '#aaaaaa' : '';
 
-    const titleStyle = art.customTitleSize ? `font-size:${art.customTitleSize}px;` : '';
+    const templateId = options.templateId || 'classic';
+    const isMinimal = (templateId === 'minimal');
+    const effectiveTitleSize = (art.customTitleSize && art.customTitleSize !== 20 && art.customTitleSize !== 18 && art.customTitleSize !== 16)
+        ? art.customTitleSize
+        : (isMinimal ? 28 : null);
+    const titleStyle = effectiveTitleSize ? `font-size:${effectiveTitleSize}px;` : '';
     const textStyle  = art.customTextSize ? `font-size:${art.customTextSize}px;` : '';
     const sourceStyle = art.customSourceSize ? `font-size:${art.customSourceSize}px;` : '';
     const logoHeight = art.customLogoHeight || 38;
@@ -3015,8 +3020,6 @@ function renderArticlePreview(art, pageNum, totalPages) {
     const visualZoneStyle = `height:${imgHeight}px; max-height:${imgHeight}px; width:calc(100% - 3.8%); margin:0 1.9% 3.8%; overflow:hidden; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.08); background:#0f172a; display:flex; align-items:center; justify-content:center;`;
     const imgStyle = `width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:cover !important; object-position:center ${imgPosY}%; display:block; border-radius:8px;`;
     const cleanExcerpt = (art.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
-
-    const templateId = options.templateId || 'classic';
 
     if (templateId === 'modern') {
         const modernVisualZoneStyle = `height:${imgHeight}px; max-height:${imgHeight}px; width:100%; margin:0 0 3%; overflow:hidden; border-radius:10px; box-shadow:0 10px 25px -5px rgba(15,23,42,0.1); border:1px solid #e2e8f0; background:#0f172a; display:flex; align-items:center; justify-content:center;`;
@@ -3650,7 +3653,9 @@ function fillEditForm(idx) {
     if (urlEl) urlEl.value = art.url || '';
 
     // Text Sizes
-    const titleSize = art.customTitleSize || 20;
+    const isMin = (options.templateId === 'minimal');
+    const defTitle = isMin ? 28 : 26;
+    const titleSize = (art.customTitleSize && art.customTitleSize !== 20 && art.customTitleSize !== 18 && art.customTitleSize !== 16) ? art.customTitleSize : defTitle;
     const textSize = art.customTextSize || 11;
     const sourceSize = art.customSourceSize || 13;
 
@@ -3752,8 +3757,11 @@ function syncLivePreview() {
     art.source_type    = typeVal;
     art.published_date = dateVal;
     art.url            = urlVal;
-    art.darkHeader     = darkHeaderVal;
-    if (!isNaN(titleSizeVal) && titleSizeVal > 0) art.customTitleSize = titleSizeVal;
+    const isMinSync = (options.templateId === 'minimal');
+    const defTitleSync = isMinSync ? 28 : 26;
+    if (!isNaN(titleSizeVal) && titleSizeVal > 0) {
+        art.customTitleSize = (titleSizeVal === defTitleSync) ? undefined : titleSizeVal;
+    }
     if (!isNaN(textSizeVal) && textSizeVal > 0) art.customTextSize = textSizeVal;
     if (!isNaN(sourceSizeVal) && sourceSizeVal > 0) art.customSourceSize = sourceSizeVal;
     if (!isNaN(imgHeightVal) && imgHeightVal > 0) art.customImageHeight = imgHeightVal;
@@ -3996,7 +4004,10 @@ function selectPreviewElement(el, scrollDrawer = true) {
         if (!art) return;
 
         if (type === 'title') {
-            currentVal = (art.customTitleSize || 20) + 'px';
+            const isMin = (options.templateId === 'minimal');
+            const defTitle = isMin ? 28 : (options.templateId === 'modern' ? 26 : 24);
+            const currentTitleSize = (art.customTitleSize && art.customTitleSize !== 20 && art.customTitleSize !== 18 && art.customTitleSize !== 16) ? art.customTitleSize : defTitle;
+            currentVal = currentTitleSize + 'px';
             if (imgTools) imgTools.style.display = 'none';
         } else if (type === 'excerpt') {
             currentVal = (art.customTextSize || 11) + 'px';
@@ -4205,9 +4216,12 @@ function changeSelectedElementSize(delta) {
     const art = articles[idx];
 
     if (type === 'title') {
-        let val = (art.customTitleSize || 20) + delta;
+        const isMin = (options.templateId === 'minimal');
+        const defTitle = isMin ? 28 : (options.templateId === 'modern' ? 26 : 24);
+        const currentTitleSize = (art.customTitleSize && art.customTitleSize !== 20 && art.customTitleSize !== 18 && art.customTitleSize !== 16) ? art.customTitleSize : defTitle;
+        let val = currentTitleSize + delta;
         val = Math.max(12, Math.min(38, Math.round(val)));
-        art.customTitleSize = val;
+        art.customTitleSize = (val === defTitle) ? undefined : val;
         selectedPreviewElem.style.fontSize = val + 'px';
         const slider = document.getElementById('editTitleSizeSlider');
         if (slider) slider.value = val;

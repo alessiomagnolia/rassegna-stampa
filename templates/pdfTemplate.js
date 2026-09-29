@@ -449,7 +449,8 @@ function buildClassicHTML(articles, options) {
         const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
         const clampLines = article.imageBase64 ? 14 : 28;
 
-        const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+        const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
+        const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
         const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
         const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
         const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
@@ -655,7 +656,8 @@ function buildModernHTML(articles, options) {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
             const clampLines = article.imageBase64 ? 13 : 26;
-            const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+            const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
+            const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
             const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
             const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
             const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
@@ -855,7 +857,8 @@ function buildMinimalHTML(articles, options) {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
             const clampLines = article.imageBase64 ? 13 : 26;
-            const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+            const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 28;
+            const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
             const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
             const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
             const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
