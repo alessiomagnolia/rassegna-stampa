@@ -1,5 +1,6 @@
 const { takeScreenshot, launchBrowser } = require('./screenshotService');
 const { extractLogo, downloadImageAsBase64 } = require('./logoExtractor');
+const { PRIORITY_SOURCES } = require('../config/prioritySources');
 const https = require('https');
 const http = require('http');
 const zlib = require('zlib');
@@ -33,7 +34,7 @@ async function getCheerio() {
 }
 
 // ---------------------------------------------------------------
-// Tier 2 helper: Fetch HTML with modern headers & decompression
+// Tier 2 helper: Fetch HTML with modern headers, decompression & Cloudflare bypass
 // ---------------------------------------------------------------
 async function fetchHtml(url, customHeaders = {}) {
     const modernHeaders = {
@@ -56,7 +57,7 @@ async function fetchHtml(url, customHeaders = {}) {
     if (typeof fetch === 'function') {
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
+            const timer = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(url, {
                 signal: controller.signal,
                 redirect: 'follow',
@@ -65,7 +66,9 @@ async function fetchHtml(url, customHeaders = {}) {
             clearTimeout(timer);
             if (res.ok) {
                 const text = await res.text();
-                if (text && text.length > 50) return text;
+                if (text && text.length > 50 && !isBotChallenge('', text)) {
+                    return text;
+                }
             }
         } catch (fetchErr) {
             console.log(`[fetchHtml] Global fetch failed (${fetchErr.message}), provo con http client...`);
@@ -73,48 +76,85 @@ async function fetchHtml(url, customHeaders = {}) {
     }
 
     // 2. Fallback using Node https/http with zlib decompression
-    return new Promise((resolve, reject) => {
-        const lib = url.startsWith('https') ? https : http;
-        const options = {
-            agent: url.startsWith('https') ? httpsAgent : httpAgent,
-            headers: {
-                ...modernHeaders,
-                'Accept-Encoding': 'gzip, deflate, br'
-            }
-        };
+    let nodeClientHtml = null;
+    try {
+        nodeClientHtml = await new Promise((resolve, reject) => {
+            const lib = url.startsWith('https') ? https : http;
+            const options = {
+                agent: url.startsWith('https') ? httpsAgent : httpAgent,
+                headers: {
+                    ...modernHeaders,
+                    'Accept-Encoding': 'gzip, deflate, br'
+                }
+            };
 
-        const req = lib.get(url, options, (res) => {
-            if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
-                try {
-                    const redirectUrl = new URL(res.headers.location, url).href;
-                    fetchHtml(redirectUrl, customHeaders).then(resolve).catch(reject);
-                } catch { reject(new Error('Redirect non valido')); }
-                return;
-            }
-            if (res.statusCode < 200 || res.statusCode >= 400) {
-                reject(new Error(`HTTP ${res.statusCode}`));
-                return;
-            }
+            const req = lib.get(url, options, (res) => {
+                if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+                    try {
+                        const redirectUrl = new URL(res.headers.location, url).href;
+                        fetchHtml(redirectUrl, customHeaders).then(resolve).catch(reject);
+                    } catch { reject(new Error('Redirect non valido')); }
+                    return;
+                }
+                if (res.statusCode < 200 || res.statusCode >= 400) {
+                    reject(new Error(`HTTP ${res.statusCode}`));
+                    return;
+                }
 
-            const encoding = (res.headers['content-encoding'] || '').toLowerCase();
-            let stream = res;
-            if (encoding === 'gzip') {
-                stream = res.pipe(zlib.createGunzip());
-            } else if (encoding === 'deflate') {
-                stream = res.pipe(zlib.createInflate());
-            } else if (encoding === 'br') {
-                stream = res.pipe(zlib.createBrotliDecompress());
-            }
+                const encoding = (res.headers['content-encoding'] || '').toLowerCase();
+                let stream = res;
+                if (encoding === 'gzip') {
+                    stream = res.pipe(zlib.createGunzip());
+                } else if (encoding === 'deflate') {
+                    stream = res.pipe(zlib.createInflate());
+                } else if (encoding === 'br') {
+                    stream = res.pipe(zlib.createBrotliDecompress());
+                }
 
-            const chunks = [];
-            stream.on('data', c => chunks.push(c));
-            stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-            stream.on('error', reject);
+                const chunks = [];
+                stream.on('data', c => chunks.push(c));
+                stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+                stream.on('error', reject);
+            });
+
+            req.setTimeout(8000, () => { req.destroy(); reject(new Error('Timeout fetch')); });
+            req.on('error', reject);
         });
 
-        req.setTimeout(12000, () => { req.destroy(); reject(new Error('Timeout fetch')); });
-        req.on('error', reject);
-    });
+        if (nodeClientHtml && nodeClientHtml.length > 50 && !isBotChallenge('', nodeClientHtml)) {
+            return nodeClientHtml;
+        }
+    } catch (nodeErr) {
+        console.log(`[fetchHtml] Node HTTP client non riuscito (${nodeErr.message}), provo Google Proxy bypass...`);
+    }
+
+    // 3. Fallback: Google Proxy (Bypassa Cloudflare Bot Fight Mode su IP datacenter/cloud)
+    try {
+        console.log(`[fetchHtml] Tentativo bypass Cloudflare tramite Google Proxy per: ${url}`);
+        const googleProxyUrl = `https://translate.google.com/translate?sl=auto&tl=it&u=${encodeURIComponent(url)}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch(googleProxyUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            }
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+            const text = await res.text();
+            if (text && text.length > 50 && !isBotChallenge('', text)) {
+                console.log(`[fetchHtml] Successo bypass Cloudflare via Google Proxy per: ${url}`);
+                return text;
+            }
+        }
+    } catch (gErr) {
+        console.log(`[fetchHtml] Google proxy bypass fallito (${gErr.message})`);
+    }
+
+    if (nodeClientHtml) return nodeClientHtml;
+    throw new Error('Impossibile scaricare HTML (connessione rifiutata o blocco anti-bot)');
 }
 
 // ---------------------------------------------------------------
@@ -289,12 +329,12 @@ function isBotChallenge(title, content) {
         'checking your browser',
         'please verify you are a human',
         'are you a human',
-        'cloudflare',
         '403 forbidden',
         'shieldsquare captcha'
     ];
 
-    if (challengeSnippets.some(cs => t === cs || t.startsWith(cs) || t.includes(cs))) return true;
+    if (challengeSnippets.some(cs => t === cs || t.startsWith(cs) || (cs.length > 10 && t.includes(cs)))) return true;
+    if (t === 'cloudflare' || t.startsWith('cloudflare |') || t.includes('attention required! | cloudflare') || t.includes('just a moment... | cloudflare')) return true;
 
     if (c.includes('enable javascript and cookies to continue') ||
         c.includes('ray id:') ||
@@ -613,8 +653,15 @@ function cleanText(html, wordLimit = 500) {
 
 function extractSourceName(urlStr) {
     try {
-        const hostname = new URL(urlStr).hostname;
-        const parts = hostname.replace(/^www\./, '').split('.');
+        const hostname = new URL(urlStr).hostname.replace(/^www\./, '').toLowerCase();
+        if (Array.isArray(PRIORITY_SOURCES)) {
+            for (const s of PRIORITY_SOURCES) {
+                if (hostname === s.domain || hostname.endsWith('.' + s.domain)) {
+                    return s.name;
+                }
+            }
+        }
+        const parts = hostname.split('.');
         if (parts.length > 0) {
             return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
         }
@@ -656,6 +703,17 @@ function extractSourceType(urlStr) {
                 return mediaTypesDB[domain];
             }
         }
+        if (Array.isArray(PRIORITY_SOURCES)) {
+            for (const s of PRIORITY_SOURCES) {
+                if (hostname === s.domain || hostname.endsWith('.' + s.domain)) {
+                    if (s.category === 'quotidiano_nazionale') return 'Quotidiano Nazionale';
+                    if (s.category === 'agenzia_stampa') return 'Agenzia di Stampa';
+                    if (s.category === 'tv_radio') return 'Radio/TV';
+                    if (s.category === 'quotidiano_locale') return 'Quotidiano Locale';
+                    if (s.category === 'web_digital') return 'Web';
+                }
+            }
+        }
         return 'Web';
     } catch (e) {
         return 'Web';
@@ -684,12 +742,14 @@ async function extractArticle(url, options = {}) {
     let article = null;
     let tierUsed = 'none';
 
-    // 1) Tier 1: Primary @extractus/article-extractor
+    // 1) Tier 1: Primary @extractus/article-extractor (with safe 5s timeout)
     try {
         const extract = await getExtractor();
         if (extract) {
             console.log(`[Estrattore Tier 1] Analisi primaria: ${url}`);
-            const result = await extract(url);
+            const extractPromise = extract(url);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout @extractus')), 5000));
+            const result = await Promise.race([extractPromise, timeoutPromise]);
             if (result && (result.title || result.content)) {
                 if (!isBotChallenge(result.title, result.content)) {
                     article = result;
@@ -745,7 +805,20 @@ async function extractArticle(url, options = {}) {
                 }
             }
         } catch (fallbackErr) {
-            console.log(`[Estrattore Tier 2] Fallback Cheerio fallito (${fallbackErr.message}), provo Tier 3...`);
+            console.log(`[Estrattore Tier 2] Fallback Cheerio non riuscito (${fallbackErr.message})`);
+            try {
+                const extract = await getExtractor();
+                if (extract) {
+                    const html = await fetchHtml(url);
+                    if (html && html.length > 50 && !isBotChallenge('', html)) {
+                        const parsedFromHtml = await extract(html);
+                        if (parsedFromHtml && (parsedFromHtml.title || parsedFromHtml.content) && !isBotChallenge(parsedFromHtml.title, parsedFromHtml.content)) {
+                            article = parsedFromHtml;
+                            tierUsed = 'Tier 2 (@extractus da HTML)';
+                        }
+                    }
+                }
+            } catch (e2) {}
         }
     }
 

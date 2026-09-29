@@ -41,7 +41,7 @@ async function downloadImageAsBase64(imageUrl) {
     }
 
     // 2. Fallback using Node https/http with rejectUnauthorized: false & zlib decompression
-    return new Promise((resolve) => {
+    const nodeBuffer = await new Promise((resolve) => {
         try {
             const lib = imageUrl.startsWith('https') ? https : http;
             const req = lib.get(imageUrl, {
@@ -82,6 +82,25 @@ async function downloadImageAsBase64(imageUrl) {
             resolve(null);
         }
     });
+
+    if (nodeBuffer) return nodeBuffer;
+
+    // 3. Fallback using wsrv.nl CDN cache (bypasses Cloudflare block on datacenter IPs)
+    try {
+        const cdnUrl = `https://wsrv.nl/?url=${encodeURIComponent(imageUrl)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const cdnRes = await fetch(cdnUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (cdnRes.ok) {
+            const buffer = await cdnRes.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+            const contentType = cdnRes.headers.get('content-type') || 'image/jpeg';
+            return `data:${contentType};base64,${base64}`;
+        }
+    } catch (cdnErr) {}
+
+    return null;
 }
 
 async function extractLogo(url, sourceName = '') {

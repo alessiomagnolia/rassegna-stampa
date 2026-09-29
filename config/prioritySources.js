@@ -64,6 +64,7 @@ const PRIORITY_SOURCES = [
     { name: 'Basilicata24',              domain: 'basilicata24.it',          url: 'https://www.basilicata24.it',          rss: 'https://www.basilicata24.it/feed/',                             category: 'web_digital' },
     { name: 'Key4Biz',                   domain: 'key4biz.it',               url: 'https://www.key4biz.it',               rss: 'https://www.key4biz.it/feed/',                                  category: 'web_digital' },
     { name: 'Economy Magazine',          domain: 'economymagazine.it',       url: 'https://www.economymagazine.it',       rss: 'https://www.economymagazine.it/feed/',                          category: 'web_digital' },
+    { name: "Corriere dell'Economia",    domain: 'corrieredelleconomia.it',  url: 'https://www.corrieredelleconomia.it',  rss: 'https://www.corrieredelleconomia.it/feed/',                     category: 'web_digital' },
     { name: 'Startup Business',          domain: 'startupbusiness.it',       url: 'https://www.startupbusiness.it',       rss: 'https://www.startupbusiness.it/feed/',                          category: 'web_digital' },
     { name: 'Il Denaro',                 domain: 'ildenaro.it',              url: 'https://www.ildenaro.it',              rss: 'https://www.ildenaro.it/feed/',                                 category: 'web_digital' },
     { name: 'Notizie.it',                domain: 'notizie.it',               url: 'https://www.notizie.it',               rss: null,                                                            category: 'web_digital' },
