@@ -86,7 +86,7 @@ router.post('/analytics', authMiddleware, (req, res) => {
 
 /**
  * POST /api/articles/digest
- * Generates an executive 8:00 AM Morning Digest from selected articles
+ * Generates an executive Morning Digest from selected articles
  */
 router.post('/digest', authMiddleware, async (req, res) => {
     try {
@@ -113,7 +113,7 @@ router.post('/digest', authMiddleware, async (req, res) => {
                 ).join('\n\n');
 
                 const prompt = `Sei il capo ufficio stampa senior di un'agenzia PR di primo livello.
-Il tuo compito è preparare il "Morning Executive Briefing" delle ore 8:00 per il CEO e i vertici aziendali relativo al cliente: "${client}" (Oggetto rassegna: "${title}", Data: ${todayStr}).
+Il tuo compito è preparare l'"Executive Briefing" per il CEO e i vertici aziendali relativo al cliente: "${client}" (Oggetto rassegna: "${title}", Data: ${todayStr}).
 
 Articoli raccolti nella rassegna odierna:
 ${articleSummaries}
@@ -122,7 +122,7 @@ Sentiment generale stimato: ${analytics.overallSentiment} (${analytics.sentiment
 
 Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
 {
-  "subject": "[Briefing 8:00] Rassegna Stampa - ${client} - ${todayStr}",
+  "subject": "[Briefing] Rassegna Stampa - ${client} - ${todayStr}",
   "highlights": [
     "Punto chiave 1 sintetico ed esecutivo (max 1-2 righe)",
     "Punto chiave 2",
@@ -166,7 +166,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
         // Fallback generator if AI offline or key not present
         if (!digestData) {
             digestData = {
-                subject: `[Briefing Stampa] ${client} - ${todayStr}`,
+                subject: `[Briefing] Rassegna Stampa - ${client} - ${todayStr}`,
                 highlights: [
                     `Rassegna odierna con ${articles.length} uscite monitorate su ${analytics.uniqueOutlets} testate.`,
                     `Esposizione netta stimata: circa ${analytics.formattedAudienceOTS} lettori potenziali (~${analytics.formattedEstimatedReads} letture stimate articoli).`,

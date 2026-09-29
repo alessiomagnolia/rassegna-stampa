@@ -3827,8 +3827,16 @@ window.openMorningDigestForCurrentArticles = async function() {
             throw new Error('Impossibile elaborare il digest.');
         }
 
+        const cleanSubject = (data.digest.subject || `[Briefing] Rassegna Stampa - ${clientName || 'Cliente'}`)
+            .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+            .replace(/\b8:00\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        data.digest.subject = cleanSubject;
+
         currentDigestData = {
             ...data.digest,
+            subject: cleanSubject,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
             emailText: data.emailText || data.whatsappText || ''
@@ -3877,8 +3885,16 @@ window.openMorningDigestFromHistory = async function(reviewId) {
             throw new Error('Impossibile elaborare il digest.');
         }
 
+        const cleanSubject = (data.digest.subject || `[Briefing] Rassegna Stampa - ${reviewData.clientName || 'Cliente'}`)
+            .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+            .replace(/\b8:00\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        data.digest.subject = cleanSubject;
+
         currentDigestData = {
             ...data.digest,
+            subject: cleanSubject,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
             emailText: data.emailText || data.whatsappText || ''
@@ -3900,7 +3916,13 @@ function renderDigestModalContent(digest) {
     if (loading) loading.classList.add('hidden');
     if (content) content.classList.remove('hidden');
 
-    if (subjectEl) subjectEl.textContent = digest.subject || 'Briefing Rassegna Stampa';
+    const cleanSubject = (digest.subject || 'Briefing Rassegna Stampa')
+        .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+        .replace(/\b8:00\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+    if (subjectEl) subjectEl.textContent = cleanSubject;
     if (previewEl) {
         let clipsHtml = '';
         if (Array.isArray(digest.clips)) {
@@ -4021,11 +4043,54 @@ window.copyDigestWhatsApp = async function(btnEl) {
     }
 };
 
-window.openDigestMailto = function() {
+window.openDigestMailto = async function(btnEl) {
     if (!currentDigestData) return;
-    const subject = encodeURIComponent(currentDigestData.subject || 'Briefing Esecutivo Stampa');
-    const body = encodeURIComponent(currentDigestData.emailText || currentDigestData.whatsappText || '');
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const btn = btnEl || (window.event && window.event.currentTarget) || document.getElementById('btnDigestOpenMail');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    let cleanSubject = (currentDigestData.subject || 'Briefing Rassegna Stampa')
+        .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+        .replace(/\b8:00\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+    const htmlContent = currentDigestData.emailHtml || '';
+    const textContent = currentDigestData.emailText || currentDigestData.whatsappText || '';
+
+    // Copia negli appunti la versione grafica Rich HTML (compatibile con Outlook e Gmail)
+    try {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textContent);
+        }
+    } catch (err) {
+        console.warn('Errore copia automatica appunti prima di mailto:', err);
+    }
+
+    // Apre il client email impostando l'oggetto pulito (senza body plain text che distruggerebbe la grafica)
+    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}`;
+
+    if (btn) {
+        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Incolla (Ctrl+V) nella mail!';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#10b981';
+        if (window.feather) feather.replace();
+        setTimeout(() => {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.style.borderColor = '';
+                btn.style.color = '';
+                if (window.feather) feather.replace();
+            }
+        }, 4000);
+    }
+
+    showToast('📋 Grafica copiata negli appunti! Nella schermata dell\'email premi Incolla (Ctrl+V) per inserire il briefing formattato.', 'success', 6000);
 };
 
 // --- 3. WEB CLIENT PORTAL & SHARING ---
@@ -4897,8 +4962,16 @@ window.generateBriefingFromPageSelector = async function() {
             throw new Error('Impossibile elaborare il Briefing Esecutivo.');
         }
 
+        const cleanSubject = (data.digest.subject || `[Briefing] Rassegna Stampa - ${clientName || 'Cliente'}`)
+            .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+            .replace(/\b8:00\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        data.digest.subject = cleanSubject;
+
         currentPageDigestData = {
             ...data.digest,
+            subject: cleanSubject,
             whatsappText: data.whatsappText || '',
             emailHtml: data.emailHtml || '',
             emailText: data.emailText || data.whatsappText || ''
@@ -4907,7 +4980,7 @@ window.generateBriefingFromPageSelector = async function() {
         // Render Subject
         const subjectEl = document.getElementById('pageBriefingSubject');
         if (subjectEl) {
-            subjectEl.textContent = data.digest.subject || 'Briefing Rassegna Stampa';
+            subjectEl.textContent = cleanSubject;
         }
 
         // Render Formatted HTML Preview
@@ -4970,7 +5043,11 @@ window.copyBriefingSubject = async function(btnEl) {
     if (!currentPageDigestData || !currentPageDigestData.subject) return;
     const btn = btnEl || document.getElementById('btnCopyPageSubject');
     const originalHtml = btn ? btn.innerHTML : null;
-    const text = currentPageDigestData.subject;
+    const text = (currentPageDigestData.subject || '')
+        .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+        .replace(/\b8:00\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
 
     try {
         await navigator.clipboard.writeText(text);
@@ -5074,11 +5151,54 @@ window.copyPageBriefingWhatsApp = async function(btnEl) {
     }
 };
 
-window.openPageBriefingMailto = function() {
+window.openPageBriefingMailto = async function(btnEl) {
     if (!currentPageDigestData) return;
-    const subject = encodeURIComponent(currentPageDigestData.subject || 'Briefing Esecutivo Stampa');
-    const body = encodeURIComponent(currentPageDigestData.emailText || currentPageDigestData.whatsappText || '');
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const btn = btnEl || (window.event && window.event.currentTarget) || document.getElementById('btnPageOpenMail');
+    const originalHtml = btn ? btn.innerHTML : null;
+
+    let cleanSubject = (currentPageDigestData.subject || 'Briefing Rassegna Stampa')
+        .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+        .replace(/\b8:00\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+    const htmlContent = currentPageDigestData.emailHtml || '';
+    const textContent = currentPageDigestData.emailText || currentPageDigestData.whatsappText || '';
+
+    // Copia negli appunti la versione grafica Rich HTML (compatibile con Outlook e Gmail)
+    try {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textContent);
+        }
+    } catch (err) {
+        console.warn('Errore copia automatica appunti prima di mailto:', err);
+    }
+
+    // Apre il client email impostando l'oggetto pulito (senza body plain text che distruggerebbe la grafica)
+    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}`;
+
+    if (btn) {
+        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Incolla (Ctrl+V) nella mail!';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#10b981';
+        if (window.feather) feather.replace();
+        setTimeout(() => {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.style.borderColor = '';
+                btn.style.color = '';
+                if (window.feather) feather.replace();
+            }
+        }, 4000);
+    }
+
+    showToast('📋 Grafica copiata negli appunti! Nella schermata dell\'email premi Incolla (Ctrl+V) per inserire il briefing formattato.', 'success', 6000);
 };
 
 // ==========================================================================
