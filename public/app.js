@@ -4072,11 +4072,11 @@ window.openDigestMailto = async function(btnEl) {
         console.warn('Errore copia automatica appunti prima di mailto:', err);
     }
 
-    // Apre il client email impostando l'oggetto pulito (senza body plain text che distruggerebbe la grafica)
-    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}`;
+    // Apre il client email impostando l'oggetto e il corpo con il testo del briefing
+    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}&body=${encodeURIComponent(textContent)}`;
 
     if (btn) {
-        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Incolla (Ctrl+V) nella mail!';
+        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Mail Aperta!';
         btn.style.borderColor = '#10b981';
         btn.style.color = '#10b981';
         if (window.feather) feather.replace();
@@ -4087,10 +4087,10 @@ window.openDigestMailto = async function(btnEl) {
                 btn.style.color = '';
                 if (window.feather) feather.replace();
             }
-        }, 4000);
+        }, 3000);
     }
 
-    showToast('📋 Grafica copiata negli appunti! Nella schermata dell\'email premi Incolla (Ctrl+V) per inserire il briefing formattato.', 'success', 6000);
+    showToast('Apertura email con il testo del briefing precompilato!', 'success');
 };
 
 window.downloadBriefingEml = function(type = 'page') {
@@ -5339,11 +5339,11 @@ window.openPageBriefingMailto = async function(btnEl) {
         console.warn('Errore copia automatica appunti prima di mailto:', err);
     }
 
-    // Apre il client email impostando l'oggetto pulito (senza body plain text che distruggerebbe la grafica)
-    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}`;
+    // Apre il client email impostando l'oggetto e il corpo con il testo del briefing
+    window.location.href = `mailto:?subject=${encodeURIComponent(cleanSubject)}&body=${encodeURIComponent(textContent)}`;
 
     if (btn) {
-        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Incolla (Ctrl+V) nella mail!';
+        btn.innerHTML = '<i data-feather="check" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Mail Aperta!';
         btn.style.borderColor = '#10b981';
         btn.style.color = '#10b981';
         if (window.feather) feather.replace();
@@ -5354,10 +5354,10 @@ window.openPageBriefingMailto = async function(btnEl) {
                 btn.style.color = '';
                 if (window.feather) feather.replace();
             }
-        }, 4000);
+        }, 3000);
     }
 
-    showToast('📋 Grafica copiata negli appunti! Nella schermata dell\'email premi Incolla (Ctrl+V) per inserire il briefing formattato.', 'success', 6000);
+    showToast('Apertura email con il testo del briefing precompilato!', 'success');
 };
 
 // ==========================================================================

@@ -209,7 +209,7 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
             `CLIP STAMPA PRINCIPALI:`,
             ``,
             ...digestData.clips.map(c => 
-                `${c.source} • ${c.sentiment}\n${c.title}\n${c.one_liner}\n`
+                `${(c.source || 'MEDIA').toUpperCase()} • ${(c.sentiment || 'neutro').toUpperCase()}\n${c.title}\n${c.one_liner}\n`
             ),
             digestData.mood_sentiment ? `Clima Media: ${digestData.mood_sentiment}` : ''
         ].filter(Boolean).join('\n');

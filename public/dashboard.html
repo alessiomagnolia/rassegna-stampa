@@ -831,11 +831,8 @@
                             <button type="button" id="btnPageCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyPageBriefingWhatsApp(this)">
                                 <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                             </button>
-                            <button type="button" id="btnPageOpenMail" class="btn btn-subtle-alt btn-sm" onclick="openPageBriefingMailto(this)" title="Apre la tua email con l'oggetto e copia negli appunti la grafica HTML da incollare con Ctrl+V">
+                            <button type="button" id="btnPageOpenMail" class="btn btn-subtle-alt btn-sm" onclick="openPageBriefingMailto(this)" title="Apre il client email precompilando l'oggetto e il testo del briefing">
                                 <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
-                            </button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="downloadBriefingEml('page')" title="Scarica file bozza (.eml) per Outlook con il testo e la grafica già formattati">
-                                <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Bozza Outlook (.eml)
                             </button>
                             <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('section-kpi-report').scrollIntoView({behavior:'smooth'})" style="border-color: #7c5cff; color: #7c5cff;" title="Vai alla sezione del Report KPI A4">
                                 <i data-feather="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Vedi Report KPI A4 &darr;
@@ -2354,14 +2351,11 @@
                         <button type="button" id="btnCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyDigestWhatsApp(this)">
                             <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="downloadBriefingEml('modal')" title="Scarica file bozza (.eml) per Outlook con il testo e la grafica già formattati">
-                            <i data-feather="mail" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Bozza Outlook (.eml)
-                        </button>
                         <button type="button" id="btnDigestDownloadKpiPdf" class="btn btn-outline btn-sm" onclick="downloadCurrentDigestKpiPdf(this)" style="border-color:#7c5cff; color:#7c5cff;" title="Scarica solo il Report KPI &amp; Metriche in PDF da allegare alla mail">
                             <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica KPI (PDF)
                         </button>
                     </div>
-                    <button type="button" id="btnDigestOpenMail" class="btn btn-subtle-alt btn-sm" onclick="openDigestMailto(this)" title="Apre la tua email con l'oggetto e copia negli appunti la grafica HTML da incollare con Ctrl+V">
+                    <button type="button" id="btnDigestOpenMail" class="btn btn-subtle-alt btn-sm" onclick="openDigestMailto(this)" title="Apre il client email precompilando l'oggetto e il testo del briefing">
                         <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
                     </button>
                 </div>
@@ -2856,7 +2850,7 @@
         }, 150);
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260929_share_v5"></script>
+    <script src="app.js?v=20260929_mailto_v6"></script>
     <script src="ui.js?v=20260921_modal_click"></script>
 </body>
 </html>
