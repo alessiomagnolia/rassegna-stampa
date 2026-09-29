@@ -674,12 +674,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 8.5%;
-            padding: 0 3.5%;
-            background: #0f172a;
-            border-radius: 10px;
+            min-height: 8%;
+            padding: 0 0 1.5% 0;
+            background: transparent;
+            border-bottom: 1.5px solid #e2e8f0;
             margin-bottom: 3%;
-            color: #ffffff;
+            color: #0f172a;
         }
         .pdf-page-preview.template-modern .header-m-left {
             width: 55%;
@@ -694,18 +694,18 @@
             align-items: flex-end;
             gap: 3px;
             font-size: clamp(6px, 1.1vw, 9.5pt);
-            color: #94a3b8;
+            color: #64748b;
+            font-weight: 500;
         }
         .pdf-page-preview.template-modern .source-logo-m {
             max-height: 38px;
             max-width: 100%;
             object-fit: contain;
-            filter: brightness(0) invert(1);
         }
         .pdf-page-preview.template-modern .source-name-m {
             font-size: clamp(8px, 1.8vw, 15pt);
             font-weight: 800;
-            color: #ffffff;
+            color: #0f172a;
         }
         .pdf-page-preview.template-modern .source-badge-m {
             background: #6366f1;
@@ -716,6 +716,23 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+        .pdf-page-preview.template-modern .header-m.dark-header {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 0 3.5%;
+            border-bottom: none;
+            color: #ffffff;
+            min-height: 8.5%;
+        }
+        .pdf-page-preview.template-modern .header-m.dark-header .source-logo-m {
+            filter: brightness(0) invert(1);
+        }
+        .pdf-page-preview.template-modern .header-m.dark-header .source-name-m {
+            color: #ffffff;
+        }
+        .pdf-page-preview.template-modern .header-m.dark-header .header-m-right {
+            color: #94a3b8;
         }
         .pdf-page-preview.template-modern .title-zone-m {
             flex: 0 0 auto;
@@ -3026,7 +3043,7 @@ function renderArticlePreview(art, pageNum, totalPages) {
         const modernImgStyle = `width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:cover !important; object-position:center ${imgPosY}%; display:block; border-radius:10px;`;
         return `
     <div class="pdf-page-preview template-modern">
-        <div class="header-m">
+        <div class="header-m ${art.darkHeader ? 'dark-header' : ''}">
             <div class="header-m-left">
                 ${art.logoBase64
                     ? `<img src="${art.logoBase64}" class="source-logo-m pdf-source-logo pdf-resize-selectable" data-elem-type="logo" data-elem-name="Logo Testata" style="${logoStyle}" alt="Logo">`
@@ -3757,6 +3774,7 @@ function syncLivePreview() {
     art.source_type    = typeVal;
     art.published_date = dateVal;
     art.url            = urlVal;
+    art.darkHeader     = darkHeaderVal;
     const isMinSync = (options.templateId === 'minimal');
     const defTitleSync = isMinSync ? 28 : 26;
     if (!isNaN(titleSizeVal) && titleSizeVal > 0) {

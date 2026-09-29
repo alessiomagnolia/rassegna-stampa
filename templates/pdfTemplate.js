@@ -562,14 +562,21 @@ function buildModernHTML(articles, options) {
         /* MODERN HEADER */
         .header-m {
             display: flex; justify-content: space-between; align-items: center;
-            height: 24mm; padding: 0 16px; background: #0f172a; border-radius: 10px;
-            margin-bottom: 8mm; color: #ffffff; page-break-inside: avoid;
+            height: 20mm; padding: 0 0 3mm 0; background: transparent; border-bottom: 1.5px solid #e2e8f0;
+            margin-bottom: 7mm; color: #0f172a; page-break-inside: avoid;
         }
         .header-m-left { width: 50%; display: flex; align-items: center; }
-        .header-m-right { width: 50%; font-size: 9.5pt; color: #94a3b8; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .header-m-right { width: 50%; font-size: 9.5pt; color: #64748b; font-weight: 500; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .source-badge-m { background: #6366f1; color: #ffffff; padding: 3px 8px; border-radius: 4px; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .source-logo-m { max-height: 16mm; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
-        .source-name-m { font-size: 15pt; font-weight: 800; color: #ffffff; }
+        .source-logo-m { max-height: 16mm; max-width: 100%; object-fit: contain; }
+        .source-name-m { font-size: 15pt; font-weight: 800; color: #0f172a; }
+
+        .header-m.dark-header {
+            background: #0f172a; border-radius: 10px; padding: 0 16px; border-bottom: none; color: #ffffff; height: 24mm;
+        }
+        .header-m.dark-header .source-logo-m { filter: brightness(0) invert(1); }
+        .header-m.dark-header .source-name-m { color: #ffffff; }
+        .header-m.dark-header .header-m-right { color: #94a3b8; }
 
         /* MODERN TITLE */
         .title-zone-m { padding: 0 4px; margin-bottom: 6mm; page-break-inside: avoid; }
@@ -671,7 +678,7 @@ function buildModernHTML(articles, options) {
 
             return `
     <div class="page">
-        <div class="header-m">
+        <div class="header-m ${article.darkHeader ? 'dark-header' : ''}">
             <div class="header-m-left">
                 ${article.logoBase64
                     ? `<img src="${article.logoBase64}" class="source-logo-m" ${logoStyle} alt="Source Logo">`
