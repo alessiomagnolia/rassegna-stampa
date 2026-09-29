@@ -85,6 +85,7 @@ app.get('/api/proxy-image', (req, res) => {
 
 // Interactive White-label Public Share Portal
 app.get('/share/:token', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, 'public', 'share.html'));
 });
 

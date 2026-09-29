@@ -2387,9 +2387,9 @@
             <div class="field-group" style="margin-bottom:1.25rem;">
                 <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Link Pubblico Protetto</label>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="shareReviewUrlInput" readonly style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; font-family:monospace;">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="copyShareReviewUrl()" style="white-space:nowrap;">
-                        <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia
+                    <input type="text" id="shareReviewUrlInput" readonly style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; font-family:monospace; cursor:pointer;" onclick="this.select();" title="Clicca per selezionare tutto il link">
+                    <button type="button" id="btnCopyShareReviewUrl" class="btn btn-primary btn-sm" onclick="copyShareReviewUrl(this)" style="white-space:nowrap; min-width:92px; transition: all 0.2s ease;">
+                        <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span>Copia</span>
                     </button>
                 </div>
             </div>
@@ -2856,7 +2856,7 @@
         }, 150);
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260929_briefing_v4"></script>
+    <script src="app.js?v=20260929_share_v5"></script>
     <script src="ui.js?v=20260921_modal_click"></script>
 </body>
 </html>

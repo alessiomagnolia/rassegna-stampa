@@ -252,22 +252,32 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         .source-logo-img {
             max-height: 26px;
-            max-width: 90px;
+            max-width: 95px;
             object-fit: contain;
             background: #ffffff;
             padding: 3px 6px;
             border-radius: 4px;
+            flex-shrink: 0;
         }
         .source-name {
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             color: #ffffff;
+            letter-spacing: 0.2px;
+        }
+        .source-separator {
+            color: var(--text-muted);
+            opacity: 0.5;
+            font-size: 0.8rem;
+            user-select: none;
+            margin: 0 1px;
         }
         .article-date {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
         }
         .sentiment-badge {
@@ -556,12 +566,23 @@
                 const filtered = allArticles.filter(a => 
                     (a.title && a.title.toLowerCase().includes(q)) ||
                     (a.source_name && a.source_name.toLowerCase().includes(q)) ||
+                    (a.source && a.source.toLowerCase().includes(q)) ||
                     (a.excerpt && a.excerpt.toLowerCase().includes(q))
                 );
                 renderArticles(filtered);
             });
 
             feather.replace();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         function renderArticles(list) {
@@ -578,26 +599,44 @@
                 const sentimentClass = a.sentiment ? `sentiment-${a.sentiment}` : 'sentiment-neutro';
                 const sentimentLabel = a.sentiment ? a.sentiment.toUpperCase() : 'NEUTRO';
                 
-                const logoHtml = a.logoBase64 
-                    ? `<img src="${a.logoBase64}" alt="${a.source_name || ''}" class="source-logo-img">` 
-                    : `<span class="source-name">${a.source_name || 'Articolo'}</span>`;
+                const logoSrc = a.logoBase64 || a.logo || '';
+                const rawSourceName = (a.source_name || a.source || a.sourceName || '').trim();
+                const sourceName = escapeHtml(rawSourceName);
 
-                const cleanExcerpt = (a.excerpt || '').replace(/<[^>]*>/g, '').trim();
+                const logoHtml = logoSrc 
+                    ? `<img src="${logoSrc}" alt="${sourceName || 'Logo Testata'}" class="source-logo-img">` 
+                    : '';
+
+                const sourceNameHtml = sourceName
+                    ? `<span class="source-name">${sourceName}</span>`
+                    : (!logoHtml ? `<span class="source-name">Articolo</span>` : '');
+
+                const cleanDate = escapeHtml(a.published_date || a.date || '');
+                const separatorHtml = ((logoHtml || sourceName) && cleanDate)
+                    ? `<span class="source-separator">•</span>`
+                    : '';
+                const dateHtml = cleanDate ? `<span class="article-date">${cleanDate}</span>` : '';
+
+                const cleanExcerpt = escapeHtml((a.excerpt || '').replace(/<[^>]*>/g, '').trim());
+                const cleanTitle = escapeHtml(a.title || 'Senza Titolo');
+                const articleUrl = a.url ? escapeHtml(a.url) : '';
 
                 return `
                 <div class="article-card">
                     <div class="card-header">
                         <div class="source-meta">
                             ${logoHtml}
-                            <span class="article-date">${a.published_date || ''}</span>
+                            ${sourceNameHtml}
+                            ${separatorHtml}
+                            ${dateHtml}
                         </div>
                         <span class="sentiment-badge ${sentimentClass}">${sentimentLabel}</span>
                     </div>
-                    <h3 class="article-title">${a.title || 'Senza Titolo'}</h3>
+                    <h3 class="article-title">${cleanTitle}</h3>
                     ${cleanExcerpt ? `<p class="article-excerpt">${cleanExcerpt}</p>` : ''}
                     <div class="card-footer">
                         <span style="color:var(--text-muted);">Ritagli #${idx + 1}</span>
-                        ${a.url ? `<a href="${a.url}" target="_blank" rel="noopener noreferrer" class="article-link">Leggi l'articolo originale <i data-feather="external-link" style="width:13px;height:13px;"></i></a>` : ''}
+                        ${articleUrl ? `<a href="${articleUrl}" target="_blank" rel="noopener noreferrer" class="article-link">Leggi l'articolo originale <i data-feather="external-link" style="width:13px;height:13px;"></i></a>` : ''}
                     </div>
                 </div>`;
             }).join('');

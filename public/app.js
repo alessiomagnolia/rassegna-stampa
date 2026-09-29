@@ -4162,6 +4162,18 @@ function showShareModalWithUrl(shareUrl) {
         waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
     }
 
+    const copyBtn = document.getElementById('btnCopyShareReviewUrl');
+    if (copyBtn) {
+        if (copyBtn._resetTimer) {
+            clearTimeout(copyBtn._resetTimer);
+            copyBtn._resetTimer = null;
+        }
+        copyBtn.innerHTML = `<i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span>Copia</span>`;
+        copyBtn.style.backgroundColor = '';
+        copyBtn.style.borderColor = '';
+        copyBtn.style.color = '';
+    }
+
     const modal = document.getElementById('shareReviewModal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -4266,23 +4278,56 @@ window.closeShareModal = function() {
         modal.classList.add('hidden');
         modal.style.display = 'none';
     }
+    const btn = document.getElementById('btnCopyShareReviewUrl');
+    if (btn && btn._resetTimer) {
+        clearTimeout(btn._resetTimer);
+        btn._resetTimer = null;
+        btn.innerHTML = `<i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span>Copia</span>`;
+        btn.style.backgroundColor = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        if (window.feather) feather.replace();
+    }
 };
 
-window.copyShareReviewUrl = function() {
+window.copyShareReviewUrl = function(btnElement) {
     const input = document.getElementById('shareReviewUrlInput');
     if (!input || !input.value) return;
+
+    const btn = btnElement || document.getElementById('btnCopyShareReviewUrl') || (typeof event !== 'undefined' && event ? event.currentTarget : null);
+
+    const triggerFeedback = () => {
+        if (btn) {
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiato!`;
+            btn.style.backgroundColor = '#10b981';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#ffffff';
+
+            clearTimeout(btn._resetTimer);
+            btn._resetTimer = setTimeout(() => {
+                btn.innerHTML = `<i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> <span>Copia</span>`;
+                btn.style.backgroundColor = '';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+                btn._resetTimer = null;
+                if (window.feather) feather.replace();
+            }, 2500);
+        }
+        showToast('Link rassegna cliente copiato negli appunti!', 'success');
+    };
+
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(input.value).then(() => {
-            showToast('Link rassegna cliente copiato negli appunti!', 'success');
+            triggerFeedback();
         }).catch(() => {
             input.select();
             document.execCommand('copy');
-            showToast('Link rassegna cliente copiato negli appunti!', 'success');
+            triggerFeedback();
         });
     } else {
         input.select();
         document.execCommand('copy');
-        showToast('Link rassegna cliente copiato negli appunti!', 'success');
+        triggerFeedback();
     }
 };
 
