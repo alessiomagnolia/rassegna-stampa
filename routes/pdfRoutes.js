@@ -136,6 +136,9 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         if (title && title.trim().length > 0) {
             baseFilename = title.trim().replace(/[^a-z0-9]/gi, '_');
         }
+        const filename = `${baseFilename}_${date}_${Date.now()}.pdf`;
+        const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
+
         const outputDir = path.join(__dirname, '..', 'output');
         if (!fs.existsSync(outputDir)) {
             fs.mkdirSync(outputDir, { recursive: true });
@@ -150,19 +153,26 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         // Save or update in history
         const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
         let finalReviewId = id ? parseInt(id, 10) : null;
+        let activeShareToken = shareToken;
 
         if (finalReviewId) {
-            const existing = req.teamId
-                ? db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(finalReviewId, req.userId, req.teamId)
-                : db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND user_id = ?').get(finalReviewId, req.userId);
+            const existing = db.prepare(`
+                SELECT id, share_token, team_id FROM press_reviews 
+                WHERE id = ? AND (
+                    user_id = ? 
+                    OR (team_id IS NOT NULL AND team_id = ?)
+                    OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+                )
+            `).get(finalReviewId, req.userId, req.teamId || -1, req.userId);
+
             if (existing) {
-                const token = existing.share_token || shareToken;
+                activeShareToken = existing.share_token || shareToken;
                 const assignedTeamId = existing.team_id || req.teamId || null;
                 db.prepare(`
                     UPDATE press_reviews
                     SET title = ?, pdf_filename = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
                     WHERE id = ?
-                `).run(reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, finalReviewId);
+                `).run(reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', activeShareToken, assignedTeamId, finalReviewId);
             } else {
                 finalReviewId = null;
             }
@@ -172,7 +182,7 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             const info = db.prepare(`
                 INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).run(req.userId, req.teamId || null, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
+            `).run(req.userId, req.teamId || null, reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', activeShareToken);
             finalReviewId = info.lastInsertRowid;
         }
 
@@ -180,8 +190,8 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             id: finalReviewId,
             filename,
             downloadUrl: `/api/pdf/download/${filename}`,
-            shareToken,
-            shareUrl: `/share/${shareToken}`
+            shareToken: activeShareToken,
+            shareUrl: `/share/${activeShareToken}`
         });
 
     } catch (error) {
@@ -286,11 +296,15 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const reviewTitle = title || 'Rassegna Stampa Archiviata';
         const db = getDb();
         const articlesJsonStr = JSON.stringify(reviewArticles);
-
         if (id) {
-            const existing = req.teamId
-                ? db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(id, req.userId, req.teamId)
-                : db.prepare('SELECT id, share_token, team_id FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
+            const existing = db.prepare(`
+                SELECT id, share_token, team_id FROM press_reviews 
+                WHERE id = ? AND (
+                    user_id = ? 
+                    OR (team_id IS NOT NULL AND team_id = ?)
+                    OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+                )
+            `).get(id, req.userId, req.teamId || -1, req.userId);
             if (existing) {
                 let token = existing.share_token;
                 if (!token) {
@@ -481,9 +495,14 @@ router.get('/download/:filename', authMiddleware, async (req, res) => {
         const db = getDb();
         
         // Verify ownership (support direct user or team member)
-        const review = req.teamId
-            ? db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(safeFilename, req.userId, req.teamId)
-            : db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(safeFilename, req.userId);
+        const review = db.prepare(`
+            SELECT * FROM press_reviews 
+            WHERE pdf_filename = ? AND (
+                user_id = ? 
+                OR (team_id IS NOT NULL AND team_id = ?)
+                OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+            )
+        `).get(safeFilename, req.userId, req.teamId || -1, req.userId);
         
         if (!fs.existsSync(filePath)) {
             // Auto-regenerate on-demand if ephemeral server storage was wiped
@@ -540,29 +559,17 @@ router.get('/download/:filename', authMiddleware, async (req, res) => {
 router.get('/history', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        let history;
-        if (req.teamId) {
-            // Mostra rassegne del team + personali
-            history = db.prepare(`
-                SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
-                       '/api/pdf/download/' || pdf_filename as downloadUrl,
-                       CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable,
-                       team_id
-                FROM press_reviews
-                WHERE user_id = ? OR team_id = ?
-                ORDER BY created_at DESC
-            `).all(req.userId, req.teamId);
-        } else {
-            history = db.prepare(`
-                SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
-                       '/api/pdf/download/' || pdf_filename as downloadUrl,
-                       CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable,
-                       team_id
-                FROM press_reviews
-                WHERE user_id = ? AND (team_id IS NULL OR team_id = 0)
-                ORDER BY created_at DESC
-            `).all(req.userId);
-        }
+        const history = db.prepare(`
+            SELECT id, title, pdf_filename as filename, article_count, created_at, client_name,
+                   '/api/pdf/download/' || pdf_filename as downloadUrl,
+                   CASE WHEN articles_json IS NOT NULL THEN 1 ELSE 0 END as is_editable,
+                   team_id
+            FROM press_reviews
+            WHERE user_id = ? 
+               OR (team_id IS NOT NULL AND team_id = ?)
+               OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+            ORDER BY created_at DESC
+        `).all(req.userId, req.teamId || -1, req.userId);
 
         res.json(history);
     } catch (error) {
@@ -576,16 +583,14 @@ router.get('/review/:id', authMiddleware, (req, res) => {
     try {
         const { id } = req.params;
         const db = getDb();
-        let review;
-        if (req.teamId) {
-            review = db.prepare(
-                'SELECT * FROM press_reviews WHERE id = ? AND (user_id = ? OR team_id = ?)'
-            ).get(id, req.userId, req.teamId);
-        } else {
-            review = db.prepare(
-                'SELECT * FROM press_reviews WHERE id = ? AND user_id = ?'
-            ).get(id, req.userId);
-        }
+        const review = db.prepare(`
+            SELECT * FROM press_reviews 
+            WHERE id = ? AND (
+                user_id = ? 
+                OR (team_id IS NOT NULL AND team_id = ?)
+                OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+            )
+        `).get(id, req.userId, req.teamId || -1, req.userId);
 
         if (!review) {
             return res.status(404).json({ error: 'Rassegna non trovata.' });
@@ -611,13 +616,14 @@ router.delete('/:id', authMiddleware, (req, res) => {
     try {
         const { id } = req.params;
         const db = getDb();
-
-        let review;
-        if (req.teamId) {
-            review = db.prepare('SELECT pdf_filename FROM press_reviews WHERE id = ? AND (user_id = ? OR team_id = ?)').get(id, req.userId, req.teamId);
-        } else {
-            review = db.prepare('SELECT pdf_filename FROM press_reviews WHERE id = ? AND user_id = ?').get(id, req.userId);
-        }
+        const review = db.prepare(`
+            SELECT pdf_filename FROM press_reviews 
+            WHERE id = ? AND (
+                user_id = ? 
+                OR (team_id IS NOT NULL AND team_id = ?)
+                OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+            )
+        `).get(id, req.userId, req.teamId || -1, req.userId);
 
         if (!review) {
             return res.status(404).json({ error: 'Rassegna non trovata.' });
