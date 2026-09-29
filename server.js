@@ -132,6 +132,12 @@ const server = app.listen(PORT, () => {
     console.log(`📂 Cartella di lavoro: ${__dirname}`);
 });
 
+// Increase HTTP timeout to 180s to allow long PDF generation (Puppeteer) without
+// hitting Render's default 30s proxy timeout.
+server.setTimeout(180000);
+server.keepAliveTimeout = 180000;
+server.headersTimeout = 185000; // slightly above keepAliveTimeout
+
 // Graceful shutdown
 const shutdown = async () => {
     console.log('\nSpegnimento del server in corso...');

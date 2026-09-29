@@ -54,7 +54,26 @@ function fetchImageAsBase64(url) {
 
 router.post('/generate', authMiddleware, async (req, res) => {
     try {
-        const { articles, title, clientName, clientLogo, templateId, includeAnalytics, id, userLogo, userName } = req.body;
+        let { articles, title, clientName, clientLogo, templateId, includeAnalytics, id, userLogo, userName } = req.body;
+
+        // If articles not provided but an id is, load articles from DB
+        if ((!articles || !Array.isArray(articles) || articles.length === 0) && id) {
+            const db2 = getDb();
+            const saved = db2.prepare(`
+                SELECT articles_json, title, client_name, client_logo FROM press_reviews 
+                WHERE id = ? AND (
+                    user_id = ? 
+                    OR (team_id IS NOT NULL AND team_id = ?)
+                    OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+                )
+            `).get(id, req.userId, req.teamId || -1, req.userId);
+            if (saved && saved.articles_json) {
+                try { articles = JSON.parse(saved.articles_json); } catch(e) {}
+                if (!title) title = saved.title;
+                if (!clientName) clientName = saved.client_name;
+                if (!clientLogo) clientLogo = saved.client_logo;
+            }
+        }
 
         if (!articles || !Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Fornisci almeno un articolo per generare il PDF.' });

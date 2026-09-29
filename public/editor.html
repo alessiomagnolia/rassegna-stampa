@@ -4575,28 +4575,67 @@ async function generateAndDownload() {
 
     try {
         const title = document.getElementById('editorTitle').value.trim();
+
+        // STEP 1: Archive/update current articles in DB first.
+        // This keeps the HTTP payload for /generate small (no base64 images in body).
+        let reviewIdToUse = currentReviewId;
+        try {
+            const archiveRes = await fetch('/api/pdf/archive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id: currentReviewId || undefined,
+                    articles,
+                    title: title || options.title || '',
+                    clientName: options.clientName || '',
+                    clientLogo: options.clientLogo || ''
+                })
+            });
+            if (archiveRes.ok) {
+                const archiveData = await archiveRes.json();
+                if (archiveData && archiveData.id) {
+                    reviewIdToUse = archiveData.id;
+                    currentReviewId = archiveData.id;
+                    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+                }
+            }
+        } catch(archErr) {
+            console.warn('[Editor] Archive pre-step failed (non-fatal), will send articles directly:', archErr);
+        }
+
+        // STEP 2: Call /generate — if we have an id, don't send articles (server loads from DB).
+        // Otherwise fall back to sending articles directly (new unsaved review).
+        const payload = {
+            id: reviewIdToUse || undefined,
+            title: title || options.title || '',
+            clientName: options.clientName || '',
+            clientLogo: options.clientLogo || '',
+            userName: options.userName || '',
+            userLogo: options.userLogo || '',
+            templateId: options.templateId || 'classic',
+            includeAnalytics: !!options.includeAnalytics,
+            customLogoSize: options.customLogoSize,
+            customCoverTitleSize: options.customCoverTitleSize,
+            customCoverSubtitleSize: options.customCoverSubtitleSize,
+            customCoverDateSize: options.customCoverDateSize,
+            customCoverCenterOffsetY: options.customCoverCenterOffsetY,
+            customCoverDate: options.customCoverDate
+        };
+        // Only attach articles if we don't have a saved id (fallback)
+        if (!reviewIdToUse) {
+            payload.articles = articles;
+        }
+
         const res = await fetch('/api/pdf/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                articles,
-                title: title || options.title || '',
-                clientName: options.clientName || '',
-                clientLogo: options.clientLogo || '',
-                userName: options.userName || '',
-                userLogo: options.userLogo || '',
-                templateId: options.templateId || 'classic',
-                includeAnalytics: !!options.includeAnalytics,
-                customLogoSize: options.customLogoSize,
-                customCoverTitleSize: options.customCoverTitleSize,
-                customCoverSubtitleSize: options.customCoverSubtitleSize,
-                customCoverDateSize: options.customCoverDateSize,
-                customCoverCenterOffsetY: options.customCoverCenterOffsetY,
-                customCoverDate: options.customCoverDate
-            })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
