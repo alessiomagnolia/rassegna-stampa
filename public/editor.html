@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Rassegna | Rassegna Stampa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260914_02">
     <script>
         (function() {
@@ -615,6 +615,353 @@
             justify-content: space-between;
             padding: 6% 6%;
             box-sizing: border-box;
+        }
+
+        /* ============ TEMPLATE 2: MODERN EXECUTIVE (EDITOR PREVIEW) ============ */
+        .pdf-cover-preview.template-modern {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
+            color: #ffffff !important;
+            padding: 7.5% 7.5%;
+        }
+        .pdf-cover-preview.template-modern .pdf-cover-client-logo {
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+        }
+        .pdf-cover-preview.template-modern .cover-badge-m {
+            display: inline-block;
+            padding: 4px 14px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 30px;
+            font-size: clamp(7px, 1.1vw, 9.5pt);
+            font-weight: 600;
+            color: #818cf8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 2.5%;
+        }
+        .pdf-cover-preview.template-modern .pdf-cover-title {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            font-size: clamp(14px, 3.4vw, 34pt);
+            font-weight: 800 !important;
+            color: #ffffff !important;
+            margin-bottom: 2%;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+        .pdf-cover-preview.template-modern .pdf-cover-subtitle {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            font-size: clamp(8px, 1.8vw, 16pt);
+            color: #94a3b8 !important;
+            font-weight: 400 !important;
+            font-style: normal !important;
+        }
+        .pdf-cover-preview.template-modern .pdf-cover-date {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            font-size: clamp(6px, 1.2vw, 11pt);
+            color: #64748b !important;
+            font-weight: 500 !important;
+            margin-top: 3%;
+            letter-spacing: 1px;
+        }
+
+        .pdf-page-preview.template-modern {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+        }
+        .pdf-page-preview.template-modern .header-m {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 8.5%;
+            padding: 0 3.5%;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-bottom: 3%;
+            color: #ffffff;
+        }
+        .pdf-page-preview.template-modern .header-m-left {
+            width: 55%;
+            display: flex;
+            align-items: center;
+        }
+        .pdf-page-preview.template-modern .header-m-right {
+            width: 45%;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 3px;
+            font-size: clamp(6px, 1.1vw, 9.5pt);
+            color: #94a3b8;
+        }
+        .pdf-page-preview.template-modern .source-logo-m {
+            max-height: 38px;
+            max-width: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+        .pdf-page-preview.template-modern .source-name-m {
+            font-size: clamp(8px, 1.8vw, 15pt);
+            font-weight: 800;
+            color: #ffffff;
+        }
+        .pdf-page-preview.template-modern .source-badge-m {
+            background: #6366f1;
+            color: #ffffff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: clamp(5px, 0.8vw, 7.5pt);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pdf-page-preview.template-modern .title-zone-m {
+            flex: 0 0 auto;
+            padding: 0 1%;
+            margin-bottom: 2.5%;
+        }
+        .pdf-page-preview.template-modern .title-bar-m {
+            width: 40px;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+            border-radius: 2px;
+            margin-bottom: 6px;
+        }
+        .pdf-page-preview.template-modern .article-title-m {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            font-size: clamp(9px, 2.1vw, 19pt);
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.3;
+            letter-spacing: -0.3px;
+        }
+        .pdf-page-preview.template-modern .visual-zone-m {
+            border-radius: 10px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .pdf-page-preview.template-modern .content-zone-m {
+            flex: 1 1 auto;
+            padding: 0 1%;
+            margin-bottom: 1.5%;
+            overflow: hidden;
+            position: relative;
+        }
+        .pdf-page-preview.template-modern .content-text-m {
+            font-size: clamp(7px, 1.15vw, 10.5pt);
+            line-height: 1.65;
+            color: #334155;
+            text-align: justify;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-weight: 400;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 20;
+        }
+        .pdf-page-preview.template-modern .content-text-m strong {
+            font-weight: 700;
+            color: #4338ca;
+        }
+        .pdf-page-preview.template-modern .footer-m {
+            flex: 0 0 auto;
+            min-height: 3.5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1%;
+            padding-left: 1%;
+            padding-right: 1%;
+            gap: 8px;
+        }
+        .pdf-page-preview.template-modern .footer-link-m {
+            color: #6366f1;
+            font-weight: 500;
+            font-size: clamp(5px, 0.85vw, 8.5pt);
+            text-decoration: none;
+            flex: 1 1 auto;
+            min-width: 0;
+            line-height: 1.25;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            cursor: pointer;
+        }
+        .pdf-page-preview.template-modern .footer-link-m:hover {
+            color: #4338ca;
+            text-decoration: underline;
+        }
+        .pdf-page-preview.template-modern .footer-page-m {
+            font-size: clamp(5px, 0.8vw, 8pt);
+            color: #64748b;
+            font-weight: 600;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 12px;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        /* ============ TEMPLATE 3: MINIMAL EDITORIAL (EDITOR PREVIEW) ============ */
+        .pdf-cover-preview.template-minimal {
+            background: #faf9f6 !important;
+            border: 1px solid #e7e5e4 !important;
+            color: #1c1917 !important;
+            padding: 7.5% 7.5%;
+        }
+        .pdf-cover-preview.template-minimal .cover-rule-top {
+            width: 85%;
+            border-top: 2px solid #1c1917;
+            border-bottom: 1px solid #1c1917;
+            height: 4px;
+            margin: 0 auto 3%;
+        }
+        .pdf-cover-preview.template-minimal .pdf-cover-title {
+            font-family: 'Playfair Display', Georgia, serif !important;
+            font-size: clamp(14px, 3.6vw, 36pt);
+            font-weight: 700 !important;
+            color: #1c1917 !important;
+            margin-bottom: 2%;
+            line-height: 1.2;
+        }
+        .pdf-cover-preview.template-minimal .pdf-cover-subtitle {
+            font-family: 'Playfair Display', Georgia, serif !important;
+            font-size: clamp(8px, 1.8vw, 15pt);
+            color: #78716c !important;
+            font-style: italic !important;
+        }
+        .pdf-cover-preview.template-minimal .cover-rule-bottom {
+            width: 85%;
+            border-top: 1px solid #1c1917;
+            border-bottom: 2px solid #1c1917;
+            height: 4px;
+            margin: 3% auto 2%;
+        }
+        .pdf-cover-preview.template-minimal .pdf-cover-date {
+            font-size: clamp(6px, 1.2vw, 11pt);
+            color: #78716c !important;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2%;
+        }
+
+        .pdf-page-preview.template-minimal {
+            background: #faf9f6 !important;
+            color: #1c1917 !important;
+            font-family: 'Playfair Display', Georgia, serif !important;
+        }
+        .pdf-page-preview.template-minimal .header-e {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 1.5%;
+            border-bottom: 2px solid #1c1917;
+            margin-bottom: 3%;
+        }
+        .pdf-page-preview.template-minimal .header-e.dark-header {
+            background: #1c1917;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+        .pdf-page-preview.template-minimal .header-e.dark-header .source-name-e {
+            color: #ffffff !important;
+        }
+        .pdf-page-preview.template-minimal .header-e.dark-header .header-e-right {
+            color: #d6d3d1 !important;
+        }
+        .pdf-page-preview.template-minimal .header-e-left {
+            width: 60%;
+            display: flex;
+            align-items: center;
+        }
+        .pdf-page-preview.template-minimal .header-e-right {
+            width: 40%;
+            text-align: right;
+            font-size: clamp(6px, 1.1vw, 9.5pt);
+            color: #78716c;
+            font-style: italic;
+        }
+        .pdf-page-preview.template-minimal .source-name-e {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(8px, 1.9vw, 18pt);
+            font-weight: 700;
+            color: #1c1917;
+        }
+        .pdf-page-preview.template-minimal .source-logo-e {
+            max-height: 38px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .pdf-page-preview.template-minimal .title-zone-e {
+            flex: 0 0 auto;
+            margin-bottom: 2.5%;
+        }
+        .pdf-page-preview.template-minimal .article-title-e {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(9px, 2.2vw, 20pt);
+            font-weight: 700;
+            color: #1c1917;
+            line-height: 1.25;
+        }
+        .pdf-page-preview.template-minimal .visual-zone-e {
+            border-radius: 2px;
+        }
+        .pdf-page-preview.template-minimal .content-zone-e {
+            flex: 1 1 auto;
+            margin-bottom: 1.5%;
+            overflow: hidden;
+            position: relative;
+        }
+        .pdf-page-preview.template-minimal .content-text-e {
+            font-size: clamp(7px, 1.2vw, 11pt);
+            line-height: 1.7;
+            color: #292524;
+            text-align: justify;
+            font-family: 'Source Serif 4', Georgia, serif;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 20;
+        }
+        .pdf-page-preview.template-minimal .content-text-e strong {
+            font-weight: 700;
+            color: #000000;
+        }
+        .pdf-page-preview.template-minimal .footer-e {
+            flex: 0 0 auto;
+            min-height: 3.5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #d6d3d1;
+            padding-top: 1%;
+            font-size: clamp(5px, 0.9vw, 8.5pt);
+            color: #78716c;
+            gap: 8px;
+        }
+        .pdf-page-preview.template-minimal .footer-link-e {
+            color: #57534e;
+            text-decoration: none;
+            font-style: italic;
+            flex: 1 1 auto;
+            min-width: 0;
+            line-height: 1.25;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            cursor: pointer;
+        }
+        .pdf-page-preview.template-minimal .footer-link-e:hover {
+            color: #1c1917;
+            text-decoration: underline;
+        }
+        .pdf-page-preview.template-minimal .footer-page-e {
+            flex: 0 0 auto;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* ============ RIGHT-OPENING EDIT PANEL DRAWER (FIXED AT RIGHT: 0) ============ */
@@ -2030,13 +2377,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title;
     if (document.getElementById('editorArticleCount')) document.getElementById('editorArticleCount').textContent = `${articles.length} articol${articles.length === 1 ? 'o' : 'i'}`;
     
-    // Set active template
     const templateSelect = document.getElementById('editorTemplateSelect');
     if (templateSelect) {
         templateSelect.value = options.templateId || 'classic';
         templateSelect.addEventListener('change', (e) => {
             options.templateId = e.target.value;
+            try {
+                localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            } catch(err) {}
             pushUndoState();
+            selectPage(selectedIdx);
+            const gridModal = document.getElementById('pagesGridViewModal');
+            if (gridModal && gridModal.style.display !== 'none') {
+                renderGridPages();
+            }
+            const templateNames = {
+                'classic': 'Template Classico',
+                'modern': 'Modern Executive',
+                'minimal': 'Minimal Editorial'
+            };
+            showToast(`Template applicato: ${templateNames[options.templateId] || options.templateId}`, 'info');
         });
     }
 
@@ -2583,6 +2943,47 @@ function renderCoverPreview() {
     const subtitleText = options.clientName ? options.clientName : agencyName;
     const showBottomAgencyLogo = (options.clientLogo && options.userLogo);
 
+    const templateId = options.templateId || 'classic';
+
+    if (templateId === 'modern') {
+        return `
+    <div class="pdf-cover-preview template-modern">
+        <div class="pdf-cover-top">
+            ${topLogo ? `<img src="${topLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Copertina">` : `<div class="pdf-cover-client-logo-placeholder pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" onclick="openDrawerForSelectedElement()" style="border: 1.5px dashed rgba(129, 140, 248, 0.45); border-radius: 8px; padding: 8px 16px; font-size: 0.78rem; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select:none;"><i data-feather="image" style="width:13px;height:13px;color:#818cf8;"></i><span>Aggiungi Logo Copertina</span></div>`}
+        </div>
+        <div class="pdf-cover-center" style="${centerStyle}">
+            <div class="cover-badge-m">Rassegna Stampa</div>
+            <div class="pdf-cover-title pdf-resize-selectable" data-elem-type="cover_title" data-elem-name="Titolo Copertina" style="${titleStyle}">${escHtml(options.title || 'Rassegna Stampa')}</div>
+            ${subtitleText ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-type="cover_subtitle" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(subtitleText)}</div>` : ''}
+            <div class="pdf-cover-date pdf-resize-selectable" data-elem-type="cover_date" data-elem-name="Data Copertina" style="${dateStyle}">${escHtml(dateStr)}</div>
+        </div>
+        <div class="pdf-cover-bottom pdf-resize-selectable" data-elem-type="cover_agency" data-elem-name="A cura di / Logo" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+            ${showBottomAgencyLogo ? `<img src="${options.userLogo}" style="max-height:22mm; max-width:50mm; object-fit:contain; filter:brightness(0) invert(1);" alt="Logo Agenzia">` : ''}
+            ${agencyName ? `<div style="font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">A cura di: ${escHtml(agencyName)}</div>` : ''}
+        </div>
+    </div>`;
+    }
+
+    if (templateId === 'minimal') {
+        return `
+    <div class="pdf-cover-preview template-minimal">
+        <div class="pdf-cover-top">
+            ${topLogo ? `<img src="${topLogo}" class="pdf-cover-client-logo pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" style="${logoStyle}" alt="Logo Copertina">` : `<div class="pdf-cover-client-logo-placeholder pdf-resize-selectable" data-elem-type="cover_logo" data-elem-name="Logo Copertina" onclick="openDrawerForSelectedElement()" style="border: 1.5px dashed rgba(28, 25, 23, 0.45); border-radius: 8px; padding: 8px 16px; font-size: 0.78rem; color: #78716c; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select:none;"><i data-feather="image" style="width:13px;height:13px;color:#1c1917;"></i><span>Aggiungi Logo Copertina</span></div>`}
+        </div>
+        <div class="pdf-cover-center" style="${centerStyle}">
+            <div class="cover-rule-top"></div>
+            <div class="pdf-cover-title pdf-resize-selectable" data-elem-type="cover_title" data-elem-name="Titolo Copertina" style="${titleStyle}">${escHtml(options.title || 'Rassegna Stampa')}</div>
+            ${subtitleText ? `<div class="pdf-cover-subtitle pdf-resize-selectable" data-elem-type="cover_subtitle" data-elem-name="Sottotitolo / Cliente" style="${subtitleStyle}">${escHtml(subtitleText)}</div>` : ''}
+            <div class="cover-rule-bottom"></div>
+            <div class="pdf-cover-date pdf-resize-selectable" data-elem-type="cover_date" data-elem-name="Data Copertina" style="${dateStyle}">${escHtml(dateStr)}</div>
+        </div>
+        <div class="pdf-cover-bottom pdf-resize-selectable" data-elem-type="cover_agency" data-elem-name="A cura di / Logo" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+            ${showBottomAgencyLogo ? `<img src="${options.userLogo}" style="max-height:22mm; max-width:50mm; object-fit:contain;" alt="Logo Agenzia">` : ''}
+            ${agencyName ? `<div style="font-size:0.75rem; color:#78716c; font-style:italic; font-family:'Times New Roman',serif;">A cura di: ${escHtml(agencyName)}</div>` : ''}
+        </div>
+    </div>`;
+    }
+
     return `
     <div class="pdf-cover-preview">
         <div class="pdf-cover-top">
@@ -2620,6 +3021,74 @@ function renderArticlePreview(art, pageNum, totalPages) {
     const visualZoneStyle = `height:${imgHeight}px; max-height:${imgHeight}px; width:calc(100% - 3.8%); margin:0 1.9% 3.8%; overflow:hidden; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.08); background:#0f172a; display:flex; align-items:center; justify-content:center;`;
     const imgStyle = `width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:cover !important; object-position:center ${imgPosY}%; display:block; border-radius:8px;`;
     const cleanExcerpt = (art.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
+
+    const templateId = options.templateId || 'classic';
+
+    if (templateId === 'modern') {
+        const modernVisualZoneStyle = `height:${imgHeight}px; max-height:${imgHeight}px; width:100%; margin:0 0 3%; overflow:hidden; border-radius:10px; box-shadow:0 10px 25px -5px rgba(15,23,42,0.1); border:1px solid #e2e8f0; background:#0f172a; display:flex; align-items:center; justify-content:center;`;
+        const modernImgStyle = `width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:cover !important; object-position:center ${imgPosY}%; display:block; border-radius:10px;`;
+        return `
+    <div class="pdf-page-preview template-modern">
+        <div class="header-m">
+            <div class="header-m-left">
+                ${art.logoBase64
+                    ? `<img src="${art.logoBase64}" class="source-logo-m pdf-source-logo pdf-resize-selectable" data-elem-type="logo" data-elem-name="Logo Testata" style="${logoStyle}" alt="Logo">`
+                    : `<div class="source-name-m pdf-source-name pdf-resize-selectable" data-elem-type="source_name" data-elem-name="Testata Header" style="${art.customSourceNameSize ? `font-size:${art.customSourceNameSize}px;` : ''}">${escHtml(art.source_name || '')}</div>`}
+            </div>
+            <div class="header-m-right">
+                <span>${escHtml(art.published_date || '')}</span>
+                <span class="source-badge-m">${escHtml(art.source_type || 'Web')}</span>
+            </div>
+        </div>
+        <div class="title-zone-m">
+            <div class="title-bar-m"></div>
+            <div class="article-title-m pdf-article-title pdf-resize-selectable" data-elem-type="title" data-elem-name="Titolo Articolo" style="${titleStyle}">${escHtml(art.title || '')}</div>
+        </div>
+        ${art.imageBase64 ? `
+        <div class="pdf-visual-zone visual-zone-m" style="${modernVisualZoneStyle}">
+            <img src="${art.imageBase64}" class="pdf-main-visual main-visual-m pdf-resize-selectable" data-elem-type="image" data-elem-name="Immagine Articolo" style="${modernImgStyle}" alt="Immagine">
+        </div>` : ''}
+        <div class="pdf-content-zone content-zone-m">
+            <div class="pdf-content-text content-text-m pdf-resize-selectable" data-elem-type="excerpt" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(cleanExcerpt), buildKeywordRegex(options.title, options.clientName))}</div>
+        </div>
+        <div class="pdf-footer footer-m">
+            ${art.url ? `<a href="${escHtml(formatLinkUrl(art.url))}" target="_blank" rel="noopener noreferrer" class="pdf-footer-link footer-link-m" style="${(art.url || '').length > 110 ? 'font-size:clamp(4.5px, 0.65vw, 6.8pt);' : ((art.url || '').length > 70 ? 'font-size:clamp(5px, 0.75vw, 7.5pt);' : 'font-size:clamp(5.5px, 0.85vw, 8.5pt);')}" title="Clicca per aprire la notizia completa: ${escHtml(art.url)}">${escHtml(art.url)}</a>` : '<span class="pdf-footer-link"></span>'}
+            <span class="footer-page-m">Pagina ${pageNum} di ${totalPages}</span>
+        </div>
+    </div>`;
+    }
+
+    if (templateId === 'minimal') {
+        const minimalVisualZoneStyle = `height:${imgHeight}px; max-height:${imgHeight}px; width:100%; margin:0 0 3%; overflow:hidden; border-radius:2px; background:#0f172a; display:flex; align-items:center; justify-content:center;`;
+        const minimalImgStyle = `width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; object-fit:cover !important; object-position:center ${imgPosY}%; display:block; border-radius:2px;`;
+        return `
+    <div class="pdf-page-preview template-minimal">
+        <div class="header-e ${art.darkHeader ? 'dark-header' : ''}">
+            <div class="header-e-left">
+                ${art.logoBase64
+                    ? `<img src="${art.logoBase64}" class="source-logo-e pdf-source-logo pdf-resize-selectable" data-elem-type="logo" data-elem-name="Logo Testata" style="${logoStyle}" alt="Logo">`
+                    : `<div class="source-name-e pdf-source-name pdf-resize-selectable" data-elem-type="source_name" data-elem-name="Testata Header" style="${art.customSourceNameSize ? `font-size:${art.customSourceNameSize}px;` : ''}">${escHtml(art.source_name || '')}</div>`}
+            </div>
+            <div class="header-e-right">
+                <span>${escHtml(art.published_date || '')} &bull; ${escHtml(art.source_type || 'Web')}</span>
+            </div>
+        </div>
+        <div class="title-zone-e">
+            <div class="article-title-e pdf-article-title pdf-resize-selectable" data-elem-type="title" data-elem-name="Titolo Articolo" style="${titleStyle}">${escHtml(art.title || '')}</div>
+        </div>
+        ${art.imageBase64 ? `
+        <div class="pdf-visual-zone visual-zone-e" style="${minimalVisualZoneStyle}">
+            <img src="${art.imageBase64}" class="pdf-main-visual main-visual-e pdf-resize-selectable" data-elem-type="image" data-elem-name="Immagine Articolo" style="${minimalImgStyle}" alt="Immagine">
+        </div>` : ''}
+        <div class="pdf-content-zone content-zone-e">
+            <div class="pdf-content-text content-text-e pdf-resize-selectable" data-elem-type="excerpt" data-elem-name="Testo Articolo" style="${textStyle}">${boldKeywords(escHtml(cleanExcerpt), buildKeywordRegex(options.title, options.clientName))}</div>
+        </div>
+        <div class="pdf-footer footer-e">
+            ${art.url ? `<a href="${escHtml(formatLinkUrl(art.url))}" target="_blank" rel="noopener noreferrer" class="pdf-footer-link footer-link-e" style="${(art.url || '').length > 110 ? 'font-size:clamp(4.5px, 0.65vw, 6.8pt);' : ((art.url || '').length > 70 ? 'font-size:clamp(5px, 0.75vw, 7.5pt);' : 'font-size:clamp(5.5px, 0.85vw, 8.5pt);')}" title="Clicca per aprire la notizia completa: ${escHtml(art.url)}">${escHtml(art.url)}</a>` : '<span class="pdf-footer-link"></span>'}
+            <span class="footer-page-e">Articolo ${pageNum} di ${totalPages}</span>
+        </div>
+    </div>`;
+    }
 
     return `
     <div class="pdf-page-preview">
@@ -4780,8 +5249,21 @@ function selectMobilePdfTemplate(tplId) {
     options.templateId = tplId;
     const templateSelect = document.getElementById('editorTemplateSelect');
     if (templateSelect) templateSelect.value = tplId;
+    try {
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    } catch(err) {}
+    pushUndoState();
     selectPage(selectedIdx);
-    showToast(`Template impostato: ${tplId}`, 'success');
+    const gridModal = document.getElementById('pagesGridViewModal');
+    if (gridModal && gridModal.style.display !== 'none') {
+        renderGridPages();
+    }
+    const templateNames = {
+        'classic': 'Template Classico',
+        'modern': 'Modern Executive',
+        'minimal': 'Minimal Editorial'
+    };
+    showToast(`Template applicato: ${templateNames[tplId] || tplId}`, 'success');
 }
 
 function saveMobilePdfText() {

@@ -648,16 +648,32 @@ function buildModernHTML(articles, options) {
 
     ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
 
-    ${articles.map((article, index) => {
-        const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
-        const clampLines = article.imageBase64 ? 13 : 26;
-        return `
+    ${(() => {
+        const baseOffset = (title ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
+        const totalPages = articles.length + baseOffset;
+        return articles.map((article, index) => {
+            const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
+            const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
+            const clampLines = article.imageBase64 ? 13 : 26;
+            const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+            const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
+            const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
+            const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
+            const pageNum = index + 1 + baseOffset;
+            const defaultImgH = 68; // mm
+            const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320)
+                ? Math.round(article.customImageHeight * 0.25)
+                : defaultImgH;
+            const visualZoneStyle = `style="height: ${effectiveImgH}mm; max-height: ${effectiveImgH}mm;"`;
+            const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
+
+            return `
     <div class="page">
         <div class="header-m">
             <div class="header-m-left">
                 ${article.logoBase64
-                    ? `<img src="${article.logoBase64}" class="source-logo-m" alt="Source Logo">`
-                    : `<div class="source-name-m">${article.source_name || ''}</div>`}
+                    ? `<img src="${article.logoBase64}" class="source-logo-m" ${logoStyle} alt="Source Logo">`
+                    : `<div class="source-name-m" ${sourceStyle}>${article.source_name || ''}</div>`}
             </div>
             <div class="header-m-right">
                 <span>${article.published_date || ''}</span>
@@ -667,26 +683,27 @@ function buildModernHTML(articles, options) {
 
         <div class="title-zone-m">
             <div class="title-bar-m"></div>
-            <div class="article-title-m">${article.title || ''}</div>
+            <div class="article-title-m" ${titleStyle}>${article.title || ''}</div>
         </div>
 
         ${article.imageBase64 ? `
-        <div class="visual-zone-m" style="${(article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320) ? `height:${Math.round(article.customImageHeight * 0.25)}mm; max-height:${Math.round(article.customImageHeight * 0.25)}mm;` : ''}">
-            <img src="${article.imageBase64}" class="main-visual-m" style="width:100%; height:100%; object-fit:cover; object-position: center ${article.customImagePosY !== undefined ? article.customImagePosY : 50}%;" alt="Article Image">
+        <div class="visual-zone-m" ${visualZoneStyle}>
+            <img src="${article.imageBase64}" class="main-visual-m" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-m">
-            <div class="content-text-m" style="-webkit-line-clamp: ${clampLines};">
+            <div class="content-text-m" style="-webkit-line-clamp: ${clampLines};" ${textStyle}>
                 ${processedExcerpt}
             </div>
         </div>
 
         <div class="footer-m">
             <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-m" style="${(article.url || '').length > 110 ? 'font-size: 6.8pt;' : ((article.url || '').length > 70 ? 'font-size: 7.5pt;' : 'font-size: 8.5pt;')}" title="${article.url || ''}">${article.url || ''}</a>
-            <div class="footer-page-m">PAGINA ${index + 1} DI ${articles.length}</div>
+            <div class="footer-page-m">PAGINA ${pageNum} DI ${totalPages}</div>
         </div>
     </div>`;
-    }).join('')}
+        }).join('');
+    })()}
 </body>
 </html>`;
     return html;
@@ -831,16 +848,32 @@ function buildMinimalHTML(articles, options) {
 
     ${options.includeAnalytics ? buildAnalyticsPageHTML(require('../services/analyticsService').calculatePRAnalytics(articles), options) : ''}
 
-    ${articles.map((article, index) => {
-        const processedExcerpt = boldKeywords(article.excerpt || '', keywordRegex);
-        const clampLines = article.imageBase64 ? 13 : 26;
-        return `
+    ${(() => {
+        const baseOffset = (title ? 1 : 0) + (options.includeAnalytics ? 1 : 0);
+        const totalPages = articles.length + baseOffset;
+        return articles.map((article, index) => {
+            const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
+            const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
+            const clampLines = article.imageBase64 ? 13 : 26;
+            const titleStyle = article.customTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
+            const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
+            const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
+            const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
+            const pageNum = index + 1 + baseOffset;
+            const defaultImgH = 68; // mm
+            const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320)
+                ? Math.round(article.customImageHeight * 0.25)
+                : defaultImgH;
+            const visualZoneStyle = `style="height: ${effectiveImgH}mm; max-height: ${effectiveImgH}mm;"`;
+            const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
+
+            return `
     <div class="page">
-        <div class="header-e">
+        <div class="header-e ${article.darkHeader ? 'dark-header' : ''}">
             <div class="header-e-left">
                 ${article.logoBase64
-                    ? `<img src="${article.logoBase64}" class="source-logo-e" alt="Source Logo">`
-                    : `<div class="source-name-e">${article.source_name || ''}</div>`}
+                    ? `<img src="${article.logoBase64}" class="source-logo-e" ${logoStyle} alt="Source Logo">`
+                    : `<div class="source-name-e" ${sourceStyle}>${article.source_name || ''}</div>`}
             </div>
             <div class="header-e-right">
                 <span>${article.published_date || ''} • ${article.source_type || 'Web'}</span>
@@ -848,26 +881,27 @@ function buildMinimalHTML(articles, options) {
         </div>
 
         <div class="title-zone-e">
-            <div class="article-title-e">${article.title || ''}</div>
+            <div class="article-title-e" ${titleStyle}>${article.title || ''}</div>
         </div>
 
         ${article.imageBase64 ? `
-        <div class="visual-zone-e" style="${(article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320) ? `height:${Math.round(article.customImageHeight * 0.25)}mm; max-height:${Math.round(article.customImageHeight * 0.25)}mm;` : ''}">
-            <img src="${article.imageBase64}" class="main-visual-e" style="width:100%; height:100%; object-fit:cover; object-position: center ${article.customImagePosY !== undefined ? article.customImagePosY : 50}%;" alt="Article Image">
+        <div class="visual-zone-e" ${visualZoneStyle}>
+            <img src="${article.imageBase64}" class="main-visual-e" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-e">
-            <div class="content-text-e" style="-webkit-line-clamp: ${clampLines};">
+            <div class="content-text-e" style="-webkit-line-clamp: ${clampLines};" ${textStyle}>
                 ${processedExcerpt}
             </div>
         </div>
 
         <div class="footer-e">
             <a href="${formatLinkUrl(article.url)}" target="_blank" rel="noopener noreferrer" class="footer-link-e" style="${(article.url || '').length > 110 ? 'font-size: 6.8pt;' : ((article.url || '').length > 70 ? 'font-size: 7.5pt;' : 'font-size: 8.5pt;')}" title="${article.url || ''}">${article.url || ''}</a>
-            <div class="footer-page-e">Articolo ${index + 1} di ${articles.length}</div>
+            <div class="footer-page-e">Articolo ${pageNum} di ${totalPages}</div>
         </div>
     </div>`;
-    }).join('')}
+        }).join('');
+    })()}
 </body>
 </html>`;
     return html;
