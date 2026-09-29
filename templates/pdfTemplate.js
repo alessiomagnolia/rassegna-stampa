@@ -447,7 +447,7 @@ function buildClassicHTML(articles, options) {
         // Strip raw HTML tags from excerpt, then bold keywords
         const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
         const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-        const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+        const articleImgSrc = (article.imageBase64 && article.imageBase64.startsWith('data:')) ? article.imageBase64 : null;
         const clampLines = articleImgSrc ? 14 : 28;
 
         const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
@@ -663,7 +663,7 @@ function buildModernHTML(articles, options) {
         return articles.map((article, index) => {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-            const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+            const articleImgSrc = (article.imageBase64 && article.imageBase64.startsWith('data:')) ? article.imageBase64 : null;
             const clampLines = articleImgSrc ? 13 : 26;
             const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
             const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
@@ -865,7 +865,7 @@ function buildMinimalHTML(articles, options) {
         return articles.map((article, index) => {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-            const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+            const articleImgSrc = (article.imageBase64 && article.imageBase64.startsWith('data:')) ? article.imageBase64 : null;
             const clampLines = articleImgSrc ? 13 : 26;
             const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 28;
             const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';

@@ -4565,8 +4565,48 @@ window.filterEditorLogoCategory = filterEditorLogoCategory;
 window.selectEditorLogo = selectEditorLogo;
 
 // ============================================================
-// GENERATE PDF
+// GENERATE & DOWNLOAD PDF
 // ============================================================
+async function triggerDownload(url, filename) {
+    try {
+        const token = localStorage.getItem('rs_token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(url, { headers });
+        if (!res.ok) {
+            let errMsg = 'HTTP ' + res.status;
+            try {
+                const errJson = await res.json();
+                if (errJson && errJson.error) errMsg = errJson.error;
+            } catch(e) {}
+            throw new Error(errMsg);
+        }
+        const blob = await res.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename || 'Rassegna_Stampa.pdf';
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            a.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        }, 60000);
+    } catch (error) {
+        console.error('triggerDownload error:', error);
+        const token = localStorage.getItem('rs_token');
+        if (url && token && !url.includes('token=')) {
+            const sep = url.includes('?') ? '&' : '?';
+            window.open(`${url}${sep}token=${encodeURIComponent(token)}`, '_blank');
+            return;
+        }
+        showToast('Errore durante il download: ' + error.message, 'error');
+        throw error;
+    }
+}
+
 async function generateAndDownload() {
     const btn = document.getElementById('btnGeneratePDF');
     const loading = document.getElementById('genLoading');
@@ -4574,117 +4614,80 @@ async function generateAndDownload() {
     loading.classList.remove('hidden');
 
     try {
-        const title = document.getElementById('editorTitle').value.trim();
-
-        // STEP 1: Archive/update current articles in DB first.
-        // Send articles WITHOUT imageBase64 to keep the payload small.
-        // The /generate route will fetch images from imageUrl server-side.
-        let reviewIdToUse = currentReviewId;
-        try {
-            const articlesForArchive = articles.map(a => {
-                const slim = { ...a };
-                delete slim.imageBase64;    // strip large base64 images
-                delete slim.screenshotBase64;
-                return slim;
-            });
-            const archiveRes = await fetch('/api/pdf/archive', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    id: currentReviewId || undefined,
-                    articles: articlesForArchive,
-                    title: title || options.title || '',
-                    clientName: options.clientName || '',
-                    clientLogo: options.clientLogo || ''
-                })
-            });
-            if (archiveRes.ok) {
-                const archiveData = await archiveRes.json();
-                if (archiveData && archiveData.id) {
-                    reviewIdToUse = archiveData.id;
-                    currentReviewId = archiveData.id;
-                    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
-                }
-            }
-        } catch(archErr) {
-            console.warn('[Editor] Archive pre-step failed (non-fatal), will send articles directly:', archErr);
+        const userToken = localStorage.getItem('rs_token');
+        if (!userToken) {
+            showToast('Sessione scaduta. Effettua nuovamente il login.', 'error');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            return;
         }
 
-        // STEP 2: Call /generate — if we have an id, don't send articles (server loads from DB).
-        // Otherwise fall back to sending articles directly (new unsaved review).
+        const title = document.getElementById('editorTitle')?.value.trim() || options.title || '';
+        const clientName = options.clientName || '';
+        const clientLogo = options.clientLogo || null;
+        const userName = options.userName || '';
+        const userLogo = options.userLogo || null;
+        const templateId = document.getElementById('editorTemplateSelect')?.value || options.templateId || 'classic';
+        const includeAnalytics = document.getElementById('editorIncludeKpi') ? document.getElementById('editorIncludeKpi').checked : (options.includeAnalytics !== false);
+
         const payload = {
-            id: reviewIdToUse || undefined,
-            title: title || options.title || '',
-            clientName: options.clientName || '',
-            clientLogo: options.clientLogo || '',
-            userName: options.userName || '',
-            userLogo: options.userLogo || '',
-            templateId: options.templateId || 'classic',
-            includeAnalytics: !!options.includeAnalytics,
-            customLogoSize: options.customLogoSize,
-            customCoverTitleSize: options.customCoverTitleSize,
-            customCoverSubtitleSize: options.customCoverSubtitleSize,
-            customCoverDateSize: options.customCoverDateSize,
-            customCoverCenterOffsetY: options.customCoverCenterOffsetY,
-            customCoverDate: options.customCoverDate
+            articles,
+            title,
+            clientName,
+            clientLogo,
+            userName,
+            userLogo,
+            templateId,
+            includeAnalytics,
+            id: currentReviewId || undefined,
+            customLogoSize: options.customLogoSize || null,
+            customCoverTitleSize: options.customCoverTitleSize || null,
+            customCoverSubtitleSize: options.customCoverSubtitleSize || null,
+            customCoverDateSize: options.customCoverDateSize || null,
+            customCoverCenterOffsetY: options.customCoverCenterOffsetY || null,
+            customCoverDate: options.customCoverDate || null
         };
-        // Only attach articles if we don't have a saved id (fallback)
-        if (!reviewIdToUse) {
-            payload.articles = articles;
-        }
 
         const res = await fetch('/api/pdf/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${userToken}`
             },
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
 
-        // Trigger download via fetch to include Auth token
-        try {
-            const downloadRes = await fetch(data.downloadUrl, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('rs_token')}` }
-            });
-            if (!downloadRes.ok) throw new Error('HTTP ' + downloadRes.status);
-            
-            const blob = await downloadRes.blob();
-            const objectUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = objectUrl;
-            link.download = data.filename || 'Rassegna_Stampa.pdf';
-            document.body.appendChild(link);
-            link.click();
-            
-            setTimeout(() => {
-                link.remove();
-                window.URL.revokeObjectURL(objectUrl);
-            }, 60000);
-        } catch(dlErr) {
-            console.warn('Fetch download failed, falling back to direct URL navigation:', dlErr);
-            const userToken = localStorage.getItem('rs_token');
-            const sep = data.downloadUrl.includes('?') ? '&' : '?';
-            window.open(`${data.downloadUrl}${sep}token=${encodeURIComponent(userToken)}`, '_blank');
+        if (res.status === 401) {
+            localStorage.removeItem('rs_token');
+            showToast('Sessione scaduta. Effettua nuovamente il login.', 'error');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            return;
         }
 
-        showToast('PDF generato e scaricato!', 'success');
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        if (!res.ok) {
+            let errorMsg = 'Errore durante la generazione del PDF';
+            if (isJson) {
+                const errData = await res.json();
+                errorMsg = errData.error || errorMsg;
+            }
+            throw new Error(errorMsg);
+        }
 
-        // Sync localStorage with latest articles (including any edits made in editor)
-        // so when the user goes back to dashboard, articles are up to date
-        const finalTitle = title || options.title || '';
-        options.title = finalTitle;
-        hasCover = !!(finalTitle);
-        if (data && data.id) currentReviewId = data.id;
+        const data = await res.json();
+        if (data && data.id) {
+            currentReviewId = data.id;
+        }
+
+        showToast('PDF generato! Download in corso...', 'success');
+        await triggerDownload(data.downloadUrl, data.filename);
+
+        options.title = title;
+        hasCover = !!(title);
         localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
         renderPagesList();
 
     } catch (err) {
+        console.error('generateAndDownload error:', err);
         showToast(err.message || 'Errore generazione PDF', 'error');
     } finally {
         btn.classList.remove('hidden');

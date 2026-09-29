@@ -51,8 +51,8 @@ async function generatePDF(articles, options) {
         
         page = await browser.newPage();
         
-        // Load HTML; base64 images are inline so 'load' fires immediately
-        await page.setContent(html, { waitUntil: 'load', timeout: 90000 });
+        // Load HTML; base64 images are inline so 'domcontentloaded' fires immediately without waiting for external requests
+        await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         // Auto-detect white/light logos via Canvas API (runs in real Chromium)
         try {

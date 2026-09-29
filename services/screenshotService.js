@@ -42,7 +42,11 @@ async function launchBrowser() {
             '--disable-gpu',
             '--disable-extensions',
             '--disable-background-networking',
-            '--font-render-hinting=none'
+            '--font-render-hinting=none',
+            '--no-zygote',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--js-flags="--max-old-space-size=128"'
         ]
     });
 }

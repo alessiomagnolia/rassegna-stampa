@@ -122,19 +122,6 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
                 updated.logoBase64 = resolvedLogo;
             }
 
-            // If imageBase64 is missing but imageUrl is a remote URL, fetch it server-side.
-            // This allows the editor to archive articles without base64 images and still
-            // get images in the PDF via server-side fetch.
-            if (!updated.imageBase64 && updated.imageUrl && !updated.imageUrl.startsWith('data:') && updated.imageUrl.startsWith('http')) {
-                try {
-                    const fetched = await Promise.race([
-                        fetchImageAsBase64(updated.imageUrl),
-                        new Promise(r => setTimeout(() => r(null), 5000))
-                    ]);
-                    if (fetched) updated.imageBase64 = fetched;
-                } catch(e) {}
-            }
-
             return updated;
         }));
 
