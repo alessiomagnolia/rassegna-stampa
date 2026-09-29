@@ -342,9 +342,14 @@ router.post('/archive', authMiddleware, async (req, res) => {
 router.post('/share/:id', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        const review = req.teamId
-            ? db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(req.params.id, req.userId, req.teamId)
-            : db.prepare('SELECT id, share_token FROM press_reviews WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+        const review = db.prepare(`
+            SELECT id, share_token FROM press_reviews 
+            WHERE id = ? AND (
+                user_id = ? 
+                OR (team_id IS NOT NULL AND team_id = ?)
+                OR (team_id IS NOT NULL AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ?))
+            )
+        `).get(req.params.id, req.userId, req.teamId || -1, req.userId);
         if (!review) return res.status(404).json({ error: 'Rassegna non trovata.' });
 
         let token = review.share_token;

@@ -4148,31 +4148,46 @@ window.downloadBriefingEml = function(type = 'page') {
 };
 
 // --- 3. WEB CLIENT PORTAL & SHARING ---
+function showShareModalWithUrl(shareUrl) {
+    if (!shareUrl) return;
+    const fullUrl = window.location.origin + (shareUrl.startsWith('/') ? shareUrl : '/' + shareUrl);
+    const input = document.getElementById('shareReviewUrlInput');
+    const portalBtn = document.getElementById('btnOpenSharePortalLink');
+    const waBtn = document.getElementById('btnShareWhatsAppLink');
+
+    if (input) input.value = fullUrl;
+    if (portalBtn) portalBtn.href = fullUrl;
+    if (waBtn) {
+        const waText = encodeURIComponent(`Ecco la rassegna stampa aggiornata: ${fullUrl}`);
+        waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
+    }
+
+    const modal = document.getElementById('shareReviewModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        if (window.feather) feather.replace();
+    }
+
+    // Copia automatica negli appunti come comodità immediata
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullUrl).catch(() => {});
+    }
+    showToast('Link di condivisione generato e copiato negli appunti!', 'success');
+}
+
 window.openShareModal = async function(reviewId) {
+    if (!reviewId) return;
     try {
         showToast('Generazione link condivisibile protetto...', 'info');
         const res = await apiCall('POST', `/api/pdf/share/${reviewId}`);
         if (res && res.shareUrl) {
-            const fullUrl = window.location.origin + res.shareUrl;
-            const input = document.getElementById('shareReviewUrlInput');
-            const portalBtn = document.getElementById('btnOpenSharePortalLink');
-            const waBtn = document.getElementById('btnShareWhatsAppLink');
-
-            if (input) input.value = fullUrl;
-            if (portalBtn) portalBtn.href = fullUrl;
-            if (waBtn) {
-                const waText = encodeURIComponent(`Ecco la rassegna stampa aggiornata: ${fullUrl}`);
-                waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
-            }
-
-            const modal = document.getElementById('shareReviewModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.style.display = 'flex';
-                feather.replace();
-            }
+            showShareModalWithUrl(res.shareUrl);
+        } else {
+            throw new Error('Nessun link generato dal server.');
         }
     } catch (err) {
+        console.error('Errore openShareModal:', err);
         showToast('Errore durante la condivisione: ' + err.message, 'error');
     }
 };
@@ -4183,16 +4198,14 @@ window.openShareModalForCurrentReview = async function() {
         return;
     }
 
-    if (state.currentReviewId) {
-        return openShareModal(state.currentReviewId);
-    }
-
     try {
-        showToast('Archiviazione e generazione link condivisibile...', 'info');
-        const title = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
-        const clientName = document.getElementById('clientName')?.value.trim() || '';
+        showToast('Generazione link condivisibile protetto...', 'info');
+        const title = (document.getElementById('rassegnaTitle')?.value || '').trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+        const clientName = (document.getElementById('clientName')?.value || '').trim();
 
+        // Salva / aggiorna sempre la rassegna attuale per assicurare che il link web mostri tutti gli articoli correnti
         const saveRes = await apiCall('POST', '/api/pdf/archive', {
+            id: state.currentReviewId || undefined,
             articles: state.articles,
             title,
             clientName,
@@ -4202,11 +4215,48 @@ window.openShareModalForCurrentReview = async function() {
         if (saveRes && saveRes.id) {
             state.currentReviewId = saveRes.id;
             sessionStorage.setItem('rs_draft_review_id', saveRes.id);
-            loadHistory();
-            openShareModal(saveRes.id);
+            if (typeof loadHistory === 'function') loadHistory();
         }
+
+        if (saveRes && saveRes.shareUrl) {
+            showShareModalWithUrl(saveRes.shareUrl);
+            return;
+        }
+
+        if (saveRes && saveRes.id) {
+            return await openShareModal(saveRes.id);
+        }
+
+        throw new Error('Impossibile ottenere il link di condivisione.');
     } catch (err) {
-        showToast('Errore: ' + err.message, 'error');
+        console.error('Errore openShareModalForCurrentReview:', err);
+        // Fallback: se l'ID era invalido/cancellato, resettiamo l'ID e forziamo una nuova archiviazione
+        if (state.currentReviewId) {
+            state.currentReviewId = null;
+            sessionStorage.removeItem('rs_draft_review_id');
+            try {
+                const title = (document.getElementById('rassegnaTitle')?.value || '').trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
+                const clientName = (document.getElementById('clientName')?.value || '').trim();
+                const freshRes = await apiCall('POST', '/api/pdf/archive', {
+                    articles: state.articles,
+                    title,
+                    clientName,
+                    clientLogo: state.clientLogoBase64
+                });
+                if (freshRes && freshRes.id) {
+                    state.currentReviewId = freshRes.id;
+                    sessionStorage.setItem('rs_draft_review_id', freshRes.id);
+                    if (freshRes.shareUrl) {
+                        showShareModalWithUrl(freshRes.shareUrl);
+                        return;
+                    }
+                    return await openShareModal(freshRes.id);
+                }
+            } catch (fallbackErr) {
+                console.error('Fallback archive error:', fallbackErr);
+            }
+        }
+        showToast('Errore durante la condivisione: ' + err.message, 'error');
     }
 };
 
@@ -4221,9 +4271,19 @@ window.closeShareModal = function() {
 window.copyShareReviewUrl = function() {
     const input = document.getElementById('shareReviewUrlInput');
     if (!input || !input.value) return;
-    navigator.clipboard.writeText(input.value).then(() => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            showToast('Link rassegna cliente copiato negli appunti!', 'success');
+        }).catch(() => {
+            input.select();
+            document.execCommand('copy');
+            showToast('Link rassegna cliente copiato negli appunti!', 'success');
+        });
+    } else {
+        input.select();
+        document.execCommand('copy');
         showToast('Link rassegna cliente copiato negli appunti!', 'success');
-    }).catch(() => showToast('Errore durante la copia', 'error'));
+    }
 };
 
 // --- 4. MEDIA CONTACTS CRM & MAILING LIST CONTROLLER ---
