@@ -447,7 +447,8 @@ function buildClassicHTML(articles, options) {
         // Strip raw HTML tags from excerpt, then bold keywords
         const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
         const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-        const clampLines = article.imageBase64 ? 14 : 28;
+        const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+        const clampLines = articleImgSrc ? 14 : 28;
 
         const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
         const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
@@ -482,9 +483,9 @@ function buildClassicHTML(articles, options) {
             <div class="article-source-label" ${sourceStyle}>${article.source_name || ''}</div>
             <div class="article-title" ${titleStyle}>${article.title || ''}</div>
         </div>
-        ${article.imageBase64 ? `
+        ${articleImgSrc ? `
         <div class="visual-zone" ${visualZoneStyle}>
-            <img src="${article.imageBase64}" class="main-visual" ${imgStyle} alt="Article Image">
+            <img src="${articleImgSrc}" class="main-visual" ${imgStyle} alt="Article Image">
         </div>` : ''}
         <div class="content-zone">
             <div class="content-text" style="-webkit-line-clamp: ${clampLines}; ${article.customTextSize ? `font-size: ${article.customTextSize}px;` : ''}">
@@ -662,7 +663,8 @@ function buildModernHTML(articles, options) {
         return articles.map((article, index) => {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-            const clampLines = article.imageBase64 ? 13 : 26;
+            const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+            const clampLines = articleImgSrc ? 13 : 26;
             const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 26;
             const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
             const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
@@ -695,9 +697,9 @@ function buildModernHTML(articles, options) {
             <div class="article-title-m" ${titleStyle}>${article.title || ''}</div>
         </div>
 
-        ${article.imageBase64 ? `
+        ${articleImgSrc ? `
         <div class="visual-zone-m" ${visualZoneStyle}>
-            <img src="${article.imageBase64}" class="main-visual-m" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
+            <img src="${articleImgSrc}" class="main-visual-m" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-m">
@@ -863,7 +865,8 @@ function buildMinimalHTML(articles, options) {
         return articles.map((article, index) => {
             const cleanExcerpt = (article.excerpt || '').replace(/<\/?(?:b|strong)\b[^>]*>/gi, '');
             const processedExcerpt = boldKeywords(cleanExcerpt, keywordRegex);
-            const clampLines = article.imageBase64 ? 13 : 26;
+            const articleImgSrc = article.imageBase64 || (article.imageUrl && !article.imageUrl.includes('data:') ? article.imageUrl : null);
+            const clampLines = articleImgSrc ? 13 : 26;
             const hasExplicitTitleSize = article.customTitleSize && article.customTitleSize !== 20 && article.customTitleSize !== 18 && article.customTitleSize !== 16 && article.customTitleSize !== 28;
             const titleStyle = hasExplicitTitleSize ? `style="font-size: ${article.customTitleSize}px;"` : '';
             const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
@@ -894,9 +897,9 @@ function buildMinimalHTML(articles, options) {
             <div class="article-title-e" ${titleStyle}>${article.title || ''}</div>
         </div>
 
-        ${article.imageBase64 ? `
+        ${articleImgSrc ? `
         <div class="visual-zone-e" ${visualZoneStyle}>
-            <img src="${article.imageBase64}" class="main-visual-e" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
+            <img src="${articleImgSrc}" class="main-visual-e" style="width:100%; height:100%; object-fit:cover; object-position: center ${imgPosY}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-e">

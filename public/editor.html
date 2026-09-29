@@ -4577,9 +4577,16 @@ async function generateAndDownload() {
         const title = document.getElementById('editorTitle').value.trim();
 
         // STEP 1: Archive/update current articles in DB first.
-        // This keeps the HTTP payload for /generate small (no base64 images in body).
+        // Send articles WITHOUT imageBase64 to keep the payload small.
+        // The /generate route will fetch images from imageUrl server-side.
         let reviewIdToUse = currentReviewId;
         try {
+            const articlesForArchive = articles.map(a => {
+                const slim = { ...a };
+                delete slim.imageBase64;    // strip large base64 images
+                delete slim.screenshotBase64;
+                return slim;
+            });
             const archiveRes = await fetch('/api/pdf/archive', {
                 method: 'POST',
                 headers: {
@@ -4588,7 +4595,7 @@ async function generateAndDownload() {
                 },
                 body: JSON.stringify({
                     id: currentReviewId || undefined,
-                    articles,
+                    articles: articlesForArchive,
                     title: title || options.title || '',
                     clientName: options.clientName || '',
                     clientLogo: options.clientLogo || ''
