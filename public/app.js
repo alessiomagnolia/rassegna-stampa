@@ -4093,6 +4093,60 @@ window.openDigestMailto = async function(btnEl) {
     showToast('📋 Grafica copiata negli appunti! Nella schermata dell\'email premi Incolla (Ctrl+V) per inserire il briefing formattato.', 'success', 6000);
 };
 
+window.downloadBriefingEml = function(type = 'page') {
+    const data = type === 'page' ? currentPageDigestData : currentDigestData;
+    if (!data) {
+        showToast('Nessun briefing disponibile da scaricare.', 'warning');
+        return;
+    }
+
+    let cleanSubject = (data.subject || 'Briefing Rassegna Stampa')
+        .replace(/\[Briefing\s*8:00\]/gi, '[Briefing]')
+        .replace(/\b8:00\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+    const htmlContent = data.emailHtml || '';
+    const textContent = data.emailText || data.whatsappText || '';
+
+    const boundary = "----=_NextPart_" + Math.random().toString(36).substring(2);
+    const emlContent = [
+        `Subject: ${cleanSubject}`,
+        `X-Unsent: 1`,
+        `MIME-Version: 1.0`,
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        ``,
+        `--${boundary}`,
+        `Content-Type: text/plain; charset=utf-8`,
+        `Content-Transfer-Encoding: 8bit`,
+        ``,
+        textContent,
+        ``,
+        `--${boundary}`,
+        `Content-Type: text/html; charset=utf-8`,
+        `Content-Transfer-Encoding: 8bit`,
+        ``,
+        htmlContent,
+        ``,
+        `--${boundary}--`
+    ].join('\r\n');
+
+    const blob = new Blob([emlContent], { type: 'message/rfc822' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cleanFileName = cleanSubject.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 70);
+    a.download = `${cleanFileName}.eml`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 15000);
+
+    showToast('Bozza per Outlook (.eml) scaricata! Aprila per trovare il messaggio già pronto con tutta la formattazione grafica.', 'success', 6000);
+};
+
 // --- 3. WEB CLIENT PORTAL & SHARING ---
 window.openShareModal = async function(reviewId) {
     try {
