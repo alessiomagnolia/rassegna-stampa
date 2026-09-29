@@ -4,14 +4,18 @@ const { getDb } = require('../database/db');
 const JWT_SECRET = process.env.JWT_SECRET || 'rassegna-stampa-secret-key-dev';
 
 const authMiddleware = (req, res, next) => {
-    // Read Authorization header (Bearer token format)
+    // Read Authorization header (Bearer token format) or query parameter ?token=
     const authHeader = req.headers.authorization;
+    let token = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    } else if (req.query && req.query.token) {
+        token = req.query.token;
+    }
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
         return res.status(401).json({ error: 'Accesso negato. Token mancante o non valido.' });
     }
-
-    const token = authHeader.split(' ')[1];
 
     try {
         // Verify token

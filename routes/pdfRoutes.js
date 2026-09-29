@@ -136,8 +136,11 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         if (title && title.trim().length > 0) {
             baseFilename = title.trim().replace(/[^a-z0-9]/gi, '_');
         }
-        const filename = `${baseFilename}_${date}.pdf`;
-        const outputPath = path.join(__dirname, '..', 'output', filename);
+        const outputDir = path.join(__dirname, '..', 'output');
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+        const outputPath = path.join(outputDir, filename);
 
         console.log(`[PDF] Generazione PDF in: ${outputPath}`);
         const pdfBuffer = await generatePDF(resolvedArticles, options);
@@ -418,7 +421,7 @@ router.get('/share-data/:token', (req, res) => {
  * GET /api/pdf/public-download/:token
  * Public download for client portal
  */
-router.get('/public-download/:token', (req, res) => {
+router.get('/public-download/:token', async (req, res) => {
     try {
         const db = getDb();
         const review = db.prepare('SELECT * FROM press_reviews WHERE share_token = ?').get(req.params.token);
@@ -426,16 +429,42 @@ router.get('/public-download/:token', (req, res) => {
 
         const filePath = path.join(__dirname, '..', 'output', review.pdf_filename);
         if (!fs.existsSync(filePath)) {
+            // Auto-regenerate on-demand if ephemeral server storage was wiped
+            if (review && review.articles_json) {
+                try {
+                    const articles = JSON.parse(review.articles_json);
+                    if (Array.isArray(articles) && articles.length > 0) {
+                        const options = {
+                            title: review.title || 'Rassegna Stampa',
+                            clientName: review.client_name || null,
+                            clientLogo: review.client_logo || null,
+                            templateId: 'classic',
+                            includeAnalytics: true
+                        };
+                        const outputDir = path.join(__dirname, '..', 'output');
+                        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+                        const pdfBuffer = await generatePDF(articles, options);
+                        fs.writeFileSync(filePath, pdfBuffer);
+                    }
+                } catch (regenErr) {
+                    console.error('[PDF] Errore rigenerazione on-demand public download:', regenErr);
+                }
+            }
+        }
+
+        if (!fs.existsSync(filePath)) {
             return res.status(404).send('File PDF non disponibile.');
         }
 
-        res.download(filePath, `Rassegna_Stampa_${(review.title || 'Ufficiale').replace(/[^a-z0-9]/gi, '_')}.pdf`);
+        const safeTitle = (review.title || 'Ufficiale').trim().replace(/[^a-z0-9]/gi, '_');
+        res.download(filePath, `Rassegna_Stampa_${safeTitle}.pdf`);
     } catch (e) {
+        console.error('Public download PDF error:', e);
         res.status(500).send('Errore download');
     }
 });
 
-router.get('/download/:filename', authMiddleware, (req, res) => {
+router.get('/download/:filename', authMiddleware, async (req, res) => {
     try {
         const { filename } = req.params;
         const safeFilename = path.basename(filename);
@@ -444,14 +473,41 @@ router.get('/download/:filename', authMiddleware, (req, res) => {
         }
 
         const filePath = path.join(__dirname, '..', 'output', safeFilename);
+        const db = getDb();
+        
+        // Verify ownership (support direct user or team member)
+        const review = req.teamId
+            ? db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND (user_id = ? OR (team_id IS NOT NULL AND team_id = ?))').get(safeFilename, req.userId, req.teamId)
+            : db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(safeFilename, req.userId);
+        
+        if (!fs.existsSync(filePath)) {
+            // Auto-regenerate on-demand if ephemeral server storage was wiped
+            if (review && review.articles_json) {
+                try {
+                    const articles = JSON.parse(review.articles_json);
+                    if (Array.isArray(articles) && articles.length > 0) {
+                        console.log(`[PDF] Rigenerazione on-demand per: ${safeFilename}`);
+                        const options = {
+                            title: review.title || 'Rassegna Stampa',
+                            clientName: review.client_name || null,
+                            clientLogo: review.client_logo || null,
+                            templateId: 'classic',
+                            includeAnalytics: true
+                        };
+                        const outputDir = path.join(__dirname, '..', 'output');
+                        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+                        const pdfBuffer = await generatePDF(articles, options);
+                        fs.writeFileSync(filePath, pdfBuffer);
+                    }
+                } catch (regenErr) {
+                    console.error('[PDF] Errore rigenerazione on-demand download:', regenErr);
+                }
+            }
+        }
+
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ error: 'Il file PDF non è più disponibile sul server.' });
         }
-
-        const db = getDb();
-        
-        // Verify ownership
-        const review = db.prepare('SELECT * FROM press_reviews WHERE pdf_filename = ? AND user_id = ?').get(safeFilename, req.userId);
         
         if (!review) {
             // KPI and draft files are ephemeral — not stored in press_reviews.
@@ -468,7 +524,8 @@ router.get('/download/:filename', authMiddleware, (req, res) => {
             return res.status(404).json({ error: 'PDF non trovato o non autorizzato.' });
         }
 
-        res.download(filePath, `Rassegna_Stampa_${review.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+        const safeTitle = (review.title || 'Rassegna_Stampa').trim().replace(/[^a-z0-9]/gi, '_');
+        res.download(filePath, `Rassegna_Stampa_${safeTitle}.pdf`);
     } catch (error) {
         console.error('Download PDF error:', error);
         res.status(500).json({ error: 'Errore durante il download del PDF.' });

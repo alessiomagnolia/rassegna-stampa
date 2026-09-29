@@ -950,10 +950,21 @@ async function triggerDownload(url, filename) {
         a.download = filename || 'Rassegna_Stampa.pdf';
         document.body.appendChild(a);
         a.click();
-        a.remove();
-        window.URL.revokeObjectURL(objectUrl);
+
+        // Delay revoke so browser download manager has time to stream file completely
+        setTimeout(() => {
+            a.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        }, 60000);
     } catch (error) {
         console.error('triggerDownload error:', error);
+        // Fallback: direct browser navigation with query token
+        const token = state.token || localStorage.getItem('rs_token');
+        if (url && token && !url.includes('token=')) {
+            const sep = url.includes('?') ? '&' : '?';
+            window.open(`${url}${sep}token=${encodeURIComponent(token)}`, '_blank');
+            return;
+        }
         showToast('Errore durante il download: ' + error.message, 'error');
         throw error;
     }

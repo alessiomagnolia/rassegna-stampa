@@ -9,20 +9,40 @@ try {
 // Launch a fresh browser instance optimized for low-memory servers (512MB RAM)
 async function launchBrowser() {
     if (!puppeteer) {
-        throw new Error('Puppeteer non installato o non disponibile');
+        try {
+            puppeteer = require('puppeteer');
+        } catch(e) {
+            throw new Error('Puppeteer non installato o non disponibile: ' + e.message);
+        }
     }
     console.log('Avvio di Puppeteer...');
-    const chromePath = (process.env.RENDER && fs.existsSync('/usr/bin/google-chrome')) ? '/usr/bin/google-chrome' : undefined;
+
+    // Resolve chrome executable path across environments (Docker, Railway, Render, Linux, Windows)
+    let chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (!chromePath || !fs.existsSync(chromePath)) {
+        const candidates = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+        ];
+        chromePath = candidates.find(p => fs.existsSync(p)) || undefined;
+    }
+
     return await puppeteer.launch({
-        headless: 'new',
-        executablePath: chromePath,
+        headless: true,
+        ...(chromePath ? { executablePath: chromePath } : {}),
         args: [
             '--no-sandbox', 
             '--disable-setuid-sandbox', 
             '--disable-dev-shm-usage',
             '--disable-gpu',
             '--disable-extensions',
-            '--disable-background-networking'
+            '--disable-background-networking',
+            '--font-render-hinting=none'
         ]
     });
 }
