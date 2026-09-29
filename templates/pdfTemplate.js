@@ -355,11 +355,13 @@ function buildClassicHTML(articles, options) {
         .article-title { font-size: 20pt; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 
         .visual-zone {
-            flex: 0 0 auto; margin: 0 5mm 10mm; text-align: center;
-            max-height: 80mm; overflow: visible;
+            flex: 0 0 auto; margin: 0 5mm 8mm; text-align: center;
+            height: 72mm; max-height: 72mm; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            background: #0f172a;
         }
-        .main-visual { max-width: 100%; height: auto; max-height: 80mm; object-fit: contain; object-position: center; display: block; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .main-visual { width: 100%; height: 100%; object-fit: cover; object-position: center 50%; display: block; border-radius: 8px; }
 
         .content-zone { flex: 1 1 auto; padding: 0 5mm; margin-bottom: 5mm; overflow: hidden; position: relative; }
         .content-text {
@@ -451,10 +453,13 @@ function buildClassicHTML(articles, options) {
         const textStyle = article.customTextSize ? `style="font-size: ${article.customTextSize}px;"` : '';
         const sourceStyle = article.customSourceSize ? `style="font-size: ${article.customSourceSize}px;"` : '';
         const logoStyle = article.customLogoHeight ? `style="max-height: ${article.customLogoHeight}px; height: ${article.customLogoHeight}px;"` : '';
-        const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260) ? article.customImageHeight : null;
-        const visualZoneStyle = effectiveImgH ? `style="max-height: ${effectiveImgH}px; height: ${effectiveImgH}px;"` : '';
+        const defaultImgH = 72; // mm
+        const effectiveImgH = (article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320)
+            ? Math.round(article.customImageHeight * 0.25)
+            : defaultImgH;
+        const visualZoneStyle = `style="height: ${effectiveImgH}mm; max-height: ${effectiveImgH}mm;"`;
         const imgPosY = article.customImagePosY !== undefined ? article.customImagePosY : 50;
-        const imgStyle = `style="object-position: center ${imgPosY}%; ${effectiveImgH ? `max-height:${effectiveImgH}px;` : ''}"`;
+        const imgStyle = `style="width: 100%; height: 100%; object-fit: cover; object-position: center ${imgPosY}%;"`;
 
         html += `
     <div class="page">
@@ -573,11 +578,13 @@ function buildModernHTML(articles, options) {
         /* VISUAL ZONE MODERN */
         .visual-zone-m {
             flex: 0 0 auto; margin: 0 0 8mm; text-align: center;
-            max-height: 68mm; overflow: hidden; border-radius: 10px;
+            height: 68mm; max-height: 68mm; width: 100%;
+            overflow: hidden; border-radius: 10px;
             box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1); border: 1px solid #e2e8f0;
             display: flex; justify-content: center; align-items: center;
+            background: #0f172a;
         }
-        .main-visual-m { width: 100%; height: auto; max-height: 68mm; object-fit: contain; object-position: top center; display: block; }
+        .main-visual-m { width: 100%; height: 100%; object-fit: cover; object-position: center 50%; display: block; }
 
         /* CONTENT ZONE MODERN */
         .content-zone-m { flex: 1 1 auto; padding: 0 4px; margin-bottom: 4mm; overflow: hidden; position: relative; }
@@ -664,8 +671,8 @@ function buildModernHTML(articles, options) {
         </div>
 
         ${article.imageBase64 ? `
-        <div class="visual-zone-m">
-            <img src="${article.imageBase64}" class="main-visual-m" style="object-position: ${article.imagePosition || 'top center'};" alt="Article Image">
+        <div class="visual-zone-m" style="${(article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320) ? `height:${Math.round(article.customImageHeight * 0.25)}mm; max-height:${Math.round(article.customImageHeight * 0.25)}mm;` : ''}">
+            <img src="${article.imageBase64}" class="main-visual-m" style="width:100%; height:100%; object-fit:cover; object-position: center ${article.customImagePosY !== undefined ? article.customImagePosY : 50}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-m">
@@ -754,10 +761,12 @@ function buildMinimalHTML(articles, options) {
         /* VISUAL ZONE MINIMAL */
         .visual-zone-e {
             flex: 0 0 auto; margin: 0 0 8mm; text-align: center;
-            max-height: 68mm; overflow: hidden; border-radius: 2px;
+            height: 68mm; max-height: 68mm; width: 100%;
+            overflow: hidden; border-radius: 2px;
             display: flex; justify-content: center; align-items: center;
+            background: #0f172a;
         }
-        .main-visual-e { width: 100%; height: auto; max-height: 68mm; object-fit: contain; object-position: top center; display: block; }
+        .main-visual-e { width: 100%; height: 100%; object-fit: cover; object-position: center 50%; display: block; }
 
         /* CONTENT ZONE MINIMAL */
         .content-zone-e { flex: 1 1 auto; margin-bottom: 4mm; overflow: hidden; position: relative; }
@@ -843,8 +852,8 @@ function buildMinimalHTML(articles, options) {
         </div>
 
         ${article.imageBase64 ? `
-        <div class="visual-zone-e">
-            <img src="${article.imageBase64}" class="main-visual-e" style="object-position: ${article.imagePosition || 'top center'};" alt="Article Image">
+        <div class="visual-zone-e" style="${(article.customImageHeight && article.customImageHeight !== 160 && article.customImageHeight !== 260 && article.customImageHeight !== 280 && article.customImageHeight !== 320) ? `height:${Math.round(article.customImageHeight * 0.25)}mm; max-height:${Math.round(article.customImageHeight * 0.25)}mm;` : ''}">
+            <img src="${article.imageBase64}" class="main-visual-e" style="width:100%; height:100%; object-fit:cover; object-position: center ${article.customImagePosY !== undefined ? article.customImagePosY : 50}%;" alt="Article Image">
         </div>` : ''}
 
         <div class="content-zone-e">
