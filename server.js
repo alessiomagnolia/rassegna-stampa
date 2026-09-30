@@ -23,6 +23,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public'), {
+    index: false,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html') || filePath.endsWith('app.js')) {
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

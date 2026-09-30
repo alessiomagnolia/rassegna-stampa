@@ -34,27 +34,32 @@ function checkRateLimit(ip) {
 // ---------------------------------------------------------------------------
 
 // Homepage (SEO Landing Page)
-router.get('/', (req, res) => {
+router.get(['/', '/home'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'landing.html'));
 });
 
 // Direct Login / Workspace entry
-router.get('/login', (req, res) => {
+router.get(['/login', '/accedi'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // Solutions Page
 router.get('/soluzioni', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'soluzioni.html'));
 });
 
 // Comparison Page (Alternative a Mimesi, Volocom, Telpress)
 router.get('/confronto', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'confronto.html'));
 });
 
 // Free Tool Lead Magnet
 router.get('/strumenti-gratuiti/generatore-comunicati-stampa', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'strumento-comunicato-stampa-gratuito.html'));
 });
 
