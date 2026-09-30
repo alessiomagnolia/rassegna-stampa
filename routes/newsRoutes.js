@@ -8,6 +8,8 @@ const cheerio = require('cheerio');
 const decoder = new GoogleDecoder();
 const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains, getAllRssFeeds } = require('../config/prioritySources');
 const { expandQueryWithAI } = require('../services/aiQueryService');
+const { analyzeSentimentAndRisk, generateAudioBriefingScript, generateExecutiveBoardSummary } = require('../services/aiService');
+const { extractArticle } = require('../services/articleExtractor');
 
 const router = express.Router();
 
@@ -822,6 +824,74 @@ router.post('/resolve-urls', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('[Resolve URLs] error:', err);
         res.status(500).json({ error: 'Errore durante la risoluzione degli URL.' });
+    }
+});
+
+/**
+ * POST /api/news/reader — Focus Reader Mode (estrazione pulita dell'articolo full-text e citazioni)
+ */
+router.post('/reader', authMiddleware, async (req, res) => {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL articolo obbligatorio' });
+
+    try {
+        const articleData = await extractArticle(url);
+        res.json(articleData);
+    } catch (err) {
+        console.error('[NewsRoutes] Errore reader:', err.message);
+        res.status(500).json({ error: err.message || 'Impossibile estrarre l\'articolo per la lettura.' });
+    }
+});
+
+/**
+ * POST /api/news/sentiment-risk — Valutazione semantica del sentiment e crisi reputazionale
+ */
+router.post('/sentiment-risk', authMiddleware, async (req, res) => {
+    const { title, content, clientName } = req.body;
+    if (!title) return res.status(400).json({ error: 'Titolo articolo obbligatorio' });
+
+    try {
+        const result = await analyzeSentimentAndRisk({ title, content, clientName });
+        res.json(result);
+    } catch (err) {
+        console.error('[NewsRoutes] Errore sentiment:', err);
+        res.status(500).json({ error: 'Errore durante l\'analisi del sentiment' });
+    }
+});
+
+/**
+ * POST /api/news/audio-briefing — Genera script radiofonico per Executive Audio Briefing (60s)
+ */
+router.post('/audio-briefing', authMiddleware, async (req, res) => {
+    const { articles, clientName } = req.body;
+    if (!articles || !Array.isArray(articles) || articles.length === 0) {
+        return res.status(400).json({ error: 'Fornire almeno un articolo per il briefing' });
+    }
+
+    try {
+        const briefing = await generateAudioBriefingScript({ articles, clientName });
+        res.json(briefing);
+    } catch (err) {
+        console.error('[NewsRoutes] Errore audio briefing:', err);
+        res.status(500).json({ error: 'Errore durante la generazione dell\'audio briefing' });
+    }
+});
+
+/**
+ * POST /api/news/board-summary — Genera sintesi esecutiva per il Consiglio di Amministrazione
+ */
+router.post('/board-summary', authMiddleware, async (req, res) => {
+    const { articles, clientName } = req.body;
+    if (!articles || !Array.isArray(articles) || articles.length === 0) {
+        return res.status(400).json({ error: 'Fornire articoli per il sommario' });
+    }
+
+    try {
+        const summary = await generateExecutiveBoardSummary({ articles, clientName });
+        res.json(summary);
+    } catch (err) {
+        console.error('[NewsRoutes] Errore board summary:', err);
+        res.status(500).json({ error: 'Errore nella generazione del sommario esecutivo' });
     }
 });
 

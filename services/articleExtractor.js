@@ -875,6 +875,9 @@ async function extractArticle(url, options = {}) {
     }
 
     const excerptText = cleanText(article.content || article.description || '', 500);
+    const fullText = cleanText(article.content || article.description || '', 12000);
+    const quotesMatches = fullText.match(/[«"“][^»"”]{20,250}[»"”]/g) || [];
+    const keyQuotes = quotesMatches.slice(0, 4).map(q => q.replace(/^[«"“]|[\»"”]$/g, '').trim());
 
     return {
         url,
@@ -884,6 +887,10 @@ async function extractArticle(url, options = {}) {
         source_name: sourceName,
         source_type: extractSourceType(url),
         excerpt: excerptText,
+        full_content: fullText,
+        key_quotes: keyQuotes,
+        word_count: fullText.split(/\s+/).length,
+        reading_time_min: Math.max(1, Math.round(fullText.split(/\s+/).length / 200)),
         imageBase64,
         logoBase64,
         screenshotBase64: rawScreenshot ? (rawScreenshot.startsWith('data:') ? rawScreenshot : `data:image/png;base64,${rawScreenshot}`) : null

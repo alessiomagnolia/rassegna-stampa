@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Comunicati Stampa Online Gratuito con AI | Tool per Uffici Stampa</title>
+    <meta name="description" content="Genera comunicati stampa professionali in pochi secondi grazie all'Intelligenza Artificiale. Tool gratuito online con diversi toni di voce, formattazione giornalistica e download immediato.">
+    <link rel="canonical" href="https://rassegnastampa.ai/strumenti-gratuiti/generatore-comunicati-stampa">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Generatore Comunicati Stampa Online Gratuito con AI">
+    <meta property="og:description" content="Crea una bozza impeccabile di comunicato stampa aziendale o istituzionale in 30 secondi con l'Intelligenza Artificiale.">
+    <meta property="og:type" content="website">
+
+    <!-- Fonts & CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        :root {
+            --bg-body: #0a0f1d;
+            --bg-card: #131b2e;
+            --border: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+        header.nav-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .nav-logo span { color: var(--accent-blue); }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
+        .nav-links a:hover, .nav-links a.active { color: #fff; }
+        .btn-cta {
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 3rem 1.5rem; }
+        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 4px 14px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.8rem; }
+        .lead { font-size: 1.15rem; color: var(--text-muted); max-width: 700px; margin: 0 auto; }
+
+        /* Generator Box */
+        .tool-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            margin-bottom: 3rem;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: #e2e8f0; }
+        input[type="text"], select, textarea {
+            width: 100%;
+            background: rgba(10, 15, 29, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent-blue); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+        .btn-generate {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: #fff;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.2s;
+        }
+        .btn-generate:hover { opacity: 0.9; }
+
+        /* Output Box */
+        .output-box {
+            margin-top: 2rem;
+            background: rgba(10, 15, 29, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+        }
+        .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
+        .output-content { white-space: pre-wrap; font-size: 0.95rem; line-height: 1.7; color: #cbd5e1; max-height: 450px; overflow-y: auto; }
+        .btn-copy { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
+
+        /* Upsell Banner */
+        .upsell-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 3rem; }
+    </style>
+
+    <!-- Schema.org JSON-LD: WebApplication & HowTo -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Generatore di Comunicati Stampa Online con AI",
+      "operatingSystem": "All",
+      "applicationCategory": "BusinessApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "description": "Strumento gratuito basato su intelligenza artificiale per creare comunicati stampa istituzionali e aziendali."
+    }
+    </script>
+</head>
+<body>
+
+    <header class="nav-header">
+        <a href="/" class="nav-logo"><i data-feather="cpu"></i> Rassegna Stampa <span>AI</span></a>
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/soluzioni">Soluzioni</a>
+            <a href="/confronto">Confronto Competitor</a>
+            <a href="/strumenti-gratuiti/generatore-comunicati-stampa" class="active">Tool Gratuito</a>
+            <a href="/index.html">Accedi</a>
+            <a href="/index.html#registerForm" class="btn-cta">Inizia Ora</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="pill-badge"><i data-feather="zap"></i> 100% Gratuito · Nessuna Carta Richiesta</div>
+            <h1>Generatore di Comunicati Stampa con AI</h1>
+            <p class="lead">Inserisci il tema o l'argomento chiave e lascia che l'Intelligenza Artificiale scriva una bozza giornalistica professionale strutturata secondo le regole dell'ufficio stampa.</p>
+        </section>
+
+        <div class="tool-box">
+            <form id="freeToolForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="companyName">Nome Azienda o Brand</label>
+                        <input type="text" id="companyName" placeholder="Es. ACME Tech, Comune di Milano, Studio Legale Rossi" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prTone">Tono di Voce (Tone of Voice)</label>
+                        <select id="prTone">
+                            <option value="istituzionale">Istituzionale & Formale</option>
+                            <option value="dinamico">Dinamico & Innovativo (Startup/Tech)</option>
+                            <option value="crisi">Crisis Response / Smentita Ufficiale</option>
+                            <option value="evento">Lancio Prodotto / Invito Evento</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prTopic">Titolo o Sintesi della Notizia</label>
+                    <input type="text" id="prTopic" placeholder="Es. Lancio della nuova piattaforma cloud sostenibile o acquisizione strategica" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="prDetails">Dettagli Chiave, Numeri o Virgolettati da Includere (Opzionale)</label>
+                    <textarea id="prDetails" rows="4" placeholder="Es. Investimento da 2M€, dichiarazione del CEO Marco Bianchi: 'Puntiamo all'espansione europea entro fine anno', disponibilità dal 1° Novembre."></textarea>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="btn-generate">
+                    <i data-feather="feather"></i> Genera Comunicato Stampa con AI
+                </button>
+            </form>
+
+            <div id="outputWrapper" class="output-box">
+                <div class="output-header">
+                    <span style="font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+                        <i data-feather="check-circle" style="color:var(--accent-green); width:18px;"></i> Bozza Pronta per l'Ufficio Stampa
+                    </span>
+                    <button type="button" id="btnCopy" class="btn-copy">
+                        <i data-feather="copy" style="width:14px;"></i> Copia Testo
+                    </button>
+                </div>
+                <div id="outputContent" class="output-content"></div>
+            </div>
+        </div>
+
+        <div class="upsell-card">
+            <h3 style="font-size:1.4rem; margin-bottom:0.5rem; color:#fff;">Vuoi monitorare anche le notizie che parlano di te?</h3>
+            <p style="color:var(--text-muted); font-size:0.95rem; max-width:650px; margin:0 auto 1.2rem;">
+                La nostra piattaforma completa non scrive solo comunicati: monitora oltre 10.000 fonti web e quotidiani in tempo reale, rileva i rischi reputazionali ed esporta rassegne stampa con il logo del tuo cliente in PDF per il CdA.
+            </p>
+            <a href="/index.html#registerForm" class="btn-cta" style="display:inline-block;">Scopri la Suite Completa con Prova Gratuita</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Rassegna Stampa AI. Tutti i diritti riservati.</p>
+    </footer>
+
+    <script>
+        feather.replace();
+
+        const form = document.getElementById('freeToolForm');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const outputWrapper = document.getElementById('outputWrapper');
+        const outputContent = document.getElementById('outputContent');
+        const btnCopy = document.getElementById('btnCopy');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i data-feather="loader"></i> Elaborazione con Intelligenza Artificiale in corso...`;
+            feather.replace();
+
+            const company = document.getElementById('companyName').value.trim();
+            const tone = document.getElementById('prTone').value;
+            const topic = document.getElementById('prTopic').value.trim();
+            const details = document.getElementById('prDetails').value.trim();
+
+            try {
+                const res = await fetch('/api/seo/free-pr-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company, tone, topic, details })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Errore nella generazione');
+
+                outputContent.innerText = data.pressRelease;
+                outputWrapper.style.display = 'block';
+                outputWrapper.scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                alert(err.message || 'Errore durante la generazione del comunicato.');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i data-feather="feather"></i> Genera Comunicato Stampa con AI`;
+                feather.replace();
+            }
+        });
+
+        btnCopy.addEventListener('click', () => {
+            navigator.clipboard.writeText(outputContent.innerText).then(() => {
+                btnCopy.innerHTML = `<i data-feather="check" style="width:14px;"></i> Copiato!`;
+                feather.replace();
+                setTimeout(() => {
+                    btnCopy.innerHTML = `<i data-feather="copy" style="width:14px;"></i> Copia Testo`;
+                    feather.replace();
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

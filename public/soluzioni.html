@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soluzioni di Rassegna Stampa & Media Intelligence per Agenzie, Aziende e Uffici Stampa</title>
+    <meta name="description" content="Scopri le soluzioni su misura di rassegna stampa AI e media intelligence: per agenzie di comunicazione, PMI, grandi aziende e uffici stampa istituzionali.">
+    <link rel="canonical" href="https://rassegnastampa.ai/soluzioni">
+
+    <!-- Fonts & CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        :root {
+            --bg-body: #0a0f1d;
+            --bg-card: #131b2e;
+            --border: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+        header.nav-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .nav-logo span { color: var(--accent-blue); }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
+        .nav-links a:hover, .nav-links a.active { color: #fff; }
+        .btn-cta {
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem; }
+        .hero { text-align: center; margin-bottom: 4rem; }
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            padding: 4px 14px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 2.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
+        .lead { font-size: 1.15rem; color: var(--text-muted); max-width: 750px; margin: 0 auto; }
+
+        .solutions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 4rem; }
+        .sol-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .sol-card:hover { transform: translateY(-4px); border-color: var(--accent-blue); }
+        .sol-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+        }
+        .sol-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.8rem; color: #fff; }
+        .sol-card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .sol-features { list-style: none; }
+        .sol-features li { color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 8px; }
+
+        .banner-cta {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+    </style>
+
+    <!-- Schema.org JSON-LD: Service -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "serviceType": "Media Monitoring e Rassegna Stampa AI",
+      "provider": {
+        "@type": "Organization",
+        "name": "Rassegna Stampa AI"
+      },
+      "areaServed": "IT",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Piani Rassegna Stampa",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Soluzione Agenzie di Comunicazione & PR"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Soluzione Corporate & Direzione Generale"
+            }
+          }
+        ]
+      }
+    }
+    </script>
+</head>
+<body>
+
+    <header class="nav-header">
+        <a href="/" class="nav-logo"><i data-feather="cpu"></i> Rassegna Stampa <span>AI</span></a>
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/soluzioni" class="active">Soluzioni</a>
+            <a href="/confronto">Confronto Competitor</a>
+            <a href="/strumenti-gratuiti/generatore-comunicati-stampa">Tool Gratuito</a>
+            <a href="/index.html">Accedi</a>
+            <a href="/index.html#registerForm" class="btn-cta">Inizia Ora</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="pill-badge"><i data-feather="layers"></i> Soluzioni Dedicate</div>
+            <h1>Progettato per chi Lavora con le Notizie</h1>
+            <p class="lead">Dall'agenzia che gestisce decine di clienti in contemporanea all'ufficio stampa aziendale che deve riferire al CdA alle 8:00 del mattino.</p>
+        </section>
+
+        <div class="solutions-grid">
+            <div class="sol-card">
+                <div class="sol-icon"><i data-feather="briefcase"></i></div>
+                <h3>Per Agenzie PR & Media Relations</h3>
+                <p>Gestisci clienti multipli con spazi di lavoro separati, archivio loghi automatico e rassegne PDF 100% White-Label brandizzate.</p>
+                <ul class="sol-features">
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Layout PDF con logo cliente e colori dedicati</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Scrittura automatica di comunicati stampa</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Generazione post LinkedIn ottimizzati</li>
+                </ul>
+            </div>
+
+            <div class="sol-card">
+                <div class="sol-icon"><i data-feather="shield"></i></div>
+                <h3>Per Direzione Generale & CdA</h3>
+                <p>Niente tomi di centinaia di pagine cartacee: solo l'Executive Briefing essenziale con indice di rischio reputazionale e audio podcast.</p>
+                <ul class="sol-features">
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Executive Audio Briefing vocale da 60s</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Crisis Alert su articoli critici o scandali</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Executive Summary in 3 punti per il CEO</li>
+                </ul>
+            </div>
+
+            <div class="sol-card">
+                <div class="sol-icon"><i data-feather="feather"></i></div>
+                <h3>Per Uffici Stampa & Giornalisti</h3>
+                <p>Elimina il rumore informativo e concentra l'attenzione sui fatti reali con la modalità Focus Reader e l'estrazione virgolettati.</p>
+                <ul class="sol-features">
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Focus Reader mode senza cookie e banner</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Estrazione automatica delle citazioni chiave</li>
+                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Integrazione scraping Web, Bing e RSS</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="banner-cta">
+            <h2 style="font-size:2rem; margin-bottom:1rem;">Trova il piano perfetto per la tua organizzazione</h2>
+            <p style="color:var(--text-muted); max-width:650px; margin:0 auto 1.5rem;">Attiva il tuo workspace in 30 secondi. Nessun contratto annuale vincolante, disdici quando vuoi.</p>
+            <a href="/index.html#registerForm" class="btn-cta" style="font-size:1.05rem; padding:0.8rem 2rem;">Attiva la Prova Gratuita</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Rassegna Stampa AI. Tutti i diritti riservati.</p>
+    </footer>
+
+    <script>feather.replace();</script>
+</body>
+</html>

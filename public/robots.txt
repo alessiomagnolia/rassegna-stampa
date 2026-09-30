@@ -1,7 +1,10 @@
-﻿# robots.txt for Rassegna Stampa Generator
+# robots.txt for Rassegna Stampa Generator
 User-agent: *
 Allow: /
 Allow: /index.html
+Allow: /soluzioni
+Allow: /confronto
+Allow: /strumenti-gratuiti
 Allow: /assets/
 Allow: /logos/
 

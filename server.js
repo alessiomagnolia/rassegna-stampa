@@ -42,6 +42,7 @@ const clientRoutes = require('./routes/clientRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const seoRoutes = require('./routes/seoRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -114,10 +115,8 @@ app.get('/save-the-date', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'save-the-date.html'));
 });
 
-// Fallback to index.html for SPA if needed (currently using multiple HTML files though)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// SEO Routes & Public Portals
+app.use('/', seoRoutes);
 
 const { startCrawlerScheduler } = require('./services/newsCrawler');
 const { initNewsIndexer } = require('./services/newsIndexer');

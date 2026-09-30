@@ -59,6 +59,8 @@ function buildPDFHTML(articles, options = {}) {
         return buildModernHTML(articles, options);
     } else if (templateId === 'minimal') {
         return buildMinimalHTML(articles, options);
+    } else if (templateId === 'board' || templateId === 'whitelabel') {
+        return buildBoardHTML(articles, options);
     }
     return buildClassicHTML(articles, options);
 }
@@ -917,6 +919,368 @@ function buildMinimalHTML(articles, options) {
     })()}
 </body>
 </html>`;
+    return html;
+}
+
+// ---------------------------------------------------------------------------
+// TEMPLATE 4: BOARD EXECUTIVE & WHITE-LABEL AGENCY (PREMIUM)
+// ---------------------------------------------------------------------------
+function buildBoardHTML(articles, options) {
+    const { title, userName, clientName, clientLogo, userLogo, executiveSummary, primaryColor = '#0f172a', accentColor = '#3b82f6' } = options;
+    const keywordRegex = buildKeywordRegex(title, clientName);
+    const today = new Date();
+    const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+
+    // Statistics
+    const totalArticles = articles.length;
+    const webCount = articles.filter(a => (a.source_type || '').toLowerCase() === 'web').length;
+    const pressCount = articles.filter(a => (a.source_type || '').toLowerCase() === 'stampa').length;
+
+    let html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>${title || 'Executive Media Briefing'}</title>
+    <style>
+        @page { size: A4; margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        .page-container {
+            width: 210mm;
+            height: 297mm;
+            page-break-after: always;
+            position: relative;
+            background: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16mm 18mm;
+        }
+
+        /* COVER PAGE */
+        .cover-page {
+            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
+            color: #ffffff;
+            padding: 22mm 22mm;
+            justify-content: space-between;
+        }
+        .cover-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 14px;
+        }
+        .agency-badge {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .cover-logos {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .cover-logo-img {
+            max-height: 40px;
+            max-width: 140px;
+            object-fit: contain;
+        }
+        .cover-hero {
+            margin-top: 30px;
+            margin-bottom: 25px;
+        }
+        .cover-tag {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .cover-title {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+        .cover-subtitle {
+            font-size: 15px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .cover-summary-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #3b82f6;
+            border-radius: 0 10px 10px 0;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+        .summary-title {
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cover-kpis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+            padding-top: 20px;
+        }
+        .kpi-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #60a5fa;
+        }
+        .kpi-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .cover-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 12px;
+        }
+
+        /* ARTICLE PAGES */
+        .article-page {
+            background: #ffffff;
+        }
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .article-source-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .article-source-logo {
+            max-height: 38px;
+            max-width: 130px;
+            object-fit: contain;
+        }
+        .article-source-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .article-meta-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .article-body-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .article-title-block {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.35;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+        .article-author-date {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .article-visual {
+            width: 100%;
+            height: 190px;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin: 6px 0;
+        }
+        .article-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .article-text {
+            font-size: 13px;
+            line-height: 1.65;
+            color: #334155;
+            text-align: justify;
+            flex: 1;
+            overflow: hidden;
+        }
+        .article-quotes-box {
+            background: #f8fafc;
+            border-left: 3px solid #3b82f6;
+            padding: 8px 14px;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            font-size: 12px;
+            color: #1e293b;
+            margin-top: 8px;
+        }
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+        .article-link {
+            color: #3b82f6;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 70%;
+        }
+    </style>
+</head>
+<body>
+    <!-- COVER PAGE -->
+    <div class="page-container cover-page">
+        <div>
+            <div class="cover-top-bar">
+                <div class="agency-badge">Executive White-Label Intelligence</div>
+                <div class="cover-logos">
+                    ${userLogo ? `<img src="${userLogo}" class="cover-logo-img" alt="Agency">` : ''}
+                    ${clientLogo ? `<img src="${clientLogo}" class="cover-logo-img" alt="Client">` : ''}
+                </div>
+            </div>
+
+            <div class="cover-hero">
+                <div class="cover-tag">Consiglio di Amministrazione & Direzione</div>
+                <h1 class="cover-title">${title || 'Rassegna Stampa & Analisi di Posizionamento'}</h1>
+                <p class="cover-subtitle">Report riservato e aggregazione strategica media per <strong>${clientName || 'la Direzione Generale'}</strong> • Data: ${dateStr}</p>
+            </div>
+
+            ${executiveSummary ? `
+            <div class="cover-summary-box">
+                <div class="summary-title">Executive Briefing del Giorno</div>
+                <div>${executiveSummary.replace(/\n/g, '<br>')}</div>
+            </div>` : `
+            <div class="cover-summary-box">
+                <div class="summary-title">Quadro Informativo Giornaliero</div>
+                <div>Monitoraggio sistematico dei flussi d'informazione digitale e stampa. Gli articoli inclusi in questa rassegna sono stati selezionati e validati per fornire una visuale completa su reputazione e mercato.</div>
+            </div>`}
+
+            <div class="cover-kpis">
+                <div class="kpi-card">
+                    <div class="kpi-value">${totalArticles}</div>
+                    <div class="kpi-label">Notizie Monitorate</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">${pressCount + webCount}</div>
+                    <div class="kpi-label">Fonti Web & Stampa</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">${Math.max(1, Math.round(totalArticles * 2.5))} min</div>
+                    <div class="kpi-label">Tempo Lettura Stimato</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>Documento confidenziale ad uso interno • ${clientName || 'Azienda'}</div>
+            <div>Preparato da: ${userName || 'Ufficio Stampa & Media Relations'}</div>
+        </div>
+    </div>
+
+    <!-- ARTICLE PAGES -->
+    ${articles.map((article, index) => {
+        let processedExcerpt = article.excerpt || '';
+        if (keywordRegex) {
+            processedExcerpt = boldKeywords(processedExcerpt, keywordRegex);
+        }
+
+        const quote = (article.key_quotes && article.key_quotes.length > 0) ? article.key_quotes[0] : null;
+
+        return `
+    <div class="page-container article-page">
+        <div class="article-header">
+            <div class="article-source-wrap">
+                ${article.logoBase64 ? `<img src="${article.logoBase64}" class="article-source-logo" alt="${article.source_name || ''}">` : ''}
+                <span class="article-source-text">${article.source_name || 'Fonte Stampa'}</span>
+            </div>
+            <div class="article-meta-badge">${article.published_date || dateStr} • ${article.source_type || 'Web'}</div>
+        </div>
+
+        <div class="article-body-wrapper">
+            <div>
+                <h2 class="article-title-block">${article.title || 'Titolo'}</h2>
+                <div class="article-author-date">Autore: ${article.author || 'Redazione'} • Parole: ${article.word_count || 350}</div>
+            </div>
+
+            ${article.imageBase64 ? `
+            <div class="article-visual">
+                <img src="${article.imageBase64}" style="object-position: ${article.imagePosition || 'top center'};" alt="Immagine articolo">
+            </div>` : ''}
+
+            <div class="article-text">
+                ${processedExcerpt}
+            </div>
+
+            ${quote ? `
+            <div class="article-quotes-box">
+                " ${quote} "
+            </div>` : ''}
+        </div>
+
+        <div class="article-footer">
+            <a href="${article.url || '#'}" class="article-link">${article.url || ''}</a>
+            <div>Pagina ${index + 2} di ${totalArticles + 1}</div>
+        </div>
+    </div>`;
+    }).join('')}
+</body>
+</html>`;
+
     return html;
 }
 
