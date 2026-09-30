@@ -505,15 +505,19 @@ function renderArticles() {
                         <span class="article-meta-dot">&bull;</span>
                         <span class="article-date">${article.published_date || ''}</span>
                     </div>
-                    <div class="article-category-pill">
-                        <select onchange="changeArticleType(event, ${idx})" class="article-category-select" title="Cambia Categoria / Tipo Fonte">
-                            <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>🌐 Web</option>
-                            <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>📰 Quotidiano Nazionale</option>
-                            <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>🏙️ Quotidiano Locale</option>
-                            <option value="Agenzia di Stampa" ${article.source_type === 'Agenzia di Stampa' ? 'selected' : ''}>⚡ Agenzia di Stampa</option>
-                            <option value="Periodico" ${article.source_type === 'Periodico' ? 'selected' : ''}>📑 Periodico</option>
-                            <option value="Radio/TV" ${article.source_type === 'Radio/TV' ? 'selected' : ''}>📺 Radio/TV</option>
-                        </select>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${article.crisis_alert ? `<span class="badge-crisis-alert" onclick="openRiskAnalysisModalForArticle(${idx})" title="Allerta Crisi Reputazionale rilevata dall'AI!"><i data-feather="alert-triangle" style="width:12px;height:12px;"></i> ALERT CRISI</span>` : ''}
+                        ${article.risk_level ? `<span class="article-risk-pill risk-${article.risk_level}" onclick="openRiskAnalysisModalForArticle(${idx})" title="Rischio Reputazionale calcolato: ${article.risk_score || 0}/100 - ${article.risk_level}"><i data-feather="activity" style="width:11px;height:11px;"></i> ${article.risk_score !== undefined ? `${article.risk_score}/100 ` : ''}${article.risk_level}</span>` : ''}
+                        <div class="article-category-pill">
+                            <select onchange="changeArticleType(event, ${idx})" class="article-category-select" title="Cambia Categoria / Tipo Fonte">
+                                <option value="Web" ${article.source_type === 'Web' ? 'selected' : ''}>🌐 Web</option>
+                                <option value="Quotidiano Nazionale" ${article.source_type === 'Quotidiano Nazionale' ? 'selected' : ''}>📰 Quotidiano Nazionale</option>
+                                <option value="Quotidiano Locale" ${article.source_type === 'Quotidiano Locale' ? 'selected' : ''}>🏙️ Quotidiano Locale</option>
+                                <option value="Agenzia di Stampa" ${article.source_type === 'Agenzia di Stampa' ? 'selected' : ''}>⚡ Agenzia di Stampa</option>
+                                <option value="Periodico" ${article.source_type === 'Periodico' ? 'selected' : ''}>📑 Periodico</option>
+                                <option value="Radio/TV" ${article.source_type === 'Radio/TV' ? 'selected' : ''}>📺 Radio/TV</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="article-title">${article.title || 'Senza titolo'}</div>
@@ -526,6 +530,12 @@ function renderArticles() {
                         <input type="file" id="uploadLogo_${idx}" style="display:none;" accept="image/*" onchange="changeArticleLogo(event, ${idx})">
                         <button type="button" class="btn-card-action" onclick="openLogoArchive(${idx})" title="Scegli logo dall'archivio testate">
                             <i data-feather="archive"></i> <span>Archivio loghi</span>
+                        </button>
+                        <button type="button" class="btn-card-action" onclick="openFocusReaderModal(${idx})" title="Focus Reader: leggi testo pulito senza annunci e citazioni estratte">
+                            <i data-feather="book-open"></i> <span>Focus Reader</span>
+                        </button>
+                        <button type="button" class="btn-card-action" id="btnRisk_${idx}" onclick="evaluateArticleRisk(${idx}, this)" title="Calcola rischio reputazionale e sentiment con AI">
+                            <i data-feather="activity"></i> <span>${article.risk_score !== undefined ? 'Rischio ' + article.risk_score + '/100' : 'Analisi Rischio'}</span>
                         </button>
                         <button type="button" class="btn-card-action" onclick="copyArticleLink(${idx})" title="Copia link originale">
                             <i data-feather="copy"></i> <span>Copia link</span>
@@ -7479,4 +7489,300 @@ async function deleteReportItem(reportId) {
     }
 }
 window.deleteReportItem = deleteReportItem;
+
+// ==========================================================================
+// --- AI INNOVATIONS: FOCUS READER, RISK ANALYSIS, EXECUTIVE AUDIO BRIEFING
+// ==========================================================================
+
+let currentFocusReaderText = '';
+
+window.openFocusReaderModal = async function(idx) {
+    const article = state.articles && state.articles[idx];
+    if (!article) return;
+
+    const modal = document.getElementById('focusReaderModal');
+    const loading = document.getElementById('focusReaderLoading');
+    const body = document.getElementById('focusReaderBody');
+    const textEl = document.getElementById('focusReaderText');
+    const metaEl = document.getElementById('focusReaderMeta');
+    const quotesContainer = document.getElementById('focusReaderQuotesContainer');
+    const quotesList = document.getElementById('focusReaderQuotesList');
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (loading) loading.classList.remove('hidden');
+    if (body) body.classList.add('hidden');
+
+    try {
+        let content = article.full_content || '';
+        let quotes = article.key_quotes || [];
+        let wordCount = article.word_count || 0;
+        let readMin = article.reading_time_min || 0;
+
+        // If not cached, fetch from backend /api/news/reader
+        if (!content && article.url) {
+            const data = await apiCall('POST', '/api/news/reader', { url: article.url });
+            if (data) {
+                content = data.full_content || data.content || data.description || '';
+                quotes = data.key_quotes || [];
+                wordCount = data.word_count || (content ? content.split(/\s+/).length : 0);
+                readMin = data.reading_time_min || Math.max(1, Math.ceil(wordCount / 200));
+
+                article.full_content = content;
+                article.key_quotes = quotes;
+                article.word_count = wordCount;
+                article.reading_time_min = readMin;
+            }
+        }
+
+        if (!content) {
+            content = article.excerpt || 'Testo completo non disponibile per questa fonte web.';
+            wordCount = content.split(/\s+/).length;
+            readMin = Math.max(1, Math.ceil(wordCount / 200));
+        }
+
+        currentFocusReaderText = `${article.title}\n${article.source_name || ''} - ${article.published_date || ''}\n\n${content}`;
+
+        if (metaEl) {
+            metaEl.innerHTML = `<strong>${escapeHtml(article.source_name || 'Fonte')}</strong> &bull; ⏱️ ${readMin} min di lettura &bull; ${wordCount} parole`;
+        }
+
+        if (quotesList && quotesContainer) {
+            if (Array.isArray(quotes) && quotes.length > 0) {
+                quotesList.innerHTML = quotes.map(q => `<div class="focus-reader-quote-item">&ldquo;${escapeHtml(q)}&rdquo;</div>`).join('');
+                quotesContainer.classList.remove('hidden');
+            } else {
+                quotesContainer.classList.add('hidden');
+            }
+        }
+
+        if (textEl) {
+            textEl.textContent = content;
+        }
+
+        if (loading) loading.classList.add('hidden');
+        if (body) body.classList.remove('hidden');
+        if (window.feather) feather.replace();
+
+    } catch (err) {
+        showToast('Errore nel caricamento del Focus Reader: ' + err.message, 'error');
+        closeFocusReaderModal();
+    }
+};
+
+window.closeFocusReaderModal = function() {
+    const modal = document.getElementById('focusReaderModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.copyFocusReaderText = function() {
+    if (!currentFocusReaderText) return;
+    navigator.clipboard.writeText(currentFocusReaderText).then(() => {
+        showToast('Testo pulito copiato negli appunti!', 'success');
+    }).catch(() => {
+        showToast('Errore durante la copia del testo', 'error');
+    });
+};
+
+window.evaluateArticleRisk = async function(idx, btn) {
+    const article = state.articles && state.articles[idx];
+    if (!article) return;
+
+    const originalBtnHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-feather="loader"></i> <span>Analisi...</span>`;
+        if (window.feather) feather.replace();
+    }
+
+    try {
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+        const res = await apiCall('POST', '/api/news/sentiment-risk', {
+            title: article.title,
+            content: article.full_content || article.excerpt || article.title,
+            clientName
+        });
+
+        if (res) {
+            article.sentiment = res.sentiment || 'neutro';
+            article.risk_level = res.risk_level || 'basso';
+            article.risk_score = typeof res.risk_score === 'number' ? res.risk_score : 15;
+            article.crisis_alert = !!res.crisis_alert;
+            article.summary = res.summary || '';
+            article.defensive_actions = res.defensive_actions || '';
+
+            // Update UI card
+            renderArticles();
+
+            // Open risk modal
+            openRiskAnalysisModalForArticle(idx);
+        }
+    } catch (err) {
+        showToast('Errore durante l\'analisi del rischio: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+        }
+    }
+};
+
+window.openRiskAnalysisModalForArticle = function(idx) {
+    const article = state.articles && state.articles[idx];
+    if (!article) return;
+
+    if (article.risk_score === undefined) {
+        return evaluateArticleRisk(idx);
+    }
+
+    const modal = document.getElementById('riskAnalysisModal');
+    const loading = document.getElementById('riskModalLoading');
+    const body = document.getElementById('riskModalBody');
+    const scoreVal = document.getElementById('riskModalScoreVal');
+    const levelBadge = document.getElementById('riskModalLevelBadge');
+    const sentimentVal = document.getElementById('riskModalSentimentVal');
+    const crisisAlertBox = document.getElementById('riskModalCrisisAlertBox');
+    const defensiveEl = document.getElementById('riskModalDefensiveActions');
+    const summaryEl = document.getElementById('riskModalSummaryText');
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (loading) loading.classList.add('hidden');
+    if (body) body.classList.remove('hidden');
+
+    const score = article.risk_score || 0;
+    const level = article.risk_level || 'basso';
+    const sentiment = article.sentiment || 'neutro';
+
+    if (scoreVal) {
+        scoreVal.textContent = `${score}/100`;
+        scoreVal.style.color = level === 'alto' ? '#ef4444' : (level === 'medio' ? '#f59e0b' : '#10b981');
+    }
+
+    if (levelBadge) {
+        levelBadge.className = `article-risk-pill risk-${level}`;
+        levelBadge.textContent = level.toUpperCase();
+    }
+
+    if (sentimentVal) {
+        sentimentVal.textContent = sentiment.toUpperCase();
+        sentimentVal.style.color = sentiment === 'positivo' ? '#10b981' : (sentiment === 'critico' || sentiment === 'negativo' ? '#ef4444' : 'var(--text-muted)');
+    }
+
+    if (crisisAlertBox && defensiveEl) {
+        if (article.crisis_alert) {
+            crisisAlertBox.classList.remove('hidden');
+            defensiveEl.textContent = article.defensive_actions || 'Consigliato monitoraggio attivo e predisposizione nota di chiarimento per la stampa.';
+        } else {
+            crisisAlertBox.classList.add('hidden');
+        }
+    }
+
+    if (summaryEl) {
+        summaryEl.textContent = article.summary || 'Nessuna criticità rilevata dall\'analisi contestuale del testo.';
+    }
+
+    if (window.feather) feather.replace();
+};
+
+window.closeRiskAnalysisModal = function() {
+    const modal = document.getElementById('riskAnalysisModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+let currentAudioScript = '';
+
+window.openAudioBriefingModal = async function(triggerBtn) {
+    let articles = [];
+    if (currentPageDigestData && Array.isArray(currentPageDigestData.clips) && currentPageDigestData.clips.length > 0) {
+        articles = currentPageDigestData.clips.map(c => ({
+            title: c.title,
+            source_name: c.source,
+            excerpt: c.one_liner || ''
+        }));
+    } else if (state.articles && state.articles.length > 0) {
+        articles = state.articles.slice(0, 5).map(a => ({
+            title: a.title,
+            source_name: a.source_name,
+            excerpt: a.excerpt || ''
+        }));
+    }
+
+    if (articles.length === 0) {
+        showToast('Aggiungi almeno un articolo per generare l\'audio briefing.', 'warning');
+        return;
+    }
+
+    const modal = document.getElementById('audioBriefingModal');
+    const loading = document.getElementById('audioBriefingLoading');
+    const body = document.getElementById('audioBriefingBody');
+    const textEl = document.getElementById('audioBriefingScriptText');
+    const metaEl = document.getElementById('audioBriefingMeta');
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (loading) loading.classList.remove('hidden');
+    if (body) body.classList.add('hidden');
+
+    try {
+        const clientName = document.getElementById('clientName')?.value.trim() || '';
+        const res = await apiCall('POST', '/api/news/audio-briefing', {
+            articles,
+            clientName
+        });
+
+        if (!res || !res.script_60s) {
+            throw new Error('Script non generato.');
+        }
+
+        currentAudioScript = res.script_60s;
+        if (textEl) textEl.textContent = res.script_60s;
+        if (metaEl) metaEl.textContent = `⏱️ Durata stimata: ~${res.estimated_seconds || 60} secondi`;
+
+        if (loading) loading.classList.add('hidden');
+        if (body) body.classList.remove('hidden');
+
+        if (window.feather) feather.replace();
+
+    } catch (err) {
+        showToast('Errore durante la generazione dell\'audio briefing: ' + err.message, 'error');
+        closeAudioBriefingModal();
+    }
+};
+
+window.closeAudioBriefingModal = function() {
+    const modal = document.getElementById('audioBriefingModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.copyAudioBriefingScript = function(btn) {
+    if (!currentAudioScript) return;
+    navigator.clipboard.writeText(currentAudioScript).then(() => {
+        showToast('Script radiofonico da 60s copiato! Pronto per WhatsApp o vocale.', 'success');
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-feather="check"></i> Copiato!`;
+            if (window.feather) feather.replace();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                if (window.feather) feather.replace();
+            }, 2500);
+        }
+    }).catch(() => {
+        showToast('Errore durante la copia dello script.', 'error');
+    });
+};
+
 

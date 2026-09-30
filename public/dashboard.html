@@ -858,6 +858,9 @@
                             <button type="button" id="btnPageCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyPageBriefingWhatsApp(this)">
                                 <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                             </button>
+                            <button type="button" id="btnPageAudioBriefing" class="btn btn-outline btn-sm" onclick="openAudioBriefingModal(this)" style="border-color: #10b981; color: #10b981;" title="Genera lo script radiofonico da 60s per messaggi vocali e WhatsApp al CEO">
+                                <i data-feather="mic" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Audio Script (60s)
+                            </button>
                             <button type="button" id="btnPageOpenMail" class="btn btn-subtle-alt btn-sm" onclick="openPageBriefingMailto(this)" title="Apre il client email precompilando l'oggetto e il testo del briefing">
                                 <i data-feather="send" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Apri in Outlook / Mail
                             </button>
@@ -2378,6 +2381,9 @@
                         <button type="button" id="btnCopyWhatsApp" class="btn btn-outline btn-sm" onclick="copyDigestWhatsApp(this)">
                             <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia per WhatsApp
                         </button>
+                        <button type="button" id="btnDigestAudioBriefing" class="btn btn-outline btn-sm" onclick="openAudioBriefingModal(this)" style="border-color:#10b981; color:#10b981;" title="Genera lo script radiofonico da 60s per messaggi vocali e WhatsApp al CEO">
+                            <i data-feather="mic" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Audio Script (60s)
+                        </button>
                         <button type="button" id="btnDigestDownloadKpiPdf" class="btn btn-outline btn-sm" onclick="downloadCurrentDigestKpiPdf(this)" style="border-color:#7c5cff; color:#7c5cff;" title="Scarica solo il Report KPI &amp; Metriche in PDF da allegare alla mail">
                             <i data-feather="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scarica KPI (PDF)
                         </button>
@@ -2422,6 +2428,120 @@
                 <a id="btnShareWhatsAppLink" href="#" target="_blank" class="btn btn-gradient" style="flex:1; text-align:center; justify-content:center; text-decoration:none; font-size:0.85rem; background:linear-gradient(135deg, #25D366, #128C7E);">
                     <i data-feather="message-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Invia su WhatsApp
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. Focus Reader Modal -->
+    <div id="focusReaderModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 780px; width: 92%; max-height: 90vh; display: flex; flex-direction: column; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="book-open" style="color:var(--accent-primary); width:20px; height:20px;"></i>
+                    <span>Focus Reader <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Lettura senza annunci né distrazioni)</span></span>
+                </h3>
+                <button class="btn-icon" onclick="closeFocusReaderModal()"><i data-feather="x"></i></button>
+            </div>
+            
+            <div id="focusReaderLoading" style="text-align:center; padding: 3rem 1rem;">
+                <div class="spinner" style="width:36px; height:36px; margin: 0 auto 1rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Estrazione del testo pulito e dei virgolettati in corso...</p>
+            </div>
+
+            <div id="focusReaderBody" class="hidden" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom: 1rem; font-size:0.85rem; color:var(--text-muted);">
+                    <div id="focusReaderMeta"></div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyFocusReaderText()" style="padding: 4px 10px; font-size:0.8rem;">
+                        <i data-feather="copy" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Copia Testo
+                    </button>
+                </div>
+
+                <div id="focusReaderQuotesContainer" class="hidden" style="margin-bottom: 1rem;">
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.6px; color:var(--accent-primary); font-weight:700; margin-bottom:6px;">
+                        Virgolettati &amp; Dichiarazioni Salienti:
+                    </div>
+                    <div id="focusReaderQuotesList"></div>
+                </div>
+
+                <div id="focusReaderText" class="focus-reader-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Crisis & Sentiment Risk Modal -->
+    <div id="riskAnalysisModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y:auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="activity" style="color:var(--accent-primary); width:20px; height:20px;"></i>
+                    <span>Analisi Sentiment &amp; Rischio Reputazionale</span>
+                </h3>
+                <button class="btn-icon" onclick="closeRiskAnalysisModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <div id="riskModalLoading" style="text-align:center; padding: 2.5rem 1rem;">
+                <div class="spinner" style="width:36px; height:36px; margin: 0 auto 1rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Valutazione semantica del contesto mediatico in corso...</p>
+            </div>
+
+            <div id="riskModalBody" class="hidden">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 1.25rem;">
+                    <div style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; padding:1rem; text-align:center;">
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Risk Score</span>
+                        <div id="riskModalScoreVal" style="font-size:1.8rem; font-weight:800;"></div>
+                        <span id="riskModalLevelBadge" class="article-risk-pill"></span>
+                    </div>
+                    <div style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; padding:1rem; text-align:center;">
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Sentiment Rilevato</span>
+                        <div id="riskModalSentimentVal" style="font-size:1.4rem; font-weight:700; margin-top:6px;"></div>
+                    </div>
+                </div>
+
+                <div id="riskModalCrisisAlertBox" class="hidden" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); border-radius:10px; padding:1rem; margin-bottom: 1.25rem;">
+                    <div style="color:#ef4444; font-weight:800; font-size:0.9rem; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                        <i data-feather="alert-triangle" style="width:16px;height:16px;"></i> ATTENZIONE: Possibile Criticità o Crisi Reputazionale
+                    </div>
+                    <p id="riskModalDefensiveActions" style="font-size:0.85rem; color:var(--text-primary); margin:0; line-height:1.5;"></p>
+                </div>
+
+                <div style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; padding:1rem; margin-bottom: 1.25rem;">
+                    <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-primary); font-weight:700; display:block; margin-bottom:4px;">Sintesi Analitica</span>
+                    <p id="riskModalSummaryText" style="font-size:0.88rem; color:var(--text-primary); margin:0; line-height:1.6;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Executive Audio Briefing Modal -->
+    <div id="audioBriefingModal" class="modal-overlay hidden">
+        <div class="modal-content glass-card" style="max-width: 620px; width: 90%; max-height: 90vh; overflow-y:auto; padding: 1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                <h3 style="margin:0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                    <i data-feather="mic" style="color:#10b981; width:20px; height:20px;"></i>
+                    <span>Executive Audio Briefing <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Script vocale 60s)</span></span>
+                </h3>
+                <button class="btn-icon" onclick="closeAudioBriefingModal()"><i data-feather="x"></i></button>
+            </div>
+
+            <div id="audioBriefingLoading" style="text-align:center; padding: 2.5rem 1rem;">
+                <div class="spinner" style="width:36px; height:36px; margin: 0 auto 1rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.9rem;">Creazione script radiofonico esecutivo con AI in corso...</p>
+            </div>
+
+            <div id="audioBriefingBody" class="hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; font-size:0.82rem; color:var(--text-muted);">
+                    <span id="audioBriefingMeta">⏱️ Durata stimata: ~60 secondi</span>
+                    <span style="color:#10b981; font-weight:600;"><i data-feather="check-circle" style="width:12px;height:12px;vertical-align:middle;"></i> Tono Radiofonico Esecutivo</span>
+                </div>
+
+                <div id="audioBriefingScriptText" style="background:var(--bg-primary); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:1.25rem; font-size:0.98rem; line-height:1.7; color:var(--text-primary); white-space:pre-wrap; margin-bottom: 1.25rem; max-height: 380px; overflow-y: auto;"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border-color); padding-top:1rem;">
+                    <button type="button" id="btnCopyAudioScript" class="btn btn-primary" onclick="copyAudioBriefingScript(this)" style="background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;">
+                        <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Script per WhatsApp / Vocale
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeAudioBriefingModal()">Chiudi</button>
+                </div>
             </div>
         </div>
     </div>

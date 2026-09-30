@@ -4535,7 +4535,79 @@ html {
         flex-direction: column;
         gap: 8px;
     }
-    .team-workspace-banner .team-banner-actions .btn {
-        width: 100%;
-    }
+}
+
+/* --- AI Enhancements: Focus Reader, Crisis Risk, Audio Briefing --- */
+.article-risk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.article-risk-pill:hover {
+    transform: scale(1.05);
+}
+.article-risk-pill.risk-basso {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.article-risk-pill.risk-medio {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.article-risk-pill.risk-alto {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.badge-crisis-alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: #ef4444;
+    color: #fff;
+    animation: pulse-red 2s infinite;
+}
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.focus-reader-content {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.5rem;
+    max-height: 520px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.focus-reader-quote-item {
+    border-left: 3px solid var(--accent-primary);
+    background: rgba(123, 44, 191, 0.08);
+    padding: 8px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 8px;
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--text-primary);
 }
