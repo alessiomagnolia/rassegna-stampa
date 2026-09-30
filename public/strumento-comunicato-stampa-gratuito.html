@@ -12,144 +12,278 @@
     <meta property="og:description" content="Crea una bozza impeccabile di comunicato stampa aziendale o istituzionale in 30 secondi con l'Intelligenza Artificiale.">
     <meta property="og:type" content="website">
 
-    <!-- Fonts & CSS -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 
     <style>
         :root {
-            --bg-body: #0a0f1d;
-            --bg-card: #131b2e;
-            --border: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
+            --bg-primary: #121212;
+            --bg-secondary: #181924;
+            --bg-card: rgba(26, 27, 38, 0.75);
+            --bg-card-hover: rgba(35, 36, 52, 0.9);
+            --text-primary: #efece5;
+            --text-secondary: #b3b3b3;
+            --text-muted: #888888;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-primary: #7B2CBF;
+            --accent-primary-hover: #9d4edd;
+            --accent-secondary: #00E676;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Playfair Display', serif;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
         }
+
+        /* Ambient Blobs */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.28;
+        }
+        .blob-1 {
+            width: 450px; height: 450px;
+            background: var(--accent-primary);
+            top: -50px; right: -50px;
+        }
+        .blob-2 {
+            width: 380px; height: 380px;
+            background: #00E676;
+            bottom: 10%; left: -100px;
+            opacity: 0.18;
+        }
+
+        /* Navigation Header */
         header.nav-header {
-            border-bottom: 1px solid var(--border);
-            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(10, 15, 29, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(14px);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .nav-logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-logo span { color: var(--accent-blue); }
-        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
-        .nav-links a:hover, .nav-links a.active { color: #fff; }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+        .brand-badge {
+            width: 34px; height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(123, 44, 191, 0.25);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            color: #c084fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-badge svg { width: 18px; height: 18px; }
+        .nav-logo span.accent { color: #c084fc; }
+        .nav-links { display: flex; gap: 1.6rem; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: #ffffff; }
+
         .btn-cta {
-            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
-            color: #fff;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
+            color: #fff !important;
+            padding: 0.55rem 1.3rem;
+            border-radius: var(--radius-sm);
             font-weight: 600;
             text-decoration: none;
+            box-shadow: 0 4px 14px rgba(123, 44, 191, 0.35);
+            transition: all 0.2s ease;
+        }
+        .btn-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(123, 44, 191, 0.5);
         }
 
-        .container { max-width: 960px; margin: 0 auto; padding: 3rem 1.5rem; }
-        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .container { max-width: 960px; margin: 0 auto; padding: 3.5rem 1.5rem; }
+
+        .hero { text-align: center; margin-bottom: 2.8rem; }
         .pill-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #34d399;
-            padding: 4px 14px;
+            background: rgba(0, 230, 118, 0.12);
+            border: 1px solid rgba(0, 230, 118, 0.35);
+            color: #00E676;
+            padding: 5px 16px;
             border-radius: 9999px;
             font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
-        h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.8rem; }
-        .lead { font-size: 1.15rem; color: var(--text-muted); max-width: 700px; margin: 0 auto; }
+        h1.hero-title {
+            font-size: clamp(2.2rem, 3.8vw, 3rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+        .lead { font-size: 1.15rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; line-height: 1.6; }
 
         /* Generator Box */
         .tool-box {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: 2.5rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.3);
+            margin-bottom: 3.5rem;
         }
         .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: #e2e8f0; }
+        label { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: #fff; }
         input[type="text"], select, textarea {
             width: 100%;
-            background: rgba(10, 15, 29, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0.8rem 1rem;
+            background: rgba(18, 18, 24, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1.1rem;
             color: #fff;
             font-size: 0.95rem;
             font-family: inherit;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent-blue); }
+        input[type="text"]:focus, select:focus, textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.25);
+        }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 
         .btn-generate {
             width: 100%;
-            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
             color: #fff;
             border: none;
             padding: 1rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 1.05rem;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
-            transition: opacity 0.2s;
+            box-shadow: 0 4px 18px rgba(123, 44, 191, 0.4);
+            transition: all 0.2s ease;
         }
-        .btn-generate:hover { opacity: 0.9; }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 22px rgba(123, 44, 191, 0.6);
+        }
+        .btn-generate:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         /* Output Box */
         .output-box {
-            margin-top: 2rem;
-            background: rgba(10, 15, 29, 0.9);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
+            margin-top: 2.2rem;
+            background: rgba(18, 18, 26, 0.95);
+            border: 1px solid rgba(123, 44, 191, 0.4);
+            border-radius: var(--radius-md);
+            padding: 1.8rem;
             display: none;
         }
-        .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
-        .output-content { white-space: pre-wrap; font-size: 0.95rem; line-height: 1.7; color: #cbd5e1; max-height: 450px; overflow-y: auto; }
-        .btn-copy { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.9rem;
+        }
+        .output-content {
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+            max-height: 480px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.25);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+        }
+        .btn-copy {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 0.45rem 0.9rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-copy:hover {
+            background: rgba(255,255,255,0.15);
+        }
 
         /* Upsell Banner */
         .upsell-card {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            border-radius: 16px;
-            padding: 2rem;
+            background: linear-gradient(135deg, rgba(123, 44, 191, 0.25) 0%, rgba(26, 27, 38, 0.85) 100%);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            border-radius: var(--radius-lg);
+            padding: 2.8rem 2rem;
             text-align: center;
+            backdrop-filter: blur(12px);
         }
 
-        footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 3rem; }
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 3.5rem;
+            background: rgba(18, 18, 18, 0.95);
+        }
     </style>
 
-    <!-- Schema.org JSON-LD: WebApplication & HowTo -->
+    <!-- Schema.org JSON-LD: WebApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -168,13 +302,21 @@
 </head>
 <body>
 
+    <div class="bg-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
     <header class="nav-header">
-        <a href="/" class="nav-logo"><i data-feather="cpu"></i> Rassegna Stampa <span>AI</span></a>
+        <a href="/" class="nav-logo">
+            <span class="brand-badge"><i data-feather="file-text"></i></span>
+            <span>Rassegna Stampa <span class="accent">Generator</span></span>
+        </a>
         <nav class="nav-links">
             <a href="/">Home</a>
+            <a href="/confronto">Perché Noi</a>
             <a href="/soluzioni">Soluzioni</a>
-            <a href="/confronto">Confronto Competitor</a>
-            <a href="/strumenti-gratuiti/generatore-comunicati-stampa" class="active">Tool Gratuito</a>
+            <a href="/strumenti-gratuiti/generatore-comunicati-stampa" class="active">Tool Gratuito AI</a>
             <a href="/index.html">Accedi</a>
             <a href="/index.html#registerForm" class="btn-cta">Inizia Ora</a>
         </nav>
@@ -182,8 +324,8 @@
 
     <main class="container">
         <section class="hero">
-            <div class="pill-badge"><i data-feather="zap"></i> 100% Gratuito · Nessuna Carta Richiesta</div>
-            <h1>Generatore di Comunicati Stampa con AI</h1>
+            <div class="pill-badge"><i data-feather="zap"></i> 100% Gratuito · Nessuna Registrazione Richiesta</div>
+            <h1 class="hero-title">Generatore di Comunicati Stampa con AI</h1>
             <p class="lead">Inserisci il tema o l'argomento chiave e lascia che l'Intelligenza Artificiale scriva una bozza giornalistica professionale strutturata secondo le regole dell'ufficio stampa.</p>
         </section>
 
@@ -197,8 +339,8 @@
                     <div class="form-group">
                         <label for="prTone">Tono di Voce (Tone of Voice)</label>
                         <select id="prTone">
-                            <option value="istituzionale">Istituzionale & Formale</option>
-                            <option value="dinamico">Dinamico & Innovativo (Startup/Tech)</option>
+                            <option value="istituzionale">Istituzionale &amp; Formale</option>
+                            <option value="dinamico">Dinamico &amp; Innovativo (Startup/Tech)</option>
                             <option value="crisi">Crisis Response / Smentita Ufficiale</option>
                             <option value="evento">Lancio Prodotto / Invito Evento</option>
                         </select>
@@ -207,12 +349,12 @@
 
                 <div class="form-group">
                     <label for="prTopic">Titolo o Sintesi della Notizia</label>
-                    <input type="text" id="prTopic" placeholder="Es. Lancio della nuova piattaforma cloud sostenibile o acquisizione strategica" required>
+                    <input type="text" id="prTopic" placeholder="Es. Lancio della nuova piattaforma cloud sostenibile o accordo strategico" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="prDetails">Dettagli Chiave, Numeri o Virgolettati da Includere (Opzionale)</label>
-                    <textarea id="prDetails" rows="4" placeholder="Es. Investimento da 2M€, dichiarazione del CEO Marco Bianchi: 'Puntiamo all'espansione europea entro fine anno', disponibilità dal 1° Novembre."></textarea>
+                    <label for="prDetails">Dettagli Chiave, Dati o Virgolettati da Includere (Opzionale)</label>
+                    <textarea id="prDetails" rows="4" placeholder="Es. Investimento da 2M€, dichiarazione del CEO: 'Puntiamo all'espansione entro fine anno', lancio operativo dal 1° Novembre."></textarea>
                 </div>
 
                 <button type="submit" id="btnSubmit" class="btn-generate">
@@ -222,11 +364,11 @@
 
             <div id="outputWrapper" class="output-box">
                 <div class="output-header">
-                    <span style="font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
-                        <i data-feather="check-circle" style="color:var(--accent-green); width:18px;"></i> Bozza Pronta per l'Ufficio Stampa
+                    <span style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="check-circle" style="color:var(--accent-secondary); width:20px; height:20px;"></i> Bozza Pronta per l'Ufficio Stampa
                     </span>
                     <button type="button" id="btnCopy" class="btn-copy">
-                        <i data-feather="copy" style="width:14px;"></i> Copia Testo
+                        <i data-feather="copy" style="width:14px; height:14px;"></i> Copia Testo
                     </button>
                 </div>
                 <div id="outputContent" class="output-content"></div>
@@ -234,16 +376,16 @@
         </div>
 
         <div class="upsell-card">
-            <h3 style="font-size:1.4rem; margin-bottom:0.5rem; color:#fff;">Vuoi monitorare anche le notizie che parlano di te?</h3>
-            <p style="color:var(--text-muted); font-size:0.95rem; max-width:650px; margin:0 auto 1.2rem;">
+            <h3 style="font-size:1.5rem; margin-bottom:0.7rem; color:#fff;">Vuoi monitorare anche le notizie che parlano di te?</h3>
+            <p style="color:var(--text-secondary); font-size:0.95rem; max-width:680px; margin:0 auto 1.5rem; line-height:1.6;">
                 La nostra piattaforma completa non scrive solo comunicati: monitora oltre 10.000 fonti web e quotidiani in tempo reale, rileva i rischi reputazionali ed esporta rassegne stampa con il logo del tuo cliente in PDF per il CdA.
             </p>
-            <a href="/index.html#registerForm" class="btn-cta" style="display:inline-block;">Scopri la Suite Completa con Prova Gratuita</a>
+            <a href="/index.html#registerForm" class="btn-cta" style="display:inline-block; font-size:1rem; padding:0.8rem 2.2rem;">Scopri la Suite Completa con Prova Gratuita</a>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 Rassegna Stampa AI. Tutti i diritti riservati.</p>
+        <p>&copy; 2026 Rassegna Stampa Generator. Tutti i diritti riservati.</p>
     </footer>
 
     <script>
@@ -289,10 +431,10 @@
 
         btnCopy.addEventListener('click', () => {
             navigator.clipboard.writeText(outputContent.innerText).then(() => {
-                btnCopy.innerHTML = `<i data-feather="check" style="width:14px;"></i> Copiato!`;
+                btnCopy.innerHTML = `<i data-feather="check" style="width:14px; height:14px; color:var(--accent-secondary);"></i> Copiato!`;
                 feather.replace();
                 setTimeout(() => {
-                    btnCopy.innerHTML = `<i data-feather="copy" style="width:14px;"></i> Copia Testo`;
+                    btnCopy.innerHTML = `<i data-feather="copy" style="width:14px; height:14px;"></i> Copia Testo`;
                     feather.replace();
                 }, 2000);
             });

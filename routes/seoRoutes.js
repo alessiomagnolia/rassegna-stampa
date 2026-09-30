@@ -51,7 +51,7 @@ router.get('/soluzioni', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'soluzioni.html'));
 });
 
-// Comparison Page (Alternative a Mimesi, Volocom, Telpress)
+// Comparison Page (Confronto vs Sistemi Tradizionali)
 router.get('/confronto', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'confronto.html'));

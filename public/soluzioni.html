@@ -7,109 +7,210 @@
     <meta name="description" content="Scopri le soluzioni su misura di rassegna stampa AI e media intelligence: per agenzie di comunicazione, PMI, grandi aziende e uffici stampa istituzionali.">
     <link rel="canonical" href="https://rassegnastampa.ai/soluzioni">
 
-    <!-- Fonts & CSS -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 
     <style>
         :root {
-            --bg-body: #0a0f1d;
-            --bg-card: #131b2e;
-            --border: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
+            --bg-primary: #121212;
+            --bg-secondary: #181924;
+            --bg-card: rgba(26, 27, 38, 0.75);
+            --bg-card-hover: rgba(35, 36, 52, 0.9);
+            --text-primary: #efece5;
+            --text-secondary: #b3b3b3;
+            --text-muted: #888888;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-primary: #7B2CBF;
+            --accent-primary-hover: #9d4edd;
+            --accent-secondary: #00E676;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Playfair Display', serif;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
         }
+
+        /* Ambient Blobs */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.28;
+        }
+        .blob-1 {
+            width: 450px; height: 450px;
+            background: var(--accent-primary);
+            top: -50px; right: -50px;
+        }
+        .blob-2 {
+            width: 380px; height: 380px;
+            background: #00E676;
+            bottom: 10%; left: -100px;
+            opacity: 0.18;
+        }
+
+        /* Navigation Header */
         header.nav-header {
-            border-bottom: 1px solid var(--border);
-            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(10, 15, 29, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(14px);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .nav-logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-logo span { color: var(--accent-blue); }
-        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
-        .nav-links a:hover, .nav-links a.active { color: #fff; }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+        .brand-badge {
+            width: 34px; height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(123, 44, 191, 0.25);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            color: #c084fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-badge svg { width: 18px; height: 18px; }
+        .nav-logo span.accent { color: #c084fc; }
+        .nav-links { display: flex; gap: 1.6rem; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: #ffffff; }
+
         .btn-cta {
-            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
-            color: #fff;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
+            color: #fff !important;
+            padding: 0.55rem 1.3rem;
+            border-radius: var(--radius-sm);
             font-weight: 600;
             text-decoration: none;
+            box-shadow: 0 4px 14px rgba(123, 44, 191, 0.35);
+            transition: all 0.2s ease;
+        }
+        .btn-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(123, 44, 191, 0.5);
         }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 3.5rem 1.5rem; }
+
         .hero { text-align: center; margin-bottom: 4rem; }
         .pill-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-            padding: 4px 14px;
+            background: rgba(123, 44, 191, 0.15);
+            border: 1px solid rgba(123, 44, 191, 0.4);
+            color: #d8b4fe;
+            padding: 5px 16px;
             border-radius: 9999px;
             font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.3rem;
         }
-        h1 { font-size: 2.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
-        .lead { font-size: 1.15rem; color: var(--text-muted); max-width: 750px; margin: 0 auto; }
+        h1.hero-title {
+            font-size: clamp(2.2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.2rem;
+            letter-spacing: -0.01em;
+        }
+        .lead { font-size: 1.2rem; color: var(--text-secondary); max-width: 780px; margin: 0 auto; line-height: 1.6; }
 
-        .solutions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 4rem; }
+        .solutions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 4.5rem; }
         .sol-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2.4rem;
+            backdrop-filter: blur(10px);
             transition: transform 0.2s, border-color 0.2s;
         }
-        .sol-card:hover { transform: translateY(-4px); border-color: var(--accent-blue); }
+        .sol-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(123, 44, 191, 0.5);
+            background: var(--bg-card-hover);
+        }
         .sol-icon {
-            width: 52px;
-            height: 52px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 12px;
+            width: 50px; height: 50px;
+            background: rgba(123, 44, 191, 0.2);
+            border: 1px solid rgba(123, 44, 191, 0.4);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-blue);
-            margin-bottom: 1.5rem;
+            color: #c084fc;
+            margin-bottom: 1.3rem;
         }
-        .sol-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.8rem; color: #fff; }
-        .sol-card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .sol-icon svg { width: 24px; height: 24px; }
+        .sol-card h3 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.8rem; color: #fff; }
+        .sol-card p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6; }
         .sol-features { list-style: none; }
-        .sol-features li { color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 8px; }
+        .sol-features li {
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sol-features li svg { color: var(--accent-secondary); width: 17px; height: 17px; flex-shrink: 0; }
 
         .banner-cta {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            border-radius: 16px;
-            padding: 3rem 2rem;
+            background: linear-gradient(135deg, rgba(123, 44, 191, 0.25) 0%, rgba(26, 27, 38, 0.85) 100%);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2rem;
             text-align: center;
             margin-top: 2rem;
+            backdrop-filter: blur(12px);
         }
 
-        footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(18, 18, 18, 0.95);
+        }
     </style>
 
     <!-- Schema.org JSON-LD: Service -->
@@ -120,7 +221,7 @@
       "serviceType": "Media Monitoring e Rassegna Stampa AI",
       "provider": {
         "@type": "Organization",
-        "name": "Rassegna Stampa AI"
+        "name": "Rassegna Stampa Generator"
       },
       "areaServed": "IT",
       "hasOfferCatalog": {
@@ -148,13 +249,21 @@
 </head>
 <body>
 
+    <div class="bg-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
     <header class="nav-header">
-        <a href="/" class="nav-logo"><i data-feather="cpu"></i> Rassegna Stampa <span>AI</span></a>
+        <a href="/" class="nav-logo">
+            <span class="brand-badge"><i data-feather="file-text"></i></span>
+            <span>Rassegna Stampa <span class="accent">Generator</span></span>
+        </a>
         <nav class="nav-links">
             <a href="/">Home</a>
+            <a href="/confronto">Perché Noi</a>
             <a href="/soluzioni" class="active">Soluzioni</a>
-            <a href="/confronto">Confronto Competitor</a>
-            <a href="/strumenti-gratuiti/generatore-comunicati-stampa">Tool Gratuito</a>
+            <a href="/strumenti-gratuiti/generatore-comunicati-stampa">Tool Gratuito AI</a>
             <a href="/index.html">Accedi</a>
             <a href="/index.html#registerForm" class="btn-cta">Inizia Ora</a>
         </nav>
@@ -163,54 +272,54 @@
     <main class="container">
         <section class="hero">
             <div class="pill-badge"><i data-feather="layers"></i> Soluzioni Dedicate</div>
-            <h1>Progettato per chi Lavora con le Notizie</h1>
-            <p class="lead">Dall'agenzia che gestisce decine di clienti in contemporanea all'ufficio stampa aziendale che deve riferire al CdA alle 8:00 del mattino.</p>
+            <h1 class="hero-title">Progettato per chi Lavora con le Notizie</h1>
+            <p class="lead">Dall'agenzia di comunicazione che gestisce molteplici brand in contemporanea, all'ufficio stampa aziendale che deve riferire al Consiglio di Amministrazione alle prime ore del mattino.</p>
         </section>
 
         <div class="solutions-grid">
             <div class="sol-card">
                 <div class="sol-icon"><i data-feather="briefcase"></i></div>
-                <h3>Per Agenzie PR & Media Relations</h3>
-                <p>Gestisci clienti multipli con spazi di lavoro separati, archivio loghi automatico e rassegne PDF 100% White-Label brandizzate.</p>
+                <h3>Per Agenzie PR &amp; Media Relations</h3>
+                <p>Gestisci brand multipli con archivi separati, riconoscimento automatico dei loghi delle testate e rassegne PDF White-Label ad alto impatto per i tuoi clienti.</p>
                 <ul class="sol-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Layout PDF con logo cliente e colori dedicati</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Scrittura automatica di comunicati stampa</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Generazione post LinkedIn ottimizzati</li>
+                    <li><i data-feather="check"></i> Layout PDF personalizzati con doppio logo (Agenzia + Cliente)</li>
+                    <li><i data-feather="check"></i> Scrittura automatica di comunicati e pitch con l'AI</li>
+                    <li><i data-feather="check"></i> Generazione post LinkedIn ottimizzati per la rassegna</li>
                 </ul>
             </div>
 
             <div class="sol-card">
                 <div class="sol-icon"><i data-feather="shield"></i></div>
-                <h3>Per Direzione Generale & CdA</h3>
-                <p>Niente tomi di centinaia di pagine cartacee: solo l'Executive Briefing essenziale con indice di rischio reputazionale e audio podcast.</p>
+                <h3>Per Direzione Generale &amp; CdA</h3>
+                <p>Niente tomi statici di centinaia di pagine: solo l'Executive Briefing essenziale con indice di rischio reputazionale, audience e sintesi vocale da 60 secondi.</p>
                 <ul class="sol-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Executive Audio Briefing vocale da 60s</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Crisis Alert su articoli critici o scandali</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Executive Summary in 3 punti per il CEO</li>
+                    <li><i data-feather="check"></i> Executive Audio Briefing vocale per il CEO</li>
+                    <li><i data-feather="check"></i> Alert di Crisi su articoli critici o smentite</li>
+                    <li><i data-feather="check"></i> Executive Summary in 3 punti chiave per il Board</li>
                 </ul>
             </div>
 
             <div class="sol-card">
                 <div class="sol-icon"><i data-feather="feather"></i></div>
-                <h3>Per Uffici Stampa & Giornalisti</h3>
-                <p>Elimina il rumore informativo e concentra l'attenzione sui fatti reali con la modalità Focus Reader e l'estrazione virgolettati.</p>
+                <h3>Per Uffici Stampa &amp; Redazioni</h3>
+                <p>Elimina il rumore informativo e concentrati sui fatti salienti con la modalità Focus Reader e l'estrazione automatica dei virgolettati.</p>
                 <ul class="sol-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Focus Reader mode senza cookie e banner</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Estrazione automatica delle citazioni chiave</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Integrazione scraping Web, Bing e RSS</li>
+                    <li><i data-feather="check"></i> Focus Reader mode: zero banner, pop-up o cookie wall</li>
+                    <li><i data-feather="check"></i> Estrazione immediata dei virgolettati salienti</li>
+                    <li><i data-feather="check"></i> Monitoraggio in tempo reale Web, Google News e RSS</li>
                 </ul>
             </div>
         </div>
 
         <div class="banner-cta">
-            <h2 style="font-size:2rem; margin-bottom:1rem;">Trova il piano perfetto per la tua organizzazione</h2>
-            <p style="color:var(--text-muted); max-width:650px; margin:0 auto 1.5rem;">Attiva il tuo workspace in 30 secondi. Nessun contratto annuale vincolante, disdici quando vuoi.</p>
-            <a href="/index.html#registerForm" class="btn-cta" style="font-size:1.05rem; padding:0.8rem 2rem;">Attiva la Prova Gratuita</a>
+            <h2 style="font-size:2rem; margin-bottom:1rem; color:#fff;">Trova la soluzione ideale per il tuo team</h2>
+            <p style="color:var(--text-secondary); max-width:650px; margin:0 auto 1.5rem;">Attiva il tuo workspace in 30 secondi. Nessun contratto annuale vincolante, disdici quando vuoi.</p>
+            <a href="/index.html#registerForm" class="btn-cta" style="font-size:1.05rem; padding:0.85rem 2.2rem;">Attiva la Prova Gratuita</a>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 Rassegna Stampa AI. Tutti i diritti riservati.</p>
+        <p>&copy; 2026 Rassegna Stampa Generator. Tutti i diritti riservati.</p>
     </footer>
 
     <script>feather.replace();</script>

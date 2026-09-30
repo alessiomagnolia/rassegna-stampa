@@ -3,166 +3,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rassegna Stampa AI: Software di Media Monitoring e Comunicazione Intelligente</title>
-    <meta name="description" content="La prima suite all-in-one per Uffici Stampa e Agenzie PR che unisce rassegna stampa in tempo reale, analisi del sentiment con AI, briefing audio per il CdA e scrittura automatica di comunicati.">
+    <title>Rassegna Stampa Generator & AI | Software di Media Monitoring e Comunicazione Intelligente</title>
+    <meta name="description" content="La suite all-in-one per Uffici Stampa, Agenzie PR e Aziende: rassegna stampa in tempo reale in PDF, briefing esecutivo per il CdA, analisi semantica e scrittura comunicati con AI.">
     <link rel="canonical" href="https://rassegnastampa.ai/">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Rassegna Stampa AI: Il Software di Media Intelligence per Uffici Stampa Moderni">
-    <meta property="og:description" content="Automatizza la rassegna stampa, rileva i rischi reputazionali, genera comunicati stampa e crea report PDF White-Label per il CdA.">
+    <meta property="og:title" content="Rassegna Stampa Generator & AI: Media Intelligence per Uffici Stampa Moderni">
+    <meta property="og:description" content="Automatizza la rassegna stampa in PDF, rileva i rischi reputazionali con AI, genera comunicati stampa e crea report White-Label per il CdA.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rassegnastampa.ai/">
 
-    <!-- Fonts & CSS -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 
     <style>
         :root {
-            --bg-body: #0a0f1d;
-            --bg-card: #131b2e;
-            --border: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
+            --bg-primary: #121212;
+            --bg-secondary: #181924;
+            --bg-card: rgba(26, 27, 38, 0.75);
+            --bg-card-hover: rgba(35, 36, 52, 0.9);
+            --text-primary: #efece5;
+            --text-secondary: #b3b3b3;
+            --text-muted: #888888;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-primary: #7B2CBF;
+            --accent-primary-hover: #9d4edd;
+            --accent-secondary: #00E676;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Playfair Display', serif;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
         }
+
+        /* Ambient Blobs */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.28;
+        }
+        .blob-1 {
+            width: 450px; height: 450px;
+            background: var(--accent-primary);
+            top: -50px; right: -50px;
+        }
+        .blob-2 {
+            width: 380px; height: 380px;
+            background: #00E676;
+            bottom: 10%; left: -100px;
+            opacity: 0.18;
+        }
+
+        /* Navigation Header */
         header.nav-header {
-            border-bottom: 1px solid var(--border);
-            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(10, 15, 29, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(14px);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .nav-logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-logo span { color: var(--accent-blue); }
-        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
-        .nav-links a:hover, .nav-links a.active { color: #fff; }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.01em;
+        }
+        .brand-badge {
+            width: 34px; height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(123, 44, 191, 0.25);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            color: #c084fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-badge svg { width: 18px; height: 18px; }
+        .nav-logo span.accent {
+            color: #c084fc;
+        }
+        .nav-links { display: flex; gap: 1.6rem; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: #ffffff; }
+
         .btn-cta {
-            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
-            color: #fff;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
+            color: #fff !important;
+            padding: 0.55rem 1.3rem;
+            border-radius: var(--radius-sm);
             font-weight: 600;
             text-decoration: none;
+            box-shadow: 0 4px 14px rgba(123, 44, 191, 0.35);
+            transition: all 0.2s ease;
+        }
+        .btn-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(123, 44, 191, 0.5);
         }
 
+        /* Container */
         .container { max-width: 1140px; margin: 0 auto; padding: 4rem 1.5rem; }
-        .hero { text-align: center; margin-bottom: 4rem; }
+
+        /* Hero */
+        .hero { text-align: center; margin-bottom: 4.5rem; }
         .hero-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-            padding: 6px 16px;
+            background: rgba(123, 44, 191, 0.15);
+            border: 1px solid rgba(123, 44, 191, 0.4);
+            color: #d8b4fe;
+            padding: 6px 18px;
             border-radius: 9999px;
             font-size: 0.88rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
         }
-        .hero-pill .dot { width: 8px; height: 8px; background: #60a5fa; border-radius: 50%; box-shadow: 0 0 10px #60a5fa; }
-        h1 { font-size: 3.2rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.5rem; letter-spacing: -1px; }
-        h1 span { background: linear-gradient(135deg, #60a5fa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .lead { font-size: 1.25rem; color: var(--text-muted); max-width: 820px; margin: 0 auto 2.5rem; }
+        .hero-pill .dot {
+            width: 8px; height: 8px;
+            background: var(--accent-secondary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-secondary);
+        }
+        h1.hero-title {
+            font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+        .highlight-text {
+            background: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline;
+        }
+        .lead {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 820px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.65;
+        }
         .hero-actions { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-        .btn-hero-primary { background: linear-gradient(135deg, var(--accent-blue), #2563eb); color: #fff; padding: 0.9rem 2rem; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 1.05rem; }
-        .btn-hero-secondary { background: var(--bg-card); border: 1px solid var(--border); color: #fff; padding: 0.9rem 2rem; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 1.05rem; }
+        .btn-hero-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
+            color: #fff;
+            padding: 0.9rem 2.2rem;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1.05rem;
+            box-shadow: 0 6px 20px rgba(123, 44, 191, 0.4);
+            transition: all 0.2s;
+        }
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(123, 44, 191, 0.6);
+        }
+        .btn-hero-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.9rem 2.2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: all 0.2s;
+        }
+        .btn-hero-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
 
-        /* Trust banner */
+        /* Trust Banner */
         .trust-banner {
             text-align: center;
-            padding: 1.5rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 3rem auto 5rem;
+            padding: 1.2rem 1.8rem;
+            background: rgba(26, 27, 38, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 3.5rem auto 4.5rem;
             max-width: 900px;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 0.95rem;
         }
-        .trust-banner strong { color: #fff; }
+        .trust-banner strong { color: #ffffff; }
+
+        /* Section Headings */
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-tag {
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #c084fc;
+            margin-bottom: 0.6rem;
+        }
+        .section-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.8rem; letter-spacing: -0.01em; }
 
         /* Features Grid */
-        .section-header { text-align: center; margin-bottom: 3rem; }
-        .section-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.8rem; }
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 5rem; }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 5.5rem;
+        }
         .feat-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: 2.2rem;
-            transition: transform 0.2s;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, border-color 0.2s;
         }
-        .feat-card:hover { transform: translateY(-4px); }
-        .feat-icon { width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent-blue); margin-bottom: 1.2rem; }
-        .feat-card h3 { font-size: 1.3rem; margin-bottom: 0.6rem; color: #fff; }
-        .feat-card p { color: var(--text-muted); font-size: 0.95rem; }
+        .feat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(123, 44, 191, 0.5);
+            background: var(--bg-card-hover);
+        }
+        .feat-icon {
+            width: 48px; height: 48px;
+            background: rgba(123, 44, 191, 0.2);
+            border: 1px solid rgba(123, 44, 191, 0.4);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c084fc;
+            margin-bottom: 1.3rem;
+        }
+        .feat-icon svg { width: 22px; height: 22px; }
+        .feat-card h3 { font-size: 1.3rem; margin-bottom: 0.7rem; color: #fff; }
+        .feat-card p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
 
         /* Pricing Table */
-        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 5rem; }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 5.5rem;
+        }
         .price-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: 2.5rem;
             position: relative;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .price-card.featured {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+            border-color: rgba(123, 44, 191, 0.8);
+            box-shadow: 0 0 35px rgba(123, 44, 191, 0.25);
+            background: rgba(30, 27, 46, 0.85);
         }
         .featured-tag {
             position: absolute;
             top: -12px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--accent-blue);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #9d4edd 100%);
             color: #fff;
-            padding: 4px 14px;
+            padding: 4px 16px;
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .price-amount { font-size: 2.8rem; font-weight: 800; color: #fff; margin: 1rem 0 0.5rem; }
+        .price-amount { font-size: 2.8rem; font-weight: 800; color: #fff; margin: 1.2rem 0 0.5rem; }
         .price-amount span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
         .price-features { list-style: none; margin: 1.5rem 0 2rem; }
-        .price-features li { margin-bottom: 0.8rem; font-size: 0.95rem; color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+        .price-features li {
+            margin-bottom: 0.85rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .price-features li svg { color: var(--accent-secondary); width: 17px; height: 17px; flex-shrink: 0; }
 
         /* FAQ */
-        .faq-grid { max-width: 800px; margin: 0 auto 5rem; }
-        .faq-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; padding: 1.4rem; }
+        .faq-grid { max-width: 820px; margin: 0 auto 5.5rem; }
+        .faq-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.1rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
         .faq-box h4 { font-size: 1.15rem; color: #fff; margin-bottom: 0.5rem; }
-        .faq-box p { color: var(--text-muted); font-size: 0.95rem; }
+        .faq-box p { color: var(--text-secondary); font-size: 0.95rem; }
 
-        /* Bottom CTA */
+        /* Bottom Banner CTA */
         .banner-cta {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(123, 44, 191, 0.25) 0%, rgba(26, 27, 38, 0.85) 100%);
+            border: 1px solid rgba(123, 44, 191, 0.45);
+            border-radius: var(--radius-lg);
             padding: 3.5rem 2rem;
             text-align: center;
+            backdrop-filter: blur(12px);
         }
 
-        footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(18, 18, 18, 0.95);
+        }
     </style>
 
     <!-- Schema.org JSON-LD: SoftwareApplication & FAQPage -->
@@ -172,7 +367,7 @@
       "@graph": [
         {
           "@type": "SoftwareApplication",
-          "name": "Rassegna Stampa AI",
+          "name": "Rassegna Stampa Generator & AI",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web, Cloud",
           "offers": {
@@ -182,17 +377,17 @@
             "highPrice": "199",
             "offerCount": "3"
           },
-          "description": "Piattaforma moderna di media monitoring, rassegna stampa automatica ed executive briefing con intelligenza artificiale per agenzie PR e uffici stampa."
+          "description": "Piattaforma moderna di media monitoring, rassegna stampa automatica in PDF ed executive briefing con intelligenza artificiale per agenzie PR, uffici stampa e aziende."
         },
         {
           "@type": "FAQPage",
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "Cosa differenzia Rassegna Stampa AI dai software tradizionali come Mimesi o Telpress?",
+              "name": "Cosa differenzia la piattaforma dai software di rassegna stampa tradizionali?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Rassegna Stampa AI unisce il monitoraggio media attivo a un copilota di intelligenza artificiale che redige comunicati stampa, riassume le notizie per il CdA ed effettua l'analisi semantica del rischio reputazionale, a un costo trasparente e senza contratti vincolanti."
+                "text": "La piattaforma unisce il monitoraggio media attivo a un copilota di intelligenza artificiale che redige comunicati stampa, riassume le notizie per il CdA ed effettua l'analisi semantica del rischio reputazionale, con un modello trasparente senza contratti annuali vincolanti."
               }
             },
             {
@@ -200,7 +395,7 @@
               "name": "Come funziona la modalità White-Label per le agenzie di comunicazione?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Le agenzie possono impostare loghi personalizzati, colori primari e note di copertina per ciascun cliente, esportando rassegne stampa in PDF pronte per la presentazione ufficiale al consiglio di amministrazione."
+                "text": "Le agenzie possono impostare loghi personalizzati, copertine con note esecutive per il Consiglio di Amministrazione ed esportare rassegne stampa in PDF pronte per la presentazione ufficiale."
               }
             }
           ]
@@ -211,13 +406,21 @@
 </head>
 <body>
 
+    <div class="bg-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
     <header class="nav-header">
-        <a href="/" class="nav-logo"><i data-feather="cpu"></i> Rassegna Stampa <span>AI</span></a>
+        <a href="/" class="nav-logo">
+            <span class="brand-badge"><i data-feather="file-text"></i></span>
+            <span>Rassegna Stampa <span class="accent">Generator</span></span>
+        </a>
         <nav class="nav-links">
             <a href="/" class="active">Home</a>
+            <a href="/confronto">Perché Noi</a>
             <a href="/soluzioni">Soluzioni</a>
-            <a href="/confronto">Confronto Competitor</a>
-            <a href="/strumenti-gratuiti/generatore-comunicati-stampa">Tool Gratuito</a>
+            <a href="/strumenti-gratuiti/generatore-comunicati-stampa">Tool Gratuito AI</a>
             <a href="/index.html">Accedi</a>
             <a href="/index.html#registerForm" class="btn-cta">Inizia Gratis</a>
         </nav>
@@ -228,142 +431,151 @@
         <section class="hero">
             <div class="hero-pill">
                 <span class="dot"></span>
-                <span>La Nuova Generazione del Media Monitoring & PR Copilot</span>
+                <span>Suite Integrata Media &amp; PR · Nuova Generazione AI</span>
             </div>
-            <h1>La Rassegna Stampa che <br><span>Lavora per il tuo Ufficio Stampa</span></h1>
-            <p class="lead">Basta sfogliare passivamente ritagli scannerizzati o pagare migliaia di euro per piattaforme complesse degli anni 2000. Monitora, analizza il sentiment con AI e genera comunicati e rassegne executive per il CdA in pochi secondi.</p>
+            <h1 class="hero-title">Tutto per i Tuoi Media:<br><span class="highlight-text">Rassegne Stampa</span>, Briefing CdA e Copilot AI</h1>
+            <p class="lead">Dimentica la lentezza e i costi opachi dei software tradizionali. Estrai articoli web in tempo reale, impagina rassegne PDF impeccabili con loghi ufficiali HD e ricevi ogni mattina il briefing esecutivo per la direzione.</p>
             <div class="hero-actions">
-                <a href="/index.html#registerForm" class="btn-hero-primary">Crea il tuo Team Workspace Gratis</a>
-                <a href="/confronto" class="btn-hero-secondary">Confronta con Mimesi e Volocom</a>
+                <a href="/index.html#registerForm" class="btn-hero-primary">Crea il tuo Workspace Gratuito</a>
+                <a href="/confronto" class="btn-hero-secondary">Perché Scegliere Noi vs Sistemi Tradizionali</a>
             </div>
 
             <div class="trust-banner">
-                <strong>Oltre l'80% di risparmio sui canoni legacy</strong> • Attivazione istantanea senza contratti vincolanti • Nessun costo a destinatario
+                <strong>Oltre l'80% di risparmio sui canoni convenzionali</strong> • Attivazione istantanea senza contratti vincolanti • Nessun costo a destinatario
             </div>
         </section>
 
         <!-- Features Grid -->
         <div class="section-header">
+            <span class="section-tag">Caratteristiche Esclusive</span>
             <h2 class="section-title">Perché i Comunicatori Scelgono la Nostra Suite</h2>
-            <p style="color:var(--text-muted); max-width:600px; margin:0 auto;">Tutto ciò che serve per gestire le media relations moderne senza frizioni tecnologiche.</p>
+            <p style="color:var(--text-secondary); max-width:600px; margin:0 auto;">Tutto ciò che serve per gestire il monitoraggio e le media relations senza frizioni tecnologiche.</p>
         </div>
 
         <div class="features-grid">
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="book-open"></i></div>
-                <h3>Focus Reader & Anti-Rumore</h3>
-                <p>Addio banner pubblicitari invasivi, cookie wall e popup. Leggi gli articoli estratti in full-text con citazioni e virgolettati già evidenziati.</p>
+                <h3>Focus Reader &amp; Anti-Rumore</h3>
+                <p>Addio banner pubblicitari invasivi, cookie wall e popup. Leggi gli articoli estratti in full-text con citazioni e virgolettati salienti già evidenziati.</p>
             </div>
 
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="alert-triangle"></i></div>
-                <h3>Sentiment & Crisis Detection Semantico</h3>
-                <p>Non semplici parole chiave booleane: l'AI valuta il reale contesto mediatico e ti avvisa immediatamente se un articolo minaccia la reputazione del brand.</p>
+                <h3>Sentiment &amp; Crisis Detection Semantico</h3>
+                <p>Non semplici parole chiave rigide: l'AI valuta il reale contesto mediatico e calcola il punteggio di rischio per anticipare potenziali crisi reputazionali.</p>
             </div>
 
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="mic"></i></div>
                 <h3>Executive Audio Briefing (60s)</h3>
-                <p>Genera ogni mattina alle 8:00 un notiziario vocale radiofonico di 1 minuto con i fatti salienti, pronto da inviare al CEO su WhatsApp o Telegram.</p>
+                <p>Genera ogni mattina uno script sintetico di 1 minuto con i fatti chiave del giorno, pronto da condividere con vertici aziendali e portavoce.</p>
             </div>
 
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="feather"></i></div>
-                <h3>AI Press Release & LinkedIn Copilot</h3>
-                <p>Dall'articolo di rassegna alla reazione: genera comunicati stampa di riscontro o post professionali per LinkedIn calibrati sul Tone of Voice del cliente.</p>
+                <h3>AI Press Release &amp; Social Copilot</h3>
+                <p>Dalla notizia alla reazione: crea comunicati stampa di riscontro o post professionali per LinkedIn calibrati sul tono di voce del tuo brand.</p>
             </div>
 
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="file-text"></i></div>
                 <h3>PDF Board Edition White-Label</h3>
-                <p>Impagina rassegne stampa impeccabili in formato A4 con logo dell'agenzia, logo del cliente e note esecutive per il Consiglio di Amministrazione.</p>
+                <p>Impagina rassegne stampa eleganti in formato A4 con logo dell'agenzia, logo del cliente e box di sintesi esecutiva per il Consiglio di Amministrazione.</p>
             </div>
 
             <div class="feat-card">
                 <div class="feat-icon"><i data-feather="users"></i></div>
                 <h3>Workspace Collaborativo Multi-Cliente</h3>
-                <p>Organizza brand, loghi ad alta risoluzione e archivi separati per ogni cliente con accessi sincronizzati per tutto il team di redazione.</p>
+                <p>Organizza brand, loghi ad alta definizione e archivi separati per ogni cliente con accessi sincronizzati per tutto il tuo team di lavoro.</p>
             </div>
         </div>
 
         <!-- Transparent Pricing -->
         <div class="section-header">
+            <span class="section-tag">Piani e Prezzi</span>
             <h2 class="section-title">Prezzi Trasparenti. Nessuna Sorpresa.</h2>
-            <p style="color:var(--text-muted);">Dimentica i preventivi opachi e i contratti annuali rigidi delle vecchie piattaforme.</p>
+            <p style="color:var(--text-secondary);">Dimentica i preventivi opachi e i contratti annuali vincolanti dei fornitori convenzionali.</p>
         </div>
 
         <div class="pricing-grid">
             <div class="price-card">
-                <h3>Freelance / Solo PR</h3>
-                <p style="color:var(--text-muted); font-size:0.9rem;">Per professionisti autonomi e uffici stampa individuali.</p>
-                <div class="price-amount">49€ <span>/ mese</span></div>
-                <ul class="price-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Fino a 3 clienti monitorati</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Monitoraggio Web, Google News e RSS</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Generatore Comunicati Stampa AI</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Export PDF ad alta risoluzione</li>
-                </ul>
+                <div>
+                    <h3 style="font-size:1.3rem; margin-bottom:0.5rem; color:#fff;">Freelance / Solo PR</h3>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">Per professionisti autonomi e uffici stampa individuali.</p>
+                    <div class="price-amount">49€ <span>/ mese</span></div>
+                    <ul class="price-features">
+                        <li><i data-feather="check"></i> Fino a 3 clienti monitorati</li>
+                        <li><i data-feather="check"></i> Monitoraggio Web, Google News e RSS</li>
+                        <li><i data-feather="check"></i> Generatore Comunicati Stampa AI</li>
+                        <li><i data-feather="check"></i> Export PDF ad alta risoluzione</li>
+                    </ul>
+                </div>
                 <a href="/index.html#registerForm" class="btn-hero-secondary" style="display:block; text-align:center;">Inizia Prova</a>
             </div>
 
             <div class="price-card featured">
-                <div class="featured-tag">Più Popolare</div>
-                <h3>Agency & Team</h3>
-                <p style="color:var(--text-muted); font-size:0.9rem;">Per agenzie di comunicazione e team strutturati.</p>
-                <div class="price-amount">199€ <span>/ mese</span></div>
-                <ul class="price-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Clienti e brand illimitati</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Fino a 10 collaboratori di team</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> White-Label PDF con copertine CdA</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Sentiment semantico e Crisis Alert</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Executive Audio Briefing vocale</li>
-                </ul>
+                <div class="featured-tag">Più Scelto</div>
+                <div>
+                    <h3 style="font-size:1.3rem; margin-bottom:0.5rem; color:#fff;">Agency &amp; Team</h3>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">Per agenzie di comunicazione e uffici stampa strutturati.</p>
+                    <div class="price-amount">199€ <span>/ mese</span></div>
+                    <ul class="price-features">
+                        <li><i data-feather="check"></i> Clienti e brand illimitati</li>
+                        <li><i data-feather="check"></i> Fino a 10 collaboratori di team</li>
+                        <li><i data-feather="check"></i> White-Label PDF con copertine CdA</li>
+                        <li><i data-feather="check"></i> Sentiment semantico e Crisis Alert</li>
+                        <li><i data-feather="check"></i> Executive Audio Briefing vocale</li>
+                    </ul>
+                </div>
                 <a href="/index.html#registerForm" class="btn-hero-primary" style="display:block; text-align:center;">Attiva Workspace Agency</a>
             </div>
 
             <div class="price-card">
-                <h3>Enterprise / Grandi Enti</h3>
-                <p style="color:var(--text-muted); font-size:0.9rem;">Per grandi corporate, istituzioni ed enti complessi.</p>
-                <div class="price-amount">Personalizzato</div>
-                <ul class="price-features">
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Utenti e postazioni illimitate</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Integrazione feed API proprietari</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Supporto dedicato e SLA 99.9%</li>
-                    <li><i data-feather="check" style="color:var(--accent-green); width:16px;"></i> Formazione personalizzata del personale</li>
-                </ul>
+                <div>
+                    <h3 style="font-size:1.3rem; margin-bottom:0.5rem; color:#fff;">Enterprise / Grandi Enti</h3>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">Per grandi corporate, istituzioni ed enti complessi.</p>
+                    <div class="price-amount">Personalizzato</div>
+                    <ul class="price-features">
+                        <li><i data-feather="check"></i> Utenti e postazioni illimitate</li>
+                        <li><i data-feather="check"></i> Integrazione feed e API personalizzate</li>
+                        <li><i data-feather="check"></i> Supporto prioritario e SLA garantito</li>
+                        <li><i data-feather="check"></i> Onboarding dedicato per il team</li>
+                    </ul>
+                </div>
                 <a href="/index.html#registerForm" class="btn-hero-secondary" style="display:block; text-align:center;">Contattaci</a>
             </div>
         </div>
 
         <!-- FAQ -->
         <div class="section-header">
+            <span class="section-tag">Chiarimenti</span>
             <h2 class="section-title">Domande Frequenti</h2>
         </div>
         <div class="faq-grid">
             <div class="faq-box">
-                <h4>Come si posiziona Rassegna Stampa AI rispetto a Mimesi, Volocom ed Eco della Stampa?</h4>
-                <p>I fornitori tradizionali vendono archivi passivi a costi elevatissimi e con interfacce legacy complesse. La nostra piattaforma è un copilota attivo che integra scraping in tempo reale, intelligenza artificiale per l'analisi e la redazione, e layout grafici pensati per il management moderno.</p>
+                <h4>In cosa si differenzia la piattaforma rispetto ai fornitori tradizionali di rassegna stampa?</h4>
+                <p>I fornitori tradizionali vendono spesso archivi passivi con contratti annuali vincolanti e interfacce complesse. La nostra piattaforma è un copilota attivo e agile: combina estrazione rapida in tempo reale, intelligenza artificiale per l'analisi e la redazione, layout grafici pensati per il management e un modello di abbonamento flessibile.</p>
             </div>
             <div class="faq-box">
                 <h4>Posso disdire l'abbonamento in qualsiasi momento?</h4>
-                <p>Sì, a differenza dei contratti annuali vincolanti tipici del settore, i nostri piani sono flessibili e gestibili direttamente dal pannello senza penali di recesso.</p>
+                <p>Sì, a differenza dei contratti annuali vincolanti tipici del settore, i nostri piani sono flessibili e gestibili direttamente dal pannello senza penali né costi di recesso.</p>
             </div>
             <div class="faq-box">
                 <h4>È possibile provare il generatore di comunicati stampa gratuitamente?</h4>
-                <p>Certamente! Abbiamo messo a disposizione un tool gratuito online senza registrazione: <a href="/strumenti-gratuiti/generatore-comunicati-stampa" style="color:var(--accent-blue);">prova subito il generatore di comunicati stampa</a>.</p>
+                <p>Certamente! Abbiamo reso disponibile un tool gratuito online senza registrazione: <a href="/strumenti-gratuiti/generatore-comunicati-stampa" style="color:#c084fc; text-decoration:underline;">prova subito il generatore di comunicati stampa</a>.</p>
             </div>
         </div>
 
         <!-- Banner CTA -->
         <div class="banner-cta">
-            <h2 style="font-size:2.2rem; margin-bottom:1rem;">Rendi il tuo Ufficio Stampa 10x più Veloce</h2>
-            <p style="color:var(--text-muted); max-width:650px; margin:0 auto 2rem; font-size:1.1rem;">Inizia oggi con la prova gratuita. Nessuna carta di credito richiesta.</p>
-            <a href="/index.html#registerForm" class="btn-hero-primary" style="font-size:1.1rem; padding:1rem 2.5rem;">Crea il tuo Account Gratuito</a>
+            <h2 style="font-size:2.2rem; margin-bottom:1rem; color:#fff;">Rendi il tuo Ufficio Stampa 10x più Rapido</h2>
+            <p style="color:var(--text-secondary); max-width:650px; margin:0 auto 2rem; font-size:1.1rem;">Inizia oggi con la prova gratuita. Nessuna carta di credito richiesta.</p>
+            <a href="/index.html#registerForm" class="btn-hero-primary" style="font-size:1.1rem; padding:1rem 2.6rem;">Crea il tuo Account Gratuito</a>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 Rassegna Stampa AI. Tutti i diritti riservati.</p>
+        <p>&copy; 2026 Rassegna Stampa Generator. Tutti i diritti riservati.</p>
     </footer>
 
     <script>feather.replace();</script>

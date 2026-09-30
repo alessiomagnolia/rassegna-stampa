@@ -18,7 +18,7 @@ const DEFAULT_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022
 
 /**
  * Analisi semantica avanzata del Sentiment e del Rischio Reputazionale (Crisis Detection)
- * Supera i filtri booleani legacy di Mimesi e Telpress.
+ * Supera i filtri booleani legacy delle piattaforme tradizionali.
  */
 async function analyzeSentimentAndRisk({ title, content, clientName = '' }) {
     const client = getAnthropic();
