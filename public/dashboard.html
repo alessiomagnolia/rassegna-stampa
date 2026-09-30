@@ -156,6 +156,10 @@
                     <span class="sidebar-icon"><i data-feather="search"></i></span>
                     <span class="sidebar-label">Ricerca Notizie</span>
                 </a>
+                <a href="#" class="sidebar-item" data-page="focus-reader" title="Lettura notizie pulita senza pubblicità e virgolettati salienti">
+                    <span class="sidebar-icon"><i data-feather="book-open"></i></span>
+                    <span class="sidebar-label">Focus Reader</span>
+                </a>
                 <a href="press.html" class="sidebar-item">
                     <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/><path d="M22 9a4 4 0 0 1 0 6"/></svg></span>
                     <span class="sidebar-label">Comunicati stampa</span>
@@ -167,6 +171,10 @@
                 <a href="#" class="sidebar-item" data-page="briefing">
                     <span class="sidebar-icon"><i data-feather="zap" style="color:var(--accent-primary);"></i></span>
                     <span class="sidebar-label">Briefing AI</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="analisi-rischio" title="Monitoraggio sentiment e analisi del rischio reputazionale">
+                    <span class="sidebar-icon"><i data-feather="shield"></i></span>
+                    <span class="sidebar-label">Analisi Rischio</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="reports">
                     <span class="sidebar-icon"><i data-feather="pie-chart"></i></span>
@@ -1055,7 +1063,185 @@
             </div>
         </div>
 
-        <!-- PAGE: MEDIA CRM (RUBRICA MEDIA & PR) -->
+        <!-- PAGE: FOCUS READER (LETTURA PULITA & ANTI-RUMORE) -->
+        <div id="page-focus-reader" class="page-view">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom: 2rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="book-open" style="width:28px;height:28px;vertical-align:middle;color:var(--accent-primary);"></i> Focus Reader</h1>
+                    <p class="page-subtitle">Lettura notizie full-text pulita senza annunci, banner o paywall grafici, con virgolettati salienti e stima tempi di lettura.</p>
+                </div>
+            </div>
+
+            <!-- Input & Selection Card -->
+            <div class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2rem;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 1.25rem;">
+                    <input type="url" id="focusReaderUrlInput" placeholder="Incolla qui il link web dell'articolo da estrarre e leggere..." style="flex:1; min-width:280px; padding:11px 16px; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.95rem; outline:none;">
+                    <button type="button" id="btnExtractFocusReader" class="btn btn-primary" onclick="extractAndReadFocusArticle()" style="padding:10px 22px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="search" style="width:16px;height:16px;"></i> Estrai &amp; Leggi
+                    </button>
+                </div>
+
+                <!-- Quick Pick from Rassegna or Search -->
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.85rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:1rem;">
+                    <span>Oppure seleziona una notizia già presente:</span>
+                    <select id="focusReaderQuickPick" onchange="onFocusReaderQuickPick(this)" style="max-width:420px; padding:6px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem;">
+                        <option value="">-- Scegli dalla rassegna attiva o ricerca --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="focusReaderPageLoading" class="hidden" style="text-align:center; padding: 4rem 1rem;">
+                <div class="spinner" style="width:40px; height:40px; margin: 0 auto 1.25rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.95rem;">Estrazione del testo pulito, rimozione annunci e ricerca virgolettati in corso...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="focusReaderPageEmpty" style="text-align:center; padding: 4.5rem 2rem; color:var(--text-muted);">
+                <div style="margin-bottom:1rem;"><i data-feather="book" style="width:48px;height:48px;color:var(--text-muted); opacity:0.6;"></i></div>
+                <p style="font-size:1.15rem; font-weight:700; margin-bottom:0.4rem; color:var(--text-primary);">Nessun articolo caricato nel lettore</p>
+                <p style="font-size:0.9rem; max-width:550px; margin:0 auto;">Incolla un URL di un quotidiano o testata online qui sopra per visualizzare il testo pulito e i virgolettati salienti.</p>
+            </div>
+
+            <!-- Reader Article View -->
+            <div id="focusReaderPageView" class="hidden">
+                <div class="glass-card" style="padding: 2.25rem; border-radius: 14px; margin-bottom: 2rem;">
+                    <!-- Top Action Bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border-color); padding-bottom:1.25rem; margin-bottom:1.5rem;">
+                        <div id="focusReaderPageMeta" style="font-size:0.9rem; color:var(--text-muted);"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="copyFocusReaderPageText()">
+                                <i data-feather="copy" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Copia Testo
+                            </button>
+                            <button type="button" class="btn btn-gradient btn-sm" onclick="sendFocusReaderArticleToReview()">
+                                <i data-feather="plus-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Inserisci in Rassegna
+                            </button>
+                            <a id="focusReaderPageOriginalLink" href="#" target="_blank" class="btn btn-subtle-alt btn-sm">
+                                <i data-feather="external-link" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Fonte Web
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Article Headline -->
+                    <h1 id="focusReaderPageTitle" style="font-size:clamp(1.6rem, 3vw, 2.2rem); font-weight:800; line-height:1.25; margin-bottom:1.5rem; color:var(--text-primary);"></h1>
+
+                    <!-- Key Quotes Box -->
+                    <div id="focusReaderPageQuotesBox" class="hidden" style="background:rgba(124,92,255,0.06); border:1px solid rgba(124,92,255,0.25); border-radius:12px; padding:1.25rem; margin-bottom:2rem;">
+                        <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent-primary); font-weight:800; margin-bottom:0.75rem; display:flex; align-items:center; gap:6px;">
+                            <i data-feather="message-square" style="width:15px;height:15px;"></i> Virgolettati Salienti &amp; Dichiarazioni Chiave
+                        </div>
+                        <div id="focusReaderPageQuotesList"></div>
+                    </div>
+
+                    <!-- Article Body Content -->
+                    <div id="focusReaderPageContent" class="focus-reader-content" style="max-height:none; background:transparent; border:none; padding:0;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: ANALISI RISCHIO & SENTIMENT -->
+        <div id="page-analisi-rischio" class="page-view">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom: 2rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="shield" style="width:28px;height:28px;vertical-align:middle;color:#ef4444;"></i> Analisi Rischio &amp; Sentiment</h1>
+                    <p class="page-subtitle">Monitora il clima mediatico e il rischio reputazionale, con indicazioni strategiche per l'ufficio stampa su come muoversi in ogni evenienza.</p>
+                </div>
+            </div>
+
+            <!-- Setup & Source Card -->
+            <div class="glass-card" style="padding: 1.75rem; border-radius: 14px; margin-bottom: 2rem;">
+                <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.95rem;">
+                        <input type="radio" name="riskSourceType" id="riskSourceActive" value="activeReview" checked onchange="toggleRiskSourceInput()">
+                        <span>Rassegna in lavorazione (<span id="riskActiveReviewCount">0 articoli</span>)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.95rem;">
+                        <input type="radio" name="riskSourceType" id="riskSourceManual" value="manualLink" onchange="toggleRiskSourceInput()">
+                        <span>Analizza da Link o Testo notizia</span>
+                    </label>
+                </div>
+
+                <div id="riskManualInputSection" class="hidden" style="margin-bottom:1.25rem;">
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Link Articolo</label>
+                        <input type="url" id="riskManualUrlInput" placeholder="Es. https://www.corriere.it/economia/..." style="width:100%; padding:9px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.9rem;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:4px;">Oppure Titolo / Testo della Dichiarazione</label>
+                        <textarea id="riskManualTextInput" rows="3" placeholder="Incolla il testo della notizia o della dichiarazione da valutare..." style="width:100%; padding:9px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.9rem;"></textarea>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-top:1px solid var(--border-color); padding-top:1.25rem;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Brand / Cliente:</label>
+                        <input type="text" id="riskClientNameInput" placeholder="Es. Nome Azienda o Cliente" style="padding:6px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; width:220px;">
+                    </div>
+                    <button type="button" id="btnRunRiskAnalysis" class="btn btn-primary" onclick="runRiskAnalysisProcess()" style="padding:10px 24px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="activity" style="width:16px;height:16px;"></i> Esegui Analisi Rischio &amp; Sentiment
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="riskPageLoading" class="hidden" style="text-align:center; padding: 4rem 1rem;">
+                <div class="spinner" style="width:40px; height:40px; margin: 0 auto 1.25rem auto;"></div>
+                <p style="color:var(--text-muted); font-size:0.95rem;">Elaborazione semantica del contesto mediatico e calcolo del rischio reputazionale in corso...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="riskPageEmpty" style="text-align:center; padding: 4.5rem 2rem; color:var(--text-muted);">
+                <div style="margin-bottom:1rem;"><i data-feather="shield" style="width:48px;height:48px;color:var(--text-muted); opacity:0.6;"></i></div>
+                <p style="font-size:1.15rem; font-weight:700; margin-bottom:0.4rem; color:var(--text-primary);">Nessuna analisi attiva</p>
+                <p style="font-size:0.9rem; max-width:550px; margin:0 auto;">Avvia l'analisi della rassegna in lavorazione o inserisci una notizia specifica per monitorare il sentiment e ricevere consigli strategici dall'AI.</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="riskPageResults" class="hidden">
+                <!-- 3 Top Metric Cards -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+                    <!-- Card 1: Score -->
+                    <div class="glass-card" style="padding:1.5rem; border-radius:14px; text-align:center;">
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:6px;">Indice Rischio Reputazionale</span>
+                        <div id="riskScoreGauge" style="font-size:2.8rem; font-weight:800; line-height:1; margin-bottom:6px;">0/100</div>
+                        <span id="riskLevelBadge" class="article-risk-pill" style="font-size:0.8rem; padding:4px 12px;">Basso</span>
+                    </div>
+
+                    <!-- Card 2: Clima Media -->
+                    <div class="glass-card" style="padding:1.5rem; border-radius:14px; text-align:center;">
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:6px;">Clima Media Prevalente</span>
+                        <div id="riskSentimentGauge" style="font-size:2.2rem; font-weight:800; line-height:1.2; margin-top:8px;">Neutro</div>
+                        <span id="riskSentimentBreakdown" style="font-size:0.8rem; color:var(--text-muted); display:block; margin-top:4px;"></span>
+                    </div>
+
+                    <!-- Card 3: Alert Status -->
+                    <div class="glass-card" style="padding:1.5rem; border-radius:14px; text-align:center;">
+                        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:6px;">Stato Criticità</span>
+                        <div id="riskStatusGauge" style="font-size:1.8rem; font-weight:800; line-height:1.2; margin-top:10px;">🟢 Stabile</div>
+                        <span id="riskStatusSubtext" style="font-size:0.8rem; color:var(--text-muted); display:block; margin-top:6px;">Nessuna emergenza in corso</span>
+                    </div>
+                </div>
+
+                <!-- Strategic Advisory Box: "Come muoversi in ogni evenienza" -->
+                <div class="glass-card" style="padding:1.75rem; border-radius:14px; margin-bottom:2rem; border-left:5px solid var(--accent-primary);">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+                        <i data-feather="compass" style="width:22px;height:22px;color:var(--accent-primary);"></i>
+                        <h3 style="margin:0; font-size:1.2rem; font-weight:800;">Advisory Strategico &amp; Piano d'Azione Consigliato</h3>
+                    </div>
+                    <div id="riskAdvisoryContent" style="font-size:0.95rem; line-height:1.7; color:var(--text-primary);"></div>
+                </div>
+
+                <!-- Detailed Articles Breakdown -->
+                <div class="glass-card" style="padding:1.75rem; border-radius:14px; margin-bottom:2rem;">
+                    <h3 style="margin:0 0 1.25rem 0; font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <i data-feather="list" style="width:18px;height:18px;"></i>
+                        <span>Dettaglio Notizie Analizzate</span>
+                    </h3>
+                    <div id="riskArticlesList"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- PAGE: MEDIA CRM (RUBRICA MEDIA & PR) -->
         <div id="page-media-crm" class="page-view">
             <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
@@ -2933,6 +3119,22 @@
                 } else {
                     setTimeout(() => {
                         if (typeof window.loadReportsPage === 'function') window.loadReportsPage();
+                    }, 200);
+                }
+            } else if (page === 'focus-reader') {
+                if (typeof window.initFocusReaderPage === 'function') {
+                    window.initFocusReaderPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.initFocusReaderPage === 'function') window.initFocusReaderPage();
+                    }, 200);
+                }
+            } else if (page === 'analisi-rischio') {
+                if (typeof window.initRiskAnalysisPage === 'function') {
+                    window.initRiskAnalysisPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.initRiskAnalysisPage === 'function') window.initRiskAnalysisPage();
                     }, 200);
                 }
             } else if (page === 'home' || !page) {
