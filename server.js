@@ -21,16 +21,86 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
+
+// HTTP Compression (Gzip / Deflate / Brotli)
+let compressionMiddleware;
+try {
+    const compression = require('compression');
+    compressionMiddleware = compression({
+        filter: (req, res) => {
+            if (req.headers['x-no-compression']) return false;
+            const ct = res.getHeader('Content-Type');
+            // Non comprimere flussi PDF o archivi binari già compressi internamente
+            if (ct && (String(ct).includes('application/pdf') || String(ct).includes('application/zip'))) {
+                return false;
+            }
+            return compression.filter(req, res);
+        },
+        level: 6, // Bilanciamento ottimale tra risparmio banda e carico CPU
+        threshold: 1024 // Comprime solo payload superiori a 1 KB
+    });
+} catch (e) {
+    // Fallback nativo zlib
+    const zlib = require('zlib');
+    compressionMiddleware = (req, res, next) => {
+        const accept = req.headers['accept-encoding'] || '';
+        if (!accept.includes('gzip')) return next();
+        const origSend = res.send;
+        res.send = function (body) {
+            const ct = res.getHeader('Content-Type') || '';
+            if (typeof body === 'string' && body.length > 1024 && !String(ct).includes('application/pdf') && !String(ct).includes('image/')) {
+                res.setHeader('Content-Encoding', 'gzip');
+                res.removeHeader('Content-Length');
+                zlib.gzip(body, (err, buf) => {
+                    if (err) return origSend.call(res, body);
+                    res.setHeader('Content-Length', buf.length);
+                    origSend.call(res, buf);
+                });
+            } else {
+                origSend.call(res, body);
+            }
+        };
+        next();
+    };
+}
+app.use(compressionMiddleware);
+
 app.use(express.json({ limit: '50mb' }));
+
+// Politica di Caching Intelligente per Asset Statici
 app.use(express.static(path.join(__dirname, 'public'), {
     index: false,
+    etag: true,
+    lastModified: true,
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html') || filePath.endsWith('app.js')) {
-            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        const ext = path.extname(filePath).toLowerCase();
+
+        // 1. Asset statici pesanti / immutabili (immagini, font, icone): cache 7 giorni
+        if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+        }
+        // 2. Fogli di stile CSS: cache 1 giorno con ETag per 304 Not Modified immediato
+        else if (['.css'].includes(ext)) {
+            res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+        }
+        // 3. Pagine HTML e JavaScript (app.js, dashboard.html, editor.html):
+        // "no-cache" consente al browser di conservare il file in memoria, effettuando una revalidazione
+        // HTTP 304 istantanea (0 byte trasferiti) se il file non è cambiato, e scaricando la nuova versione
+        // appena si pubblica un aggiornamento.
+        else if (['.html', '.js'].includes(ext)) {
+            res.setHeader('Cache-Control', 'no-cache');
         }
     }
 }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    }
+}));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -87,7 +157,7 @@ app.get('/api/proxy-image', (req, res) => {
 
 // Interactive White-label Public Share Portal
 app.get('/share/:token', (req, res) => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(__dirname, 'public', 'share.html'));
 });
 
