@@ -491,6 +491,8 @@ function renderArticles() {
         card.style.animationDelay = `${idx * 0.1}s`;
         
         const imgSrc = article.imageBase64 || article.screenshotBase64 || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjZhNjgyIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=';
+        const rawExcerpt = article.excerpt || 'Nessun estratto disponibile per questo articolo.';
+        const cleanExcerpt = rawExcerpt.replace(/\s+/g, ' ').trim();
         
         card.innerHTML = `
             <div class="article-card-left">
@@ -516,8 +518,8 @@ function renderArticles() {
                         </select>
                     </div>
                 </div>
-                <div class="article-title">${article.title || 'Senza titolo'}</div>
-                <div class="article-excerpt">${article.excerpt || 'Nessun estratto disponibile per questo articolo.'}</div>
+                <div class="article-title">${escapeHtml(article.title || 'Senza titolo')}</div>
+                <div class="article-excerpt" title="${escapeHtml(cleanExcerpt)}">${escapeHtml(cleanExcerpt)}</div>
                 <div class="article-card-footer">
                     <div class="article-card-actions-left">
                         <label for="uploadLogo_${idx}" class="btn-card-action" title="Carica file logo dal tuo computer">

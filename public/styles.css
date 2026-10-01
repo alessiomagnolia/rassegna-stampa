@@ -1115,9 +1115,13 @@ input::placeholder, textarea::placeholder {
     color: var(--text-muted);
     line-height: 1.45;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
     margin: 0;
 }
 
@@ -2547,9 +2551,13 @@ input[type="date"] {
         font-size: 0.8rem !important;
         color: var(--text-secondary) !important;
         display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
+        -webkit-line-clamp: 1 !important;
+        line-clamp: 1 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        word-break: break-word !important;
         line-height: 1.4 !important;
     }
 
