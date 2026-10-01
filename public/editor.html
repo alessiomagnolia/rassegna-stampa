@@ -4676,6 +4676,10 @@ async function generateAndDownload() {
         // Server streams PDF directly — read as blob
         if (contentType.includes('application/pdf')) {
             const blob = await res.blob();
+            if (!blob || blob.size === 0) {
+                throw new Error('Il PDF generato dal server è vuoto o non valido.');
+            }
+
             const reviewId = res.headers.get('X-Review-Id');
             const filename  = res.headers.get('X-Filename') || 'Rassegna_Stampa.pdf';
 
@@ -4683,6 +4687,7 @@ async function generateAndDownload() {
 
             const objectUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = objectUrl;
             a.download = filename;
             document.body.appendChild(a);

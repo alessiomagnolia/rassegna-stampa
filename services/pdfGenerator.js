@@ -52,7 +52,7 @@ async function generatePDF(articles, options) {
         page = await browser.newPage();
         
         // Load HTML; base64 images are inline so 'domcontentloaded' fires immediately without waiting for external requests
-        await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
         // Auto-detect white/light logos via Canvas API (runs in real Chromium)
         try {
@@ -71,7 +71,7 @@ async function generatePDF(articles, options) {
         return pdfBuffer;
     } catch (error) {
         console.error('[PDFGenerator] Errore:', error);
-        throw new Error('Errore durante la generazione del layout PDF.');
+        throw new Error('Errore durante la generazione del layout PDF: ' + (error.message || error));
     } finally {
         if (page)    await page.close().catch(e => console.error(e));
         if (browser) await browser.close().catch(e => console.error(e));

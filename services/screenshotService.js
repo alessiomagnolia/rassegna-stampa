@@ -15,8 +15,6 @@ async function launchBrowser() {
             throw new Error('Puppeteer non installato o non disponibile: ' + e.message);
         }
     }
-    console.log('Avvio di Puppeteer...');
-
     // Resolve chrome executable path across environments (Docker, Railway, Render, Linux, Windows)
     let chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
     if (!chromePath || !fs.existsSync(chromePath)) {
@@ -31,6 +29,7 @@ async function launchBrowser() {
         ];
         chromePath = candidates.find(p => fs.existsSync(p)) || undefined;
     }
+    console.log(`Avvio di Puppeteer con chromePath: ${chromePath || 'bundled Chromium'}...`);
 
     return await puppeteer.launch({
         headless: true,
@@ -43,10 +42,7 @@ async function launchBrowser() {
             '--disable-extensions',
             '--disable-background-networking',
             '--font-render-hinting=none',
-            '--no-zygote',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--js-flags="--max-old-space-size=128"'
+            '--no-first-run'
         ]
     });
 }

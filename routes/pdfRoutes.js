@@ -37,18 +37,27 @@ function fetchImageAsBase64(url) {
             return resolve(null);
         }
 
-        const protocol = url.startsWith('https') ? https : http;
-        const agent = url.startsWith('https') ? new https.Agent({ rejectUnauthorized: false }) : undefined;
-        protocol.get(url, { agent, headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
-            if (response.statusCode !== 200) return resolve(null);
-            const chunks = [];
-            response.on('data', chunk => chunks.push(chunk));
-            response.on('end', () => {
-                const buffer = Buffer.concat(chunks);
-                const contentType = response.headers['content-type'] || 'image/png';
-                resolve(`data:${contentType};base64,${buffer.toString('base64')}`);
+        try {
+            const protocol = url.startsWith('https') ? https : http;
+            const agent = url.startsWith('https') ? new https.Agent({ rejectUnauthorized: false }) : undefined;
+            const req = protocol.get(url, { agent, timeout: 3500, headers: { 'User-Agent': 'Mozilla/5.0' } }, (response) => {
+                if (response.statusCode !== 200) return resolve(null);
+                const chunks = [];
+                response.on('data', chunk => chunks.push(chunk));
+                response.on('end', () => {
+                    const buffer = Buffer.concat(chunks);
+                    const contentType = response.headers['content-type'] || 'image/png';
+                    resolve(`data:${contentType};base64,${buffer.toString('base64')}`);
+                });
             });
-        }).on('error', () => resolve(null));
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(null);
+            });
+            req.on('error', () => resolve(null));
+        } catch (e) {
+            resolve(null);
+        }
     });
 }
 
@@ -213,6 +222,7 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${safeDownloadName}"`);
         res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Access-Control-Expose-Headers', 'X-Review-Id, X-Share-Token, X-Share-Url, X-Filename, Content-Disposition');
         res.setHeader('X-Review-Id', String(finalReviewId));
         res.setHeader('X-Share-Token', activeShareToken);
         res.setHeader('X-Share-Url', `/share/${activeShareToken}`);

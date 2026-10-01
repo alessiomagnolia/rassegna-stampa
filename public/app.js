@@ -936,6 +936,10 @@ async function generatePDF() {
         // Server now streams the PDF directly — read it as a blob
         if (contentType.includes('application/pdf')) {
             const blob = await res.blob();
+            if (!blob || blob.size === 0) {
+                throw new Error('Il PDF generato dal server è vuoto o non valido.');
+            }
+
             const reviewId = res.headers.get('X-Review-Id');
             const shareUrl  = res.headers.get('X-Share-Url');
             const filename  = res.headers.get('X-Filename') || 'Rassegna_Stampa.pdf';
@@ -951,6 +955,7 @@ async function generatePDF() {
             // Trigger download from blob
             const objectUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = objectUrl;
             a.download = filename;
             document.body.appendChild(a);
@@ -974,9 +979,9 @@ async function generatePDF() {
         
     } catch (error) {
         showToast(error.message || 'Errore durante la generazione del PDF', 'error');
-        btn.classList.remove('hidden');
     } finally {
         state.isGenerating = false;
+        btn.classList.remove('hidden');
         loading.classList.add('hidden');
     }
 }
