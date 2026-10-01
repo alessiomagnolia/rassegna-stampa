@@ -1368,13 +1368,20 @@
 
         <!-- PAGE: I MIEI CLIENTI -->
         <div id="page-clienti" class="page-view">
+            <style>
+                @media (max-width: 1024px) {
+                    .client-workspace-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                }
+            </style>
             <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom: 2rem;">
                 <div>
                     <h1 class="page-title"><i data-feather="briefcase" style="width:28px;height:28px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> I Miei Clienti</h1>
-                    <p class="page-subtitle">Gestisci i profili aziendali dei tuoi clienti, loghi per copertine, parole chiave per la rassegna e tone of voice per l'IA.</p>
+                    <p class="page-subtitle">Configura i profili aziendali dei tuoi clienti, loghi per copertine, parole chiave per la rassegna e allena il Tone of Voice per comunicati e testi con IA.</p>
                 </div>
-                <button type="button" class="btn btn-gradient" onclick="openClientModal()" style="display:flex; align-items:center; gap:8px;">
-                    <i data-feather="plus-circle" style="width:16px;height:16px;"></i> Aggiungi Nuovo Cliente
+                <button type="button" class="btn btn-outline" onclick="resetClientPageForm()" style="display:flex; align-items:center; gap:8px;">
+                    <i data-feather="plus-circle" style="width:16px;height:16px;"></i> Nuovo Cliente
                 </button>
             </div>
 
@@ -1404,13 +1411,124 @@
                         <i data-feather="zap" style="width:18px;height:18px;color:#ffb703;"></i>
                     </div>
                     <div style="font-size:1.25rem; font-weight:800; color:#ffb703;">Memoria Attiva</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Loghi e tone of voice applicati ai documenti</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Loghi, Tone of Voice e testi di training applicati</div>
                 </div>
             </div>
 
-            <!-- Client Cards Grid -->
-            <div id="clientsPageGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem; margin-bottom:2.5rem;">
-                <!-- Populated dynamically by renderClientsPage() -->
+            <!-- Workspace Section: Form & Training (Sinistra) + Elenco Clienti (Destra) -->
+            <div class="client-workspace-grid" style="display:grid; grid-template-columns: minmax(360px, 460px) 1fr; gap:1.75rem; align-items:start; margin-bottom:2.5rem;">
+                
+                <!-- PANNELLO SINISTRA: Form Configurazione & Training IA -->
+                <div class="glass-card" id="clientPageFormCard" style="padding:1.75rem; border-radius:14px; position:sticky; top:5.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+                        <h3 id="pageClientFormTitle" style="margin:0; font-size:1.1rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+                            <i data-feather="plus-circle" style="color:var(--accent-primary); width:18px; height:18px;"></i> Aggiungi Nuovo Cliente
+                        </h3>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="resetClientPageForm()" style="font-size:0.75rem; padding:3px 8px;" title="Svuota campi per un nuovo cliente">
+                            Pulisci
+                        </button>
+                    </div>
+
+                    <input type="hidden" id="pageClientId" value="">
+
+                    <!-- Nome Cliente -->
+                    <div style="margin-bottom:1.15rem;">
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Nome Cliente / Azienda *</label>
+                        <input type="text" id="pageClientNameInput" placeholder="Es. Paolo Capone oppure Acme Corp" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.9rem;">
+                    </div>
+
+                    <!-- Logo Predefinito -->
+                    <div style="margin-bottom:1.15rem;">
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Logo Predefinito Cliente</label>
+                        
+                        <!-- Preview container -->
+                        <div id="pageClientLogoPreviewContainer" class="hidden" style="display:none; align-items:center; gap:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; margin-bottom:8px;">
+                            <div style="width:48px; height:48px; border-radius:6px; background:#ffffff; display:flex; align-items:center; justify-content:center; padding:4px; box-shadow:0 2px 4px rgba(0,0,0,0.2); overflow:hidden; flex-shrink:0;">
+                                <img id="pageClientLogoPreview" src="" alt="Logo" style="max-height:100%; max-width:100%; object-fit:contain;">
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div id="pageClientLogoFileName" style="font-size:0.82rem; font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Logo caricato</div>
+                                <div style="font-size:0.72rem; color:#10b981; display:flex; align-items:center; gap:4px; margin-top:2px;">
+                                    <i data-feather="check-circle" style="width:12px;height:12px;"></i> Pronto per il salvataggio
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="removeClientPageLogo()" style="font-size:0.75rem; color:#ef4444; border-color:rgba(239,68,68,0.3); padding:4px 8px; cursor:pointer;" title="Rimuovi questo logo">
+                                <i data-feather="trash-2" style="width:12px;height:12px;"></i>
+                            </button>
+                        </div>
+
+                        <input type="file" id="pageClientLogoFileInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="display:none;" onchange="handleClientPageLogoChange(event)">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('pageClientLogoFileInput').click()" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <i data-feather="image" style="width:14px;height:14px;"></i> <span id="btnPageUploadLogoText">Carica Logo</span>
+                        </button>
+                    </div>
+
+                    <!-- Parole Chiave Monitoraggio -->
+                    <div style="margin-bottom:1.15rem;">
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Parole Chiave per Ricerca Notizie</label>
+                        <input type="text" id="pageClientKeywordsInput" placeholder="Es. Paolo Capone, UGL, lavoro, sindacato" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.9rem;">
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">Separate da virgola. Vengono inserite in automatico nella Ricerca Notizie.</small>
+                    </div>
+
+                    <!-- Tone of Voice per IA -->
+                    <div style="margin-bottom:1.15rem;">
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Tone of Voice per Comunicati Stampa (IA)</label>
+                        <input type="text" id="pageClientToneInput" placeholder="Es. Istituzionale, assertivo, incisivo, autorevole" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.9rem;">
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">Puoi digitarlo a mano oppure usare il box di training qui sotto per estrarlo con l'IA.</small>
+                    </div>
+
+                    <!-- BOX TRAINING TONE OF VOICE CON TESTI DI RIFERIMENTO -->
+                    <div style="background:rgba(124,92,255,0.06); border:1px solid rgba(124,92,255,0.25); border-radius:10px; padding:12px 14px; margin-bottom:1.15rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="font-size:0.85rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <i data-feather="cpu" style="width:15px;height:15px;color:var(--accent-primary);"></i> Training Tone of Voice
+                            </label>
+                            <span id="pageClientTrainingCharCount" style="font-size:0.72rem; color:var(--text-muted);">0 car.</span>
+                        </div>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 8px 0; line-height:1.4;">
+                            Incolla qui testi d'esempio (comunicati passati, dichiarazioni, interviste o discorsi). L'IA ne apprenderà il lessico e la tonalità stilistica.
+                        </p>
+                        <textarea id="pageClientTrainingTextInput" rows="5" placeholder="Incolla qui uno o più testi di riferimento del cliente per addestrare l'IA sullo stile e sul vocabolario..." style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.83rem; line-height:1.45; resize:vertical;" oninput="updateTrainingCharCount()"></textarea>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:6px;">
+                            <button type="button" id="btnAnalyzeClientTone" class="btn btn-outline btn-sm" onclick="analyzeClientToneOfVoice()" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:0.78rem; border-color:rgba(124,92,255,0.45); background:rgba(124,92,255,0.12); color:var(--text-primary); cursor:pointer;">
+                                <i data-feather="zap" style="width:13px;height:13px;color:#ffb703;"></i> <span id="btnAnalyzeToneText">✨ Analizza ed Estrai Tone of Voice con IA</span>
+                            </button>
+                            <small style="font-size:0.7rem; color:var(--text-muted);">Minimo 30 caratteri</small>
+                        </div>
+                    </div>
+
+                    <!-- Note & Contesto Aziendale -->
+                    <div style="margin-bottom:1.35rem;">
+                        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Note / Contesto Aziendale (per IA)</label>
+                        <textarea id="pageClientNotesInput" rows="2" placeholder="Informazioni utili sul cliente, settore, mission, ruoli ufficiali..." style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-size:0.85rem; resize:vertical;"></textarea>
+                    </div>
+
+                    <!-- Pulsanti Azione -->
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" id="btnSaveClientPage" class="btn btn-gradient" onclick="saveClientFromPageForm()" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-weight:700; padding:10px 16px; cursor:pointer;">
+                            <i data-feather="check" style="width:16px;height:16px;"></i> Salva Cliente
+                        </button>
+                        <button type="button" id="btnCancelClientPageEdit" class="btn btn-outline" onclick="resetClientPageForm()" style="display:none; padding:10px 14px; cursor:pointer;">
+                            Annulla
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PANNELLO DESTRA: Elenco Clienti Registrati -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                        <h3 style="font-size:1.15rem; font-weight:700; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i data-feather="folder" style="color:var(--accent-primary);"></i> Archivio Clienti (<span id="clientsGridCount">0</span>)
+                        </h3>
+                    </div>
+
+                    <!-- Client Cards Grid -->
+                    <div id="clientsPageGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap:1.25rem;">
+                        <!-- Populated dynamically by renderClientsPage() -->
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -3288,7 +3406,7 @@
         }, 150);
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20261001_clienti_v3"></script>
+    <script src="app.js?v=20261001_clienti_v5"></script>
     <script src="ui.js?v=20260921_modal_click"></script>
 </body>
 </html>

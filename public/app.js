@@ -3058,6 +3058,17 @@ window.applyKeywordSuggestion = function(kw) {
 };
 
 window.openClientModal = function() {
+    const pageClienti = document.getElementById('page-clienti');
+    if (pageClienti && pageClienti.classList.contains('active')) {
+        if (typeof resetClientPageForm === 'function') resetClientPageForm();
+        const input = document.getElementById('pageClientNameInput');
+        if (input) {
+            input.focus();
+            const formCard = document.getElementById('clientPageFormCard');
+            if (formCard) formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+    }
     const modal = document.getElementById('clientModal');
     if (!modal) return;
     resetClientForm();
@@ -3150,6 +3161,274 @@ window.removeClientFormLogo = function() {
     showToast('Logo rimosso', 'info');
 };
 
+let clientPageLogoBase64 = null;
+
+window.updateTrainingCharCount = function() {
+    const textarea = document.getElementById('pageClientTrainingTextInput');
+    const badge = document.getElementById('pageClientTrainingCharCount');
+    if (textarea && badge) {
+        badge.textContent = `${textarea.value.length} car.`;
+    }
+};
+
+window.handleClientPageLogoChange = async function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+        clientPageLogoBase64 = await fileToBase64(file);
+        const container = document.getElementById('pageClientLogoPreviewContainer');
+        const img = document.getElementById('pageClientLogoPreview');
+        const nameEl = document.getElementById('pageClientLogoFileName');
+        const btnText = document.getElementById('btnPageUploadLogoText');
+
+        if (img) img.src = clientPageLogoBase64;
+        if (nameEl) nameEl.textContent = file.name || 'Logo caricato';
+        if (container) {
+            container.classList.remove('hidden');
+            container.style.display = 'flex';
+        }
+        if (btnText) btnText.textContent = 'Cambia Logo';
+
+        showToast('Logo caricato con successo!', 'success');
+        feather.replace();
+    } catch (err) {
+        console.error('Errore caricamento logo:', err);
+        showToast('Errore nel caricamento del logo', 'error');
+    }
+};
+
+window.removeClientPageLogo = function() {
+    clientPageLogoBase64 = '';
+    const fileInput = document.getElementById('pageClientLogoFileInput');
+    if (fileInput) fileInput.value = '';
+
+    const container = document.getElementById('pageClientLogoPreviewContainer');
+    if (container) {
+        container.classList.add('hidden');
+        container.style.display = 'none';
+    }
+    const img = document.getElementById('pageClientLogoPreview');
+    if (img) img.src = '';
+    const nameEl = document.getElementById('pageClientLogoFileName');
+    if (nameEl) nameEl.textContent = '';
+    const btnText = document.getElementById('btnPageUploadLogoText');
+    if (btnText) btnText.textContent = 'Carica Logo';
+};
+
+window.resetClientPageForm = function() {
+    if (document.getElementById('pageClientId')) document.getElementById('pageClientId').value = '';
+    if (document.getElementById('pageClientNameInput')) document.getElementById('pageClientNameInput').value = '';
+    if (document.getElementById('pageClientKeywordsInput')) document.getElementById('pageClientKeywordsInput').value = '';
+    if (document.getElementById('pageClientToneInput')) document.getElementById('pageClientToneInput').value = '';
+    if (document.getElementById('pageClientTrainingTextInput')) document.getElementById('pageClientTrainingTextInput').value = '';
+    if (document.getElementById('pageClientTrainingCharCount')) document.getElementById('pageClientTrainingCharCount').textContent = '0 car.';
+    if (document.getElementById('pageClientNotesInput')) document.getElementById('pageClientNotesInput').value = '';
+    
+    removeClientPageLogo();
+
+    const title = document.getElementById('pageClientFormTitle');
+    if (title) title.innerHTML = '<i data-feather="plus-circle" style="color:var(--accent-primary); width:18px; height:18px;"></i> Aggiungi Nuovo Cliente';
+    const cancelBtn = document.getElementById('btnCancelClientPageEdit');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    feather.replace();
+};
+
+window.analyzeClientToneOfVoice = async function() {
+    const textInput = document.getElementById('pageClientTrainingTextInput');
+    const text = textInput ? textInput.value.trim() : '';
+    const clientName = document.getElementById('pageClientNameInput')?.value.trim() || '';
+
+    if (!text || text.length < 30) {
+        return showToast('Inserisci almeno 30 caratteri di testo d\'esempio per allenare l\'IA sul tone of voice', 'warning');
+    }
+
+    const btn = document.getElementById('btnAnalyzeClientTone');
+    const btnText = document.getElementById('btnAnalyzeToneText');
+    const origHtml = btnText ? btnText.innerHTML : '';
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.innerHTML = '<i data-feather="loader" class="spin"></i> Analisi linguistica in corso...';
+    feather.replace();
+
+    try {
+        let res = null;
+        if (state.token) {
+            try {
+                res = await apiCall('POST', '/api/clients/analyze-tone', { text, clientName });
+            } catch(e) {
+                console.warn('API analyze-tone fallita, uso analisi locale:', e);
+            }
+        }
+
+        // Se offline o non autenticato, fallback linguistico
+        if (!res || !res.tone_of_voice) {
+            const isFormal = text.includes('dichiara') || text.includes('sottolinea') || text.includes('comunicato') || text.includes('istituzionale') || text.includes('ufficiale');
+            const words = text.split(/\s+/).filter(w => w.length > 5);
+            const freq = {};
+            words.forEach(w => {
+                const clean = w.toLowerCase().replace(/[^a-zàèéìòù]/gi, '');
+                if (clean.length > 4 && !['questo', 'quello', 'perché', 'quando', 'hanno', 'stato', 'prima', 'dopo'].includes(clean)) {
+                    freq[clean] = (freq[clean] || 0) + 1;
+                }
+            });
+            const topWords = Object.keys(freq).sort((a,b) => freq[b] - freq[a]).slice(0, 5).map(w => w.charAt(0).toUpperCase() + w.slice(1));
+            res = {
+                tone_of_voice: isFormal 
+                    ? 'Istituzionale, autorevole, assertivo e orientato alla chiarezza dei fatti'
+                    : 'Professionale, dinamico, incisivo e orientato all\'impatto',
+                suggested_keywords: topWords.join(', ')
+            };
+        }
+
+        if (res.tone_of_voice) {
+            const toneInput = document.getElementById('pageClientToneInput');
+            if (toneInput) toneInput.value = res.tone_of_voice;
+        }
+
+        if (res.suggested_keywords) {
+            const kwInput = document.getElementById('pageClientKeywordsInput');
+            if (kwInput) {
+                if (!kwInput.value.trim()) {
+                    kwInput.value = res.suggested_keywords;
+                } else if (!kwInput.value.includes(res.suggested_keywords)) {
+                    kwInput.value += ', ' + res.suggested_keywords;
+                }
+            }
+        }
+
+        showToast('Tone of Voice estratto con successo dall\'IA!', 'success');
+    } catch (err) {
+        console.error('Errore analisi tone:', err);
+        showToast('Errore durante l\'analisi del testo', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerHTML = origHtml || '✨ Analizza ed Estrai Tone of Voice con IA';
+        feather.replace();
+    }
+};
+
+window.saveClientFromPageForm = async function() {
+    if (isSavingClient) return;
+
+    const id = document.getElementById('pageClientId')?.value;
+    const name = document.getElementById('pageClientNameInput')?.value.trim();
+    const keywords = document.getElementById('pageClientKeywordsInput')?.value.trim() || '';
+    const tone_of_voice = document.getElementById('pageClientToneInput')?.value.trim() || '';
+    const training_text = document.getElementById('pageClientTrainingTextInput')?.value.trim() || '';
+    const notes = document.getElementById('pageClientNotesInput')?.value.trim() || '';
+
+    if (!name) return showToast('Inserisci il nome del cliente o azienda', 'warning');
+
+    isSavingClient = true;
+    const saveBtn = document.getElementById('btnSaveClientPage');
+    const prevHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i data-feather="loader" class="spin"></i> Salvataggio...';
+        feather.replace();
+    }
+
+    try {
+        const payload = {
+            id: id || Date.now(),
+            name,
+            keywords,
+            tone_of_voice,
+            training_text,
+            notes,
+            logo_base64: clientPageLogoBase64 !== null ? clientPageLogoBase64 : ''
+        };
+
+        if (state.token) {
+            try {
+                let res;
+                if (id) {
+                    res = await apiCall('PUT', `/api/clients/${id}`, payload);
+                    showToast('Cliente aggiornato!', 'success');
+                } else {
+                    res = await apiCall('POST', '/api/clients', payload);
+                    showToast('Nuovo cliente creato!', 'success');
+                }
+                resetClientPageForm();
+                await loadClients();
+                if (res && res.client) applyActiveClient(res.client.id);
+                return;
+            } catch (err) {
+                console.log('Salvataggio API client fallito, uso memoria locale:', err);
+            }
+        }
+
+        // Local Storage Fallback
+        let localList = localStorage.getItem('rs_local_clients');
+        localList = localList ? JSON.parse(localList) : [];
+
+        if (id) {
+            const idx = localList.findIndex(c => c.id == id);
+            if (idx !== -1) localList[idx] = payload;
+            else localList.push(payload);
+            showToast('Cliente aggiornato!', 'success');
+        } else {
+            localList.push(payload);
+            showToast('Nuovo cliente creato!', 'success');
+        }
+
+        localStorage.setItem('rs_local_clients', JSON.stringify(localList));
+        userClients = localList;
+
+        resetClientPageForm();
+        renderClientSelectors();
+        applyActiveClient(payload.id);
+    } finally {
+        isSavingClient = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = prevHtml || '<i data-feather="check"></i> Salva Cliente';
+            feather.replace();
+        }
+    }
+};
+
+window.editClientOnPage = function(id) {
+    const client = userClients.find(c => c.id == id);
+    if (!client) return;
+
+    if (document.getElementById('pageClientId')) document.getElementById('pageClientId').value = client.id;
+    if (document.getElementById('pageClientNameInput')) document.getElementById('pageClientNameInput').value = client.name || '';
+    if (document.getElementById('pageClientKeywordsInput')) document.getElementById('pageClientKeywordsInput').value = client.keywords || '';
+    if (document.getElementById('pageClientToneInput')) document.getElementById('pageClientToneInput').value = client.tone_of_voice || '';
+    if (document.getElementById('pageClientTrainingTextInput')) {
+        document.getElementById('pageClientTrainingTextInput').value = client.training_text || '';
+        updateTrainingCharCount();
+    }
+    if (document.getElementById('pageClientNotesInput')) document.getElementById('pageClientNotesInput').value = client.notes || '';
+
+    clientPageLogoBase64 = client.logo_base64 || null;
+    const container = document.getElementById('pageClientLogoPreviewContainer');
+    const img = document.getElementById('pageClientLogoPreview');
+    const nameEl = document.getElementById('pageClientLogoFileName');
+    const btnText = document.getElementById('btnPageUploadLogoText');
+
+    if (client.logo_base64 && container && img) {
+        img.src = client.logo_base64;
+        if (nameEl) nameEl.textContent = `${client.name} - Logo`;
+        container.classList.remove('hidden');
+        container.style.display = 'flex';
+        if (btnText) btnText.textContent = 'Cambia Logo';
+    } else {
+        removeClientPageLogo();
+    }
+
+    const title = document.getElementById('pageClientFormTitle');
+    if (title) title.innerHTML = `<i data-feather="edit-2" style="color:var(--accent-primary); width:18px; height:18px;"></i> Modifica: ${client.name}`;
+    const cancelBtn = document.getElementById('btnCancelClientPageEdit');
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+    const formCard = document.getElementById('clientPageFormCard');
+    if (formCard) formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    feather.replace();
+};
+
 let isSavingClient = false;
 
 window.saveClientFromForm = async function() {
@@ -3230,6 +3509,11 @@ window.saveClientFromForm = async function() {
 };
 
 window.editClient = function(id) {
+    const pageClienti = document.getElementById('page-clienti');
+    if (pageClienti && pageClienti.classList.contains('active')) {
+        return editClientOnPage(id);
+    }
+
     const client = userClients.find(c => c.id == id);
     if (!client) return;
 
@@ -3296,6 +3580,10 @@ window.deleteClient = async function(id) {
             applyActiveClient('');
         }
     }
+    const currentEditedId = document.getElementById('pageClientId')?.value;
+    if (currentEditedId == id) {
+        if (typeof resetClientPageForm === 'function') resetClientPageForm();
+    }
     renderClientSelectors();
     if (typeof window.renderClientsPage === 'function') {
         window.renderClientsPage();
@@ -3339,10 +3627,14 @@ function renderClientModalList() {
 window.renderClientsPage = function() {
     const grid = document.getElementById('clientsPageGrid');
     const kpiCount = document.getElementById('kpiClientsCount');
+    const gridCount = document.getElementById('clientsGridCount');
     const kpiActive = document.getElementById('kpiActiveClientName');
 
     if (kpiCount) {
         kpiCount.textContent = userClients.length;
+    }
+    if (gridCount) {
+        gridCount.textContent = userClients.length;
     }
 
     const activeClient = userClients.find(c => c.id == activeClientId);
@@ -3354,16 +3646,16 @@ window.renderClientsPage = function() {
 
     if (userClients.length === 0) {
         grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 14px;">
-                <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(124, 92, 255, 0.1); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
-                    <i data-feather="briefcase" style="width: 28px; height: 28px;"></i>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 14px;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(124, 92, 255, 0.1); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i data-feather="briefcase" style="width: 26px; height: 26px;"></i>
                 </div>
-                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Nessun cliente registrato</h3>
-                <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem; line-height: 1.5;">
-                    Configura i profili aziendali dei tuoi clienti per associare automaticamente loghi, parole chiave di ricerca e tone of voice alle tue rassegne stampa.
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Nessun cliente registrato</h3>
+                <p style="color: var(--text-muted); max-width: 380px; margin: 0 auto 1.25rem; font-size: 0.85rem; line-height: 1.5;">
+                    Compila la scheda a sinistra per registrare il tuo cliente con logo, parole chiave e testi di addestramento Tone of Voice per l'IA.
                 </p>
-                <button type="button" class="btn btn-gradient" onclick="openClientModal()" style="display: inline-flex; align-items: center; gap: 8px;">
-                    <i data-feather="plus" style="width: 16px; height: 16px;"></i> Aggiungi il Tuo Primo Cliente
+                <button type="button" class="btn btn-gradient btn-sm" onclick="document.getElementById('pageClientNameInput')?.focus(); document.getElementById('clientPageFormCard')?.scrollIntoView({behavior:'smooth'});" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-feather="edit-3" style="width: 14px; height: 14px;"></i> Compila Scheda Cliente
                 </button>
             </div>
         `;
@@ -3376,79 +3668,88 @@ window.renderClientsPage = function() {
         const isActive = c.id == activeClientId;
         const card = document.createElement('div');
         card.className = 'glass-card';
-        card.style.cssText = `padding: 1.5rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: all 0.2s ease; ${isActive ? 'border: 1.5px solid var(--accent-primary); box-shadow: 0 0 15px rgba(124, 92, 255, 0.15);' : ''}`;
+        card.style.cssText = `padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: all 0.2s ease; ${isActive ? 'border: 1.5px solid var(--accent-primary); box-shadow: 0 0 15px rgba(124, 92, 255, 0.15);' : ''}`;
 
         const keywordsList = c.keywords ? c.keywords.split(/[,;\-]+/).map(k => k.trim()).filter(Boolean) : [];
 
         card.innerHTML = `
             <div>
                 <!-- Top Header: Logo + Status Badge -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 1.25rem;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
                         ${c.logo_base64 ? `
-                            <div style="width: 56px; height: 56px; border-radius: 8px; background: #ffffff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
+                            <div style="width: 48px; height: 48px; border-radius: 8px; background: #ffffff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
                                 <img src="${c.logo_base64}" alt="${c.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
                             </div>
                         ` : `
-                            <div style="width: 56px; height: 56px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; color: var(--accent-primary); flex-shrink: 0;">
+                            <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: var(--accent-primary); flex-shrink: 0;">
                                 ${c.name.charAt(0).toUpperCase()}
                             </div>
                         `}
                         <div>
-                            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); line-height: 1.2;">${c.name}</h3>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">ID Cliente: #${String(c.id).slice(-6)}</span>
+                            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 2px 0; color: var(--text-primary); line-height: 1.2;">${c.name}</h3>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">ID: #${String(c.id).slice(-6)}</span>
                         </div>
                     </div>
                     <div>
                         ${isActive ? `
-                            <span style="font-size: 0.72rem; font-weight: 700; background: rgba(0, 230, 118, 0.12); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); padding: 4px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
-                                <i data-feather="check-circle" style="width: 12px; height: 12px;"></i> ATTIVO
+                            <span style="font-size: 0.7rem; font-weight: 700; background: rgba(0, 230, 118, 0.12); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-feather="check-circle" style="width: 11px; height: 11px;"></i> ATTIVO
                             </span>
                         ` : `
-                            <button type="button" class="btn btn-outline btn-sm" onclick="applyActiveClient('${c.id}')" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 12px; cursor: pointer;" title="Rendi questo cliente attivo">
-                                Rendi Attivo
+                            <button type="button" class="btn btn-outline btn-sm" onclick="applyActiveClient('${c.id}')" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; cursor: pointer;" title="Rendi questo cliente attivo">
+                                Attiva
                             </button>
                         `}
                     </div>
                 </div>
 
                 <!-- Info Sections -->
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem;">
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;">
                     <!-- Keywords -->
                     <div>
-                        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Parole Chiave Monitoraggio</div>
+                        <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Parole Chiave</div>
                         ${keywordsList.length > 0 ? `
                             <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                ${keywordsList.map(kw => `<span style="font-size: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 10px; color: var(--text-primary);">${kw}</span>`).join('')}
+                                ${keywordsList.map(kw => `<span style="font-size: 0.72rem; background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 8px; color: var(--text-primary);">${kw}</span>`).join('')}
                             </div>
-                        ` : `<div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Nessuna keyword impostata</div>`}
+                        ` : `<div style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Nessuna keyword</div>`}
                     </div>
 
                     <!-- Tone of Voice -->
                     ${c.tone_of_voice ? `
                         <div>
-                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Tone of Voice (IA)</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);"><i data-feather="mic" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px; color: var(--accent-primary);"></i> ${c.tone_of_voice}</div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Tone of Voice</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.3;"><i data-feather="mic" style="width: 11px; height: 11px; vertical-align: middle; margin-right: 3px; color: var(--accent-primary);"></i> ${c.tone_of_voice}</div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Training IA badge -->
+                    ${c.training_text ? `
+                        <div style="margin-top: 2px;">
+                            <span style="font-size:0.7rem; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); padding:2px 7px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;" title="Tone of Voice addestrato con testi di riferimento">
+                                <i data-feather="cpu" style="width:11px;height:11px;"></i> Training IA attivo (${c.training_text.length} car.)
+                            </span>
                         </div>
                     ` : ''}
 
                     <!-- Notes / Context -->
                     ${c.notes ? `
                         <div>
-                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Note & Contesto</div>
-                            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.notes}</div>
+                            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Note</div>
+                            <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.notes}</div>
                         </div>
                     ` : ''}
                 </div>
             </div>
 
             <!-- Bottom Actions -->
-            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="editClient('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; cursor: pointer;">
-                    <i data-feather="edit-2" style="width: 13px; height: 13px;"></i> Modifica
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="editClientOnPage('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; cursor: pointer; padding: 4px 10px;">
+                    <i data-feather="edit-2" style="width: 12px; height: 12px;"></i> Modifica
                 </button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="deleteClient('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); cursor: pointer;" title="Elimina cliente">
-                    <i data-feather="trash-2" style="width: 13px; height: 13px;"></i> Elimina
+                <button type="button" class="btn btn-outline btn-sm" onclick="deleteClient('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); cursor: pointer; padding: 4px 8px;" title="Elimina cliente">
+                    <i data-feather="trash-2" style="width: 12px; height: 12px;"></i> Elimina
                 </button>
             </div>
         `;

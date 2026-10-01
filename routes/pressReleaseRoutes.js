@@ -84,7 +84,8 @@ router.post('/generate', authMiddleware, async (req, res) => {
         let contextText = '';
         let pastExamples = [];
 
-        // Se è specificato un cliente, recuperiamo i suoi comunicati passati dal DB
+        // Se è specificato un cliente, recuperiamo sia i comunicati passati che il profilo cliente (con training_text e tone_of_voice)
+        let clientProfile = null;
         if (client_name && client_name.trim()) {
             pastExamples = db.prepare(`
                 SELECT title, content 
@@ -93,12 +94,27 @@ router.post('/generate', authMiddleware, async (req, res) => {
                 ORDER BY created_at DESC 
                 LIMIT 5
             `).all(req.userId, client_name.trim());
+
+            try {
+                clientProfile = db.prepare(`
+                    SELECT tone_of_voice, training_text, notes, keywords 
+                    FROM clients 
+                    WHERE user_id = ? AND LOWER(name) = LOWER(?)
+                    LIMIT 1
+                `).get(req.userId, client_name.trim());
+            } catch (err) {
+                console.warn('[Press] Client profile lookup error:', err);
+            }
         }
 
-        // Costruiamo il contesto degli esempi (Tone of Voice)
-        if (pastExamples.length > 0 || (manual_examples && manual_examples.trim().length > 0)) {
-            contextText += "ESEMPI PRECEDENTI DEL CLIENTE (Usa questi testi per imparare il Tone of Voice esatto, lo stile, l'impaginazione e il lessico aziendale):\n\n";
+        // Costruiamo il contesto degli esempi e del training (Tone of Voice)
+        if (pastExamples.length > 0 || (manual_examples && manual_examples.trim().length > 0) || (clientProfile && clientProfile.training_text)) {
+            contextText += "ESEMPI PRECEDENTI E TRAINING DEL CLIENTE (Usa questi testi per apprendere il Tone of Voice esatto, lo stile, l'impaginazione e il lessico aziendale):\n\n";
             
+            if (clientProfile && clientProfile.training_text && clientProfile.training_text.trim()) {
+                contextText += `--- TESTO DI ADDESTRAMENTO TONE OF VOICE ---\n${clientProfile.training_text.trim()}\n\n`;
+            }
+
             pastExamples.forEach((ex, idx) => {
                 contextText += `--- ESEMPIO ${idx + 1}: ${ex.title} ---\n${ex.content}\n\n`;
             });
@@ -153,7 +169,7 @@ Crea un Comunicato Stampa completo con le seguenti specifiche:
 - TITOLO / ARGOMENTO: ${title}
 - CLIENTE / AZIENDA: ${client_name || 'Generico'}
 - VINCOLO LUNGHEZZA: ${lengthInstruction}
-${extra_instructions ? `- ISTRUZIONI AGGIUNTIVE: ${extra_instructions}\n` : ''}
+${clientProfile && clientProfile.tone_of_voice ? `- TONE OF VOICE RICHIESTO: ${clientProfile.tone_of_voice}\n` : ''}${clientProfile && clientProfile.notes ? `- NOTE E CONTESTO CLIENTE: ${clientProfile.notes}\n` : ''}${extra_instructions ? `- ISTRUZIONI AGGIUNTIVE: ${extra_instructions}\n` : ''}
 
 IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire dal titolo. Nessun saluto, nessun commento prima o dopo.`;
 

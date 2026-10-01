@@ -101,6 +101,7 @@ function initDatabase() {
             logo_base64 TEXT DEFAULT '',
             keywords TEXT DEFAULT '',
             tone_of_voice TEXT DEFAULT '',
+            training_text TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -213,6 +214,7 @@ function initDatabase() {
 
     if (!prCols.includes('team_id'))  db.prepare('ALTER TABLE press_reviews  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
     if (!clCols.includes('team_id'))  db.prepare('ALTER TABLE clients         ADD COLUMN team_id INTEGER DEFAULT NULL').run();
+    if (!clCols.includes('training_text')) db.prepare('ALTER TABLE clients    ADD COLUMN training_text TEXT DEFAULT ""').run();
     if (!prlCols.includes('team_id')) db.prepare('ALTER TABLE press_releases  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
     if (!mcCols.includes('team_id'))  db.prepare('ALTER TABLE media_contacts  ADD COLUMN team_id INTEGER DEFAULT NULL').run();
     if (!mcCols.includes('client_id')) db.prepare('ALTER TABLE media_contacts ADD COLUMN client_id INTEGER DEFAULT NULL').run();
