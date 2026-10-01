@@ -629,6 +629,59 @@ input::placeholder, textarea::placeholder {
     color: var(--text-secondary);
 }
 
+/* Universal Logo Dropzone Styles */
+.logo-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 1.15rem 1rem;
+    text-align: center;
+    background: rgba(124, 92, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    user-select: none;
+    margin-bottom: 8px;
+}
+.logo-dropzone:hover {
+    border-color: var(--accent-primary);
+    background: rgba(124, 92, 255, 0.06);
+}
+.logo-dropzone.dragover {
+    border-color: var(--accent-primary) !important;
+    background: rgba(124, 92, 255, 0.16) !important;
+    box-shadow: 0 0 16px rgba(124, 92, 255, 0.35);
+    transform: scale(1.01);
+}
+.logo-dropzone-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--accent-primary);
+}
+.logo-dropzone-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.logo-dropzone-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.logo-dropzone-compact {
+    padding: 0.7rem 0.6rem;
+    gap: 4px;
+}
+.logo-dropzone-compact .logo-dropzone-icon {
+    width: 18px;
+    height: 18px;
+}
+.logo-dropzone-compact .logo-dropzone-text {
+    font-size: 0.78rem;
+}
+
 .logo-preview-container {
     margin-top: 1rem;
     display: flex;

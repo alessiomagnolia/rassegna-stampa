@@ -1746,9 +1746,12 @@
                     <!-- CARICA FILE LOGO -->
                     <div class="form-group">
                         <label class="form-label">Carica File Logo Trasparente (PNG, SVG, JPG)</label>
-                        <div class="file-upload-box" onclick="document.getElementById('inputLogoFile').click()">
-                            <i data-feather="upload-cloud" style="color:var(--accent-glow); width:20px; height:20px;"></i>
-                            <div class="file-upload-text">Clicca per selezionare il file del tuo logo dal computer</div>
+                        <div id="saveTheDateLogoDropZone" class="logo-dropzone" style="cursor:pointer;" onclick="document.getElementById('inputLogoFile').click()">
+                            <i data-feather="upload-cloud" class="logo-dropzone-icon"></i>
+                            <div class="logo-dropzone-text">
+                                <span><strong>Trascina qui il file del tuo logo</strong> oppure <span style="color:var(--accent-primary); text-decoration:underline;">sfoglia dal PC</span></span>
+                            </div>
+                            <div class="logo-dropzone-hint">PNG, SVG, JPG (Trascina il file o clicca per selezionare)</div>
                             <input type="file" id="inputLogoFile" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
                         </div>
                         <div id="customLogoActions" style="display:none; margin-top:6px; text-align:right;">
@@ -3139,7 +3142,7 @@
 
         // Gestione Upload Logo Personalizzato
         function handleLogoUpload(event) {
-            const file = event.target.files[0];
+            const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
 
             const reader = new FileReader();
@@ -3163,6 +3166,34 @@
             };
             reader.readAsDataURL(file);
         }
+
+        // Bind Drag and Drop on Logo Zone
+        (function() {
+            const dropZone = document.getElementById('saveTheDateLogoDropZone');
+            if (!dropZone) return;
+            ['dragenter', 'dragover'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'dragend'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                });
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleLogoUpload(e.dataTransfer.files[0]);
+                }
+            });
+        })();
 
         // Rimozione Logo Personalizzato
         function removeCustomLogo() {

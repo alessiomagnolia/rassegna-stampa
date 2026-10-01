@@ -927,9 +927,15 @@
                             Visibile
                         </label>
                     </div>
+                    <div id="dropZoneLogoLeft" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
+                        <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
+                        <div class="logo-dropzone-text" style="font-size:0.75rem;">
+                            <span><strong>Trascina logo sinistra</strong> o sfoglia</span>
+                        </div>
+                    </div>
                     <input type="file" id="inputLogoLeftFile" accept="image/*" style="display:none;" onchange="handleLogoLeftUpload(event)">
                     <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoLeftFile').click()">
-                        Cambia Stemma / Logo Sinistra
+                        Cambia Stemma / Logo Sinistra da file
                     </button>
                 </div>
 
@@ -942,9 +948,15 @@
                             Visibile
                         </label>
                     </div>
+                    <div id="dropZoneLogoRight" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
+                        <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
+                        <div class="logo-dropzone-text" style="font-size:0.75rem;">
+                            <span><strong>Trascina logo destra</strong> o sfoglia</span>
+                        </div>
+                    </div>
                     <input type="file" id="inputLogoRightFile" accept="image/*" style="display:none;" onchange="handleLogoRightUpload(event)">
                     <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoRightFile').click()">
-                        Cambia Logo Spazio Dopo
+                        Cambia Logo Spazio Dopo da file
                     </button>
                 </div>
             </div>
@@ -1440,7 +1452,7 @@
         }
 
         function handleLogoLeftUpload(event) {
-            const file = event.target.files[0];
+            const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
             const reader = new FileReader();
             reader.onload = e => {
@@ -1451,7 +1463,7 @@
         }
 
         function handleLogoRightUpload(event) {
-            const file = event.target.files[0];
+            const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
             const reader = new FileReader();
             reader.onload = e => {
@@ -1460,6 +1472,37 @@
             };
             reader.readAsDataURL(file);
         }
+
+        function bindLocandineDropZone(dropZoneId, fileInputId, handler) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            if (!dropZone || !fileInput) return;
+            dropZone.addEventListener('click', () => fileInput.click());
+            ['dragenter', 'dragover'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'dragend'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                });
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handler(e.dataTransfer.files[0]);
+                }
+            });
+        }
+        bindLocandineDropZone('dropZoneLogoLeft', 'inputLogoLeftFile', handleLogoLeftUpload);
+        bindLocandineDropZone('dropZoneLogoRight', 'inputLogoRightFile', handleLogoRightUpload);
 
         // --- FORMATI CANVAS (9:16, A4, 4:5) ---
         function changeFormat(fmt) {

@@ -596,6 +596,36 @@ function renderArticles() {
     // Init drag-and-drop after rendering
     feather.replace();
     initArticlesSortable();
+
+    // Support dropping logo files directly onto article cards
+    list.querySelectorAll('.article-card').forEach(card => {
+        const idx = parseInt(card.dataset.idx);
+        const uploadLabel = card.querySelector(`label[for="uploadLogo_${idx}"]`);
+        const sourceMeta = card.querySelector('.article-source-meta');
+        [uploadLabel, sourceMeta].filter(Boolean).forEach(dropEl => {
+            dropEl.addEventListener('dragover', (e) => {
+                if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropEl.style.outline = '2px dashed var(--accent-primary)';
+                    dropEl.style.borderRadius = '4px';
+                }
+            });
+            dropEl.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropEl.style.outline = '';
+            });
+            dropEl.addEventListener('drop', (e) => {
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropEl.style.outline = '';
+                    changeArticleLogo(e.dataTransfer.files[0], idx);
+                }
+            });
+        });
+    });
 }
 
 window.copyArticleLink = function(idx) {
@@ -695,12 +725,13 @@ function initArticlesSortable() {
 }
 
 function changeArticleLogo(event, idx) {
-    const file = event.target.files[0];
+    const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
             state.articles[idx].logoBase64 = e.target.result;
             renderArticles();
+            showToast('Logo articolo aggiornato!', 'success');
         };
         reader.readAsDataURL(file);
     }
@@ -2098,37 +2129,141 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('companyName')?.addEventListener('change', saveProfile);
         document.getElementById('btnRemoveLogo')?.addEventListener('click', removeLogo);
         
-        // Drag & Drop
-        const dropZone = document.getElementById('dropZone');
-        const logoInput = document.getElementById('logoInput');
-        
-        if (dropZone && logoInput) {
-            dropZone.addEventListener('click', () => logoInput.click());
-            
-            logoInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    handleLogoUpload(e.target.files[0]);
-                }
+        // Universal Drag & Drop System for all logos
+        window.setupLogoDropZone = function(dropZoneId, fileInputId, onFileChosen) {
+            const dropZone = (typeof dropZoneId === 'string') ? document.getElementById(dropZoneId) : dropZoneId;
+            const fileInput = (typeof fileInputId === 'string') ? document.getElementById(fileInputId) : fileInputId;
+            if (!dropZone || !fileInput) return;
+            if (dropZone._dropZoneBound) return;
+            dropZone._dropZoneBound = true;
+
+            dropZone.addEventListener('click', (e) => {
+                if (e.target === fileInput || e.target.closest('button') || e.target.closest('input')) return;
+                fileInput.click();
             });
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('dragover');
+                });
             });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
+
+            ['dragleave', 'dragend'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                });
             });
-            
+
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.remove('dragover');
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleLogoUpload(e.dataTransfer.files[0]);
+
+                const files = e.dataTransfer?.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    try {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fileInput.files = dt.files;
+                    } catch (err) {
+                        console.warn('DataTransfer sync warning:', err);
+                    }
+
+                    if (typeof onFileChosen === 'function') {
+                        onFileChosen(file, e);
+                    } else {
+                        const evt = new Event('change', { bubbles: true });
+                        fileInput.dispatchEvent(evt);
+                    }
                 }
             });
-        }
+        };
+
+        window.initAllLogoDropZones = function() {
+            // 1. Client Page Logo
+            setupLogoDropZone('pageClientLogoDropZone', 'pageClientLogoFileInput', (file) => {
+                if (typeof handleClientPageLogoChange === 'function') {
+                    handleClientPageLogoChange(file);
+                }
+            });
+
+            // 2. Client Modal Logo
+            setupLogoDropZone('clientFormLogoDropZone', 'clientLogoFileInput', (file) => {
+                if (typeof handleClientLogoChange === 'function') {
+                    handleClientLogoChange(file);
+                }
+            });
+
+            // 3. Profile / Settings Company Logo
+            setupLogoDropZone('profLogoDropZone', 'profLogoInput', (file) => {
+                if (typeof handleProfileLogoUpload === 'function') {
+                    handleProfileLogoUpload(file);
+                }
+            });
+
+            // 4. Nuova Rassegna Client Logo
+            setupLogoDropZone('clientLogoDropZone', 'clientLogoInput', (file) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    state.clientLogoBase64 = event.target.result;
+                    const prev = document.getElementById('clientLogoPreview');
+                    const cont = document.getElementById('clientLogoPreviewContainer');
+                    if (prev) prev.src = state.clientLogoBase64;
+                    if (cont) cont.style.display = 'flex';
+                    showToast('Logo cliente caricato!', 'success');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // 5. Classic Header / Settings DropZone
+            setupLogoDropZone('dropZone', 'logoInput', (file) => {
+                if (typeof handleLogoUpload === 'function') {
+                    handleLogoUpload(file);
+                }
+            });
+
+            // 6. Logo Archive Modal Manual Upload
+            setupLogoDropZone('manualLogoUploadDropZone', 'manualLogoUpload', async (file) => {
+                if (!file || currentEditingArticleIndex === -1) return;
+                try {
+                    const base64 = await fileToBase64(file);
+                    state.articles[currentEditingArticleIndex].logoBase64 = base64;
+                    renderArticles();
+                    closeLogoArchive();
+                    showToast('Logo aggiornato manualmente', 'success');
+                } catch (err) {
+                    showToast('Errore file', 'error');
+                }
+            });
+
+            // 7. Manual Article Modal Logo Testata
+            setupLogoDropZone('manualLogoDropZone', 'manualLogo', (file) => {
+                const hint = document.getElementById('manualLogoPreviewHint');
+                if (hint) {
+                    hint.textContent = `Caricato: ${file.name}`;
+                    hint.style.color = '#10b981';
+                    hint.style.fontWeight = '600';
+                }
+                showToast('Logo testata selezionato!', 'success');
+            });
+
+            // 8. Archivio Loghi Page New Logo
+            setupLogoDropZone('archiveLogoDropZone', 'archiveLogoFileInput', (file) => {
+                const hint = document.querySelector('#archiveLogoDropZone .logo-dropzone-text');
+                if (hint) {
+                    hint.innerHTML = `<span style="color:#10b981; font-weight:600;"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;"></i> ${file.name}</span>`;
+                    if (window.feather) feather.replace();
+                }
+                showToast('Immagine logo selezionata per l\'archivio!', 'success');
+            });
+        };
+
+        initAllLogoDropZones();
         
         // Articles
         document.getElementById('btnAddArticle')?.addEventListener('click', addArticle);
@@ -3137,6 +3272,7 @@ window.openClientModal = function() {
     loadClients();
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
+    if (typeof initAllLogoDropZones === 'function') initAllLogoDropZones();
 };
 
 window.closeClientModal = function() {
@@ -3178,7 +3314,7 @@ window.resetClientForm = function() {
 };
 
 window.handleClientLogoChange = async function(e) {
-    const file = e.target.files && e.target.files[0];
+    const file = (e instanceof File) ? e : (e?.target?.files?.[0] || e?.dataTransfer?.files?.[0]);
     if (!file) return;
     try {
         clientFormLogoBase64 = await fileToBase64(file);
@@ -3234,7 +3370,7 @@ window.updateTrainingCharCount = function() {
 };
 
 window.handleClientPageLogoChange = async function(e) {
-    const file = e.target.files && e.target.files[0];
+    const file = (e instanceof File) ? e : (e?.target?.files?.[0] || e?.dataTransfer?.files?.[0]);
     if (!file) return;
     try {
         clientPageLogoBase64 = await fileToBase64(file);
@@ -3880,7 +4016,7 @@ function loadFullProfileData() {
 }
 
 window.handleProfileLogoUpload = async function(e) {
-    const file = e.target.files && e.target.files[0];
+    const file = (e instanceof File) ? e : (e?.target?.files?.[0] || e?.dataTransfer?.files?.[0]);
     if (!file) return;
     try {
         const base64 = await fileToBase64(file);

@@ -1049,6 +1049,12 @@
                     </div>
                     <div class="field-group">
                         <label for="inputSourceLogoFile">Oppure Carica Logo Testata</label>
+                        <div id="dropZoneSourceLogo" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
+                            <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
+                            <div class="logo-dropzone-text" style="font-size:0.75rem;">
+                                <span><strong>Trascina qui il logo testata</strong> o sfoglia</span>
+                            </div>
+                        </div>
                         <input type="file" id="inputSourceLogoFile" accept="image/*">
                     </div>
                     <div class="field-group">
@@ -1067,6 +1073,12 @@
                 <div class="panel-section-body">
                     <div class="field-group">
                         <label for="inputClientLogoFile">Carica Logo Cliente</label>
+                        <div id="dropZoneLinkedinClientLogo" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
+                            <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
+                            <div class="logo-dropzone-text" style="font-size:0.75rem;">
+                                <span><strong>Trascina qui il logo cliente</strong> o sfoglia</span>
+                            </div>
+                        </div>
                         <input type="file" id="inputClientLogoFile" accept="image/*">
                     </div>
                     <button type="button" id="btnRemoveClientLogo" class="btn btn-outline btn-sm hidden" style="color:#ff4d4d; border-color:rgba(255,77,77,0.3); width:100%;">Rimuovi Logo Cliente</button>
@@ -1600,6 +1612,42 @@
             inputSourceLogoFile.addEventListener('change', (e) => handleSourceLogoUpload(e.target.files[0]));
             inputClientLogoFile.addEventListener('change', (e) => handleClientLogoUpload(e.target.files[0]));
             inputImageFile.addEventListener('change', (e) => handleNewsPhotoUpload(e.target.files[0]));
+
+            function bindLinkedinDropZone(dropZoneId, fileInputId, handler) {
+                const dropZone = document.getElementById(dropZoneId);
+                const fileInput = document.getElementById(fileInputId);
+                if (!dropZone || !fileInput) return;
+                dropZone.addEventListener('click', () => fileInput.click());
+                ['dragenter', 'dragover'].forEach(name => {
+                    dropZone.addEventListener(name, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropZone.classList.add('dragover');
+                    });
+                });
+                ['dragleave', 'dragend'].forEach(name => {
+                    dropZone.addEventListener(name, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropZone.classList.remove('dragover');
+                    });
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        try {
+                            const dt = new DataTransfer();
+                            dt.items.add(e.dataTransfer.files[0]);
+                            fileInput.files = dt.files;
+                        } catch(err) {}
+                        handler(e.dataTransfer.files[0]);
+                    }
+                });
+            }
+            bindLinkedinDropZone('dropZoneSourceLogo', 'inputSourceLogoFile', handleSourceLogoUpload);
+            bindLinkedinDropZone('dropZoneLinkedinClientLogo', 'inputClientLogoFile', handleClientLogoUpload);
 
             btnRemoveClientLogo.addEventListener('click', () => {
                 cardClientLogo.src = '';
