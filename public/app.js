@@ -445,14 +445,27 @@ function removeArticle(index) {
 
 function renderArticles() {
     const list = document.getElementById('articlesList');
-    const empty = document.getElementById('emptyArticles');
+    let empty = document.getElementById('emptyArticles');
     const btnGenerate = document.getElementById('btnGeneratePDF');
     const btnEditor = document.getElementById('btnOpenEditor');
     const btnArchive = document.getElementById('btnArchiveReview');
     const btnCopyLinks = document.getElementById('btnCopyAllLinks');
     const btnResetAndNew = document.getElementById('btnResetAndNewReview');
+    const btnMorning = document.getElementById('btnOpenMorningDigestAction');
+    const btnShare = document.getElementById('btnShareReviewAction');
+    const liveKpi = document.getElementById('liveKpiBanner');
+    const genLoading = document.getElementById('generationLoading');
     
     if (!list) return;
+
+    // Crea l'elemento empty state se mancante nel DOM
+    if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.id = 'emptyArticles';
+        empty.textContent = 'Nessun articolo aggiunto. Incolla un link qui sopra per iniziare!';
+        list.appendChild(empty);
+    }
 
     // Clear existing cards
     Array.from(list.children).forEach(child => {
@@ -465,24 +478,47 @@ function renderArticles() {
 
     if (state.articles.length === 0) {
         sessionStorage.removeItem('rs_draft_articles');
-        empty.classList.remove('hidden');
+        sessionStorage.removeItem('rs_draft_review_id');
+        if (empty) empty.classList.remove('hidden');
         if (btnGenerate)    btnGenerate.classList.add('hidden');
         if (btnEditor)      btnEditor.classList.add('hidden');
         if (btnArchive)     btnArchive.classList.add('hidden');
         if (btnCopyLinks)   btnCopyLinks.classList.add('hidden');
         if (btnResetAndNew) btnResetAndNew.classList.add('hidden');
-        if (typeof updateLiveKpis === 'function') updateLiveKpis();
+        if (btnMorning)     btnMorning.classList.add('hidden');
+        if (btnShare)       btnShare.classList.add('hidden');
+        if (liveKpi)        liveKpi.classList.add('hidden');
+        if (genLoading)     genLoading.classList.add('hidden');
+
+        if (list._sortable) {
+            try { list._sortable.destroy(); } catch (e) {}
+            list._sortable = null;
+        }
+
+        try {
+            if (typeof updateLiveKpis === 'function') updateLiveKpis();
+        } catch (e) {
+            console.warn('updateLiveKpis warning:', e);
+        }
         return;
     }
 
     sessionStorage.setItem('rs_draft_articles', JSON.stringify(state.articles));
-    empty.classList.add('hidden');
+    if (empty) empty.classList.add('hidden');
     if (btnGenerate)    btnGenerate.classList.remove('hidden');
     if (btnEditor)      btnEditor.classList.remove('hidden');
     if (btnArchive)     btnArchive.classList.remove('hidden');
     if (btnCopyLinks)   btnCopyLinks.classList.remove('hidden');
     if (btnResetAndNew) btnResetAndNew.classList.remove('hidden');
-    if (typeof updateLiveKpis === 'function') updateLiveKpis();
+    if (btnMorning)     btnMorning.classList.remove('hidden');
+    if (btnShare)       btnShare.classList.remove('hidden');
+    if (liveKpi)        liveKpi.classList.remove('hidden');
+
+    try {
+        if (typeof updateLiveKpis === 'function') updateLiveKpis();
+    } catch (e) {
+        console.warn('updateLiveKpis warning:', e);
+    }
 
     state.articles.forEach((article, idx) => {
         const card = document.createElement('div');
@@ -746,11 +782,15 @@ async function startNewReview() {
                 clientLogo
             });
 
-            loadHistory();
+            try {
+                if (typeof loadHistory === 'function') loadHistory();
+            } catch (histErr) {
+                console.warn('loadHistory non bloccante:', histErr);
+            }
             showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
         } catch (err) {
-            showToast('Errore durante l\'archiviazione nello Storico: ' + err.message, 'error');
-            return; // Non azzera gli articoli in caso di fallimento del salvataggio
+            console.error('Archiviazione fallita durante startNewReview:', err);
+            showToast('Nota: salvataggio automatico non completato (' + (err.message || 'errore') + '). Procedo comunque con la nuova rassegna.', 'warning');
         } finally {
             if (btn1) {
                 btn1.disabled = false;
@@ -774,6 +814,7 @@ async function startNewReview() {
     sessionStorage.removeItem('rs_draft_articles');
     sessionStorage.removeItem('rs_draft_review_id');
     localStorage.removeItem('rs_editor_state');
+    localStorage.removeItem('rs_open_review');
 
     // Reset input rassegna
     const urlInput = document.getElementById('articleUrl');
@@ -816,19 +857,38 @@ async function startNewReview() {
         if (logoPrevCont) logoPrevCont.style.display = 'none';
     }
 
-    // Ridisegna lista articoli (mostra empty state)
+    // Reset eventuale opzione analytics e stati di caricamento
+    const includeAnalytics = document.getElementById('includeAnalyticsPdf');
+    if (includeAnalytics) includeAnalytics.checked = true;
+
+    document.getElementById('extractionLoading')?.classList.add('hidden');
+    document.getElementById('generationLoading')?.classList.add('hidden');
+
+    const countBadge = document.getElementById('articleCountBadge');
+    if (countBadge) countBadge.textContent = '0';
+
+    // Ridisegna lista articoli (svuota e mostra empty state)
     renderArticles();
+
+    // Assicura navigazione attiva alla pagina Nuova Rassegna
+    if (typeof showDashboardPage === 'function') {
+        showDashboardPage('rassegna', true);
+    }
+
+    // Scroll all'inizio della pagina
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Focus sull'omnibar per inserire il primo link della nuova rassegna
     if (urlInput) {
         urlInput.focus();
-        urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    if (window.feather) feather.replace();
 
     if (count === 0) {
         showToast('Campi azzerati. Pronto per una nuova rassegna!', 'info');
     } else {
-        showToast('Nuova rassegna avviata! La precedente è al sicuro nello Storico.', 'success');
+        showToast('Nuova rassegna pronta! La precedente è al sicuro nello Storico.', 'success');
     }
 }
 window.startNewReview = startNewReview;
