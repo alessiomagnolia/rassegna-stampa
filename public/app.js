@@ -182,20 +182,35 @@ async function loadProfile() {
     }
 }
 
-function updateProfileUI() {
-    const { user } = state;
-    if (!user) return;
-
-    // Navbar
-    const compName = user.company_name || localStorage.getItem('rs_company_name') || user.email;
-    const navCompanyEl = document.getElementById('navCompany');
+function updateCompanyNameAcrossUI(compName) {
+    if (!compName) return;
+    localStorage.setItem('rs_company_name', compName);
     const navCompanyHeaderEl = document.getElementById('navCompanyHeader');
-    if (navCompanyEl) navCompanyEl.innerText = compName;
     if (navCompanyHeaderEl) navCompanyHeaderEl.innerText = compName;
-    
-    // Sidebar footer
+    const navCompanyEl = document.getElementById('navCompany');
+    if (navCompanyEl) navCompanyEl.innerText = compName;
     const sidebarCompany = document.getElementById('sidebarCompany');
     if (sidebarCompany) sidebarCompany.textContent = compName;
+}
+window.updateCompanyNameAcrossUI = updateCompanyNameAcrossUI;
+
+function updateProfileUI() {
+    const { user } = state;
+    let compName = localStorage.getItem('rs_company_name');
+    if (!compName && localStorage.getItem('rs_full_profile')) {
+        try {
+            compName = JSON.parse(localStorage.getItem('rs_full_profile')).companyName;
+        } catch(e){}
+    }
+    if (!compName && user) {
+        compName = user.company_name || user.companyName || user.email;
+    }
+
+    if (compName) {
+        updateCompanyNameAcrossUI(compName);
+    }
+
+    if (!user) return;
 
     const activeLogoSrc = state.userLogoBase64 || user.logo_data || user.logo_path || localStorage.getItem('rs_company_logo') || '';
     if (activeLogoSrc) {
@@ -1981,19 +1996,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btnCancelClientEdit')?.addEventListener('click', resetClientForm);
         document.getElementById('btnSaveClient')?.addEventListener('click', saveClientFromForm);
 
-        document.getElementById('clientLogoFileInput')?.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            clientFormLogoBase64 = await fileToBase64(file);
-            const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-            const logoPrev = document.getElementById('clientLogoPreview');
-            if (logoPrevContainer && logoPrev) {
-                logoPrev.src = clientFormLogoBase64;
-                logoPrevContainer.classList.remove('hidden');
-            }
-            e.target.value = '';
-        });
-
         // ── Restore editor state if coming back from editor ──
         const savedEditorState = localStorage.getItem('rs_editor_state');
         if (savedEditorState) {
@@ -2890,29 +2892,50 @@ function useSelectedNews() {
 // CLIENT MEMORY MANAGEMENT & WORKSPACE CONTEXT
 // ============================================================
 let userClients = [];
+try {
+    const savedLocal = localStorage.getItem('rs_local_clients');
+    if (savedLocal) userClients = JSON.parse(savedLocal);
+} catch(e){}
 let activeClientId = localStorage.getItem('rs_active_client_id') || '';
 let clientFormLogoBase64 = null;
 
 async function loadClients() {
-    if (!state.token) return;
-    try {
-        const res = await apiCall('GET', '/api/clients');
-        userClients = res.clients || [];
-        renderClientSelectors();
-        
-        if (activeClientId) {
-            const exists = userClients.find(c => c.id == activeClientId);
-            if (exists) {
-                applyActiveClient(activeClientId);
-            } else {
-                activeClientId = '';
-                localStorage.removeItem('rs_active_client_id');
-                applyActiveClient('');
+    let clientsLoaded = false;
+    if (state.token) {
+        try {
+            const res = await apiCall('GET', '/api/clients');
+            if (res && res.clients) {
+                userClients = res.clients;
+                clientsLoaded = true;
             }
+        } catch (err) {
+            console.error('Errore caricamento clienti:', err);
         }
-    } catch (err) {
-        console.error('Errore caricamento clienti:', err);
     }
+
+    if (!clientsLoaded) {
+        let localList = localStorage.getItem('rs_local_clients');
+        if (localList) {
+            try {
+                userClients = JSON.parse(localList);
+            } catch(e){}
+        }
+    }
+
+    if (userClients.length > 0) {
+        const exists = userClients.find(c => c.id == activeClientId);
+        if (exists) {
+            applyActiveClient(activeClientId, true);
+        } else {
+            activeClientId = userClients[0].id;
+            applyActiveClient(activeClientId, true);
+        }
+    } else {
+        activeClientId = '';
+        applyActiveClient('', true);
+    }
+
+    renderClientSelectors();
 }
 
 function renderClientSelectors() {
@@ -2923,21 +2946,33 @@ function renderClientSelectors() {
 
     selects.forEach(select => {
         if (!select) return;
-        select.innerHTML = '<option value="" style="color:black;">Nessun Cliente</option>';
-        userClients.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            opt.style.color = 'black';
-            if (c.id == activeClientId) opt.selected = true;
-            select.appendChild(opt);
-        });
+        select.innerHTML = '';
+
+        if (userClients.length === 0) {
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = 'Nessun Cliente';
+            emptyOpt.style.color = 'black';
+            select.appendChild(emptyOpt);
+        } else {
+            userClients.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                opt.style.color = 'black';
+                if (c.id == activeClientId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
     });
 
     renderClientModalList();
+    if (typeof window.renderClientsPage === 'function') {
+        window.renderClientsPage();
+    }
 }
 
-function applyActiveClient(clientId) {
+function applyActiveClient(clientId, silent = false) {
     activeClientId = clientId;
     if (clientId) {
         localStorage.setItem('rs_active_client_id', clientId);
@@ -2972,11 +3007,17 @@ function applyActiveClient(clientId) {
 
         // 2. Ricerca Notizie - Suggerimenti
         renderNewsKeywordSuggestions();
+        if (typeof window.renderClientsPage === 'function') {
+            window.renderClientsPage();
+        }
 
-        showToast(`Cliente attivo: ${client.name}`, 'info');
+        if (!silent) showToast(`Cliente attivo: ${client.name}`, 'info');
     } else {
         renderNewsKeywordSuggestions();
-        showToast('Nessun cliente attivo', 'info');
+        if (typeof window.renderClientsPage === 'function') {
+            window.renderClientsPage();
+        }
+        if (!silent) showToast('Nessun cliente attivo', 'info');
     }
 }
 
@@ -3040,13 +3081,22 @@ window.resetClientForm = function() {
     if (document.getElementById('clientToneInput')) document.getElementById('clientToneInput').value = '';
     if (document.getElementById('clientNotesInput')) document.getElementById('clientNotesInput').value = '';
     clientFormLogoBase64 = null;
-    const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+
+    const fileInput = document.getElementById('clientLogoFileInput');
+    if (fileInput) fileInput.value = '';
+
+    const logoPrevContainer = document.getElementById('clientFormLogoPreviewContainer');
     if (logoPrevContainer) {
         logoPrevContainer.classList.add('hidden');
         logoPrevContainer.style.display = 'none';
     }
-    const logoPrev = document.getElementById('clientLogoPreview');
+    const logoPrev = document.getElementById('clientFormLogoPreview');
     if (logoPrev) logoPrev.src = '';
+    const logoFileName = document.getElementById('clientFormLogoFileName');
+    if (logoFileName) logoFileName.textContent = '';
+    const btnUploadText = document.getElementById('btnUploadClientLogoText');
+    if (btnUploadText) btnUploadText.textContent = 'Carica Logo';
+
     const title = document.getElementById('clientFormTitle');
     if (title) title.innerHTML = '<i data-feather="plus-circle" style="width:16px;height:16px;"></i> Aggiungi Nuovo Cliente';
     const cancelBtn = document.getElementById('btnCancelClientEdit');
@@ -3055,32 +3105,49 @@ window.resetClientForm = function() {
 };
 
 window.handleClientLogoChange = async function(e) {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (!file) return;
     try {
         clientFormLogoBase64 = await fileToBase64(file);
-        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-        const logoPrev = document.getElementById('clientLogoPreview');
-        if (logoPrevContainer && logoPrev) {
-            logoPrev.src = clientFormLogoBase64;
+        const logoPrevContainer = document.getElementById('clientFormLogoPreviewContainer');
+        const logoPrev = document.getElementById('clientFormLogoPreview');
+        const logoFileName = document.getElementById('clientFormLogoFileName');
+        const btnUploadText = document.getElementById('btnUploadClientLogoText');
+
+        if (logoPrev) logoPrev.src = clientFormLogoBase64;
+        if (logoFileName) logoFileName.textContent = file.name || 'Logo caricato';
+        if (logoPrevContainer) {
             logoPrevContainer.classList.remove('hidden');
-            logoPrevContainer.style.display = 'block';
+            logoPrevContainer.style.display = 'flex';
         }
-        showToast('Logo del cliente caricato!', 'success');
+        if (btnUploadText) btnUploadText.textContent = 'Cambia Logo';
+
+        showToast('Logo del cliente caricato con successo!', 'success');
+        feather.replace();
     } catch (err) {
+        console.error('Errore nel caricamento del logo:', err);
         showToast('Errore nel caricamento del logo', 'error');
     }
 };
 
 window.removeClientFormLogo = function() {
     clientFormLogoBase64 = '';
-    const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
+    const fileInput = document.getElementById('clientLogoFileInput');
+    if (fileInput) fileInput.value = '';
+
+    const logoPrevContainer = document.getElementById('clientFormLogoPreviewContainer');
     if (logoPrevContainer) {
         logoPrevContainer.classList.add('hidden');
         logoPrevContainer.style.display = 'none';
     }
-    const logoPrev = document.getElementById('clientLogoPreview');
+    const logoPrev = document.getElementById('clientFormLogoPreview');
     if (logoPrev) logoPrev.src = '';
+    const logoFileName = document.getElementById('clientFormLogoFileName');
+    if (logoFileName) logoFileName.textContent = '';
+    const btnUploadText = document.getElementById('btnUploadClientLogoText');
+    if (btnUploadText) btnUploadText.textContent = 'Carica Logo';
+
+    showToast('Logo rimosso', 'info');
 };
 
 let isSavingClient = false;
@@ -3166,6 +3233,12 @@ window.editClient = function(id) {
     const client = userClients.find(c => c.id == id);
     if (!client) return;
 
+    const modal = document.getElementById('clientModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+
     document.getElementById('clientId').value = client.id;
     document.getElementById('clientNameInput').value = client.name || '';
     document.getElementById('clientKeywordsInput').value = client.keywords || '';
@@ -3173,14 +3246,25 @@ window.editClient = function(id) {
     document.getElementById('clientNotesInput').value = client.notes || '';
     clientFormLogoBase64 = client.logo_base64 || null;
 
-    if (client.logo_base64) {
-        const logoPrevContainer = document.getElementById('clientLogoPreviewContainer');
-        const logoPrev = document.getElementById('clientLogoPreview');
-        if (logoPrevContainer && logoPrev) {
-            logoPrev.src = client.logo_base64;
-            logoPrevContainer.classList.remove('hidden');
-            logoPrevContainer.style.display = 'block';
+    const logoPrevContainer = document.getElementById('clientFormLogoPreviewContainer');
+    const logoPrev = document.getElementById('clientFormLogoPreview');
+    const logoFileName = document.getElementById('clientFormLogoFileName');
+    const btnUploadText = document.getElementById('btnUploadClientLogoText');
+
+    if (client.logo_base64 && logoPrevContainer && logoPrev) {
+        logoPrev.src = client.logo_base64;
+        if (logoFileName) logoFileName.textContent = `${client.name} - Logo`;
+        logoPrevContainer.classList.remove('hidden');
+        logoPrevContainer.style.display = 'flex';
+        if (btnUploadText) btnUploadText.textContent = 'Cambia Logo';
+    } else {
+        if (logoPrevContainer) {
+            logoPrevContainer.classList.add('hidden');
+            logoPrevContainer.style.display = 'none';
         }
+        if (logoPrev) logoPrev.src = '';
+        if (logoFileName) logoFileName.textContent = '';
+        if (btnUploadText) btnUploadText.textContent = 'Carica Logo';
     }
 
     const title = document.getElementById('clientFormTitle');
@@ -3206,9 +3290,16 @@ window.deleteClient = async function(id) {
 
     userClients = userClients.filter(c => c.id != id);
     if (activeClientId == id) {
-        applyActiveClient('');
+        if (userClients.length > 0) {
+            applyActiveClient(userClients[0].id);
+        } else {
+            applyActiveClient('');
+        }
     }
     renderClientSelectors();
+    if (typeof window.renderClientsPage === 'function') {
+        window.renderClientsPage();
+    }
     showToast('Cliente eliminato', 'success');
 };
 
@@ -3245,6 +3336,127 @@ function renderClientModalList() {
     feather.replace();
 }
 
+window.renderClientsPage = function() {
+    const grid = document.getElementById('clientsPageGrid');
+    const kpiCount = document.getElementById('kpiClientsCount');
+    const kpiActive = document.getElementById('kpiActiveClientName');
+
+    if (kpiCount) {
+        kpiCount.textContent = userClients.length;
+    }
+
+    const activeClient = userClients.find(c => c.id == activeClientId);
+    if (kpiActive) {
+        kpiActive.textContent = activeClient ? activeClient.name : (userClients.length > 0 ? userClients[0].name : 'Nessuno');
+    }
+
+    if (!grid) return;
+
+    if (userClients.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 14px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(124, 92, 255, 0.1); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+                    <i data-feather="briefcase" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Nessun cliente registrato</h3>
+                <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem; line-height: 1.5;">
+                    Configura i profili aziendali dei tuoi clienti per associare automaticamente loghi, parole chiave di ricerca e tone of voice alle tue rassegne stampa.
+                </p>
+                <button type="button" class="btn btn-gradient" onclick="openClientModal()" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i data-feather="plus" style="width: 16px; height: 16px;"></i> Aggiungi il Tuo Primo Cliente
+                </button>
+            </div>
+        `;
+        feather.replace();
+        return;
+    }
+
+    grid.innerHTML = '';
+    userClients.forEach(c => {
+        const isActive = c.id == activeClientId;
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.cssText = `padding: 1.5rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: all 0.2s ease; ${isActive ? 'border: 1.5px solid var(--accent-primary); box-shadow: 0 0 15px rgba(124, 92, 255, 0.15);' : ''}`;
+
+        const keywordsList = c.keywords ? c.keywords.split(/[,;\-]+/).map(k => k.trim()).filter(Boolean) : [];
+
+        card.innerHTML = `
+            <div>
+                <!-- Top Header: Logo + Status Badge -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        ${c.logo_base64 ? `
+                            <div style="width: 56px; height: 56px; border-radius: 8px; background: #ffffff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
+                                <img src="${c.logo_base64}" alt="${c.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                            </div>
+                        ` : `
+                            <div style="width: 56px; height: 56px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; color: var(--accent-primary); flex-shrink: 0;">
+                                ${c.name.charAt(0).toUpperCase()}
+                            </div>
+                        `}
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); line-height: 1.2;">${c.name}</h3>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">ID Cliente: #${String(c.id).slice(-6)}</span>
+                        </div>
+                    </div>
+                    <div>
+                        ${isActive ? `
+                            <span style="font-size: 0.72rem; font-weight: 700; background: rgba(0, 230, 118, 0.12); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); padding: 4px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-feather="check-circle" style="width: 12px; height: 12px;"></i> ATTIVO
+                            </span>
+                        ` : `
+                            <button type="button" class="btn btn-outline btn-sm" onclick="applyActiveClient('${c.id}')" style="font-size: 0.72rem; padding: 4px 8px; border-radius: 12px; cursor: pointer;" title="Rendi questo cliente attivo">
+                                Rendi Attivo
+                            </button>
+                        `}
+                    </div>
+                </div>
+
+                <!-- Info Sections -->
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem;">
+                    <!-- Keywords -->
+                    <div>
+                        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Parole Chiave Monitoraggio</div>
+                        ${keywordsList.length > 0 ? `
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${keywordsList.map(kw => `<span style="font-size: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 10px; color: var(--text-primary);">${kw}</span>`).join('')}
+                            </div>
+                        ` : `<div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Nessuna keyword impostata</div>`}
+                    </div>
+
+                    <!-- Tone of Voice -->
+                    ${c.tone_of_voice ? `
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Tone of Voice (IA)</div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);"><i data-feather="mic" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px; color: var(--accent-primary);"></i> ${c.tone_of_voice}</div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Notes / Context -->
+                    ${c.notes ? `
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">Note & Contesto</div>
+                            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.notes}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="editClient('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; cursor: pointer;">
+                    <i data-feather="edit-2" style="width: 13px; height: 13px;"></i> Modifica
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="deleteClient('${c.id}')" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); cursor: pointer;" title="Elimina cliente">
+                    <i data-feather="trash-2" style="width: 13px; height: 13px;"></i> Elimina
+                </button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+    feather.replace();
+};
+
 
 window.toggleTemplateCard = function() {
     const content = document.getElementById('templateSectionContent');
@@ -3273,6 +3485,7 @@ window.toggleCoverMetaCard = function() {
 // --- FULL PROFILE & SETTINGS MANAGEMENT ---
 
 function loadFullProfileData() {
+    let companyName = localStorage.getItem('rs_company_name') || '';
     const savedProf = localStorage.getItem('rs_full_profile');
     if (savedProf) {
         try {
@@ -3281,7 +3494,10 @@ function loadFullProfileData() {
             if (document.getElementById('profEmail')) document.getElementById('profEmail').value = data.email || '';
             if (document.getElementById('profRole')) document.getElementById('profRole').value = data.role || '';
             if (document.getElementById('profPhone')) document.getElementById('profPhone').value = data.phone || '';
-            if (document.getElementById('profCompanyName')) document.getElementById('profCompanyName').value = data.companyName || state.user?.companyName || '';
+            if (document.getElementById('profCompanyName')) {
+                document.getElementById('profCompanyName').value = data.companyName || companyName || state.user?.companyName || state.user?.company_name || '';
+            }
+            if (data.companyName) companyName = data.companyName;
             if (document.getElementById('profWebsite')) document.getElementById('profWebsite').value = data.website || '';
             if (data.logoBase64 && document.getElementById('profLogoPreview')) {
                 document.getElementById('profLogoPreview').src = data.logoBase64;
@@ -3290,12 +3506,18 @@ function loadFullProfileData() {
             }
         } catch(e){}
     } else {
-        if (document.getElementById('profCompanyName')) document.getElementById('profCompanyName').value = localStorage.getItem('rs_company_name') || '';
+        if (document.getElementById('profCompanyName')) {
+            document.getElementById('profCompanyName').value = companyName || state.user?.company_name || state.user?.companyName || '';
+        }
+    }
+
+    if (companyName) {
+        updateCompanyNameAcrossUI(companyName);
     }
 }
 
 window.handleProfileLogoUpload = async function(e) {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (!file) return;
     try {
         const base64 = await fileToBase64(file);
@@ -3305,13 +3527,15 @@ window.handleProfileLogoUpload = async function(e) {
             img.src = base64;
             container.style.display = 'block';
         }
+        state.userLogoBase64 = base64;
+        localStorage.setItem('rs_company_logo', base64);
         showToast('Logo aziendale caricato!', 'success');
     } catch(err) {
         showToast('Errore caricamento logo', 'error');
     }
 };
 
-function saveFullProfileData() {
+async function saveFullProfileData() {
     const fullName = document.getElementById('profFullName')?.value.trim() || '';
     const email = document.getElementById('profEmail')?.value.trim() || '';
     const role = document.getElementById('profRole')?.value.trim() || '';
@@ -3324,14 +3548,47 @@ function saveFullProfileData() {
     localStorage.setItem('rs_full_profile', JSON.stringify(profileData));
 
     if (companyName) {
-        localStorage.setItem('rs_company_name', companyName);
-        const compEl = document.getElementById('navCompany');
-        const compHeaderEl = document.getElementById('navCompanyHeader');
-        if (compEl) compEl.textContent = companyName;
-        if (compHeaderEl) compHeaderEl.textContent = companyName;
+        updateCompanyNameAcrossUI(companyName);
     }
 
-    showToast('Profilo aggiornato con successo!', 'success');
+    if (logoBase64) {
+        localStorage.setItem('rs_company_logo', logoBase64);
+        state.userLogoBase64 = logoBase64;
+    }
+
+    const btn = document.getElementById('btnSaveFullProfile');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spin"></i> Salvataggio...';
+    }
+
+    try {
+        if (state.token) {
+            try {
+                await apiCall('PUT', '/api/auth/profile', {
+                    company_name: companyName,
+                    full_name: fullName,
+                    role: role,
+                    phone: phone,
+                    website: website
+                });
+                if (state.user) {
+                    state.user.company_name = companyName;
+                    state.user.companyName = companyName;
+                }
+            } catch(apiErr) {
+                console.log('Salvataggio profilo remoto opzionale:', apiErr);
+            }
+        }
+        showToast('Profilo aggiornato con successo!', 'success');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origText || '<i data-feather="check"></i> Salva Modifiche Profilo';
+            feather.replace();
+        }
+    }
 }
 
 function loadPlatformSettings() {
@@ -3374,6 +3631,24 @@ window.clearPlatformCache = function() {
 document.addEventListener('DOMContentLoaded', () => {
     loadFullProfileData();
     loadPlatformSettings();
+
+    const profCompInput = document.getElementById('profCompanyName');
+    if (profCompInput) {
+        profCompInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            const navCompanyHeader = document.getElementById('navCompanyHeader');
+            if (navCompanyHeader) {
+                navCompanyHeader.textContent = val || 'La Tua Azienda';
+            }
+            const sidebarCompany = document.getElementById('sidebarCompany');
+            if (sidebarCompany) {
+                sidebarCompany.textContent = val || '-';
+            }
+            if (val) {
+                localStorage.setItem('rs_company_name', val);
+            }
+        });
+    }
 
     const btnSaveProf = document.getElementById('btnSaveFullProfile');
     if (btnSaveProf) btnSaveProf.addEventListener('click', saveFullProfileData);

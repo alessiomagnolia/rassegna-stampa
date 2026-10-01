@@ -216,6 +216,10 @@
                 <div class="sidebar-divider"></div>
                 <!-- 7. GESTIONE -->
                 <div class="sidebar-section-label">Gestione</div>
+                <a href="#" class="sidebar-item" data-page="clienti">
+                    <span class="sidebar-icon"><i data-feather="briefcase"></i></span>
+                    <span class="sidebar-label">I Miei Clienti</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="profilo">
                     <span class="sidebar-icon"><i data-feather="user"></i></span>
                     <span class="sidebar-label">Profilo</span>
@@ -1362,6 +1366,54 @@
             </div>
         </div>
 
+        <!-- PAGE: I MIEI CLIENTI -->
+        <div id="page-clienti" class="page-view">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom: 2rem;">
+                <div>
+                    <h1 class="page-title"><i data-feather="briefcase" style="width:28px;height:28px;vertical-align:middle;margin-right:8px;color:var(--accent-primary);"></i> I Miei Clienti</h1>
+                    <p class="page-subtitle">Gestisci i profili aziendali dei tuoi clienti, loghi per copertine, parole chiave per la rassegna e tone of voice per l'IA.</p>
+                </div>
+                <button type="button" class="btn btn-gradient" onclick="openClientModal()" style="display:flex; align-items:center; gap:8px;">
+                    <i data-feather="plus-circle" style="width:16px;height:16px;"></i> Aggiungi Nuovo Cliente
+                </button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+                <div class="glass-card" style="padding:1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Clienti Registrati</span>
+                        <i data-feather="users" style="width:18px;height:18px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div style="font-size:1.8rem; font-weight:800;" id="kpiClientsCount">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Profili cliente configurati nel tuo account</div>
+                </div>
+
+                <div class="glass-card" style="padding:1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Cliente Attivo</span>
+                        <i data-feather="check-circle" style="width:18px;height:18px;color:#00e676;"></i>
+                    </div>
+                    <div style="font-size:1.25rem; font-weight:800; color:var(--accent-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" id="kpiActiveClientName">Nessuno</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Selezionato per rassegne e ricerche rapide</div>
+                </div>
+
+                <div class="glass-card" style="padding:1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Automazione IA</span>
+                        <i data-feather="zap" style="width:18px;height:18px;color:#ffb703;"></i>
+                    </div>
+                    <div style="font-size:1.25rem; font-weight:800; color:#ffb703;">Memoria Attiva</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Loghi e tone of voice applicati ai documenti</div>
+                </div>
+            </div>
+
+            <!-- Client Cards Grid -->
+            <div id="clientsPageGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem; margin-bottom:2.5rem;">
+                <!-- Populated dynamically by renderClientsPage() -->
+            </div>
+        </div>
+
         <!-- PAGE: PROFILO -->
         <div id="page-profilo" class="page-view">
             <div class="page-header">
@@ -2350,13 +2402,28 @@
                 </div>
 
                 <div class="edit-field" style="margin-bottom:1rem;">
-                    <label style="font-size:0.85rem; font-weight:600;">Logo Predefinito Cliente</label>
-                    <div id="clientLogoPreviewContainer" class="hidden" style="margin-bottom:6px;">
-                        <img id="clientLogoPreview" src="" alt="Logo Cliente" style="max-height:50px; border-radius:4px; margin-bottom:4px;">
-                        <button type="button" class="btn btn-outline btn-sm" onclick="removeClientFormLogo()" style="display:block; font-size:0.75rem; color:#ff4d4d; border-color:#ff4d4d;">Rimuovi Logo</button>
+                    <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Logo Predefinito Cliente</label>
+                    
+                    <!-- Client Form Logo Preview Box -->
+                    <div id="clientFormLogoPreviewContainer" class="hidden" style="display:none; align-items:center; gap:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 14px; margin-bottom:8px;">
+                        <div style="width:52px; height:52px; border-radius:6px; background:#ffffff; display:flex; align-items:center; justify-content:center; padding:4px; box-shadow:0 2px 4px rgba(0,0,0,0.2); overflow:hidden; flex-shrink:0;">
+                            <img id="clientFormLogoPreview" src="" alt="Logo Cliente" style="max-height:100%; max-width:100%; object-fit:contain;">
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div id="clientFormLogoFileName" style="font-size:0.85rem; font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Logo caricato</div>
+                            <div style="font-size:0.75rem; color:#10b981; display:flex; align-items:center; gap:4px; margin-top:2px;">
+                                <i data-feather="check-circle" style="width:13px;height:13px;"></i> Pronto per il salvataggio
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="removeClientFormLogo()" style="font-size:0.75rem; color:#ef4444; border-color:rgba(239,68,68,0.3); padding:4px 10px; cursor:pointer;" title="Rimuovi questo logo">
+                            <i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi
+                        </button>
                     </div>
-                    <input type="file" id="clientLogoFileInput" accept="image/*" style="display:none;" onchange="handleClientLogoChange(event)">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('clientLogoFileInput').click()" style="cursor:pointer; display:inline-block;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Carica Logo</button>
+
+                    <input type="file" id="clientLogoFileInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="display:none;" onchange="handleClientLogoChange(event)">
+                    <button type="button" id="btnUploadClientLogo" class="btn btn-outline btn-sm" onclick="document.getElementById('clientLogoFileInput').click()" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-feather="image" style="width:14px;height:14px;"></i> <span id="btnUploadClientLogoText">Carica Logo</span>
+                    </button>
                 </div>
 
                 <div class="edit-field" style="margin-bottom:1rem;">
@@ -3097,6 +3164,14 @@
                         if (typeof window.loadHistory === 'function') window.loadHistory();
                     }, 200);
                 }
+            } else if (page === 'clienti') {
+                if (typeof window.renderClientsPage === 'function') {
+                    window.renderClientsPage();
+                } else {
+                    setTimeout(() => {
+                        if (typeof window.renderClientsPage === 'function') window.renderClientsPage();
+                    }, 200);
+                }
             } else if (page === 'media-crm') {
                 if (typeof window.loadMediaContacts === 'function') {
                     window.loadMediaContacts();
@@ -3182,12 +3257,26 @@
         });
 
         feather.replace();
-        // Restore cached team count immediately to avoid any flicker
+        // Restore cached team count and company name immediately to avoid any flicker
         try {
             const cachedTeamCount = localStorage.getItem('rs_team_count');
             const navTeamCountEl = document.getElementById('navTeamCount');
             if (navTeamCountEl && cachedTeamCount !== null) {
                 navTeamCountEl.textContent = cachedTeamCount;
+            }
+
+            let cachedComp = localStorage.getItem('rs_company_name');
+            if (!cachedComp) {
+                const fp = localStorage.getItem('rs_full_profile');
+                if (fp) {
+                    try { cachedComp = JSON.parse(fp).companyName; } catch(e){}
+                }
+            }
+            if (cachedComp) {
+                const navCompEl = document.getElementById('navCompanyHeader');
+                if (navCompEl) navCompEl.textContent = cachedComp;
+                const sideCompEl = document.getElementById('sidebarCompany');
+                if (sideCompEl) sideCompEl.textContent = cachedComp;
             }
         } catch(e){}
 
@@ -3199,7 +3288,7 @@
         }, 150);
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20260929_mailto_v6"></script>
+    <script src="app.js?v=20261001_clienti_v3"></script>
     <script src="ui.js?v=20260921_modal_click"></script>
 </body>
 </html>
