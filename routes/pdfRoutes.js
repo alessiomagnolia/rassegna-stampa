@@ -116,11 +116,8 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             if (updated.url) {
                 try {
                     updated.url = cleanAndUnwrapArticleUrl(updated.url);
-                    if (updated.url.includes('news.google.com/rss/articles/')) {
-                        updated.url = await Promise.race([
-                            resolveGoogleNewsUrl(updated.url),
-                            new Promise(r => setTimeout(() => r(updated.url), 3500))
-                        ]);
+                    if (updated.url.includes('news.google.com/rss/articles/') || updated.url.includes('news.google.com/articles/')) {
+                        updated.url = await resolveGoogleNewsUrl(updated.url, updated.title || '', updated.domain || '', updated.source_name || '');
                         updated.url = cleanAndUnwrapArticleUrl(updated.url);
                     }
                 } catch(e) {}

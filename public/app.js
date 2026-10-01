@@ -2291,7 +2291,7 @@ function mlLog(text, type = 'normal') {
 }
 
 async function startMultiLinkExtraction() {
-    const urls = parseMultiLinkUrls();
+    let urls = parseMultiLinkUrls();
     if (urls.length === 0) {
         showToast('Incolla almeno un link valido', 'warning');
         return;
@@ -2299,6 +2299,20 @@ async function startMultiLinkExtraction() {
     if (urls.length > 50) {
         showToast('Massimo 50 link per volta', 'warning');
         return;
+    }
+
+    // Safety guard: if any URL is still a Google News link, resolve it before starting extraction
+    const hasGoogle = urls.some(u => u.includes('news.google.com'));
+    if (hasGoogle) {
+        try {
+            const res = await apiCall('POST', '/api/news/resolve-urls', { urls });
+            if (res && res.resolvedUrls && res.resolvedUrls.length > 0) {
+                urls = res.resolvedUrls.filter(u => u && !u.includes('news.google.com'));
+                const textarea = document.getElementById('multiLinkTextarea');
+                if (textarea) textarea.value = urls.join('\n');
+                updateMultiLinkCount();
+            }
+        } catch(e) {}
     }
 
     // Disable button to prevent double-click duplicates
@@ -2729,27 +2743,63 @@ function renderNewsResults() {
     feather.replace();
 }
 
-async function resolveAndInsertUrlsIntoRassegna(urls) {
-    if (!urls || urls.length === 0) return;
+async function resolveAndInsertUrlsIntoRassegna(itemsOrUrls) {
+    if (!itemsOrUrls || itemsOrUrls.length === 0) return;
     
-    // Open multi-link modal on current page (do not redirect until user clicks Estrai tutti)
+    // Normalize into array of objects { url, title, domain, source }
+    const items = itemsOrUrls.map(item => {
+        if (typeof item === 'string') {
+            const found = (typeof currentNewsResults !== 'undefined') ? currentNewsResults.find(n => n.url === item) : null;
+            if (found) {
+                return { url: item, title: found.title, domain: found.domain, source: found.source };
+            }
+            return { url: item, title: '', domain: '', source: '' };
+        }
+        return {
+            url: item.url || '',
+            title: item.title || '',
+            domain: item.domain || '',
+            source: item.source || item.source_name || ''
+        };
+    }).filter(it => it.url && it.url.trim());
+
+    if (items.length === 0) return;
+
+    // Open multi-link modal on current page
     openMultiLinkModal();
     const textarea = document.getElementById('multiLinkTextarea');
+
+    // Check if any link is an opaque Google News link
+    const hasGoogleNews = items.some(it => it.url.includes('news.google.com'));
+
+    if (!hasGoogleNews) {
+        // All links are already clean direct publisher URLs!
+        if (textarea) {
+            textarea.value = items.map(it => it.url.trim()).filter(Boolean).join('\n');
+            updateMultiLinkCount();
+        }
+        return;
+    }
+
+    // Show loading state while resolving Google News links
     if (textarea) {
-        textarea.value = 'Risoluzione e pulizia link in corso...';
+        textarea.value = 'Risoluzione e pulizia link in corso... Attendere...';
         updateMultiLinkCount();
     }
 
     try {
-        const res = await apiCall('POST', '/api/news/resolve-urls', { urls });
-        const resolved = res.resolvedUrls || urls;
+        const res = await apiCall('POST', '/api/news/resolve-urls', {
+            items,
+            urls: items.map(it => it.url)
+        });
+        const resolved = (res && res.resolvedUrls && res.resolvedUrls.length > 0) ? res.resolvedUrls : items.map(it => it.url);
         if (textarea) {
-            textarea.value = resolved.join('\n');
+            textarea.value = resolved.filter(u => u && u.trim()).join('\n');
             updateMultiLinkCount();
         }
     } catch(err) {
         if (textarea) {
-            textarea.value = urls.join('\n');
+            textarea.value = items.map(it => it.url.trim()).filter(Boolean).join('\n');
             updateMultiLinkCount();
         }
     }
@@ -2759,7 +2809,12 @@ function includeSingleNewsInRassegna(idx, event) {
     if (event) event.stopPropagation();
     const news = currentNewsResults[idx];
     if (!news || !news.url) return;
-    resolveAndInsertUrlsIntoRassegna([news.url]);
+    resolveAndInsertUrlsIntoRassegna([{
+        url: news.url,
+        title: news.title,
+        domain: news.domain,
+        source: news.source
+    }]);
 }
 
 
@@ -2863,8 +2918,7 @@ async function useCollection(id) {
         const coll = await apiCall('GET', `/api/news/collections/${id}`);
         if (!coll.links || coll.links.length === 0) return showToast('La raccolta è vuota', 'warning');
         
-        const urls = coll.links.map(l => l.url);
-        resolveAndInsertUrlsIntoRassegna(urls);
+        resolveAndInsertUrlsIntoRassegna(coll.links);
         showToast(`Raccolta "${coll.name}" caricata pronta per l'estrazione`, 'success');
     } catch (err) {
         showToast('Errore caricamento raccolta', 'error');
@@ -2884,8 +2938,16 @@ async function deleteCollection(id) {
 
 function useSelectedNews() {
     if (selectedNewsIndices.size === 0) return;
-    const selectedLinks = Array.from(selectedNewsIndices).map(idx => currentNewsResults[idx].url);
-    resolveAndInsertUrlsIntoRassegna(selectedLinks);
+    const selectedItems = Array.from(selectedNewsIndices).map(idx => {
+        const n = currentNewsResults[idx];
+        return {
+            url: n.url,
+            title: n.title,
+            domain: n.domain,
+            source: n.source
+        };
+    });
+    resolveAndInsertUrlsIntoRassegna(selectedItems);
 }
 
 // ============================================================

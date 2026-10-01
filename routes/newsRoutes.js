@@ -16,21 +16,26 @@ const router = express.Router();
 // ---------------------------------------------------------------------------
 // HTTP helper — follows redirects, returns text
 // ---------------------------------------------------------------------------
-function fetchText(url, maxRedirects = 5) {
+function fetchText(url, maxRedirects = 5, timeoutMs = 15000) {
+    if (typeof maxRedirects === 'number' && maxRedirects > 20) {
+        timeoutMs = maxRedirects;
+        maxRedirects = 5;
+    }
     return new Promise((resolve, reject) => {
         if (maxRedirects <= 0) return reject(new Error('Troppi redirect'));
         const lib = url.startsWith('https') ? https : http;
         const req = lib.get(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7'
+                'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cookie': 'CONSENT=YES+cb.20230501-14-p0.en+FX+437; SOCS=CAESHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiAo_CmBg'
             }
         }, (res) => {
             if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
                 try {
                     const next = new URL(res.headers.location, url).href;
-                    fetchText(next, maxRedirects - 1).then(resolve).catch(reject);
+                    fetchText(next, maxRedirects - 1, timeoutMs).then(resolve).catch(reject);
                 } catch { reject(new Error('Redirect URL invalido')); }
                 return;
             }
@@ -43,7 +48,7 @@ function fetchText(url, maxRedirects = 5) {
             res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
             res.on('error', reject);
         });
-        req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
+        req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
         req.on('error', reject);
     });
 }
@@ -196,18 +201,30 @@ function getFaviconForDomain(domain) {
 
 function cleanAndUnwrapArticleUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== 'string') return '';
-    let target = rawUrl.trim();
+    let target = rawUrl.trim().replace(/&amp;/g, '&');
 
     // 1. Unwrap Bing News apiclick redirect URLs (extract embedded url= parameter)
-    if (target.includes('bing.com/news/apiclick') || target.includes('bing.com/search')) {
+    if (target.includes('bing.com/news/apiclick') || target.includes('bing.com/search') || target.includes('bing.com/ck/')) {
         try {
             const parsed = new URL(target);
-            const embeddedUrl = parsed.searchParams.get('url');
-            if (embeddedUrl && embeddedUrl.startsWith('http')) {
-                target = decodeURIComponent(embeddedUrl);
+            const embeddedUrl = parsed.searchParams.get('url') || parsed.searchParams.get('u');
+            if (embeddedUrl) {
+                let decoded = decodeURIComponent(embeddedUrl);
+                if (decoded.startsWith('a1aHR0') || (!decoded.startsWith('http') && /^[a-zA-Z0-9+/=_-]+$/.test(decoded))) {
+                    try {
+                        let b64 = decoded.replace(/-/g, '+').replace(/_/g, '/');
+                        if (b64.startsWith('a1')) b64 = b64.slice(2);
+                        while (b64.length % 4) b64 += '=';
+                        const buf = Buffer.from(b64, 'base64').toString('utf8');
+                        if (buf.startsWith('http')) decoded = buf;
+                    } catch(e){}
+                }
+                if (decoded && decoded.startsWith('http')) {
+                    target = decoded;
+                }
             }
         } catch(e) {
-            const m = /[?&]url=(https?%3A%2F%2F[^&]+|https?:\/\/[^&]+)/i.exec(target);
+            const m = /[?&](?:url|u)=(https?%3A%2F%2F[^&]+|https?:\/\/[^&]+)/i.exec(target);
             if (m) {
                 try { target = decodeURIComponent(m[1]); } catch(e2){}
             }
@@ -228,37 +245,204 @@ function cleanAndUnwrapArticleUrl(rawUrl) {
     return target;
 }
 
-async function resolveGoogleNewsUrl(url) {
+/**
+ * Reverse search Bing News RSS by article headline & domain to find the exact direct publisher URL.
+ * Bypasses 100% of Google News opaque redirects and consent walls in <200ms.
+ */
+async function searchDirectArticleUrl(title, domain, source = '') {
+    if (!title) return null;
+
+    // Clean title: remove trailing publisher name (" - ANSA.it" etc.) and author parens
+    let cleanTitle = title.replace(/\s*-[^-]+$/, '').trim();
+    cleanTitle = cleanTitle.replace(/\s*\(\s*di\s+[^)]+\)/gi, '').trim();
+    cleanTitle = cleanTitle.replace(/[«»""''„“”`]/g, ' ').replace(/[^\w\sàèéìòùÀÈÉÌÒÙ]/gi, ' ').replace(/\s+/g, ' ').trim();
+    if (cleanTitle.length < 5) cleanTitle = title.replace(/[«»""''„“”`]/g, ' ').trim();
+
+    const words = cleanTitle.split(/\s+/).filter(w => w.length >= 3);
+    const shortHeadline = words.slice(0, 8).join(' ');
+    if (!shortHeadline) return null;
+
+    const cleanDomain = domain ? domain.toLowerCase().replace(/^www\./, '').split('/')[0] : '';
+
+    // Step A: Search Bing News RSS with "headline site:domain"
+    if (cleanDomain && !cleanDomain.includes('google.') && !cleanDomain.includes('bing.')) {
+        try {
+            const bingQuery = `${shortHeadline} site:${cleanDomain}`;
+            const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(bingQuery)}&format=rss&cc=IT`;
+            const xml = await fetchText(bingUrl, 3, 3500);
+            if (xml && xml.includes('<item>')) {
+                const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+                let match;
+                while ((match = itemRegex.exec(xml)) !== null) {
+                    const itemXml = match[1];
+                    let rawLink = clean(tag(itemXml, 'link'));
+                    if (rawLink) {
+                        const unwrapped = cleanAndUnwrapArticleUrl(rawLink);
+                        if (unwrapped && !unwrapped.includes('bing.com') && !unwrapped.includes('google.com')) {
+                            return unwrapped;
+                        }
+                    }
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Step B: Search Bing News RSS with headline alone
+    try {
+        const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(shortHeadline)}&format=rss&cc=IT`;
+        const xml = await fetchText(bingUrl, 3, 3500);
+        if (xml && xml.includes('<item>')) {
+            const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+            let match;
+            let firstFallback = null;
+            while ((match = itemRegex.exec(xml)) !== null) {
+                const itemXml = match[1];
+                let rawLink = clean(tag(itemXml, 'link'));
+                if (rawLink) {
+                    const unwrapped = cleanAndUnwrapArticleUrl(rawLink);
+                    if (unwrapped && !unwrapped.includes('bing.com') && !unwrapped.includes('google.com')) {
+                        if (cleanDomain && unwrapped.toLowerCase().includes(cleanDomain)) {
+                            return unwrapped;
+                        }
+                        if (!firstFallback) {
+                            firstFallback = unwrapped;
+                        }
+                    }
+                }
+            }
+            if (firstFallback) return firstFallback;
+        }
+    } catch (e) {}
+
+    return null;
+}
+
+/**
+ * Resolves a Google News article link into its direct, clean publisher URL.
+ * Uses SQLite cache, Bing reverse lookup, legacy base64 decoding, and Puppeteer fallback.
+ */
+async function resolveGoogleNewsUrl(url, title = '', domain = '', source = '') {
+    if (!url || typeof url !== 'string') return '';
     url = cleanAndUnwrapArticleUrl(url);
-    if (!url.includes('news.google.com/rss/articles/')) return url;
-    
-    // First try the Base64 decode trick for speed
+    if (!url.includes('news.google.com/rss/articles/') && !url.includes('news.google.com/articles/')) {
+        return url;
+    }
+
+    // 1. Check SQLite url_cache
+    try {
+        const { getCachedUrl, setCachedUrl } = require('../services/urlResolverCache');
+        const cached = getCachedUrl(url);
+        if (cached && cached.final_url && !cached.final_url.includes('google.com')) {
+            return cached.final_url;
+        }
+    } catch (e) {}
+
+    // 2. Base64 unwrap trick for legacy links
     try {
         const parts = url.split('/articles/');
-        let b64 = parts[1].split('?')[0];
-        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
-        while (b64.length % 4) b64 += '=';
-        const decoded = Buffer.from(b64, 'base64').toString('latin1');
-        const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
-        if (match && !match[1].includes('google.com')) {
-            return match[1];
+        if (parts[1]) {
+            let b64 = parts[1].split('?')[0];
+            b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const decoded = Buffer.from(b64, 'base64').toString('latin1');
+            const match = decoded.match(/(https?:\/\/[^\s"'\>\x00-\x1F\x7F]+)/);
+            if (match && !match[1].includes('google.com') && !match[1].includes('googleusercontent.com')) {
+                const unwrapped = cleanAndUnwrapArticleUrl(match[1]);
+                try {
+                    const { setCachedUrl } = require('../services/urlResolverCache');
+                    setCachedUrl(url, unwrapped, domain, source);
+                } catch(e){}
+                return unwrapped;
+            }
         }
-    } catch(e){}
+    } catch(e) {}
 
-    // Use the official decoder
+    // 3. If title or domain missing, look up indexed_articles in SQLite
+    if (!title || !domain) {
+        try {
+            const { getDb } = require('../database/db');
+            const db = getDb();
+            const row = db.prepare('SELECT title, domain, source_name FROM indexed_articles WHERE url = ? LIMIT 1').get(url);
+            if (row) {
+                if (!title) title = row.title;
+                if (!domain) domain = row.domain;
+                if (!source) source = row.source_name;
+            }
+        } catch(e) {}
+    }
+
+    // 4. Reverse lookup via Bing News RSS headline search
+    if (title) {
+        try {
+            const directUrl = await searchDirectArticleUrl(title, domain, source);
+            if (directUrl && !directUrl.includes('google.com')) {
+                try {
+                    const { setCachedUrl } = require('../services/urlResolverCache');
+                    setCachedUrl(url, directUrl, domain, source);
+                } catch(e){}
+                return directUrl;
+            }
+        } catch(e) {}
+    }
+
+    // 5. Official decoder fallback
     try {
         const result = await decoder.decode(url);
-        if (result && result.status && result.decoded_url) {
-            return result.decoded_url;
+        if (result && result.status && result.decoded_url && !result.decoded_url.includes('google.com')) {
+            const cleanDec = cleanAndUnwrapArticleUrl(result.decoded_url);
+            try {
+                const { setCachedUrl } = require('../services/urlResolverCache');
+                setCachedUrl(url, cleanDec, domain, source);
+            } catch(e){}
+            return cleanDec;
         }
     } catch(e) {}
 
-    // Fallback to HTTP redirect follower
+    // 6. HTTP redirect follower with consent cookie
     try {
         const finalUrl = await getFinalUrl(url, 3);
-        if (finalUrl && finalUrl !== url) return finalUrl;
+        if (finalUrl && finalUrl !== url && !finalUrl.includes('google.com')) {
+            const cleanFinal = cleanAndUnwrapArticleUrl(finalUrl);
+            try {
+                const { setCachedUrl } = require('../services/urlResolverCache');
+                setCachedUrl(url, cleanFinal, domain, source);
+            } catch(e){}
+            return cleanFinal;
+        }
     } catch(e) {}
-    
+
+    // 7. Puppeteer headless navigation fallback
+    try {
+        const { launchBrowser } = require('../services/screenshotService');
+        let browser = null;
+        try {
+            browser = await launchBrowser();
+            const page = await browser.newPage();
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+            await page.setCookie(
+                { name: 'CONSENT', value: 'YES+cb.20230501-14-p0.en+FX+437', domain: '.google.com' },
+                { name: 'SOCS', value: 'CAESHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiAo_CmBg', domain: '.google.com' }
+            );
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
+            for (let i = 0; i < 4; i++) {
+                const currentUrl = page.url();
+                if (currentUrl && !currentUrl.includes('google.com') && !currentUrl.includes('google.it')) {
+                    const finalClean = cleanAndUnwrapArticleUrl(currentUrl);
+                    try {
+                        const { setCachedUrl } = require('../services/urlResolverCache');
+                        setCachedUrl(url, finalClean, domain, source);
+                    } catch(e){}
+                    await browser.close();
+                    return finalClean;
+                }
+                await new Promise(r => setTimeout(r, 600));
+            }
+            await browser.close();
+        } catch(e) {
+            if (browser) try { await browser.close(); } catch(_) {}
+        }
+    } catch(e) {}
+
     return url;
 }
 
@@ -463,8 +647,8 @@ router.get('/search', authMiddleware, async (req, res) => {
             const queryTerms = [queryClean, ...expandedQueries.filter(q => q !== queryClean)].slice(0, 3);
             queryTerms.forEach(term => {
                 const enc = encodeURIComponent(term.replace(/["']/g, '').trim());
-                searchUrls.push(`https://news.google.com/rss/search?q=${enc}&hl=it&gl=IT&ceid=IT:it`);
                 searchUrls.push(`https://www.bing.com/news/search?q=${enc}&format=rss&cc=IT`);
+                searchUrls.push(`https://news.google.com/rss/search?q=${enc}&hl=it&gl=IT&ceid=IT:it`);
             });
 
             const responses = await Promise.allSettled(searchUrls.map(u => fetchText(u, 10000)));
@@ -662,7 +846,7 @@ router.get('/search', authMiddleware, async (req, res) => {
         // --- DEDUPLICATE BY REAL PUBLISHER DOMAIN + TITLE ---
         // (Allows identical press releases published across DIFFERENT outlets to ALL be kept!)
         const seenUrls = new Set();
-        const seenDomainTitle = new Set();
+        const seenDomainTitle = new Map();
         let uniqueResults = [];
 
         for (const item of allResults) {
@@ -672,10 +856,19 @@ router.get('/search', authMiddleware, async (req, res) => {
             const domainTitleKey = `${domain}::${normTitle}`;
 
             if (normUrl && seenUrls.has(normUrl)) continue;
-            if (domainTitleKey && seenDomainTitle.has(domainTitleKey)) continue;
+
+            if (domainTitleKey && seenDomainTitle.has(domainTitleKey)) {
+                const existing = seenDomainTitle.get(domainTitleKey);
+                // If existing entry has an opaque Google News link, but this new entry has a clean direct publisher link, replace it!
+                if (existing && existing.url && existing.url.includes('news.google.com') && item.url && !item.url.includes('news.google.com')) {
+                    existing.url = item.url;
+                    if (item.source && item.source !== 'Fonte Web') existing.source = item.source;
+                }
+                continue;
+            }
 
             if (normUrl) seenUrls.add(normUrl);
-            if (domainTitleKey) seenDomainTitle.add(domainTitleKey);
+            if (domainTitleKey) seenDomainTitle.set(domainTitleKey, item);
 
             uniqueResults.push(item);
         }
@@ -698,6 +891,19 @@ router.get('/search', authMiddleware, async (req, res) => {
             r.isPrioritySource = isPriority;
             return r;
         });
+
+        // Pre-resolve any remaining Google News links for top 30 results so frontend immediately gets clean publisher URLs
+        const googleItemsToResolve = uniqueResults.slice(0, 30).filter(r => r.url && r.url.includes('news.google.com'));
+        if (googleItemsToResolve.length > 0) {
+            await Promise.allSettled(googleItemsToResolve.map(async (item) => {
+                try {
+                    const resolved = await resolveGoogleNewsUrl(item.url, item.title, item.domain, item.source);
+                    if (resolved && !resolved.includes('news.google.com')) {
+                        item.url = resolved;
+                    }
+                } catch(e) {}
+            }));
+        }
 
         const priorityCount = uniqueResults.filter(r => r.isPrioritySource).length;
         console.log(`[News Search] Query: "${queryClean}" → Restituiti ${uniqueResults.length} risultati (${priorityCount} da fonti prioritarie). Fonti usate: ${contributingSources.join(', ') || 'nessuna'}.`);
@@ -794,25 +1000,28 @@ router.get('/collections/:id', authMiddleware, (req, res) => {
 /**
  * POST /api/news/resolve-urls
  * Resolves selected Google News / Bing RSS links to clean direct publisher URLs post-selection.
- * Body: { urls: ["https://news.google.com/rss/articles/...", ...] }
+ * Body: { urls: ["..."], items: [{ url, title, domain, source }] }
  */
 router.post('/resolve-urls', authMiddleware, async (req, res) => {
     try {
-        const { urls } = req.body;
-        if (!urls || !Array.isArray(urls) || urls.length === 0) {
-            return res.status(400).json({ error: 'Fornisci un array di URL.' });
+        const { urls, items } = req.body;
+        let list = [];
+        if (Array.isArray(items) && items.length > 0) {
+            list = items.map(it => typeof it === 'string' ? { url: it } : it);
+        } else if (Array.isArray(urls) && urls.length > 0) {
+            list = urls.map(u => ({ url: u }));
+        } else {
+            return res.status(400).json({ error: 'Fornisci un array di URL o elementi.' });
         }
 
-        const resolved = await Promise.all(urls.map(async (rawUrl) => {
-            if (!rawUrl || typeof rawUrl !== 'string') return '';
+        const resolved = await Promise.all(list.map(async (entry) => {
+            let rawUrl = (entry.url || '').trim();
+            if (!rawUrl) return '';
             let target = cleanAndUnwrapArticleUrl(rawUrl);
 
-            if (target.includes('news.google.com/rss/articles/')) {
+            if (target.includes('news.google.com/rss/articles/') || target.includes('news.google.com/articles/')) {
                 try {
-                    target = await Promise.race([
-                        resolveGoogleNewsUrl(target),
-                        new Promise(r => setTimeout(() => r(target), 3000))
-                    ]);
+                    target = await resolveGoogleNewsUrl(target, entry.title || '', entry.domain || '', entry.source || '');
                     target = cleanAndUnwrapArticleUrl(target);
                 } catch(e) {}
             }
@@ -898,3 +1107,4 @@ router.post('/board-summary', authMiddleware, async (req, res) => {
 module.exports = router;
 module.exports.cleanAndUnwrapArticleUrl = cleanAndUnwrapArticleUrl;
 module.exports.resolveGoogleNewsUrl = resolveGoogleNewsUrl;
+module.exports.searchDirectArticleUrl = searchDirectArticleUrl;

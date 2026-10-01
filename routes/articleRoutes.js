@@ -16,11 +16,8 @@ router.post('/extract', authMiddleware, async (req, res) => {
         // Post-selection URL Unwrapping: resolve Google News & Bing RSS links to direct publisher URLs
         try {
             url = cleanAndUnwrapArticleUrl(url);
-            if (url.includes('news.google.com/rss/articles/')) {
-                url = await Promise.race([
-                    resolveGoogleNewsUrl(url),
-                    new Promise(r => setTimeout(() => r(url), 3500))
-                ]);
+            if (url.includes('news.google.com/rss/articles/') || url.includes('news.google.com/articles/')) {
+                url = await resolveGoogleNewsUrl(url);
                 url = cleanAndUnwrapArticleUrl(url);
             }
         } catch(e) {}
