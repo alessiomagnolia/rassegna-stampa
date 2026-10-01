@@ -4663,23 +4663,40 @@ async function generateAndDownload() {
             return;
         }
 
-        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const contentType = res.headers.get('content-type') || '';
+
         if (!res.ok) {
             let errorMsg = 'Errore durante la generazione del PDF';
-            if (isJson) {
-                const errData = await res.json();
-                errorMsg = errData.error || errorMsg;
+            if (contentType.includes('application/json')) {
+                try { const errData = await res.json(); errorMsg = errData.error || errorMsg; } catch(e) {}
             }
             throw new Error(errorMsg);
         }
 
-        const data = await res.json();
-        if (data && data.id) {
-            currentReviewId = data.id;
-        }
+        // Server streams PDF directly — read as blob
+        if (contentType.includes('application/pdf')) {
+            const blob = await res.blob();
+            const reviewId = res.headers.get('X-Review-Id');
+            const filename  = res.headers.get('X-Filename') || 'Rassegna_Stampa.pdf';
 
-        showToast('PDF generato! Download in corso...', 'success');
-        await triggerDownload(data.downloadUrl, data.filename);
+            if (reviewId) currentReviewId = parseInt(reviewId, 10);
+
+            const objectUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); window.URL.revokeObjectURL(objectUrl); }, 60000);
+
+            showToast('PDF generato e scaricato con successo!', 'success');
+        } else {
+            // Fallback: legacy JSON response
+            const data = await res.json();
+            if (data && data.id) currentReviewId = data.id;
+            showToast('PDF generato! Download in corso...', 'success');
+            await triggerDownload(data.downloadUrl, data.filename);
+        }
 
         options.title = title;
         hasCover = !!(title);

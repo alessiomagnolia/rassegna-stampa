@@ -896,33 +896,84 @@ async function generatePDF() {
         
         const includeAnalytics = document.getElementById('includeAnalyticsPdf') ? document.getElementById('includeAnalyticsPdf').checked : true;
         
-        const response = await apiCall('POST', '/api/pdf/generate', { 
-            articles: state.articles,
-            title,
-            clientName,
-            clientLogo: state.clientLogoBase64,
-            userName: companyName,
-            userLogo: userLogo,
-            templateId: selectedTemplateId,
-            includeAnalytics
+        const token = state.token || localStorage.getItem('rs_token');
+        const res = await fetch('/api/pdf/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+                articles: state.articles,
+                title,
+                clientName,
+                clientLogo: state.clientLogoBase64,
+                userName: companyName,
+                userLogo: userLogo,
+                templateId: selectedTemplateId,
+                includeAnalytics
+            })
         });
-        
-        if (response && response.id) {
-            state.currentReviewId = response.id;
-            sessionStorage.setItem('rs_draft_review_id', response.id);
-        }
-        if (response && response.shareUrl) {
-            state.currentShareUrl = response.shareUrl;
+
+        if (res.status === 401) {
+            localStorage.removeItem('rs_token');
+            state.token = null;
+            showToast('Sessione scaduta. Effettua nuovamente il login.', 'error');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            return;
         }
 
-        showToast('PDF generato! Download in corso...', 'success');
-        triggerDownload(response.downloadUrl, response.filename);
-        
-        // Reload history list automatically
-        loadHistory();
+        const contentType = res.headers.get('content-type') || '';
+
+        if (!res.ok) {
+            let errorMsg = 'Errore durante la generazione del PDF';
+            if (contentType.includes('application/json')) {
+                try { const err = await res.json(); errorMsg = err.error || errorMsg; } catch(e) {}
+            }
+            throw new Error(errorMsg);
+        }
+
+        // Server now streams the PDF directly — read it as a blob
+        if (contentType.includes('application/pdf')) {
+            const blob = await res.blob();
+            const reviewId = res.headers.get('X-Review-Id');
+            const shareUrl  = res.headers.get('X-Share-Url');
+            const filename  = res.headers.get('X-Filename') || 'Rassegna_Stampa.pdf';
+
+            if (reviewId) {
+                state.currentReviewId = parseInt(reviewId, 10);
+                sessionStorage.setItem('rs_draft_review_id', reviewId);
+            }
+            if (shareUrl) {
+                state.currentShareUrl = shareUrl;
+            }
+
+            // Trigger download from blob
+            const objectUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); window.URL.revokeObjectURL(objectUrl); }, 60000);
+
+            showToast('PDF generato e scaricato con successo!', 'success');
+            loadHistory();
+        } else {
+            // Fallback: legacy JSON response (backward compat)
+            const data = await res.json();
+            if (data && data.id) {
+                state.currentReviewId = data.id;
+                sessionStorage.setItem('rs_draft_review_id', data.id);
+            }
+            if (data && data.shareUrl) state.currentShareUrl = data.shareUrl;
+            showToast('PDF generato! Download in corso...', 'success');
+            triggerDownload(data.downloadUrl, data.filename);
+            loadHistory();
+        }
         
     } catch (error) {
-        showToast(error.message, 'error');
+        showToast(error.message || 'Errore durante la generazione del PDF', 'error');
         btn.classList.remove('hidden');
     } finally {
         state.isGenerating = false;

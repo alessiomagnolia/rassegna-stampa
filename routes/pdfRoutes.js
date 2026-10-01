@@ -159,18 +159,19 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         const filename = `${baseFilename}_${date}_${Date.now()}.pdf`;
         const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
 
-        const outputDir = path.join(__dirname, '..', 'output');
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-        const outputPath = path.join(outputDir, filename);
-
-        console.log(`[PDF] Generazione PDF in: ${outputPath}`);
+        console.log(`[PDF] Generazione PDF: ${filename}`);
         const pdfBuffer = await generatePDF(resolvedArticles, options);
-        
-        fs.writeFileSync(outputPath, pdfBuffer);
 
-        // Save or update in history
+        // Also persist to disk (best-effort, for re-download from history)
+        try {
+            const outputDir = path.join(__dirname, '..', 'output');
+            if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+            fs.writeFileSync(path.join(outputDir, filename), pdfBuffer);
+        } catch(diskErr) {
+            console.warn('[PDF] Scrittura su disco fallita (non-fatal):', diskErr.message);
+        }
+
+        // Save or update in history DB
         const articlesJsonStr = JSON.stringify(articles); // original articles (with base64 images)
         let finalReviewId = id ? parseInt(id, 10) : null;
         let activeShareToken = shareToken;
@@ -206,19 +207,24 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
             finalReviewId = info.lastInsertRowid;
         }
 
-        res.json({
-            id: finalReviewId,
-            filename,
-            downloadUrl: `/api/pdf/download/${filename}`,
-            shareToken: activeShareToken,
-            shareUrl: `/share/${activeShareToken}`
-        });
+        // Stream the PDF bytes directly — no second HTTP round-trip needed
+        // This avoids the ephemeral filesystem problem on Render/Railway/similar platforms.
+        const safeDownloadName = `Rassegna_Stampa_${reviewTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeDownloadName}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('X-Review-Id', String(finalReviewId));
+        res.setHeader('X-Share-Token', activeShareToken);
+        res.setHeader('X-Share-Url', `/share/${activeShareToken}`);
+        res.setHeader('X-Filename', filename);
+        return res.end(pdfBuffer);
 
     } catch (error) {
         console.error('PDF generation route error:', error);
-        res.status(500).json({ error: 'Errore durante la generazione del PDF.' });
+        res.status(500).json({ error: 'Errore durante la generazione del PDF: ' + (error.message || 'errore sconosciuto') });
     }
 });
+
 
 // Standalone Single-Page Executive KPI Report (PDF A4)
 router.post('/generate-kpi', authMiddleware, async (req, res) => {
