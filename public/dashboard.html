@@ -2602,6 +2602,27 @@
         </div>
     </div>
 
+    <!-- Confirm Delete Client Modal -->
+    <div id="modalConfirmDeleteClient" class="modal-overlay hidden" style="z-index: 9999;" onclick="if (event.target === this) closeConfirmDeleteClientModal()">
+        <div class="modal-content glass-card" style="max-width: 440px; width: 92%; padding: 1.75rem; text-align: center; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+                <i data-feather="trash-2" style="width: 26px; height: 26px;"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0 0 0.5rem 0; color: var(--text-primary);">Elimina Cliente</h3>
+            <p id="confirmDeleteClientMessage" style="font-size: 0.9rem; color: var(--text-muted); margin: 0 0 1.5rem 0; line-height: 1.5;">
+                Sei sicuro di voler eliminare questo cliente? L'operazione non può essere annullata.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn btn-outline" onclick="closeConfirmDeleteClientModal()" style="flex: 1; padding: 10px 16px; cursor: pointer;">
+                    Annulla
+                </button>
+                <button type="button" id="btnConfirmDeleteClientSubmit" class="btn" style="flex: 1; padding: 10px 16px; background: #ef4444; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i data-feather="trash-2" style="width: 15px; height: 15px;"></i> Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Manual Entry Modal -->
     <div id="manualEntryModal" class="modal-overlay hidden">
         <div class="modal-content glass-card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
@@ -3455,7 +3476,7 @@
         }, 150);
     </script>
     <script src="cookie-consent.js?v=20260914_02"></script>
-    <script src="app.js?v=20261001_clienti_v5"></script>
+    <script src="app.js?v=20261002_client_delete_v1"></script>
     <script src="ui.js?v=20260921_modal_click"></script>
 </body>
 </html>

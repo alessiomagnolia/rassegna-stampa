@@ -105,7 +105,12 @@ router.put('/:id', (req, res) => {
         }
 
         const db = getDb();
-        const existing = db.prepare('SELECT id FROM clients WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+        let existing;
+        if (req.teamId) {
+            existing = db.prepare('SELECT id FROM clients WHERE id = ? AND (user_id = ? OR team_id = ?)').get(req.params.id, req.userId, req.teamId);
+        } else {
+            existing = db.prepare('SELECT id FROM clients WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+        }
         if (!existing) {
             return res.status(404).json({ error: 'Cliente non trovato.' });
         }
@@ -113,7 +118,7 @@ router.put('/:id', (req, res) => {
         db.prepare(`
             UPDATE clients 
             SET name = ?, logo_base64 = ?, keywords = ?, tone_of_voice = ?, notes = ?, training_text = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND user_id = ?
+            WHERE id = ?
         `).run(
             name.trim(),
             logo_base64 !== undefined ? logo_base64 : '',
@@ -121,8 +126,7 @@ router.put('/:id', (req, res) => {
             tone_of_voice ? tone_of_voice.trim() : '',
             notes ? notes.trim() : '',
             training_text !== undefined ? training_text.trim() : '',
-            req.params.id,
-            req.userId
+            req.params.id
         );
 
         const updatedClient = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
@@ -217,13 +221,14 @@ Restituisci unicamente un oggetto JSON valido (senza testo introduttivo o markdo
 router.delete('/:id', (req, res) => {
     try {
         const db = getDb();
-        const result = db.prepare('DELETE FROM clients WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
-        
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Cliente non trovato.' });
+        let result;
+        if (req.teamId) {
+            result = db.prepare('DELETE FROM clients WHERE id = ? AND (user_id = ? OR team_id = ?)').run(req.params.id, req.userId, req.teamId);
+        } else {
+            result = db.prepare('DELETE FROM clients WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
         }
 
-        res.json({ message: 'Cliente eliminato con successo' });
+        res.json({ message: 'Cliente eliminato con successo', deleted: result ? result.changes > 0 : false });
     } catch (error) {
         console.error('Errore eliminazione cliente:', error);
         res.status(500).json({ error: 'Impossibile eliminare il cliente.' });

@@ -3115,30 +3115,48 @@ let activeClientId = localStorage.getItem('rs_active_client_id') || '';
 let clientFormLogoBase64 = null;
 
 async function loadClients() {
-    let clientsLoaded = false;
+    let remoteClients = null;
     if (state.token) {
         try {
             const res = await apiCall('GET', '/api/clients');
-            if (res && res.clients) {
-                userClients = res.clients;
-                clientsLoaded = true;
+            if (res && Array.isArray(res.clients)) {
+                remoteClients = res.clients;
             }
         } catch (err) {
-            console.error('Errore caricamento clienti:', err);
+            console.warn('Errore caricamento clienti dal server, uso fallback locale:', err);
         }
     }
 
-    if (!clientsLoaded) {
-        let localList = localStorage.getItem('rs_local_clients');
+    let localClients = [];
+    try {
+        const localList = localStorage.getItem('rs_local_clients');
         if (localList) {
-            try {
-                userClients = JSON.parse(localList);
-            } catch(e){}
+            localClients = JSON.parse(localList);
+            if (!Array.isArray(localClients)) localClients = [];
         }
+    } catch(e) {
+        localClients = [];
+    }
+
+    if (remoteClients !== null) {
+        if (remoteClients.length > 0) {
+            const remoteIds = new Set(remoteClients.map(c => String(c.id).trim()));
+            const pendingLocal = localClients.filter(c => !remoteIds.has(String(c.id).trim()) && String(c.id).length > 10);
+            userClients = [...remoteClients, ...pendingLocal];
+            try {
+                localStorage.setItem('rs_local_clients', JSON.stringify(userClients));
+            } catch(e){}
+        } else if (localClients.length > 0) {
+            userClients = localClients;
+        } else {
+            userClients = [];
+        }
+    } else {
+        userClients = localClients;
     }
 
     if (userClients.length > 0) {
-        const exists = userClients.find(c => c.id == activeClientId);
+        const exists = userClients.find(c => String(c.id).trim() === String(activeClientId).trim());
         if (exists) {
             applyActiveClient(activeClientId, true);
         } else {
@@ -3774,37 +3792,99 @@ window.editClient = function(id) {
     feather.replace();
 };
 
-window.deleteClient = async function(id) {
-    if (!confirm('Sei sicuro di voler eliminare questo cliente?')) return;
-    if (state.token) {
-        try {
-            await apiCall('DELETE', `/api/clients/${id}`);
-        } catch(e){}
-    }
+let pendingDeleteClientId = null;
 
-    let localList = localStorage.getItem('rs_local_clients');
-    if (localList) {
-        let list = JSON.parse(localList).filter(c => c.id != id);
-        localStorage.setItem('rs_local_clients', JSON.stringify(list));
+window.closeConfirmDeleteClientModal = function() {
+    const modal = document.getElementById('modalConfirmDeleteClient');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
     }
+    pendingDeleteClientId = null;
+};
 
-    userClients = userClients.filter(c => c.id != id);
-    if (activeClientId == id) {
-        if (userClients.length > 0) {
-            applyActiveClient(userClients[0].id);
-        } else {
-            applyActiveClient('');
+window.deleteClient = function(id) {
+    if (!id) return;
+    const idStr = String(id).trim();
+    const client = userClients.find(c => String(c.id).trim() === idStr);
+    const clientName = client ? client.name : 'questo cliente';
+
+    const modal = document.getElementById('modalConfirmDeleteClient');
+    const msg = document.getElementById('confirmDeleteClientMessage');
+    const submitBtn = document.getElementById('btnConfirmDeleteClientSubmit');
+
+    if (modal && msg && submitBtn) {
+        pendingDeleteClientId = idStr;
+        msg.innerHTML = `Sei sicuro di voler eliminare definitivamente <strong>"${clientName}"</strong>?<br><span style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; display:inline-block;">Verranno rimossi i loghi, il Tone of Voice e tutte le configurazioni associate.</span>`;
+        submitBtn.onclick = function() {
+            closeConfirmDeleteClientModal();
+            executeDeleteClient(idStr, clientName);
+        };
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        feather.replace();
+    } else {
+        if (confirm(`Sei sicuro di voler eliminare definitivamente il cliente "${clientName}"?`)) {
+            executeDeleteClient(idStr, clientName);
         }
     }
+};
+
+window.executeDeleteClient = async function(id, clientName = '') {
+    if (!id) return;
+    const idStr = String(id).trim();
+
+    const target = userClients.find(c => String(c.id).trim() === idStr);
+    const displayName = clientName || (target ? target.name : 'Cliente');
+
+    // 1. Optimistic removal in memory
+    userClients = userClients.filter(c => String(c.id).trim() !== idStr);
+
+    // 2. Removal from localStorage cache
+    try {
+        let localList = localStorage.getItem('rs_local_clients');
+        if (localList) {
+            let list = JSON.parse(localList).filter(c => String(c.id).trim() !== idStr);
+            localStorage.setItem('rs_local_clients', JSON.stringify(list));
+        }
+    } catch(e) {
+        console.warn('Errore rimozione da rs_local_clients:', e);
+    }
+
+    // 3. Reset active client if it was the deleted one
+    if (String(activeClientId).trim() === idStr) {
+        if (userClients.length > 0) {
+            applyActiveClient(userClients[0].id, true);
+        } else {
+            applyActiveClient('', true);
+        }
+    }
+
+    // 4. Reset edit form if currently viewing this client
     const currentEditedId = document.getElementById('pageClientId')?.value;
-    if (currentEditedId == id) {
+    if (currentEditedId && String(currentEditedId).trim() === idStr) {
         if (typeof resetClientPageForm === 'function') resetClientPageForm();
     }
+    const modalEditedId = document.getElementById('clientId')?.value;
+    if (modalEditedId && String(modalEditedId).trim() === idStr) {
+        if (typeof resetClientForm === 'function') resetClientForm();
+    }
+
+    // 5. Update UI immediately
     renderClientSelectors();
     if (typeof window.renderClientsPage === 'function') {
         window.renderClientsPage();
     }
-    showToast('Cliente eliminato', 'success');
+    showToast(`Cliente "${displayName}" eliminato con successo`, 'success');
+
+    // 6. Delete from backend if logged in
+    if (state.token) {
+        try {
+            await apiCall('DELETE', `/api/clients/${idStr}`);
+        } catch(e) {
+            console.warn('DELETE /api/clients/' + idStr + ' backend notice:', e.message);
+        }
+    }
 };
 
 function renderClientModalList() {
@@ -3823,16 +3903,16 @@ function renderClientModalList() {
             <div style="display:flex; align-items:center; gap:10px;">
                 ${c.logo_base64 ? `<img src="${c.logo_base64}" style="max-height:30px; border-radius:3px;">` : `<div style="width:30px; height:30px; border-radius:3px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700;">${c.name.charAt(0).toUpperCase()}</div>`}
                 <div>
-                    <div style="font-weight:600; font-size:0.9rem;">${c.name} ${c.id == activeClientId ? '<span style="font-size:0.7rem; background:var(--accent-primary); color:white; padding:2px 6px; border-radius:10px; margin-left:6px;">ATTIVO</span>' : ''}</div>
+                    <div style="font-weight:600; font-size:0.9rem;">${c.name} ${String(c.id).trim() === String(activeClientId).trim() ? '<span style="font-size:0.7rem; background:var(--accent-primary); color:white; padding:2px 6px; border-radius:10px; margin-left:6px;">ATTIVO</span>' : ''}</div>
                     <div style="font-size:0.75rem; color:var(--text-muted);">
                         ${c.keywords ? `KW: ${c.keywords}` : ''} ${c.tone_of_voice ? `• Tone: ${c.tone_of_voice}` : ''}
                     </div>
                 </div>
             </div>
             <div style="display:flex; gap:4px;">
-                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="applyActiveClient(${c.id})">Seleziona</button>
-                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="editClient(${c.id})"><i data-feather="edit-2" style="width:12px;height:12px;"></i></button>
-                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3);" onclick="deleteClient(${c.id})"><i data-feather="trash-2" style="width:12px;height:12px;"></i></button>
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="applyActiveClient('${c.id}')">Seleziona</button>
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem;" onclick="editClient('${c.id}')"><i data-feather="edit-2" style="width:12px;height:12px;"></i></button>
+                <button class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3);" onclick="deleteClient('${c.id}')"><i data-feather="trash-2" style="width:12px;height:12px;"></i></button>
             </div>
         `;
         list.appendChild(div);
