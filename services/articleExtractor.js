@@ -36,32 +36,45 @@ async function getCheerio() {
 // ---------------------------------------------------------------
 // Tier 2 helper: Fetch HTML with modern headers, decompression & Cloudflare bypass
 // ---------------------------------------------------------------
-async function fetchHtml(url, customHeaders = {}) {
-    const modernHeaders = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+const BROWSER_PROFILES = [
+    // 1. Modern Safari (macOS) — does not send Chromium client-hints that trigger WAF TLS signature mismatch
+    {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
         'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'no-cache',
-        ...customHeaders
-    };
+        'Cache-Control': 'no-cache'
+    },
+    // 2. Modern Firefox (Windows) — standard Gecko headers, no Client-Hints mismatch
+    {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'no-cache'
+    },
+    // 3. Social Media Crawler (Facebook external hit) — whitelisted by news WAFs for link preview generation
+    {
+        'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8'
+    },
+    // 4. Googlebot — universally allowed by editorial sites
+    {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    }
+];
 
-    // 1. Try global fetch (Node 18+) with automatic gzip/brotli decompression
+async function fetchHtmlWithProfile(url, headers, timeoutMs = 6000) {
     if (typeof fetch === 'function') {
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 6000);
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
             const res = await fetch(url, {
                 signal: controller.signal,
                 redirect: 'follow',
-                headers: modernHeaders
+                headers
             });
             clearTimeout(timer);
             if (res.ok) {
@@ -70,20 +83,16 @@ async function fetchHtml(url, customHeaders = {}) {
                     return text;
                 }
             }
-        } catch (fetchErr) {
-            console.log(`[fetchHtml] Global fetch failed (${fetchErr.message}), provo con http client...`);
-        }
+        } catch (fetchErr) {}
     }
 
-    // 2. Fallback using Node https/http with zlib decompression
-    let nodeClientHtml = null;
     try {
-        nodeClientHtml = await new Promise((resolve, reject) => {
+        const text = await new Promise((resolve, reject) => {
             const lib = url.startsWith('https') ? https : http;
             const options = {
                 agent: url.startsWith('https') ? httpsAgent : httpAgent,
                 headers: {
-                    ...modernHeaders,
+                    ...headers,
                     'Accept-Encoding': 'gzip, deflate, br'
                 }
             };
@@ -92,7 +101,7 @@ async function fetchHtml(url, customHeaders = {}) {
                 if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
                     try {
                         const redirectUrl = new URL(res.headers.location, url).href;
-                        fetchHtml(redirectUrl, customHeaders).then(resolve).catch(reject);
+                        fetchHtmlWithProfile(redirectUrl, headers, timeoutMs).then(resolve).catch(reject);
                     } catch { reject(new Error('Redirect non valido')); }
                     return;
                 }
@@ -117,18 +126,28 @@ async function fetchHtml(url, customHeaders = {}) {
                 stream.on('error', reject);
             });
 
-            req.setTimeout(8000, () => { req.destroy(); reject(new Error('Timeout fetch')); });
+            req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout fetch')); });
             req.on('error', reject);
         });
 
-        if (nodeClientHtml && nodeClientHtml.length > 50 && !isBotChallenge('', nodeClientHtml)) {
-            return nodeClientHtml;
+        if (text && text.length > 50 && !isBotChallenge('', text)) {
+            return text;
         }
-    } catch (nodeErr) {
-        console.log(`[fetchHtml] Node HTTP client non riuscito (${nodeErr.message}), provo Google Proxy bypass...`);
+    } catch (e) {}
+
+    return null;
+}
+
+async function fetchHtml(url, customHeaders = {}) {
+    for (const profile of BROWSER_PROFILES) {
+        const headers = { ...profile, ...customHeaders };
+        try {
+            const result = await fetchHtmlWithProfile(url, headers, 6000);
+            if (result) return result;
+        } catch (err) {}
     }
 
-    // 3. Fallback: Google Proxy (Bypassa Cloudflare Bot Fight Mode su IP datacenter/cloud)
+    // Google proxy fallback
     try {
         console.log(`[fetchHtml] Tentativo bypass Cloudflare tramite Google Proxy per: ${url}`);
         const googleProxyUrl = `https://translate.google.com/translate?sl=auto&tl=it&u=${encodeURIComponent(url)}`;
@@ -137,7 +156,7 @@ async function fetchHtml(url, customHeaders = {}) {
         const res = await fetch(googleProxyUrl, {
             signal: controller.signal,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
             }
         });
@@ -145,15 +164,11 @@ async function fetchHtml(url, customHeaders = {}) {
         if (res.ok) {
             const text = await res.text();
             if (text && text.length > 50 && !isBotChallenge('', text)) {
-                console.log(`[fetchHtml] Successo bypass Cloudflare via Google Proxy per: ${url}`);
                 return text;
             }
         }
-    } catch (gErr) {
-        console.log(`[fetchHtml] Google proxy bypass fallito (${gErr.message})`);
-    }
+    } catch (gErr) {}
 
-    if (nodeClientHtml) return nodeClientHtml;
     throw new Error('Impossibile scaricare HTML (connessione rifiutata o blocco anti-bot)');
 }
 
@@ -502,6 +517,51 @@ async function extractWithWordPressRss(url) {
 }
 
 // ---------------------------------------------------------------
+// Tier 2.5: Jina AI Reader (Bypassa Cloudflare/WAF complessi per news pubbliche)
+// ---------------------------------------------------------------
+async function extractWithJinaReader(url) {
+    try {
+        console.log(`[Estrattore Jina] Tentativo estrazione via Jina Reader per: ${url}`);
+        const jinaUrl = `https://r.jina.ai/${url}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch(jinaUrl, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+                'X-No-Cache': 'true'
+            }
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+            const json = await res.json();
+            const data = json.data || json;
+            const title = (data.title || '').trim();
+            const content = data.content || '';
+            const description = data.description || (content ? cleanText(content, 140) : '');
+            const image = data.metadata?.['og:image'] || data.metadata?.image || null;
+            const author = data.metadata?.author || null;
+            const published = data.publishedTime || data.metadata?.['article:published_time'] || null;
+
+            if (title && (content || description) && !isBotChallenge(title, content)) {
+                console.log(`[Estrattore Jina] Successo via Jina Reader: "${title.slice(0, 50)}"`);
+                return {
+                    title: decodeHtmlEntities(title),
+                    content,
+                    description: cleanText(description, 140),
+                    image,
+                    author,
+                    published
+                };
+            }
+        }
+    } catch (e) {
+        console.log(`[Estrattore Jina] Fallito (${e.message})`);
+    }
+    return null;
+}
+
+// ---------------------------------------------------------------
 // Tier 3: Puppeteer DOM extraction for anti-bot / JS-rendered sites
 // ---------------------------------------------------------------
 async function extractWithPuppeteer(url) {
@@ -819,6 +879,20 @@ async function extractArticle(url, options = {}) {
                     }
                 }
             } catch (e2) {}
+        }
+    }
+
+    // 3.5) Tier 2.5: Jina AI Reader fallback (ultra-fast, bypasses Cloudflare/WAF without heavy Puppeteer overhead)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
+        try {
+            console.log(`[Estrattore Tier 2.5] Fallback Jina Reader per: ${url}`);
+            const jinaResult = await extractWithJinaReader(url);
+            if (jinaResult && (jinaResult.title || jinaResult.content)) {
+                article = jinaResult;
+                tierUsed = 'Tier 2.5 (Jina AI Reader)';
+            }
+        } catch (jinaErr) {
+            console.log(`[Estrattore Tier 2.5] Fallito (${jinaErr.message})`);
         }
     }
 
