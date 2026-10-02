@@ -344,19 +344,53 @@ function isBotChallenge(title, content) {
         'checking your browser',
         'please verify you are a human',
         'are you a human',
+        'verify you are human',
+        'human verification',
         '403 forbidden',
-        'shieldsquare captcha'
+        'shieldsquare captcha',
+        'robot challenge',
+        'robot challenge screen',
+        'challenge screen',
+        'checking the site connection',
+        'site connection security',
+        'unusual traffic',
+        'one more step',
+        'perimeterx',
+        'incapsula',
+        'distil networks',
+        'kasada',
+        'datadome',
+        'aws waf',
+        'waf challenge',
+        'verifica del browser',
+        'verifica di sicurezza',
+        'controllo di sicurezza',
+        'verifica se sei un umano',
+        'controllo della sicurezza della connessione'
     ];
 
-    if (challengeSnippets.some(cs => t === cs || t.startsWith(cs) || (cs.length > 10 && t.includes(cs)))) return true;
+    if (challengeSnippets.some(cs => t === cs || t.startsWith(cs) || (cs.length > 8 && t.includes(cs)))) return true;
     if (t === 'cloudflare' || t.startsWith('cloudflare |') || t.includes('attention required! | cloudflare') || t.includes('just a moment... | cloudflare')) return true;
 
     if (c.includes('enable javascript and cookies to continue') ||
         c.includes('ray id:') ||
         c.includes('cloudflare to restrict access') ||
         c.includes('checking if the site connection is secure') ||
+        c.includes('checking the site connection security') ||
+        c.includes('checking the site connection') ||
         c.includes('ddos protection by cloudflare') ||
-        c.includes('challenge-platform')) {
+        c.includes('challenge-platform') ||
+        c.includes('robot challenge') ||
+        c.includes('loader.svg') ||
+        c.includes('d1rozh26tys225.cloudfront.net') ||
+        c.includes('aws waf') ||
+        c.includes('cf-browser-verification') ||
+        c.includes('turnstile') ||
+        c.includes('hcaptcha') ||
+        c.includes('g-recaptcha') ||
+        c.includes('shieldsquare') ||
+        c.includes('unusual traffic from your computer network') ||
+        c.includes('ip address has been banned')) {
         return true;
     }
 
@@ -458,11 +492,15 @@ async function extractWithWordPressRss(url) {
         const slug = pathSegments[pathSegments.length - 1].replace(/\.(html?|php)$/i, '');
         if (!slug || slug.length < 3) return null;
 
+        const slugWords = slug.split(/[-_]+/).filter(w => w.length > 2);
+        const searchKeywords = slugWords.slice(0, 6).join(' ');
+
         const feedCandidates = [
             `${parsed.origin}/feed/`,
             `${parsed.origin}/?feed=rss2`,
-            `${parsed.origin}/rss.xml`
-        ];
+            `${parsed.origin}/rss.xml`,
+            searchKeywords ? `${parsed.origin}/?s=${encodeURIComponent(searchKeywords)}&feed=rss2` : null
+        ].filter(Boolean);
 
         console.log(`[Estrattore RSS] Tentativo estrazione feed RSS per: ${slug}`);
 
@@ -482,11 +520,13 @@ async function extractWithWordPressRss(url) {
                         const rawTitle = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim() : '';
                         if (!rawTitle || isBotChallenge(rawTitle, '')) continue;
 
-                        const encMatch = item.match(/<enclosure[^>]+url=["']([^"']+)["']/i) || item.match(/<media:content[^>]+url=["']([^"']+)["']/i);
-                        const imageUrl = encMatch ? encMatch[1].trim() : null;
-
                         const contentMatch = item.match(/<content:encoded>(.*?)<\/content:encoded>/is) || item.match(/<description>(.*?)<\/description>/is);
                         const rawContent = contentMatch ? contentMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').trim() : '';
+                        // Do not return empty content: if RSS item has no actual body, let subsequent tiers extract it
+                        if (!rawContent || rawContent.length < 50) continue;
+
+                        const encMatch = item.match(/<enclosure[^>]+url=["']([^"']+)["']/i) || item.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+                        const imageUrl = encMatch ? encMatch[1].trim() : null;
 
                         const dateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/is);
                         const published = dateMatch ? dateMatch[1].trim() : null;
@@ -585,6 +625,13 @@ async function extractWithPuppeteer(url) {
 
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
         await page.setViewport({ width: 1280, height: 800 });
+
+        await page.evaluateOnNewDocument(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'languages', { get: () => ['it-IT', 'it', 'en-US', 'en'] });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        });
 
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
 
@@ -796,7 +843,182 @@ function formatDate(dateStr) {
 }
 
 // ---------------------------------------------------------------
-// Main extractor — Tier 1 (@extractus) + Tier 1.5 (WP REST API) + Tier 2 (Cheerio) + Tier 3 (Puppeteer)
+// Tier 4: Search Rescue (News Index fallback for anti-bot WAF protected sites)
+// Recupera titolo, abstract editoriale, data e foto ad alta definizione
+// interrogando gli indici di Bing News RSS e Google News RSS quando il sito
+// blocca qualsiasi scraper diretto con AWS WAF / CloudFront / 403 Forbidden.
+// ---------------------------------------------------------------
+async function extractWithSearchRescue(url) {
+    try {
+        const parsed = new URL(url);
+        const hostname = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        
+        // Extract meaningful slug from URL pathname (ignore numeric-only segments like year/month/day/id)
+        const textSegments = pathSegments.filter(s => !/^\d+$/.test(s));
+        if (textSegments.length === 0) return null;
+
+        const rawSlug = textSegments[textSegments.length - 1]
+            .replace(/\.(html?|php|aspx?)$/i, '')
+            .toLowerCase();
+
+        const words = rawSlug
+            .split(/[-_]+/)
+            .map(w => w.trim())
+            .filter(w => w.length > 2 && !/^(articoli|notizie|news|post|detail|view|index)$/.test(w));
+
+        if (words.length === 0) return null;
+
+        const domainKeyword = hostname.split('.')[0];
+        const keyTerms = words.slice(0, 8).join(' ');
+
+        console.log(`[Estrattore Tier 4 SearchRescue] Avvio recupero via indici news per: "${keyTerms}" (${hostname})`);
+
+        // 1. Tenta Bing News RSS (fornisce <News:Image>, <pubDate>, <title>, <description>)
+        const bingQueries = [
+            `${domainKeyword} ${keyTerms}`,
+            `site:${hostname} ${words.slice(0, 5).join(' ')}`
+        ];
+
+        for (const bQuery of bingQueries) {
+            try {
+                const bingRssUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(bQuery)}&format=rss&cc=IT`;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6000);
+                const res = await fetch(bingRssUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                        'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
+                    }
+                });
+                clearTimeout(timer);
+
+                if (res.ok) {
+                    const xml = await res.text();
+                    const items = xml.split('<item>').slice(1);
+                    for (const itemXml of items) {
+                        const itemBlock = itemXml.split('</item>')[0];
+                        const titleMatch = itemBlock.match(/<title>(.*?)<\/title>/is);
+                        const descMatch = itemBlock.match(/<description>(.*?)<\/description>/is);
+                        const dateMatch = itemBlock.match(/<pubDate>(.*?)<\/pubDate>/is);
+                        const imgMatch = itemBlock.match(/<News:Image>(.*?)<\/News:Image>/is) || itemBlock.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+                        const linkMatch = itemBlock.match(/<link>(.*?)<\/link>/is);
+
+                        const rawTitle = titleMatch ? decodeHtmlEntities(titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim()) : '';
+                        const rawDesc = descMatch ? decodeHtmlEntities(descMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim()) : '';
+                        const published = dateMatch ? dateMatch[1].trim() : null;
+                        const imageUrl = imgMatch ? (imgMatch[1] || imgMatch[2] || '').trim() : null;
+                        const itemLink = linkMatch ? linkMatch[1].trim() : '';
+
+                        if (!rawTitle || isBotChallenge(rawTitle, rawDesc)) continue;
+
+                        let targetUrlInLink = '';
+                        try {
+                            const lUrl = new URL(itemLink);
+                            targetUrlInLink = lUrl.searchParams.get('url') || '';
+                        } catch (e) {
+                            targetUrlInLink = decodeURIComponent(itemLink);
+                        }
+
+                        const titleLower = rawTitle.toLowerCase();
+                        const matchingWords = words.filter(w => titleLower.includes(w));
+                        const matchesLink = targetUrlInLink && (targetUrlInLink.includes(rawSlug) || url.includes(targetUrlInLink));
+
+                        if (matchesLink || matchingWords.length >= Math.min(3, Math.ceil(words.length * 0.35))) {
+                            console.log(`[Estrattore Tier 4 SearchRescue] Trovato in Bing News RSS: "${rawTitle}"`);
+                            return {
+                                title: rawTitle,
+                                content: rawDesc,
+                                description: cleanText(rawDesc, 140),
+                                published,
+                                image: imageUrl || null,
+                                author: extractSourceName(url)
+                            };
+                        }
+                    }
+                }
+            } catch (bErr) {
+                console.log(`[Estrattore Tier 4 SearchRescue] Bing News err: ${bErr.message}`);
+            }
+        }
+
+        // 2. Tenta Google News RSS
+        const gQueries = [
+            `${keyTerms} site:${hostname}`,
+            `${domainKeyword} ${keyTerms}`
+        ];
+
+        for (const gQuery of gQueries) {
+            try {
+                const gRssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(gQuery)}&hl=it&gl=IT&ceid=IT:it`;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6000);
+                const res = await fetch(gRssUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                        'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
+                    }
+                });
+                clearTimeout(timer);
+
+                if (res.ok) {
+                    const xml = await res.text();
+                    const items = xml.split('<item>').slice(1);
+                    for (const itemXml of items) {
+                        const itemBlock = itemXml.split('</item>')[0];
+                        const titleMatch = itemBlock.match(/<title>(.*?)<\/title>/is);
+                        const descMatch = itemBlock.match(/<description>(.*?)<\/description>/is);
+                        const dateMatch = itemBlock.match(/<pubDate>(.*?)<\/pubDate>/is);
+                        const sourceMatch = itemBlock.match(/<source[^>]*>(.*?)<\/source>/is);
+
+                        let rawTitle = titleMatch ? decodeHtmlEntities(titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim()) : '';
+                        let rawDesc = descMatch ? decodeHtmlEntities(descMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/is, '$1').replace(/<[^>]+>/g, '').trim()) : '';
+                        const published = dateMatch ? dateMatch[1].trim() : null;
+                        const sourceName = sourceMatch ? sourceMatch[1].trim() : null;
+
+                        // Google News titles often end with " - SourceName"
+                        if (sourceName && rawTitle.endsWith(` - ${sourceName}`)) {
+                            rawTitle = rawTitle.slice(0, -(` - ${sourceName}`.length)).trim();
+                        } else if (rawTitle.includes(' - ')) {
+                            const lastDash = rawTitle.lastIndexOf(' - ');
+                            if (lastDash > 15) {
+                                rawTitle = rawTitle.substring(0, lastDash).trim();
+                            }
+                        }
+
+                        if (!rawTitle || isBotChallenge(rawTitle, rawDesc)) continue;
+
+                        const titleLower = rawTitle.toLowerCase();
+                        const matchingWords = words.filter(w => titleLower.includes(w));
+
+                        if (matchingWords.length >= Math.min(3, Math.ceil(words.length * 0.35))) {
+                            console.log(`[Estrattore Tier 4 SearchRescue] Trovato in Google News RSS: "${rawTitle}"`);
+                            return {
+                                title: rawTitle,
+                                content: rawDesc,
+                                description: cleanText(rawDesc, 140),
+                                published,
+                                image: null,
+                                author: sourceName || extractSourceName(url)
+                            };
+                        }
+                    }
+                }
+            } catch (gErr) {
+                console.log(`[Estrattore Tier 4 SearchRescue] Google News err: ${gErr.message}`);
+            }
+        }
+    } catch (e) {
+        console.log(`[Estrattore Tier 4 SearchRescue] Errore generale: ${e.message}`);
+    }
+
+    return null;
+}
+
+// ---------------------------------------------------------------
+// Main extractor — Tier 1 (@extractus) + Tier 1.5 (WP REST API) + Tier 2 (Cheerio) + Tier 3 (Puppeteer) + Tier 4 (Search Rescue)
 // ---------------------------------------------------------------
 async function extractArticle(url, options = {}) {
     let article = null;
@@ -888,8 +1110,12 @@ async function extractArticle(url, options = {}) {
             console.log(`[Estrattore Tier 2.5] Fallback Jina Reader per: ${url}`);
             const jinaResult = await extractWithJinaReader(url);
             if (jinaResult && (jinaResult.title || jinaResult.content)) {
-                article = jinaResult;
-                tierUsed = 'Tier 2.5 (Jina AI Reader)';
+                if (!isBotChallenge(jinaResult.title, jinaResult.content)) {
+                    article = jinaResult;
+                    tierUsed = 'Tier 2.5 (Jina AI Reader)';
+                } else {
+                    console.log(`[Estrattore Tier 2.5] Jina ha restituito schermata bot/challenge ("${jinaResult.title}"), passo al livello successivo...`);
+                }
             }
         } catch (jinaErr) {
             console.log(`[Estrattore Tier 2.5] Fallito (${jinaErr.message})`);
@@ -914,6 +1140,24 @@ async function extractArticle(url, options = {}) {
         }
     }
 
+    // 5) Tier 4: Search Rescue (News Index fallback for anti-bot WAF protected sites)
+    if (!article || (!article.title && !article.content) || isBotChallenge(article.title, article.content)) {
+        try {
+            console.log(`[Estrattore Tier 4] Fallback Search Rescue per: ${url}`);
+            const rescueResult = await extractWithSearchRescue(url);
+            if (rescueResult && (rescueResult.title || rescueResult.content)) {
+                if (!isBotChallenge(rescueResult.title, rescueResult.content)) {
+                    article = rescueResult;
+                    tierUsed = 'Tier 4 (News Index Rescue)';
+                } else {
+                    console.warn(`[Estrattore Tier 4] Rescue ha restituito schermata bot (${rescueResult.title})`);
+                }
+            }
+        } catch (rescueErr) {
+            console.warn(`[Estrattore Tier 4] Fallback Search Rescue non riuscito:`, rescueErr.message);
+        }
+    }
+
     // Final validation: reject if null, empty or STILL a bot challenge
     if (!article || (!article.title && !article.content && !article.description) || isBotChallenge(article.title, article.content || article.description)) {
         throw new Error(`Impossibile estrarre automaticamente i contenuti da questo sito (il sito è protetto da un blocco anti-bot/Cloudflare o richiede login). Usa l'inserimento manuale.`);
@@ -926,7 +1170,7 @@ async function extractArticle(url, options = {}) {
     // Parallel secondary assets
     // Only take a screenshot if requested and if article doesn't already have an image
     const hasImage = Boolean(article.image);
-    const shouldTakeScreenshot = !options.skipScreenshot && !hasImage;
+    const shouldTakeScreenshot = !options.skipScreenshot && !hasImage && tierUsed !== 'Tier 4 (News Index Rescue)';
 
     const screenshotTask = shouldTakeScreenshot
         ? takeScreenshot(url).catch(e => { console.log('[Screenshot Notice]:', e.message); return null; })

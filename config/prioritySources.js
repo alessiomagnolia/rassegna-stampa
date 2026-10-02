@@ -72,6 +72,7 @@ const PRIORITY_SOURCES = [
     { name: 'Distretto Economico',       domain: 'distrettoeconomico.com',   url: 'https://www.distrettoeconomico.com',   rss: 'https://www.distrettoeconomico.com/feed/',                      category: 'web_digital' },
     { name: 'FS News',                   domain: 'fsnews.it',                url: 'https://www.fsnews.it',                rss: 'https://www.fsnews.it/feed/',                                   category: 'web_digital' },
     { name: 'Meridiana Notizie',         domain: 'meridiananotizie.it',      url: 'https://www.meridiananotizie.it',      rss: 'https://www.meridiananotizie.it/feed/',                         category: 'web_digital' },
+    { name: 'NewTuscia',                 domain: 'newtuscia.it',             url: 'https://www.newtuscia.it',             rss: 'https://www.newtuscia.it/feed/',                                category: 'web_digital' },
 
     // ── Quotidiani Locali ───────────────────────────────────────────────────
     // Basilicata
