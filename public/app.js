@@ -2738,7 +2738,11 @@ function resetNewsSearch() {
 }
 window.resetNewsSearch = resetNewsSearch;
 
+let isSearchingNews = false;
+
 async function searchNews() {
+    if (isSearchingNews) return;
+
     const keywordInput = document.getElementById('newsKeyword');
     const q = keywordInput ? keywordInput.value.trim() : '';
     const fromInput = document.getElementById('newsDateFrom');
@@ -2748,8 +2752,8 @@ async function searchNews() {
 
     if (!q) return showToast('Inserisci una parola chiave per la ricerca', 'warning');
 
+    isSearchingNews = true;
     const btn = document.getElementById('btnSearchNews');
-    const originalText = btn ? btn.innerHTML : '';
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin-right:4px;"></div> Ricerca...';
@@ -2781,7 +2785,7 @@ async function searchNews() {
         }
 
         const data = await apiCall('GET', url);
-        currentNewsResults = data.results || [];
+        currentNewsResults = (data && Array.isArray(data.results)) ? data.results : [];
 
         selectedNewsIndices.clear();
         
@@ -2804,11 +2808,12 @@ async function searchNews() {
     } catch (err) {
         if (loadingState) loadingState.classList.add('hidden');
         if (emptyState) emptyState.classList.remove('hidden');
-        showToast(err.message, 'error');
+        showToast(err.message || 'Errore durante la ricerca notizie', 'error');
     } finally {
+        isSearchingNews = false;
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.innerHTML = '<i data-feather="search" style="width:15px;height:15px;"></i> Cerca Notizie';
         }
         if (typeof feather !== 'undefined') feather.replace();
     }
@@ -2874,16 +2879,22 @@ function renderNewsResults() {
         card.className = `news-card ${isSelected ? 'selected' : ''}`;
         card.onclick = () => toggleNewsSelection(idx);
         
+        const safeSource = escapeHtml(news.source || news.domain || 'Fonte Web');
+        const safeDate = escapeHtml(news.date || '');
+        const safeTitle = escapeHtml(news.title || '');
+        const safeSnippet = escapeHtml(news.snippet || '');
+        const safeUrl = (news.url || '#').replace(/"/g, '&quot;');
+        
         card.innerHTML = `
             <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                ${news.favicon ? `<img src="${news.favicon}" alt="" style="width:16px;height:16px;">` : '<i data-feather="globe" style="width:16px;height:16px;color:var(--text-muted);"></i>'}
-                <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${news.source}</span>
-                <span style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;">${news.date}</span>
+                ${news.favicon ? `<img src="${escapeHtml(news.favicon)}" alt="" style="width:16px;height:16px;" onerror="this.style.display='none'">` : '<i data-feather="globe" style="width:16px;height:16px;color:var(--text-muted);"></i>'}
+                <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${safeSource}</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;">${safeDate}</span>
             </div>
-            <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${news.title}</h4>
-            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem; line-height:1.5;">${news.snippet}...</p>
+            <h4 style="margin:0 0 0.5rem 0; font-size:1rem; font-weight:700; line-height:1.4;">${safeTitle}</h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem; line-height:1.5;">${safeSnippet}...</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; gap:0.5rem; flex-wrap:wrap;">
-                <a href="${news.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:var(--text-muted); font-size:0.8rem; text-decoration:none;"><i data-feather="external-link" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i> Apri link</a>
                 <button type="button" class="btn-include-rassegna" onclick="includeSingleNewsInRassegna(${idx}, event)">
                     <i data-feather="plus-circle" style="width:13px;height:13px;"></i> Includi in rassegna
                 </button>
