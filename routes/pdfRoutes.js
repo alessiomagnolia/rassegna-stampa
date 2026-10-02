@@ -197,7 +197,7 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
                 const assignedTeamId = existing.team_id || req.teamId || null;
                 db.prepare(`
                     UPDATE press_reviews
-                    SET title = ?, pdf_filename = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
+                    SET title = ?, pdf_filename = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?, created_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 `).run(reviewTitle, filename, articles.length, articlesJsonStr, clientName || '', clientLogo || '', activeShareToken, assignedTeamId, finalReviewId);
             } else {
@@ -323,13 +323,13 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
 // Save / archive review to history for future editing
 router.post('/archive', authMiddleware, async (req, res) => {
     try {
-        const { id, articles, title, clientName, clientLogo } = req.body;
+        const { id, articles, title, clientName, clientLogo, forceNew } = req.body;
         const reviewArticles = Array.isArray(articles) ? articles : [];
 
         const reviewTitle = title || 'Rassegna Stampa Archiviata';
         const db = getDb();
         const articlesJsonStr = JSON.stringify(reviewArticles);
-        if (id) {
+        if (id && !forceNew) {
             const existing = db.prepare(`
                 SELECT id, share_token, team_id FROM press_reviews 
                 WHERE id = ? AND (
@@ -346,7 +346,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
                 const assignedTeamId = existing.team_id || req.teamId || null;
                 db.prepare(`
                     UPDATE press_reviews 
-                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?
+                    SET title = ?, article_count = ?, articles_json = ?, client_name = ?, client_logo = ?, share_token = ?, team_id = ?, created_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 `).run(reviewTitle, reviewArticles.length, articlesJsonStr, clientName || '', clientLogo || '', token, assignedTeamId, id);
 
@@ -356,6 +356,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
                     updated: true,
                     shareToken: token,
                     shareUrl: `/share/${token}`,
+                    created_at: new Date().toISOString(),
                     message: 'Rassegna aggiornata con successo nello storico.'
                 });
             }
@@ -364,8 +365,8 @@ router.post('/archive', authMiddleware, async (req, res) => {
         const placeholderFilename = `draft_${Date.now()}.pdf`;
         const shareToken = uuidv4().replace(/-/g, '').slice(0, 16);
         const info = db.prepare(`
-            INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO press_reviews (user_id, team_id, title, pdf_filename, article_count, articles_json, client_name, client_logo, share_token, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `).run(req.userId, req.teamId || null, reviewTitle, placeholderFilename, reviewArticles.length, articlesJsonStr, clientName || '', clientLogo || '', shareToken);
 
         res.json({
@@ -374,6 +375,7 @@ router.post('/archive', authMiddleware, async (req, res) => {
             updated: false,
             shareToken,
             shareUrl: `/share/${shareToken}`,
+            created_at: new Date().toISOString(),
             message: 'Rassegna archiviata con successo nel tuo storico.'
         });
     } catch (error) {

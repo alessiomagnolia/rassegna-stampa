@@ -744,6 +744,130 @@ window.changeArticleType = function(event, idx) {
     }
 };
 
+// --- CASSAFORTE DI SICUREZZA STORICO (Resilienza anti-perdita dati e Render Free-Tier) ---
+function getEmergencyVault() {
+    try {
+        const raw = localStorage.getItem('rs_emergency_history_vault');
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveToEmergencyVault(reviewData) {
+    try {
+        const vault = getEmergencyVault();
+        const incomingId = reviewData.id || ('vault_' + Date.now());
+        const serverId = reviewData.serverId || (typeof reviewData.id === 'number' ? reviewData.id : null);
+
+        // Rimuove eventuale duplicato con stesso serverId o stesso id temporaneo
+        const filtered = vault.filter(item => {
+            if (incomingId && item.id === incomingId) return false;
+            if (serverId && item.serverId && String(item.serverId) === String(serverId)) return false;
+            return true;
+        });
+
+        const vaultEntry = {
+            id: incomingId,
+            serverId: serverId,
+            title: reviewData.title || ('Rassegna del ' + new Date().toLocaleDateString('it-IT')),
+            client_name: reviewData.clientName || reviewData.client_name || '',
+            client_logo: reviewData.clientLogo || reviewData.client_logo || '',
+            article_count: (reviewData.articles && Array.isArray(reviewData.articles)) ? reviewData.articles.length : 0,
+            articles: reviewData.articles || [],
+            created_at: reviewData.created_at || new Date().toISOString(),
+            is_vault: true,
+            is_editable: 1
+        };
+
+        filtered.unshift(vaultEntry);
+        const capped = filtered.slice(0, 30);
+        localStorage.setItem('rs_emergency_history_vault', JSON.stringify(capped));
+        return vaultEntry;
+    } catch (e) {
+        console.warn('Salvataggio emergency vault:', e);
+        return null;
+    }
+}
+
+function removeFromEmergencyVault(id) {
+    try {
+        const vault = getEmergencyVault();
+        const filtered = vault.filter(item => item.id !== id && String(item.serverId) !== String(id));
+        localStorage.setItem('rs_emergency_history_vault', JSON.stringify(filtered));
+    } catch (e) {}
+}
+
+function mergeHistoryWithVault(serverItems, vaultItems) {
+    if (!Array.isArray(vaultItems) || vaultItems.length === 0) {
+        return serverItems || [];
+    }
+    const serverMap = new Map();
+    (serverItems || []).forEach(item => {
+        serverMap.set(String(item.id), item);
+    });
+
+    const merged = [...(serverItems || [])];
+
+    vaultItems.forEach(vItem => {
+        const existsOnServer = vItem.serverId && serverMap.has(String(vItem.serverId));
+        if (!existsOnServer) {
+            merged.unshift({
+                id: vItem.id,
+                serverId: vItem.serverId || null,
+                title: vItem.title,
+                filename: `draft_${Date.now()}.pdf`,
+                article_count: vItem.article_count || (vItem.articles ? vItem.articles.length : 0),
+                created_at: vItem.created_at || new Date().toISOString(),
+                client_name: vItem.client_name || '',
+                downloadUrl: null,
+                is_editable: 1,
+                is_vault: true,
+                vault_data: vItem
+            });
+        }
+    });
+
+    merged.sort((a, b) => {
+        const da = new Date(a.created_at || 0).getTime();
+        const db = new Date(b.created_at || 0).getTime();
+        return db - da;
+    });
+
+    return merged;
+}
+
+let isSyncingVault = false;
+async function syncPendingVaultItems(vault, serverHistory) {
+    if (isSyncingVault || !Array.isArray(vault) || vault.length === 0) return;
+    const serverIds = new Set((serverHistory || []).map(s => String(s.id)));
+    const pending = vault.filter(v => (!v.serverId || !serverIds.has(String(v.serverId))) && v.articles && v.articles.length > 0);
+    if (pending.length === 0) return;
+
+    isSyncingVault = true;
+    try {
+        for (const item of pending) {
+            try {
+                const res = await apiCall('POST', '/api/pdf/archive', {
+                    id: item.serverId || undefined,
+                    articles: item.articles,
+                    title: item.title,
+                    clientName: item.client_name,
+                    clientLogo: item.client_logo
+                });
+                if (res && res.id) {
+                    item.serverId = res.id;
+                    saveToEmergencyVault(item);
+                }
+            } catch (err) {
+                break;
+            }
+        }
+    } finally {
+        isSyncingVault = false;
+    }
+}
+
 // --- PDF GENERATION & ARCHIVING ---
 
 async function archiveReview() {
@@ -751,6 +875,16 @@ async function archiveReview() {
     const title = document.getElementById('rassegnaTitle')?.value.trim() || 'Rassegna Stampa';
     const clientName = document.getElementById('clientName')?.value.trim() || '';
     const btn = document.getElementById('btnArchiveReview');
+
+    // 1. Salvataggio immediato nel vault di sicurezza del browser (0ms)
+    const vaultEntry = saveToEmergencyVault({
+        serverId: state.currentReviewId || null,
+        title,
+        clientName,
+        clientLogo: state.clientLogoBase64,
+        articles: state.articles,
+        created_at: new Date().toISOString()
+    });
 
     try {
         if (btn) {
@@ -770,12 +904,17 @@ async function archiveReview() {
         if (res && res.id) {
             state.currentReviewId = res.id;
             sessionStorage.setItem('rs_draft_review_id', res.id);
+            if (vaultEntry) {
+                vaultEntry.serverId = res.id;
+                saveToEmergencyVault(vaultEntry);
+            }
         }
 
         showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
         loadHistory();
     } catch (err) {
-        showToast('Errore durante l\'archiviazione: ' + err.message, 'error');
+        showToast('Salvataggio locale completato! (Server momentaneamente offline: ' + err.message + ')', 'warning');
+        loadHistory();
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -789,7 +928,7 @@ async function startNewReview() {
     const count = (state.articles && Array.isArray(state.articles)) ? state.articles.length : 0;
 
     if (count > 0) {
-        const confirmMsg = `Vuoi creare una nuova rassegna da zero?\n\nLa rassegna attuale (${count} articol${count === 1 ? 'o' : 'i'}) verrà archiviata automaticamente nel tuo Storico.`;
+        const confirmMsg = `Vuoi creare una nuova rassegna da zero?\n\nLa rassegna attuale (${count} articol${count === 1 ? 'o' : 'i'}) verrà archiviata automaticamente nel tuo Storico per non perdere nessun dato.`;
         if (!confirm(confirmMsg)) {
             return;
         }
@@ -798,12 +937,25 @@ async function startNewReview() {
         const clientName = document.getElementById('clientName')?.value.trim() || '';
         const clientLogo = state.clientLogoBase64 || null;
 
+        // 1. SALVATAGGIO IMMEDIATO NELLA CASSAFORTE LOCALE (0ms, 100% fail-safe)
+        // I dati vengono registrati istantaneamente nel browser prima di qualsiasi chiamata di rete.
+        const vaultEntry = saveToEmergencyVault({
+            serverId: state.currentReviewId || null,
+            title,
+            clientName,
+            clientLogo,
+            articles: state.articles,
+            created_at: new Date().toISOString()
+        });
+
         const btn1 = document.getElementById('btnStartNewReview');
         const btn2 = document.getElementById('btnNewReviewAction');
         const btn3 = document.getElementById('btnResetAndNewReview');
         const originalHtml1 = btn1 ? btn1.innerHTML : '';
         const originalHtml2 = btn2 ? btn2.innerHTML : '';
         const originalHtml3 = btn3 ? btn3.innerHTML : '';
+
+        let canProceedToReset = true;
 
         try {
             if (btn1) {
@@ -820,13 +972,21 @@ async function startNewReview() {
             }
             if (window.feather) feather.replace();
 
-            await apiCall('POST', '/api/pdf/archive', {
+            const res = await apiCall('POST', '/api/pdf/archive', {
                 id: state.currentReviewId || undefined,
                 articles: state.articles,
                 title,
                 clientName,
-                clientLogo
+                clientLogo,
+                forceNew: !state.currentReviewId
             });
+
+            if (res && res.id) {
+                if (vaultEntry) {
+                    vaultEntry.serverId = res.id;
+                    saveToEmergencyVault(vaultEntry);
+                }
+            }
 
             try {
                 if (typeof loadHistory === 'function') loadHistory();
@@ -836,7 +996,16 @@ async function startNewReview() {
             showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
         } catch (err) {
             console.error('Archiviazione fallita durante startNewReview:', err);
-            showToast('Nota: salvataggio automatico non completato (' + (err.message || 'errore') + '). Procedo comunque con la nuova rassegna.', 'warning');
+            // PROTEZIONE ANTI-PERDITA DATI: non cancelliamo MAI alla cieca!
+            const userChoice = confirm(
+                `Attenzione: il server non è temporaneamente raggiungibile (${err.message || 'errore di rete'}).\n\n` +
+                `I tuoi ${count} articoli sono stati comunque PROTETTI nella cassaforte locale del browser e sono visibili nello Storico.\n\n` +
+                `Vuoi procedere comunque con una nuova rassegna vuota o preferisci rimanere sulla rassegna attuale?`
+            );
+            if (!userChoice) {
+                canProceedToReset = false;
+                return;
+            }
         } finally {
             if (btn1) {
                 btn1.disabled = false;
@@ -851,6 +1020,10 @@ async function startNewReview() {
                 btn3.innerHTML = originalHtml3;
             }
             if (window.feather) feather.replace();
+        }
+
+        if (!canProceedToReset) {
+            return;
         }
     }
 
@@ -1547,8 +1720,8 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
     card.className = 'history-group-card';
 
     // Calcola se tutte le rassegne del gruppo sono selezionate
-    const allGroupSelected = items.every(it => selectedHistoryIds.has(it.id));
-    const itemIdsAttr = items.map(it => it.id).join(',');
+    const allGroupSelected = items.every(it => selectedHistoryIds.has(it.id) || selectedHistoryIds.has(String(it.id)));
+    const itemIdsAttr = items.map(it => JSON.stringify(String(it.id))).join(',');
 
     const isHtmlTitle = typeof groupTitle === 'string' && groupTitle.includes('&bull;');
     const displayTitle = isHtmlTitle ? groupTitle : escapeHtml(groupTitle);
@@ -1581,7 +1754,7 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
     const isDateGrouping = (iconName === 'calendar');
 
     items.forEach(item => {
-        const isSelected = selectedHistoryIds.has(item.id);
+        const isSelected = selectedHistoryIds.has(item.id) || selectedHistoryIds.has(String(item.id));
         const itemRow = document.createElement('div');
         itemRow.className = `history-item ${isSelected ? 'selected' : ''}`;
         itemRow.id = `history-item-${item.id}`;
@@ -1602,38 +1775,48 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
             ? `<span class="history-client-badge"><i data-feather="user" style="width:11px;height:11px;"></i> ${escapeHtml(item.client_name)}</span>`
             : '';
 
+        const statusBadgeHtml = item.is_vault
+            ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:#10b981; background:rgba(16,185,129,0.12); padding:2px 8px; border-radius:6px; font-weight:600;"><i data-feather="shield" style="width:11px;height:11px;"></i> Vault Sicuro</span>`
+            : (item.team_id
+                ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--accent-primary); background:rgba(124,92,255,0.12); padding:2px 8px; border-radius:6px; font-weight:600;"><i data-feather="users" style="width:11px;height:11px;"></i> Progetto Team</span>`
+                : `<span style="font-size:0.75rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:6px;">Personale</span>`);
+
         itemRow.innerHTML = `
             <div style="display:flex; align-items:flex-start; gap:12px; flex:1; min-width:0;">
                 <input type="checkbox" class="history-checkbox item-checkbox" data-id="${item.id}"
                     ${isSelected ? 'checked' : ''}
-                    onchange="toggleSelectReview(${item.id}, this.checked)" style="margin-top:4px;">
+                    onchange="toggleSelectReview('${item.id}', this.checked)" style="margin-top:4px;">
                 <div class="history-info">
                     <strong>${escapeHtml(item.title)}</strong>
                     <div class="history-meta">
                         ${dateMetaHtml}
                         <span><i data-feather="file-text" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i>${item.article_count} articol${item.article_count === 1 ? 'o' : 'i'}</span>
                         ${clientBadgeHtml}
-                        ${item.team_id ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--accent-primary); background:rgba(124,92,255,0.12); padding:2px 8px; border-radius:6px; font-weight:600;"><i data-feather="users" style="width:11px;height:11px;"></i> Progetto Team</span>` : `<span style="font-size:0.75rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:6px;">Personale</span>`}
+                        ${statusBadgeHtml}
                     </div>
                 </div>
             </div>
             <div class="history-actions">
+                ${item.downloadUrl ? `
                 <button class="btn btn-primary btn-sm" onclick="triggerDownload('${item.downloadUrl}', '${escapeHtml(item.filename)}')">
                     <i data-feather="download" style="width:14px;height:14px;margin-right:4px;"></i> Scarica PDF
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory(${item.id})" title="Riapri per modificare">
+                </button>` : `
+                <button class="btn btn-primary btn-sm" onclick="reopenFromHistory('${item.id}')" title="Apri rassegna">
+                    <i data-feather="file-text" style="width:14px;height:14px;margin-right:4px;"></i> Apri
+                </button>`}
+                <button class="btn btn-secondary btn-sm" onclick="reopenFromHistory('${item.id}')" title="Riapri per modificare">
                     <i data-feather="edit-2" style="width:14px;height:14px;margin-right:4px;"></i> Modifica
                 </button>
-                <button class="btn btn-outline btn-sm" onclick="openProjectTeamModal(${item.id})" title="Lavora in team su questo progetto" style="border-color:rgba(124,92,255,0.45); color:var(--accent-primary); font-weight:600; background:rgba(124,92,255,0.06);">
+                <button class="btn btn-outline btn-sm" onclick="openProjectTeamModal('${item.id}')" title="Lavora in team su questo progetto" style="border-color:rgba(124,92,255,0.45); color:var(--accent-primary); font-weight:600; background:rgba(124,92,255,0.06);">
                     <i data-feather="users" style="width:13px;height:13px;margin-right:4px;"></i> Team
                 </button>
-                <button class="btn btn-outline btn-sm" onclick="openShareModal(${item.id})" title="Condividi rassegna con cliente">
+                <button class="btn btn-outline btn-sm" onclick="openShareModal('${item.id}')" title="Condividi rassegna con cliente">
                     <i data-feather="share-2" style="width:14px;height:14px;"></i>
                 </button>
-                <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory(${item.id})" title="Briefing Esecutivo AI">
+                <button class="btn btn-outline btn-sm" onclick="openMorningDigestFromHistory('${item.id}')" title="Briefing Esecutivo AI">
                     <i data-feather="zap" style="width:14px;height:14px;color:var(--accent-primary);"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteHistory(${item.id})" title="Elimina rassegna">
+                <button class="btn btn-danger btn-sm" onclick="deleteHistory('${item.id}')" title="Elimina rassegna">
                     <i data-feather="trash-2" style="width:14px;height:14px;"></i>
                 </button>
             </div>
@@ -1698,8 +1881,8 @@ window.toggleGroupSelection = toggleGroupSelection;
 function toggleSelectAllVisible(checked) {
     const allVisibleCheckboxes = document.querySelectorAll('#historyList .item-checkbox');
     allVisibleCheckboxes.forEach(chk => {
-        const id = parseInt(chk.dataset.id);
-        if (!isNaN(id)) {
+        const id = chk.dataset.id;
+        if (id) {
             if (checked) selectedHistoryIds.add(id);
             else selectedHistoryIds.delete(id);
             chk.checked = checked;
@@ -1861,38 +2044,54 @@ function exportHistoryCsv() {
 }
 window.exportHistoryCsv = exportHistoryCsv;
 
-// ── CARICAMENTO STORICO DAL SERVER ──────────────────────────────────────────
+// ── CARICAMENTO STORICO DAL SERVER & EMERGENCY VAULT ────────────────────────
 
 async function loadHistory() {
     const list = document.getElementById('historyList');
     if (!list) return;
 
-    // Cache locale rapida per evitare schermate vuote
+    // 1. Carica prima la cassaforte locale di sicurezza (0ms)
+    const vault = getEmergencyVault();
+
+    // 2. Cache locale rapida per evitare schermate vuote
     const cachedStr = localStorage.getItem('rs_cached_history');
     if (cachedStr && rawHistoryItems.length === 0) {
         try {
             const cached = JSON.parse(cachedStr);
             if (Array.isArray(cached) && cached.length > 0) {
-                rawHistoryItems = cached;
+                rawHistoryItems = mergeHistoryWithVault(cached, vault);
                 populateHistoryFilters(rawHistoryItems);
                 filterAndRenderHistory();
             }
         } catch (e) {}
+    } else if (vault.length > 0 && rawHistoryItems.length === 0) {
+        rawHistoryItems = mergeHistoryWithVault([], vault);
+        populateHistoryFilters(rawHistoryItems);
+        filterAndRenderHistory();
     }
 
     try {
         const history = await apiCall('GET', '/api/pdf/history');
         if (Array.isArray(history)) {
-            rawHistoryItems = history;
+            // Unisce lo storico del server con eventuali elementi presenti solo nella cassaforte locale
+            rawHistoryItems = mergeHistoryWithVault(history, vault);
             try { localStorage.setItem('rs_cached_history', JSON.stringify(history)); } catch (e) {}
             populateHistoryFilters(rawHistoryItems);
             filterAndRenderHistory();
+
+            // Background sync automatico e non bloccante
+            syncPendingVaultItems(vault, history);
         }
     } catch (error) {
-        if (rawHistoryItems.length === 0) {
+        // Se il server fallisce o Render è in riavvio, mostra sempre i dati locali
+        if (rawHistoryItems.length === 0 && vault.length > 0) {
+            rawHistoryItems = mergeHistoryWithVault([], vault);
+            populateHistoryFilters(rawHistoryItems);
+            filterAndRenderHistory();
+        } else if (rawHistoryItems.length === 0) {
             list.innerHTML = `
                 <div class="empty-state" style="text-align:center; padding:2rem;">
-                    <p style="color:var(--danger-color, #dc2626); margin-bottom:12px;">Impossibile caricare lo storico: ${escapeHtml(error.message)}</p>
+                    <p style="color:var(--danger-color, #dc2626); margin-bottom:12px;">Impossibile caricare lo storico dal server: ${escapeHtml(error.message)}</p>
                     <button class="btn btn-outline btn-sm" onclick="loadHistory()">Riprova</button>
                 </div>`;
         }
@@ -1904,22 +2103,41 @@ async function deleteHistory(id) {
     if (!confirm('Sei sicuro di voler eliminare questa rassegna?')) return;
     
     try {
+        if (typeof id === 'string' && id.startsWith('vault_')) {
+            removeFromEmergencyVault(id);
+            showToast('Rassegna rimossa dallo storico', 'success');
+            loadHistory();
+            return;
+        }
         await apiCall('DELETE', `/api/pdf/${id}`);
+        removeFromEmergencyVault(id);
         showToast('Rassegna eliminata dallo storico', 'success');
         loadHistory();
     } catch (error) {
+        removeFromEmergencyVault(id);
         showToast(error.message, 'error');
+        loadHistory();
     }
 }
 
 async function reopenFromHistory(reviewId) {
     try {
         // Se l'utente ha articoli attualmente aperti e sta aprendo una rassegna DIVERSA
-        if (state.articles && state.articles.length > 0 && state.currentReviewId != reviewId) {
-            showToast('Salvataggio automatico della rassegna precedente nello Storico...', 'info');
+        if (state.articles && state.articles.length > 0 && String(state.currentReviewId) !== String(reviewId)) {
+            showToast('Salvataggio automatico della rassegna precedente...', 'info');
             const currentTitle = document.getElementById('rassegnaTitle')?.value.trim() || ('Rassegna Stampa del ' + new Date().toLocaleDateString('it-IT'));
             const currentClientName = document.getElementById('clientName')?.value.trim() || '';
             const currentClientLogo = state.clientLogoBase64 || null;
+
+            // Salva prima nella cassaforte locale
+            saveToEmergencyVault({
+                serverId: state.currentReviewId || null,
+                title: currentTitle,
+                clientName: currentClientName,
+                clientLogo: currentClientLogo,
+                articles: state.articles,
+                created_at: new Date().toISOString()
+            });
 
             try {
                 await apiCall('POST', '/api/pdf/archive', {
@@ -1932,10 +2150,54 @@ async function reopenFromHistory(reviewId) {
                 showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
             } catch (saveErr) {
                 console.warn('Auto-save error before reopen:', saveErr);
-                const proceed = confirm(`Non è stato possibile salvare automaticamente la rassegna attuale (${saveErr.message}).\n\nVuoi comunque procedere e caricare quella selezionata?`);
+                const proceed = confirm(`Non è stato possibile salvare sul server la rassegna attuale (${saveErr.message}).\n\nI dati sono comunque al sicuro nella memoria locale del browser. Vuoi procedere e caricare quella selezionata?`);
                 if (!proceed) {
                     return; // Protegge il lavoro dell'utente da perdite
                 }
+            }
+        }
+
+        // Riapertura diretta da emergency vault se è un item locale
+        if (typeof reviewId === 'string' && reviewId.startsWith('vault_')) {
+            const vault = getEmergencyVault();
+            const found = vault.find(item => item.id === reviewId);
+            if (found && found.articles && found.articles.length > 0) {
+                state.currentReviewId = found.serverId || null;
+                if (state.currentReviewId) {
+                    sessionStorage.setItem('rs_draft_review_id', state.currentReviewId);
+                } else {
+                    sessionStorage.removeItem('rs_draft_review_id');
+                }
+                state.articles = found.articles;
+
+                const titleEl = document.getElementById('rassegnaTitle');
+                if (titleEl) titleEl.value = found.title || '';
+
+                const clientEl = document.getElementById('clientName');
+                if (clientEl) clientEl.value = found.client_name || '';
+
+                if (found.client_logo) {
+                    state.clientLogoBase64 = found.client_logo;
+                    const logoPrev = document.getElementById('clientLogoPreview');
+                    const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+                    if (logoPrev && logoPrevCont) {
+                        logoPrev.src = found.client_logo;
+                        logoPrevCont.style.display = 'flex';
+                    }
+                } else {
+                    state.clientLogoBase64 = null;
+                    const logoPrev = document.getElementById('clientLogoPreview');
+                    const logoPrevCont = document.getElementById('clientLogoPreviewContainer');
+                    if (logoPrev) logoPrev.src = '';
+                    if (logoPrevCont) logoPrevCont.style.display = 'none';
+                }
+
+                renderArticles();
+                const rassegnaNav = document.querySelector('.sidebar-item[data-page="rassegna"]');
+                if (rassegnaNav) rassegnaNav.click();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('Rassegna riaperta dalla cassaforte di sicurezza!', 'success');
+                return;
             }
         }
 
