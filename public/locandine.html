@@ -736,10 +736,13 @@
                 </div>
 
                 <div class="form-group">
-                    <input type="file" id="inputSubjectFile" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
-                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; padding:9px; margin-bottom:8px;" onclick="document.getElementById('inputSubjectFile').click()">
-                        <i data-feather="upload" style="width:14px;height:14px;"></i> Carica Nuova Foto Artista
-                    </button>
+                    <div id="dropZoneSubject" class="drop-zone drop-zone-compact" style="cursor:pointer; margin-bottom:8px;" onclick="document.getElementById('inputSubjectFile').click()">
+                        <div class="drop-content">
+                            <span><i data-feather="upload-cloud"></i> Trascina qui la foto o clicca</span>
+                            <small id="dropZoneSubjectHint">PNG, JPG, WebP (Max 10MB)</small>
+                        </div>
+                        <input type="file" id="inputSubjectFile" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                    </div>
                 </div>
 
                 <!-- PULSANTE SCONTORNO IA -->
@@ -927,16 +930,13 @@
                             Visibile
                         </label>
                     </div>
-                    <div id="dropZoneLogoLeft" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
-                        <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
-                        <div class="logo-dropzone-text" style="font-size:0.75rem;">
-                            <span><strong>Trascina logo sinistra</strong> o sfoglia</span>
+                    <div id="dropZoneLogoLeft" class="drop-zone drop-zone-compact" style="cursor:pointer;">
+                        <div class="drop-content">
+                            <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                            <small id="dropZoneLogoLeftHint">PNG, JPG, SVG (Max 5MB)</small>
                         </div>
+                        <input type="file" id="inputLogoLeftFile" accept="image/*" style="display:none;" onchange="handleLogoLeftUpload(event)">
                     </div>
-                    <input type="file" id="inputLogoLeftFile" accept="image/*" style="display:none;" onchange="handleLogoLeftUpload(event)">
-                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoLeftFile').click()">
-                        Cambia Stemma / Logo Sinistra da file
-                    </button>
                 </div>
 
                 <!-- LOGO DESTRO (SPAZIO DOPO) -->
@@ -948,16 +948,13 @@
                             Visibile
                         </label>
                     </div>
-                    <div id="dropZoneLogoRight" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-bottom:6px;">
-                        <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:16px;height:16px;"></i>
-                        <div class="logo-dropzone-text" style="font-size:0.75rem;">
-                            <span><strong>Trascina logo destra</strong> o sfoglia</span>
+                    <div id="dropZoneLogoRight" class="drop-zone drop-zone-compact" style="cursor:pointer;">
+                        <div class="drop-content">
+                            <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                            <small id="dropZoneLogoRightHint">PNG, JPG, SVG (Max 5MB)</small>
                         </div>
+                        <input type="file" id="inputLogoRightFile" accept="image/*" style="display:none;" onchange="handleLogoRightUpload(event)">
                     </div>
-                    <input type="file" id="inputLogoRightFile" accept="image/*" style="display:none;" onchange="handleLogoRightUpload(event)">
-                    <button type="button" class="btn-export-secondary" style="width:100%; justify-content:center; font-size:0.75rem; padding:6px;" onclick="document.getElementById('inputLogoRightFile').click()">
-                        Cambia Logo Spazio Dopo da file
-                    </button>
                 </div>
             </div>
 
@@ -1307,8 +1304,11 @@
 
         // --- CARICAMENTO NUOVA FOTO ARTISTA ---
         function handleImageUpload(event) {
-            const file = event.target.files[0];
+            const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
+
+            const hint = document.getElementById('dropZoneSubjectHint');
+            if (hint) hint.textContent = file.name;
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -1454,6 +1454,8 @@
         function handleLogoLeftUpload(event) {
             const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
+            const hint = document.getElementById('dropZoneLogoLeftHint');
+            if (hint) hint.textContent = file.name;
             const reader = new FileReader();
             reader.onload = e => {
                 document.getElementById('posterLogoLeftImg').src = e.target.result;
@@ -1465,6 +1467,8 @@
         function handleLogoRightUpload(event) {
             const file = (event instanceof File) ? event : (event?.target?.files?.[0] || event?.dataTransfer?.files?.[0]);
             if (!file) return;
+            const hint = document.getElementById('dropZoneLogoRightHint');
+            if (hint) hint.textContent = file.name;
             const reader = new FileReader();
             reader.onload = e => {
                 document.getElementById('posterLogoRightImg').src = e.target.result;
@@ -1501,6 +1505,7 @@
                 }
             });
         }
+        bindLocandineDropZone('dropZoneSubject', 'inputSubjectFile', handleImageUpload);
         bindLocandineDropZone('dropZoneLogoLeft', 'inputLogoLeftFile', handleLogoLeftUpload);
         bindLocandineDropZone('dropZoneLogoRight', 'inputLogoRightFile', handleLogoRightUpload);
 

@@ -607,79 +607,90 @@ input::placeholder, textarea::placeholder {
     gap: 2rem;
 }
 
-.drop-zone {
+.drop-zone, .logo-dropzone {
     border: 2px dashed var(--border-color);
     border-radius: var(--radius-md);
-    padding: 2rem;
+    padding: 1.6rem 1.25rem;
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-.drop-zone:hover, .drop-zone.dragover {
-    border-color: var(--accent-primary);
-    background: rgba(124, 92, 255, 0.05);
+[data-theme="dark"] .drop-zone, [data-theme="dark"] .logo-dropzone {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.drop-zone:hover, .drop-zone.dragover,
+.logo-dropzone:hover, .logo-dropzone.dragover {
+    border-color: var(--accent-primary) !important;
+    background: rgba(124, 92, 255, 0.07) !important;
+    box-shadow: 0 0 14px rgba(124, 92, 255, 0.2);
 }
 
 .drop-content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.35rem;
     color: var(--text-secondary);
-}
-
-/* Universal Logo Dropzone Styles */
-.logo-dropzone {
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
-    padding: 1.15rem 1rem;
-    text-align: center;
-    background: rgba(124, 92, 255, 0.02);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    user-select: none;
-    margin-bottom: 8px;
+    width: 100%;
+    pointer-events: none;
 }
-.logo-dropzone:hover {
-    border-color: var(--accent-primary);
-    background: rgba(124, 92, 255, 0.06);
-}
-.logo-dropzone.dragover {
-    border-color: var(--accent-primary) !important;
-    background: rgba(124, 92, 255, 0.16) !important;
-    box-shadow: 0 0 16px rgba(124, 92, 255, 0.35);
-    transform: scale(1.01);
-}
-.logo-dropzone-icon {
-    width: 24px;
-    height: 24px;
-    color: var(--accent-primary);
-}
-.logo-dropzone-text {
-    font-size: 0.85rem;
+
+.drop-content span {
+    font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
-.logo-dropzone-hint {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-}
-.logo-dropzone-compact {
-    padding: 0.7rem 0.6rem;
-    gap: 4px;
-}
-.logo-dropzone-compact .logo-dropzone-icon {
+
+.drop-content span i,
+.drop-content span svg {
     width: 18px;
     height: 18px;
+    color: var(--text-primary);
+    vertical-align: middle;
 }
-.logo-dropzone-compact .logo-dropzone-text {
-    font-size: 0.78rem;
+
+.drop-content small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Compact Dropzone variant */
+.drop-zone.drop-zone-compact, .logo-dropzone.logo-dropzone-compact {
+    padding: 1rem 0.85rem;
+}
+
+.drop-zone.drop-zone-compact .drop-content span,
+.logo-dropzone.logo-dropzone-compact .drop-content span {
+    font-size: 0.84rem;
+    gap: 6px;
+}
+
+.drop-zone.drop-zone-compact .drop-content span i,
+.drop-zone.drop-zone-compact .drop-content span svg,
+.logo-dropzone.logo-dropzone-compact .drop-content span i,
+.logo-dropzone.logo-dropzone-compact .drop-content span svg {
+    width: 16px;
+    height: 16px;
+}
+
+.drop-zone.drop-zone-compact .drop-content small,
+.logo-dropzone.logo-dropzone-compact .drop-content small {
+    font-size: 0.72rem;
 }
 
 .logo-preview-container {

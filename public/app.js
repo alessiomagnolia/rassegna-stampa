@@ -2208,6 +2208,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 4. Nuova Rassegna Client Logo
             setupLogoDropZone('clientLogoDropZone', 'clientLogoInput', (file) => {
+                const hint = document.getElementById('clientLogoHint');
+                if (hint) {
+                    hint.textContent = `Caricato: ${file.name}`;
+                    hint.style.color = '#10b981';
+                    hint.style.fontWeight = '600';
+                }
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     state.clientLogoBase64 = event.target.result;
@@ -2252,12 +2258,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Logo testata selezionato!', 'success');
             });
 
-            // 8. Archivio Loghi Page New Logo
-            setupLogoDropZone('archiveLogoDropZone', 'archiveLogoFileInput', (file) => {
-                const hint = document.querySelector('#archiveLogoDropZone .logo-dropzone-text');
+            // 8. Manual Article Modal Immagine Principale
+            setupLogoDropZone('manualImageDropZone', 'manualImage', (file) => {
+                const hint = document.getElementById('manualImagePreviewHint');
                 if (hint) {
-                    hint.innerHTML = `<span style="color:#10b981; font-weight:600;"><i data-feather="check" style="width:14px;height:14px;vertical-align:middle;"></i> ${file.name}</span>`;
-                    if (window.feather) feather.replace();
+                    hint.textContent = `Caricato: ${file.name}`;
+                    hint.style.color = '#10b981';
+                    hint.style.fontWeight = '600';
+                }
+                showToast('Immagine articolo selezionata!', 'success');
+            });
+
+            // 9. Archivio Loghi Page New Logo
+            setupLogoDropZone('archiveLogoDropZone', 'archiveLogoFileInput', (file) => {
+                const hint = document.getElementById('archiveLogoHint') || document.querySelector('#archiveLogoDropZone .drop-content small');
+                if (hint) {
+                    hint.textContent = `Caricato: ${file.name}`;
+                    hint.style.color = '#10b981';
+                    hint.style.fontWeight = '600';
                 }
                 showToast('Immagine logo selezionata per l\'archivio!', 'success');
             });

@@ -1831,22 +1831,18 @@
                         <img id="editLogoPreview" class="edit-logo-preview" src="" alt="">
                         <button type="button" class="edit-remove-btn" onclick="removeEditLogo()"><i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi logo</button>
                     </div>
-                    <div id="editLogoDropZone" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-top:8px;">
-                        <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:18px;height:18px;"></i>
-                        <div class="logo-dropzone-text" style="font-size:0.75rem;">
-                            <span><strong>Trascina qui il logo</strong> oppure <span style="color:var(--accent-primary); text-decoration:underline;">sfoglia dal PC</span></span>
+                    <div id="editLogoDropZone" class="drop-zone drop-zone-compact" style="cursor:pointer; margin-top:8px;">
+                        <div class="drop-content">
+                            <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                            <small>PNG, JPG, SVG (Max 5MB)</small>
                         </div>
+                        <input type="file" id="editLogoInput" accept="image/*" class="hidden" style="display:none;">
                     </div>
-                    <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-                        <button type="button" class="btn btn-primary btn-sm" id="btnOpenEditorLogoArchive" onclick="openEditorLogoArchive()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
+                    <div style="margin-top:8px;">
+                        <button type="button" class="btn btn-primary btn-sm" id="btnOpenEditorLogoArchive" onclick="openEditorLogoArchive()" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
                             <i data-feather="archive" style="width:14px;height:14px;"></i>
                             <span>Archivio loghi</span>
                         </button>
-                        <input type="file" id="editLogoInput" accept="image/*" class="hidden">
-                        <label for="editLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;" title="Carica un file immagine dal tuo dispositivo">
-                            <i data-feather="upload" style="width:14px;height:14px;"></i>
-                            <span>Carica file</span>
-                        </label>
                     </div>
 
                     <!-- Logo Size Slider -->
@@ -1919,22 +1915,18 @@
                             <img id="editCoverLogoPreview" class="edit-logo-preview" src="" alt="Logo Copertina">
                             <button type="button" class="edit-remove-btn" onclick="removeCoverLogo()"><i data-feather="trash-2" style="width:13px;height:13px;vertical-align:middle;margin-right:2px;"></i> Rimuovi logo</button>
                         </div>
-                        <div id="editCoverLogoDropZone" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer; margin-top:8px;">
-                            <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:18px;height:18px;"></i>
-                            <div class="logo-dropzone-text" style="font-size:0.75rem;">
-                                <span><strong>Trascina qui il logo copertina</strong> oppure <span style="color:var(--accent-primary); text-decoration:underline;">sfoglia dal PC</span></span>
+                        <div id="editCoverLogoDropZone" class="drop-zone drop-zone-compact" style="cursor:pointer; margin-top:8px;">
+                            <div class="drop-content">
+                                <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                                <small>PNG, JPG, SVG (Max 5MB)</small>
                             </div>
+                            <input type="file" id="editCoverLogoInput" accept="image/*" class="hidden" style="display:none;">
                         </div>
-                        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-primary btn-sm" id="btnOpenCoverLogoArchive" onclick="openEditorLogoArchive()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
+                        <div style="margin-top:8px;">
+                            <button type="button" class="btn btn-primary btn-sm" id="btnOpenCoverLogoArchive" onclick="openEditorLogoArchive()" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; cursor:pointer;" title="Scegli tra decine di testate giornalistiche italiane ed estere">
                                 <i data-feather="archive" style="width:14px;height:14px;"></i>
                                 <span>Archivio loghi</span>
                             </button>
-                            <input type="file" id="editCoverLogoInput" accept="image/*" class="hidden">
-                            <label for="editCoverLogoInput" class="btn btn-outline btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;" title="Carica un file immagine dal tuo dispositivo">
-                                <i data-feather="upload" style="width:14px;height:14px;"></i>
-                                <span>Carica file</span>
-                            </label>
                         </div>
 
                         <!-- Dimensione Logo Slider -->
@@ -2315,19 +2307,13 @@
 
         <!-- Footer: Upload custom logo if not found -->
         <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; font-size: 0.82rem; color: #94a3b8;">
-            <div id="modalLogoUploadDropZone" class="logo-dropzone logo-dropzone-compact" style="cursor:pointer;">
-                <i data-feather="upload-cloud" class="logo-dropzone-icon" style="width:18px;height:18px;"></i>
-                <div class="logo-dropzone-text" style="font-size:0.78rem;">
-                    <span><strong>Trascina qui il logo</strong> oppure <span style="color:var(--accent-primary); text-decoration:underline;">sfoglia dal PC</span></span>
+            <span style="font-weight: 500;">Non trovi la testata che cerchi?</span>
+            <div id="modalLogoUploadDropZone" class="drop-zone drop-zone-compact" style="cursor:pointer;">
+                <div class="drop-content">
+                    <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                    <small>PNG, JPG, SVG (Max 5MB)</small>
                 </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Non trovi la testata che cerchi?</span>
-                <input type="file" id="modalLogoUploadInput" accept="image/*" class="hidden">
-                <label for="modalLogoUploadInput" class="btn btn-outline btn-sm" style="cursor: pointer; margin: 0; font-size: 0.8rem; padding: 5px 12px; display: inline-flex; align-items: center; gap: 5px;">
-                    <i data-feather="upload" style="width: 12px; height: 12px;"></i>
-                    <span>Carica dal PC da file</span>
-                </label>
+                <input type="file" id="modalLogoUploadInput" accept="image/*" class="hidden" style="display:none;">
             </div>
         </div>
     </div>

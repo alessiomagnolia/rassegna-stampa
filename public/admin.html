@@ -277,9 +277,13 @@
                                 </div>
                                 <div class="input-group" style="margin-bottom: 1rem;">
                                     <label>File immagine *</label>
-                                    <input type="file" id="fileLogoFile" accept="image/*" class="hidden" onchange="previewFileLogo()">
-                                    <label for="fileLogoFile" class="btn btn-outline" style="cursor: pointer; display: inline-block; margin-top: 5px;"><i data-feather="image" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Scegli immagine</label>
-                                    <span id="fileLogoFilename" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 10px;"></span>
+                                    <div id="adminLogoDropZone" class="drop-zone drop-zone-compact" style="cursor:pointer;" onclick="document.getElementById('fileLogoFile').click()">
+                                        <div class="drop-content">
+                                            <span><i data-feather="upload-cloud"></i> Trascina qui il logo o clicca</span>
+                                            <small id="fileLogoFilename">PNG, JPG, SVG (Max 5MB)</small>
+                                        </div>
+                                        <input type="file" id="fileLogoFile" accept="image/*" class="hidden" style="display:none;" onchange="previewFileLogo()">
+                                    </div>
                                 </div>
                                 <button class="btn btn-primary" onclick="addLogoByFile()">Aggiungi</button>
                             </div>
@@ -390,6 +394,27 @@
             reader.onload = (e) => { box.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
             reader.readAsDataURL(file);
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const adminDropZone = document.getElementById('adminLogoDropZone');
+            if (adminDropZone) {
+                ['dragenter', 'dragover'].forEach(n => adminDropZone.addEventListener(n, e => { e.preventDefault(); adminDropZone.classList.add('dragover'); }));
+                ['dragleave', 'dragend'].forEach(n => adminDropZone.addEventListener(n, e => { e.preventDefault(); adminDropZone.classList.remove('dragover'); }));
+                adminDropZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    adminDropZone.classList.remove('dragover');
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        const fi = document.getElementById('fileLogoFile');
+                        try {
+                            const dt = new DataTransfer();
+                            dt.items.add(e.dataTransfer.files[0]);
+                            fi.files = dt.files;
+                        } catch(err) {}
+                        previewFileLogo();
+                    }
+                });
+            }
+        });
 
         // ---- LOAD LOGOS ----
         async function loadLogos() {
