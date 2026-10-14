@@ -114,6 +114,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const seoRoutes = require('./routes/seoRoutes');
+const transcribeRoutes = require('./routes/transcribeRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -125,6 +126,13 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/transcribe', transcribeRoutes);
+
+// Favicon Handler
+app.get('/favicon.ico', (req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
 
 // Proxy endpoint for external images (avoids CORS for logo archive previews)
 const https = require('https');

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('rs_token');
     if (!token) {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html?redirect=press.html';
         return;
     }
 

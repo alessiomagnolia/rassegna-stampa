@@ -61,6 +61,11 @@
                 <span>Team (<span id="navTeamCount">0</span>)</span>
             </button>
 
+            <!-- Theme Toggle Quick Nav -->
+            <button id="themeToggleNavbar" class="btn btn-outline btn-sm hide-mobile" onclick="if (typeof window.toggleTheme === 'function') window.toggleTheme(true);" title="Cambia Tema Chiaro/Scuro" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border-radius:8px; border-color:var(--border-color); color:var(--text-primary); cursor:pointer;">
+                <i data-feather="moon" style="width:14px;height:14px;"></i>
+            </button>
+
             <!-- 2. Desktop Only: Upgrade Button (Destra) -->
             <button id="btnUpgradePlanHeader" class="btn btn-gradient hide-mobile" onclick="document.querySelector('[data-page=piani]')?.click()" title="Upgrade Abbonamento">
                 <i data-feather="zap" style="width:15px;height:15px;flex-shrink:0;"></i>

@@ -135,7 +135,8 @@ async function handleLogin(e) {
         
         const data = await apiCall('POST', '/api/auth/login', { email, password });
         localStorage.setItem('rs_token', data.token);
-        window.location.href = 'dashboard.html';
+        const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = (redirectParam && !redirectParam.startsWith('http')) ? redirectParam : 'dashboard.html';
     } catch (error) {
         showToast(error.message, 'error');
         btn.disabled = false;
@@ -161,7 +162,8 @@ async function handleRegister(e) {
         
         const data = await apiCall('POST', '/api/auth/register', { email, password, company_name });
         localStorage.setItem('rs_token', data.token);
-        window.location.href = 'dashboard.html';
+        const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = (redirectParam && !redirectParam.startsWith('http')) ? redirectParam : 'dashboard.html';
     } catch (error) {
         showToast(error.message, 'error');
         btn.disabled = false;

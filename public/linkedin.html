@@ -1167,7 +1167,7 @@
                                     <span id="cardBannerText" style="font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; color: white; display: none;">la Repubblica</span>
                                 </div>
                                 <div id="cardBannerClientContainer" style="display: none;">
-                                    <img id="cardBannerClient" style="max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(0) invert(1);" src="" alt="Client">
+                                    <img id="cardBannerClient" style="max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(0) invert(1); display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Client">
                                 </div>
                             </div>
 
@@ -1201,7 +1201,7 @@
 
                                     <!-- Client Logo at Top Right -->
                                     <div id="cardClientLogoContainer" style="display: none; align-self: flex-start;">
-                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain;" src="" alt="Logo Cliente">
+                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain; display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo Cliente">
                                     </div>
                                 </div>
 
@@ -1271,7 +1271,7 @@
                 <div id="desktopImagePositionPanel" class="desktop-tool-panel hide-mobile" style="display:none;">
                     <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; flex-wrap:wrap;">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <i data-feather="arrow-up-down" style="width:15px;height:15px;color:var(--accent-primary);"></i>
+                            <i data-feather="move" style="width:15px;height:15px;color:var(--accent-primary);"></i>
                             <span style="font-weight:700; font-size:0.82rem; white-space:nowrap;">Posizione Foto:</span>
                             <span id="desktopImgPosBadge" class="desktop-val-badge">Centro (50%)</span>
                         </div>
@@ -1905,8 +1905,8 @@
                 }
             }
 
-            document.getElementById('btnDownloadPNG').addEventListener('click', () => downloadCardImage('png'));
-            document.getElementById('btnDownloadJPG').addEventListener('click', () => downloadCardImage('jpg'));
+            document.getElementById('btnDownloadPNG')?.addEventListener('click', () => downloadCardImage('png'));
+            document.getElementById('btnDownloadJPG')?.addEventListener('click', () => downloadCardImage('jpg'));
 
             // DIRECT LINKEDIN SHARE (Desktop & Mobile)
             async function handleShareLinkedIn() {
@@ -3185,14 +3185,14 @@
         <div class="modal-content" style="max-width:340px; text-align:center; padding:1.5rem; background:#0f172a; border:1px solid rgba(255,255,255,0.15); border-radius:16px; position:relative;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="font-size:1.1rem; font-weight:700; color:white;">Scarica Grafica</div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="closeDownloadModal()" style="border:none; color:white; font-size:1.2rem; padding:0 6px; cursor:pointer; line-height:1;">✕</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeDownloadModal()" style="border:none; color:white; font-size:1.2rem; padding:0 6px; cursor:pointer; line-height:1;">&times;</button>
             </div>
             <p style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-bottom:1.25rem; text-align:left;">Scegli il formato per il salvataggio</p>
             <div style="display:flex; flex-direction:column; gap:10px;">
-                <button type="button" class="btn btn-primary" onclick="downloadCardImage('png'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:700;">
+                <button type="button" id="btnDownloadPNG" class="btn btn-primary" onclick="downloadCardImage('png'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:700;">
                     <i data-feather="download"></i> Scarica PNG HD (Alta Qualità)
                 </button>
-                <button type="button" class="btn btn-outline" onclick="downloadCardImage('jpg'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-color:rgba(255,255,255,0.3); color:white;">
+                <button type="button" id="btnDownloadJPG" class="btn btn-outline" onclick="downloadCardImage('jpg'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-color:rgba(255,255,255,0.3); color:white;">
                     <i data-feather="image"></i> Scarica JPEG Standard
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeDownloadModal()" style="margin-top:0.4rem; height:38px;">Annulla / Chiudi</button>

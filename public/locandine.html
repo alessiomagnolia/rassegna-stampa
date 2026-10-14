@@ -363,6 +363,8 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+            position: relative;
         }
 
         /* LIVE LOCANDINA CANVAS - 1080x1920 (9:16) */
@@ -677,7 +679,7 @@
             <!-- 1. PRESET RAPIDI -->
             <div class="panel-section">
                 <div class="section-header">
-                    <h3 class="section-title"><i data-feather="palette" style="width:15px;height:15px;color:var(--accent-lime);"></i> Preset Palette Rapidi</h3>
+                    <h3 class="section-title"><i data-feather="droplet" style="width:15px;height:15px;color:var(--accent-lime);"></i> Preset Palette Rapidi</h3>
                 </div>
                 <div class="presets-grid">
                     <button type="button" class="btn-preset" onclick="applyPreset('#783c7b', '#c2f82c', '#ffffff')">
@@ -748,7 +750,7 @@
                 <!-- PULSANTE SCONTORNO IA -->
                 <div class="form-group" style="display:flex; gap:6px;">
                     <button type="button" id="btnAiBgRemoval" class="btn-export-png" style="flex:1; justify-content:center; font-size:0.8rem; padding:8px;" onclick="triggerAiBgRemoval()">
-                        <i data-feather="sparkles" style="width:14px;height:14px;"></i> Scontorna con IA
+                        <i data-feather="zap" style="width:14px;height:14px;"></i> Scontorna con IA
                     </button>
                     <button type="button" class="btn-export-secondary" style="justify-content:center; font-size:0.75rem; padding:8px;" onclick="resetToSampleImage()" title="Ripristina foto musicisti jazz predefinita">
                         Foto Default
