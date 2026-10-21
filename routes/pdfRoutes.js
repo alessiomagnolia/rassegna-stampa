@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../database/db');
 const { authMiddleware } = require('../middleware/auth');
 const { generatePDF } = require('../services/pdfGenerator');
+const { OUTPUT_DIR, resolveUploadPath } = require('../config/storage');
 
 const router = express.Router();
 
@@ -16,6 +17,19 @@ function fetchImageAsBase64(url) {
         if (!url) return resolve(null);
         // If it's already a data URI, return as-is
         if (url.startsWith('data:')) return resolve(url);
+
+        // Check if uploaded file in uploads directory
+        if (url.startsWith('/uploads/')) {
+            try {
+                const localFilePath = resolveUploadPath(url);
+                if (localFilePath && fs.existsSync(localFilePath)) {
+                    const ext = path.extname(localFilePath).toLowerCase();
+                    const mime = ext === '.svg' ? 'image/svg+xml' : (ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg'));
+                    const buf = fs.readFileSync(localFilePath);
+                    return resolve(`data:${mime};base64,${buf.toString('base64')}`);
+                }
+            } catch(e) {}
+        }
 
         // Check if local file in public directory (e.g. /logos/... or /assets/logos/...)
         if (url.startsWith('/')) {
@@ -97,9 +111,8 @@ router.post('/generate', authMiddleware, async (req, res) => {
             userLogoBase64 = user.logo_data;
         }
         if (!userLogoBase64 && user && user.logo_path) {
-            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
-            const logoFilePath = path.join(__dirname, '..', cleanRelPath);
-            if (fs.existsSync(logoFilePath)) {
+            const logoFilePath = resolveUploadPath(user.logo_path);
+            if (logoFilePath && fs.existsSync(logoFilePath)) {
                 const ext = path.extname(logoFilePath).substring(1);
                 const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
                 const fileData = fs.readFileSync(logoFilePath, { encoding: 'base64' });
@@ -168,9 +181,9 @@ const { cleanAndUnwrapArticleUrl, resolveGoogleNewsUrl } = require('./newsRoutes
         console.log(`[PDF] Generazione PDF: ${filename}`);
         const pdfBuffer = await generatePDF(resolvedArticles, options);
 
-        // Also persist to disk (best-effort, for re-download from history)
+        // Also persist to disk (for re-download from history)
         try {
-            const outputDir = path.join(__dirname, '..', 'output');
+            const outputDir = OUTPUT_DIR;
             if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
             fs.writeFileSync(path.join(outputDir, filename), pdfBuffer);
         } catch(diskErr) {
@@ -273,9 +286,8 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
             userLogoBase64 = user.logo_data;
         }
         if (!userLogoBase64 && user && user.logo_path) {
-            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
-            const logoFilePath = path.join(__dirname, '..', cleanRelPath);
-            if (fs.existsSync(logoFilePath)) {
+            const logoFilePath = resolveUploadPath(user.logo_path);
+            if (logoFilePath && fs.existsSync(logoFilePath)) {
                 const ext = path.extname(logoFilePath).substring(1);
                 const format = ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext;
                 const fileData = fs.readFileSync(logoFilePath, { encoding: 'base64' });
@@ -302,7 +314,7 @@ router.post('/generate-kpi', authMiddleware, async (req, res) => {
             baseFilename = 'Report_KPI_' + reviewTitle.trim().replace(/[^a-z0-9]/gi, '_');
         }
         const filename = `${baseFilename}_${date}.pdf`;
-        const outputPath = path.join(__dirname, '..', 'output', filename);
+        const outputPath = path.join(OUTPUT_DIR, filename);
 
         console.log(`[PDF] Generazione Report KPI singolo in: ${outputPath}`);
         const pdfBuffer = await generatePDF(resolvedArticles, options);
@@ -481,9 +493,9 @@ router.get('/public-download/:token', async (req, res) => {
         const review = db.prepare('SELECT * FROM press_reviews WHERE share_token = ?').get(req.params.token);
         if (!review) return res.status(404).send('Rassegna non trovata.');
 
-        const filePath = path.join(__dirname, '..', 'output', review.pdf_filename);
+        const filePath = path.join(OUTPUT_DIR, review.pdf_filename);
         if (!fs.existsSync(filePath)) {
-            // Auto-regenerate on-demand if ephemeral server storage was wiped
+            // Auto-regenerate on-demand if server storage was wiped or missing
             if (review && review.articles_json) {
                 try {
                     const articles = JSON.parse(review.articles_json);
@@ -495,7 +507,7 @@ router.get('/public-download/:token', async (req, res) => {
                             templateId: 'classic',
                             includeAnalytics: true
                         };
-                        const outputDir = path.join(__dirname, '..', 'output');
+                        const outputDir = OUTPUT_DIR;
                         if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
                         const pdfBuffer = await generatePDF(articles, options);
                         fs.writeFileSync(filePath, pdfBuffer);
@@ -526,7 +538,7 @@ router.get('/download/:filename', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Nome file non valido.' });
         }
 
-        const filePath = path.join(__dirname, '..', 'output', safeFilename);
+        const filePath = path.join(OUTPUT_DIR, safeFilename);
         const db = getDb();
         
         // Verify ownership (support direct user or team member)
@@ -540,7 +552,7 @@ router.get('/download/:filename', authMiddleware, async (req, res) => {
         `).get(safeFilename, req.userId, req.teamId || -1, req.userId);
         
         if (!fs.existsSync(filePath)) {
-            // Auto-regenerate on-demand if ephemeral server storage was wiped
+            // Auto-regenerate on-demand if server storage was wiped or missing
             if (review && review.articles_json) {
                 try {
                     const articles = JSON.parse(review.articles_json);
@@ -553,7 +565,7 @@ router.get('/download/:filename', authMiddleware, async (req, res) => {
                             templateId: 'classic',
                             includeAnalytics: true
                         };
-                        const outputDir = path.join(__dirname, '..', 'output');
+                        const outputDir = OUTPUT_DIR;
                         if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
                         const pdfBuffer = await generatePDF(articles, options);
                         fs.writeFileSync(filePath, pdfBuffer);
@@ -664,7 +676,7 @@ router.delete('/:id', authMiddleware, (req, res) => {
             return res.status(404).json({ error: 'Rassegna non trovata.' });
         }
 
-        const filePath = path.join(__dirname, '..', 'output', review.pdf_filename);
+        const filePath = path.join(OUTPUT_DIR, review.pdf_filename);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }

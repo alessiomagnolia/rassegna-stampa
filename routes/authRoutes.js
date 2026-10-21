@@ -5,13 +5,14 @@ const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../database/db');
 const { authMiddleware, generateToken } = require('../middleware/auth');
+const { UPLOADS_DIR, resolveUploadPath } = require('../config/storage');
 
 const router = express.Router();
 
 // Setup Multer for logo uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const userDir = path.join(__dirname, '..', 'uploads', req.userId.toString());
+        const userDir = path.join(UPLOADS_DIR, req.userId.toString());
         if (!fs.existsSync(userDir)) {
             fs.mkdirSync(userDir, { recursive: true });
         }
@@ -194,10 +195,9 @@ router.delete('/logo', authMiddleware, (req, res) => {
         const user = db.prepare('SELECT logo_path FROM users WHERE id = ?').get(req.userId);
         
         if (user && user.logo_path) {
-            const cleanRelPath = user.logo_path.replace(/^[/\\]+/, '');
-            const fullPath = path.join(__dirname, '..', cleanRelPath);
+            const fullPath = resolveUploadPath(user.logo_path);
             try {
-                if (fs.existsSync(fullPath)) {
+                if (fullPath && fs.existsSync(fullPath)) {
                     fs.unlinkSync(fullPath);
                 }
             } catch (fsErr) {

@@ -6,14 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { initDatabase } = require('./database/db');
 const { closeBrowser } = require('./services/screenshotService');
-
-// Create required directories
-const dirs = ['uploads', 'output', 'database'].map(dir => path.join(__dirname, dir));
-dirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-});
+const { UPLOADS_DIR } = require('./config/storage');
 
 // Initialize Express
 const app = express();
@@ -93,7 +86,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
 }));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+app.use('/uploads', express.static(UPLOADS_DIR, {
     maxAge: '7d',
     etag: true,
     lastModified: true,
@@ -221,6 +214,17 @@ const shutdown = async () => {
     console.log('\nSpegnimento del server in corso...');
     try {
         await closeBrowser();
+        try {
+            const { getDb } = require('./database/db');
+            const db = getDb();
+            if (db) {
+                console.log('[SHUTDOWN] Sincronizzazione WAL checkpoint su disco SQLite...');
+                db.pragma('wal_checkpoint(TRUNCATE)');
+                db.close();
+            }
+        } catch (dbErr) {
+            console.error('[SHUTDOWN] Errore chiusura SQLite:', dbErr.message);
+        }
         server.close(() => {
             console.log('Server Express chiuso.');
             process.exit(0);

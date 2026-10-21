@@ -7,6 +7,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { calculatePRAnalytics, formatMetricNumber } = require('../services/analyticsService');
 const { launchBrowser } = require('../services/screenshotService');
 const { buildReportPDFHTML } = require('../templates/reportPdfTemplate');
+const { OUTPUT_DIR } = require('../config/storage');
 
 const router = express.Router();
 
@@ -378,7 +379,7 @@ router.delete('/:id', authMiddleware, (req, res) => {
         }
 
         if (report.pdf_filename) {
-            const filePath = path.join(__dirname, '..', 'output', report.pdf_filename);
+            const filePath = path.join(OUTPUT_DIR, report.pdf_filename);
             if (fs.existsSync(filePath)) {
                 try { fs.unlinkSync(filePath); } catch(e) {}
             }
@@ -439,7 +440,7 @@ router.post('/:id/pdf', authMiddleware, async (req, res) => {
         await page.setContent(html, { waitUntil: 'load', timeout: 60000 });
 
         const filename = `Report_${report.client_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
-        const outputDir = path.join(__dirname, '..', 'output');
+        const outputDir = OUTPUT_DIR;
         if (!fs.existsSync(outputDir)) {
             fs.mkdirSync(outputDir, { recursive: true });
         }
