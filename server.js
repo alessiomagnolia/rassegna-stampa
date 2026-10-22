@@ -121,6 +121,21 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/transcribe', transcribeRoutes);
 
+// Health & Diagnostics Handler
+app.get('/api/health', (req, res) => {
+    const { isPersistent, DATA_DIR, DB_PATH, UPLOADS_DIR, OUTPUT_DIR } = require('./config/storage');
+    res.json({
+        status: 'ok',
+        persistent: isPersistent,
+        dataDir: DATA_DIR,
+        dbPath: DB_PATH,
+        uploadsDir: UPLOADS_DIR,
+        outputDir: OUTPUT_DIR,
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Favicon Handler
 app.get('/favicon.ico', (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=604800');
