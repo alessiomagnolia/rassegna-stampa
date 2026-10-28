@@ -1,0 +1,258 @@
+/* ==========================================================================
+   TEMA INCHIOSTRO
+   Livello grafico caricato dopo styles.css. Per disattivarlo basta togliere
+   i link a theme-ink.css e theme-ink.js dalle pagine HTML.
+   ========================================================================== */
+
+/* Livello "Inchiostro": anima solo lo sfondo già esistente (.bg-animation).
+   Non tocca header, menu, tasti o contenuti. Usa solo i due colori della piattaforma. */
+
+.bg-animation .ink-blob {
+    position: absolute;
+    border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%;
+    filter: blur(90px);
+    opacity: .22;
+    will-change: transform;
+}
+[data-theme="dark"] .bg-animation .ink-blob,
+body.dark-mode .bg-animation .ink-blob { mix-blend-mode: screen; opacity: .3; }
+
+.bg-animation .ink-1 { width: 540px; height: 540px; background: #7B2CBF; top: -140px; left: -100px; animation: inkDrift1 11s ease-in-out infinite alternate, inkMorph 7s ease-in-out infinite alternate; }
+.bg-animation .ink-2 { width: 460px; height: 460px; background: #00E676; bottom: -160px; right: -80px; opacity: .2; animation: inkDrift2 13s ease-in-out infinite alternate, inkMorph 8s ease-in-out infinite alternate-reverse; }
+.bg-animation .ink-3 { width: 380px; height: 380px; background: #B07FE0; top: 35%; left: 40%; animation: inkDrift3 9s ease-in-out infinite alternate, inkMorph 6s ease-in-out infinite alternate; }
+.bg-animation .ink-4 { width: 320px; height: 320px; background: #66F0A8; top: 10%; right: 5%; animation: inkDrift4 12s ease-in-out infinite alternate, inkMorph 9s ease-in-out infinite alternate-reverse; }
+.bg-animation .ink-5 { width: 300px; height: 300px; background: #9B5DD4; bottom: 5%; left: 10%; opacity: .16; animation: inkDrift5 10s ease-in-out infinite alternate, inkMorph 7s ease-in-out infinite alternate; }
+.bg-animation .ink-follow { width: 280px; height: 280px; background: #7B2CBF; opacity: .16; left: 0; top: 0; filter: blur(70px); transition: transform 1.2s cubic-bezier(.2,.7,.2,1); animation: inkMorph 5s ease-in-out infinite alternate; }
+
+@keyframes inkDrift1 { 0% { transform: translate(0, 0) scale(1) rotate(0); } 50% { transform: translate(30vw, 35vh) scale(1.25) rotate(60deg); } 100% { transform: translate(55vw, 5vh) scale(.95) rotate(120deg); } }
+@keyframes inkDrift2 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-40vw, -20vh) scale(1.2) rotate(-50deg); } 100% { transform: translate(-15vw, -55vh) scale(.9) rotate(-100deg); } }
+@keyframes inkDrift3 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-30vw, 20vh) scale(1.4); } 100% { transform: translate(20vw, -25vh) scale(1.1); } }
+@keyframes inkDrift4 { 0% { transform: translate(0, 0); } 50% { transform: translate(-45vw, 30vh) scale(1.3); } 100% { transform: translate(-20vw, 55vh) scale(.9); } }
+@keyframes inkDrift5 { 0% { transform: translate(0, 0); } 50% { transform: translate(40vw, -30vh) scale(1.3); } 100% { transform: translate(65vw, -10vh) scale(1); } }
+@keyframes inkMorph {
+    0%   { border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%; }
+    50%  { border-radius: 63% 37% 41% 59% / 58% 62% 38% 42%; }
+    100% { border-radius: 35% 65% 55% 45% / 40% 55% 45% 60%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bg-animation .ink-blob { animation: none !important; transition: none !important; }
+}
+
+/* ==========================================================================
+   TEMA "INCHIOSTRO" — solo aspetto grafico.
+   Regole d'oro: nessun elemento viene nascosto, rimosso o spostato nella pagina.
+   Si cambiano solo colori, bordi, angoli, ombre, font dei titoli e animazioni.
+   Caricato DOPO styles.css: dove serve vince con !important sugli stili inline.
+   ========================================================================== */
+
+/* ---------- 1. Palette e superfici: linee sottili al posto dei bordi neri ---------- */
+:root, html[data-theme="light"], html[data-theme="light"] body, body[data-theme="light"] {
+    --border-color: rgba(18, 18, 18, 0.12);
+    --bg-card: rgba(255, 255, 255, 0.55);
+    --bg-card-hover: rgba(255, 255, 255, 0.8);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --ink-glow: rgba(123, 44, 191, 0.38);
+    --ink-tint: rgba(123, 44, 191, 0.09);
+    --ink-line: rgba(18, 18, 18, 0.07);
+}
+html[data-theme="dark"], html[data-theme="dark"] body, body[data-theme="dark"] {
+    --border-color: rgba(239, 236, 229, 0.12);
+    --bg-card: rgba(28, 28, 28, 0.6);
+    --bg-card-hover: rgba(255, 255, 255, 0.07);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --ink-glow: rgba(167, 139, 250, 0.35);
+    --ink-tint: rgba(167, 139, 250, 0.12);
+    --ink-line: rgba(239, 236, 229, 0.06);
+}
+
+/* ---------- 2. Card in vetro ---------- */
+.glass-card {
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 30px -12px rgba(0, 0, 0, 0.08);
+}
+/* Niente più ombra "a blocco" nera spostata: solo un alone morbido, senza movimento */
+.glass-card:hover {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 16px 40px -18px var(--ink-glow);
+}
+
+/* ---------- 3. Titoli in stile editoriale ---------- */
+.hero-headline,
+.page-title,
+.auth-form h2,
+.home-service-card h3 {
+    font-family: var(--font-serif) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+}
+/* Parola evidenziata: gradiente viola che scorre + sottolineatura verde */
+.highlight-text,
+.hero-headline .highlight-text {
+    font-style: italic;
+    background: linear-gradient(90deg, #7B2CBF, #B07FE0, #7B2CBF) !important;
+    background-size: 200% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    text-decoration: underline;
+    text-decoration-color: var(--accent-secondary);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 7px;
+    animation: inkShimmer 6s linear infinite;
+}
+html[data-theme="dark"] .highlight-text {
+    background: linear-gradient(90deg, #a78bfa, #d8c4ff, #a78bfa) !important;
+    background-size: 200% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+}
+@keyframes inkShimmer { to { background-position: -200% 0; } }
+
+/* ---------- 4. Bottoni: angoli morbidi, maiuscolo rimosso, riflesso ---------- */
+.btn {
+    border-radius: var(--radius-sm);
+    text-transform: none;
+    letter-spacing: 0.01em;
+    font-weight: 600;
+    transition: transform .2s cubic-bezier(.3, 1.4, .5, 1), box-shadow .25s ease, background .25s ease, color .25s ease, border-color .25s ease;
+}
+.btn-primary:hover {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    box-shadow: 0 10px 24px -10px var(--ink-glow);
+}
+.btn-outline:hover, .btn-secondary:hover {
+    background: var(--ink-tint);
+    border-color: var(--accent-primary);
+}
+/* Riflesso che attraversa i bottoni principali (solo decorazione, non cambia dimensioni) */
+.btn-primary, .btn-gradient, .btn-hero-extract { position: relative; overflow: hidden; }
+.btn-primary::after, .btn-gradient::after, .btn-hero-extract::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; pointer-events: none;
+    background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: inkShine 4s ease-in-out infinite;
+}
+@keyframes inkShine { 0%, 65% { left: -60%; } 100% { left: 130%; } }
+
+/* ---------- 5. Campi di testo ---------- */
+input[type="text"], input[type="email"], input[type="password"], input[type="url"], select, textarea {
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.6);
+    transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+html[data-theme="dark"] input[type="text"], html[data-theme="dark"] input[type="email"],
+html[data-theme="dark"] input[type="password"], html[data-theme="dark"] input[type="url"],
+html[data-theme="dark"] select, html[data-theme="dark"] textarea { background: rgba(0, 0, 0, 0.25); }
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 4px var(--ink-tint);
+}
+
+/* ---------- 6. Pillole, tag, puntino "live" ---------- */
+.team-hero-pill, .hero-pill-badge {
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.pulse-dot { position: relative; }
+.pulse-dot::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; background: inherit;
+    animation: inkPing 1.8s ease-out infinite;
+}
+@keyframes inkPing { to { transform: scale(3); opacity: 0; } }
+.target-tag { transition: transform .25s ease, background .25s ease, color .25s ease, border-color .25s ease; }
+.target-tag:hover { transform: translateY(-3px); background: var(--text-primary); color: var(--bg-primary) !important; border-color: var(--text-primary) !important; }
+
+/* ---------- 7. Header e menu laterale ---------- */
+.navbar, .landing-top-bar {
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    animation: inkSlideDown .6s cubic-bezier(.2, .7, .2, 1) backwards;
+}
+@keyframes inkSlideDown { from { opacity: 0; transform: translateY(-100%); } }
+.sidebar { backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); }
+.sidebar-item {
+    border-radius: var(--radius-sm);
+    transition: background .2s ease, color .2s ease, padding-left .2s ease;
+}
+.sidebar-item:hover { background: var(--ink-tint); padding-left: 1.25rem; }
+.sidebar-item.active {
+    background: var(--text-primary) !important;
+    color: var(--bg-primary) !important;
+}
+.sidebar-item.active::before {
+    content: ''; position: absolute; left: 4px; top: 9px; bottom: 9px; width: 3px; border-radius: 3px;
+    background: var(--accent-secondary);
+}
+/* Comparsa a cascata delle voci (l'indice --ink-i viene messo da ink-theme.js) */
+.ink-ready .sidebar-item, .ink-ready .sidebar-section-label, .ink-ready .sidebar-divider {
+    animation: inkRise .5s cubic-bezier(.2, .7, .2, 1) backwards;
+    animation-delay: calc(var(--ink-i, 0) * 30ms + 200ms);
+}
+
+/* ---------- 8. Ingresso delle pagine e dei contenuti ---------- */
+@keyframes inkRise { from { opacity: 0; transform: translateY(18px); } }
+.page-view.active { animation: inkRise .55s cubic-bezier(.2, .7, .2, 1) backwards; }
+
+/* Pagina di accesso: testi a cascata e box login */
+.hero-text-col > * { animation: inkRise .8s cubic-bezier(.2, .7, .2, 1) backwards; }
+.hero-text-col > *:nth-child(1) { animation-delay: .15s; }
+.hero-text-col > *:nth-child(2) { animation-delay: .27s; }
+.hero-text-col > *:nth-child(3) { animation-delay: .39s; }
+.hero-text-col > *:nth-child(4) { animation-delay: .51s; }
+.hero-text-col > *:nth-child(5) { animation-delay: .63s; }
+.hero-auth-col { animation: inkRise .9s cubic-bezier(.2, .7, .2, 1) .45s backwards; perspective: 1000px; }
+
+/* Box login: vetro, bordo luminoso che segue il mouse, leggera inclinazione */
+.hero-auth-col .auth-container {
+    border-radius: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);
+    transition: transform .2s ease-out;
+}
+.auth-container::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 2;
+    background: radial-gradient(260px circle at var(--ink-mx, 50%) var(--ink-my, 50%), var(--accent-primary), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0; transition: opacity .3s ease;
+}
+.auth-container:hover::before { opacity: 1; }
+
+/* ---------- 9. Card della Home: cascata, sollevamento, alone che segue il mouse ---------- */
+.home-service-card {
+    animation: inkRise .7s cubic-bezier(.2, .7, .2, 1) backwards;
+    background-image: radial-gradient(300px circle at var(--ink-mx, 50%) var(--ink-my, 50%), transparent, transparent) !important;
+}
+.home-service-card:nth-child(1) { animation-delay: .25s; }
+.home-service-card:nth-child(2) { animation-delay: .37s; }
+.home-service-card:nth-child(3) { animation-delay: .49s; }
+.home-service-card:nth-child(4) { animation-delay: .61s; }
+.home-service-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 50px -18px var(--ink-glow) !important;
+    border-color: rgba(123, 44, 191, 0.4) !important;
+    background-image: radial-gradient(300px circle at var(--ink-mx, 50%) var(--ink-my, 50%), var(--ink-tint), transparent 65%) !important;
+}
+.home-service-card svg { transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); }
+.home-service-card:hover > div:first-child svg:first-of-type { transform: rotate(-8deg) scale(1.12); }
+.home-service-card:hover > div:last-child svg { transform: translateX(6px); }
+
+/* ---------- 10. Finestre e notifiche ---------- */
+.modal-content { border-radius: var(--radius-lg); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.35); }
+.modal-overlay { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.toast { border-radius: var(--radius-sm); box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.25); backdrop-filter: blur(14px); }
+
+/* ---------- Accessibilità: chi chiede meno movimento vede tutto fermo ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .navbar, .landing-top-bar, .sidebar-item, .sidebar-section-label, .sidebar-divider, .page-view.active,
+    .hero-text-col > *, .hero-auth-col, .home-service-card, .highlight-text,
+    .btn-primary::after, .btn-gradient::after, .btn-hero-extract::after, .pulse-dot::after {
+        animation: none !important;
+    }
+    .hero-auth-col .auth-container { transition: none; }
+}
