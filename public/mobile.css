@@ -1,0 +1,11 @@
+/* ==========================================================================
+   VERSIONE MOBILE
+   Questo file viene caricato dalle pagine con media="(max-width: 768px)":
+   sui computer il browser lo ignora, quindi nulla di quanto scritto qui
+   può modificare la versione desktop.
+
+   Regole:
+   - Tutte le nuove modifiche pensate per smartphone vanno in questo file.
+   - Non modificare styles.css o gli stili inline delle pagine per sistemare il mobile.
+   - Prima del push: tools/desktop-check (vedi CLAUDE.md / AGENTS.md).
+   ========================================================================== */
