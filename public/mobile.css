@@ -299,15 +299,37 @@ html[data-theme="dark"] .sidebar { background: #16161d !important; }
 }
 .article-content { padding-right: 0 !important; gap: 8px !important; }
 .article-card-header { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
-.article-source-meta { display: flex !important; flex-wrap: nowrap !important; align-items: center; min-width: 0; gap: 8px !important; }
+.article-source-meta {
+    display: flex !important; flex-wrap: nowrap !important; align-items: center; gap: 8px !important;
+    min-width: 0; width: 100% !important; max-width: 100% !important; box-sizing: border-box; align-self: stretch !important;
+}
 .article-source-logo {
     height: 20px !important;
     width: auto !important;
-    max-width: 84px !important;
-    flex-shrink: 0;
+    max-width: 120px !important;
+    flex: 0 1 auto;
+    min-width: 48px;
     object-fit: contain;
 }
-.article-source-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* Tema scuro: i loghi delle testate sono quasi sempre scuri, li appoggiamo su un fondino chiaro */
+html[data-theme="dark"] .article-source-logo {
+    height: 24px !important;
+    max-width: 128px !important;
+    padding: 2px 6px;
+    background: #ffffff;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+/* Articolo senza foto: l'app mette un'icona segnaposto che, ingrandita, sembra un'immagine
+   rotta. La nascondiamo e lasciamo spazio al tasto di trascinamento accanto alla testata. */
+.article-thumb[src^="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUi"] {
+    display: none !important;
+}
+.article-card:has(.article-thumb[src^="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUi"]) .article-source-meta {
+    padding-right: 44px;
+    min-height: 36px;
+}
+.article-source-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto !important; }
 .article-meta-dot, .article-date { white-space: nowrap; flex-shrink: 0; font-size: 12px !important; }
 .article-category-pill { width: 100%; }
 .article-category-select { width: 100%; height: 40px !important; line-height: normal !important; }
