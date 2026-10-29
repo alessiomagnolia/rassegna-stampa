@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.className = `history-item ${item.id === currentPrId ? 'active' : ''}`;
             div.onclick = () => loadPressRelease(item.id);
 
-            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' }) : 'Recente';
+            const dateStr = item.created_at ? new Date(String(item.created_at).replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}(:\d{2})?)$/, '$1T$2Z')).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' }) : 'Recente';
             
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">

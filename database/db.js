@@ -49,6 +49,12 @@ function initDatabase() {
     if (!existingUserCols.includes('logo_data')) {
         db.prepare("ALTER TABLE users ADD COLUMN logo_data TEXT DEFAULT ''").run();
     }
+    // Dati del profilo personale (prima salvati solo nel browser)
+    for (const col of ['full_name', 'role', 'phone', 'website']) {
+        if (!existingUserCols.includes(col)) {
+            db.prepare(`ALTER TABLE users ADD COLUMN ${col} TEXT DEFAULT ''`).run();
+        }
+    }
 
     // Create articles table (if we want to cache/store them later)
     db.prepare(`

@@ -18,7 +18,14 @@ let selectedTemplateId = 'classic';
 // Init fetch
 fetch('/assets/logos.json')
     .then(res => res.json())
-    .then(data => { logoArchive = data; })
+    .then(data => {
+        logoArchive = data;
+        // L'archivio potrebbe essere già stato disegnato con la lista di riserva: lo aggiorniamo con quella completa
+        if (document.getElementById('archiveLogosGrid') && typeof loadCustomArchiveLogos === 'function') {
+            loadCustomArchiveLogos();
+            if (typeof window.renderArchiveLogos === 'function') window.renderArchiveLogos();
+        }
+    })
     .catch(err => console.log('Logos non caricati', err));
 
 
@@ -54,6 +61,16 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
+
+// SQLite salva CURRENT_TIMESTAMP in UTC senza fuso ("2026-10-28 22:35:00"): lo interpretiamo come UTC
+// così l'ora mostrata è quella italiana
+function parseServerDate(value) {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(value)) {
+        return new Date(value.replace(' ', 'T') + 'Z');
+    }
+    return new Date(value);
+}
+window.parseServerDate = parseServerDate;
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -178,6 +195,7 @@ async function loadProfile() {
         const data = await apiCall('GET', '/api/auth/profile');
         state.user = data.user;
         updateProfileUI();
+        if (typeof loadFullProfileData === 'function') loadFullProfileData();
         loadHistory();
     } catch (error) {
         console.error('Failed to load profile');
@@ -1185,6 +1203,8 @@ async function generatePDF() {
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
             body: JSON.stringify({
+                // Aggiorna la rassegna già archiviata (es. dopo "Condividi Link Web") invece di crearne un doppione
+                id: state.currentReviewId || undefined,
                 articles: state.articles,
                 title,
                 clientName,
@@ -1332,7 +1352,7 @@ function toYYYYMMDD(d) {
 
 function getItemDateKey(dateStr) {
     if (!dateStr) return '0000-00-00';
-    const d = new Date(dateStr);
+    const d = parseServerDate(dateStr);
     if (isNaN(d.getTime())) {
         const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
         return match ? `${match[1]}-${match[2]}-${match[3]}` : '0000-00-00';
@@ -1761,7 +1781,7 @@ function renderHistoryGroupCard(container, groupTitle, items, iconName) {
         itemRow.className = `history-item ${isSelected ? 'selected' : ''}`;
         itemRow.id = `history-item-${item.id}`;
 
-        const d = new Date(item.created_at);
+        const d = parseServerDate(item.created_at);
         const timeStr = !isNaN(d.getTime())
             ? d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
             : '';
@@ -2015,7 +2035,7 @@ function exportHistoryCsv() {
     const origin = window.location.origin;
 
     itemsToExport.forEach(it => {
-        const d = new Date(it.created_at);
+        const d = parseServerDate(it.created_at);
         const dateStr = !isNaN(d.getTime()) ? d.toLocaleDateString('it-IT') : '';
         const timeStr = !isNaN(d.getTime()) ? d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
         rows.push([
@@ -3316,7 +3336,7 @@ async function loadNewsCollections() {
 
         container.innerHTML = '';
         collections.forEach(coll => {
-            const d = new Date(coll.created_at);
+            const d = parseServerDate(coll.created_at);
             const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}`;
             
             const div = document.createElement('div');
@@ -3456,13 +3476,15 @@ function renderClientSelectors() {
         if (!select) return;
         select.innerHTML = '';
 
-        if (userClients.length === 0) {
-            const emptyOpt = document.createElement('option');
-            emptyOpt.value = '';
-            emptyOpt.textContent = 'Nessun Cliente';
-            emptyOpt.style.color = 'black';
-            select.appendChild(emptyOpt);
-        } else {
+        // "Nessun Cliente" resta sempre disponibile, così si può tornare a lavorare senza cliente attivo
+        const emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = 'Nessun Cliente';
+        emptyOpt.style.color = 'black';
+        if (!activeClientId) emptyOpt.selected = true;
+        select.appendChild(emptyOpt);
+
+        if (userClients.length > 0) {
             userClients.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.id;
@@ -4383,6 +4405,25 @@ function loadFullProfileData() {
         }
     }
 
+    // Dati salvati sul server: riempiono i campi rimasti vuoti (es. primo accesso da un altro dispositivo)
+    const u = state.user || {};
+    const fillIfEmpty = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && !el.value && value) el.value = value;
+    };
+    fillIfEmpty('profFullName', u.full_name);
+    fillIfEmpty('profEmail', u.email);
+    fillIfEmpty('profRole', u.role);
+    fillIfEmpty('profPhone', u.phone);
+    fillIfEmpty('profWebsite', u.website);
+    const profPreview = document.getElementById('profLogoPreview');
+    const serverLogo = u.logo_data || '';
+    if (profPreview && serverLogo && (!profPreview.getAttribute('src') || profPreview.getAttribute('src') === '')) {
+        profPreview.src = serverLogo;
+        const container = document.getElementById('profLogoPreviewContainer');
+        if (container) container.style.display = 'block';
+    }
+
     if (companyName) {
         updateCompanyNameAcrossUI(companyName);
     }
@@ -4401,9 +4442,18 @@ window.handleProfileLogoUpload = async function(e) {
         }
         state.userLogoBase64 = base64;
         localStorage.setItem('rs_company_logo', base64);
+
+        // Salva il logo anche sul server, così resta disponibile su altri dispositivi e browser
+        const formData = new FormData();
+        formData.append('logo', file);
+        const data = await apiCall('POST', '/api/auth/upload-logo', formData, true);
+        if (state.user) {
+            state.user.logo_path = data.logo_path;
+            if (data.logo_data) state.user.logo_data = data.logo_data;
+        }
         showToast('Logo aziendale caricato!', 'success');
     } catch(err) {
-        showToast('Errore caricamento logo', 'error');
+        showToast('Errore caricamento logo: ' + (err.message || 'riprova'), 'error');
     }
 };
 
@@ -4414,7 +4464,9 @@ async function saveFullProfileData() {
     const phone = document.getElementById('profPhone')?.value.trim() || '';
     const companyName = document.getElementById('profCompanyName')?.value.trim() || '';
     const website = document.getElementById('profWebsite')?.value.trim() || '';
-    const logoBase64 = document.getElementById('profLogoPreview')?.src || null;
+    // getAttribute: con src vuoto la proprietà .src restituirebbe l'indirizzo della pagina, non un logo
+    const logoAttr = document.getElementById('profLogoPreview')?.getAttribute('src') || '';
+    const logoBase64 = logoAttr.startsWith('data:') ? logoAttr : null;
 
     const profileData = { fullName, email, role, phone, companyName, website, logoBase64 };
     localStorage.setItem('rs_full_profile', JSON.stringify(profileData));
@@ -5884,7 +5936,7 @@ window.openMailingListModal = async function() {
                 history.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
-                    const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
+                    const dateStr = p.created_at ? parseServerDate(p.created_at).toLocaleDateString() : '';
                     opt.textContent = `${p.title || 'Comunicato #' + p.id} ${p.client_name ? '(' + p.client_name + ')' : ''} [${dateStr}]`;
                     select.appendChild(opt);
                 });
@@ -6156,7 +6208,8 @@ window.executeImportContacts = async function() {
     try {
         const res = await apiCall('POST', '/api/contacts/import', { text });
         const count = res.count !== undefined ? res.count : (res.imported || 0);
-        showToast(`Importazione completata: ${count} contatti aggiunti alla rubrica!`, 'success');
+        const skippedNote = res.skipped ? ` (${res.skipped} righe ignorate: intestazione o senza email)` : '';
+        showToast(`Importazione completata: ${count} contatti aggiunti alla rubrica!${skippedNote}`, 'success');
         closeImportContactsModal();
         loadMediaContacts();
     } catch (err) {
@@ -6185,11 +6238,14 @@ window.executeImportContacts = async function() {
 // --- DEDICATED EXECUTIVE BRIEFING PAGE (#page-briefing) ---
 // ==========================================================================
 let currentPageDigestData = null;
+let briefingInitRun = 0;
 
 window.initBriefingPage = async function() {
     const selectBriefing = document.getElementById('selectBriefingSource');
     const selectKpi = document.getElementById('selectKpiSource');
     if (!selectBriefing && !selectKpi) return;
+    // Se la pagina viene inizializzata due volte di fila, vale solo l'ultima chiamata (evita voci doppie nei menu)
+    const runId = ++briefingInitRun;
 
     // Restore state.articles if empty from localStorage or sessionStorage
     if (!state.articles || state.articles.length === 0) {
@@ -6235,6 +6291,7 @@ window.initBriefingPage = async function() {
     let historyCount = 0;
     try {
         const history = await apiCall('GET', '/api/pdf/history');
+        if (runId !== briefingInitRun) return;
         if (Array.isArray(history) && history.length > 0) {
             historyCount = history.length;
             const optGroupBriefing = document.createElement('optgroup');
@@ -6245,7 +6302,7 @@ window.initBriefingPage = async function() {
             history.forEach(item => {
                 const clientPart = item.client_name ? `${item.client_name} • ` : '';
                 const countPart = `${item.article_count || 0} articoli`;
-                const datePart = item.created_at ? ` • ${new Date(item.created_at).toLocaleDateString('it-IT')}` : '';
+                const datePart = item.created_at ? ` • ${parseServerDate(item.created_at).toLocaleDateString('it-IT')}` : '';
                 const text = `${item.title || 'Rassegna'} (${clientPart}${countPart}${datePart})`;
 
                 if (selectBriefing) {
@@ -8056,7 +8113,7 @@ function renderReportsList(reports) {
         const pickupsCount = kpis.total_pickups || 0;
         const audienceOTS = kpis.formatted_audience_ots || 'N/D';
         const reads = kpis.formatted_estimated_reads || 'N/D';
-        const dateCreated = new Date(r.created_at).toLocaleDateString('it-IT');
+        const dateCreated = parseServerDate(r.created_at).toLocaleDateString('it-IT');
 
         cardsHtml += `
             <div class="glass-card" style="border-radius:14px; padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; border:1px solid var(--border-color); background:var(--bg-card);">
@@ -8324,12 +8381,12 @@ async function runReportAggregation() {
         // Precompila campi se vuoti
         const salutationInput = document.getElementById('reportRecipientSalutation');
         if (salutationInput && !salutationInput.value) {
-            salutationInput.value = 'Caro Presidente, Caro Toni,';
+            salutationInput.value = 'Gentile Cliente,';
         }
 
         const titleInput = document.getElementById('reportRecipientTitle');
         if (titleInput && !titleInput.value) {
-            titleInput.value = `Presidente di ${clientName}`;
+            titleInput.value = clientName;
         }
 
         const topMediaInput = document.getElementById('reportTopMediaText');
@@ -8339,7 +8396,7 @@ async function runReportAggregation() {
 
         const senderInput = document.getElementById('reportSenderSignature');
         if (senderInput && !senderInput.value) {
-            senderInput.value = 'Attilio';
+            senderInput.value = getDefaultReportSignature();
         }
 
         // Render tabella lanci
@@ -8452,6 +8509,17 @@ function removeManualLaunchRow(idx) {
 }
 window.removeManualLaunchRow = removeManualLaunchRow;
 
+// Firma predefinita del report: il nome dell'agenzia/azienda dell'utente
+function getDefaultReportSignature() {
+    return (state.user?.company_name || localStorage.getItem('rs_company_name') || 'Ufficio Stampa').trim();
+}
+
+// Aggiorna l'anteprima email mentre l'utente modifica i campi del report
+const REPORT_EMAIL_FIELDS = ['reportRecipientSalutation', 'reportRecipientTitle', 'reportEventsSupported', 'reportTopMediaText', 'reportSenderSignature', 'reportPeriodLabel'];
+document.addEventListener('input', (e) => {
+    if (e.target && REPORT_EMAIL_FIELDS.includes(e.target.id)) updateReportEmailPreviewText();
+});
+
 function updateReportEmailPreviewText() {
     const textarea = document.getElementById('reportGeneratedEmailText');
     if (!textarea) return;
@@ -8459,11 +8527,11 @@ function updateReportEmailPreviewText() {
     const clientSelect = document.getElementById('reportClientSelect');
     const clientName = clientSelect ? clientSelect.value.trim() : 'Cliente';
     const periodLabel = (document.getElementById('reportPeriodLabel')?.value || 'Periodo').trim();
-    const salutation = (document.getElementById('reportRecipientSalutation')?.value || 'Caro Presidente,').trim();
+    const salutation = (document.getElementById('reportRecipientSalutation')?.value || 'Gentile Cliente,').trim();
     const recipientTitle = (document.getElementById('reportRecipientTitle')?.value || '').trim();
     const eventsText = (document.getElementById('reportEventsSupported')?.value || '').trim();
     const topMedia = (document.getElementById('reportTopMediaText')?.value || '').trim();
-    const signature = (document.getElementById('reportSenderSignature')?.value || 'Attilio').trim();
+    const signature = (document.getElementById('reportSenderSignature')?.value || getDefaultReportSignature()).trim();
 
     const launches = (currentReportDraft?.launches || []).filter(l => l.included !== false);
     const totalPickups = launches.reduce((acc, l) => acc + (l.pickups || 0), 0);
@@ -8484,7 +8552,7 @@ function updateReportEmailPreviewText() {
     const launchesDetails = launches.map(l => `${l.date} - ${l.title} – ${l.pickups || 0} uscite`).join('\n');
 
     const emailText = `${salutation}
-con la presente Vi inviamo il Report Media relations e Press office${recipientTitle ? ' per ' + recipientTitle : ''}, relativo ai mesi di ${periodLabel}, con ${launches.length} lanci di comunicati stampa e dichiarazioni per un totale di ${totalPickups} pubblicazioni.
+con la presente Vi inviamo il Report Media relations e Press office${recipientTitle ? ' per ' + recipientTitle : ''}, relativo al periodo: ${periodLabel}, con ${launches.length} lanci di comunicati stampa e dichiarazioni per un totale di ${totalPickups} pubblicazioni.
 
 ${eventsSection}${topMediaSection}Nel seguente link permanente è possibile trovare il report completo e accedere a tutti i singoli lanci e rassegne PDF:
 ${shareUrl}

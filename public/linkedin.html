@@ -1168,7 +1168,7 @@
                                     <span id="cardBannerText" style="font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; color: white; display: none;">la Repubblica</span>
                                 </div>
                                 <div id="cardBannerClientContainer" style="display: none;">
-                                    <img id="cardBannerClient" style="max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(0) invert(1); display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Client">
+                                    <img id="cardBannerClient" style="max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(0) invert(1);" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Client">
                                 </div>
                             </div>
 
@@ -1202,7 +1202,7 @@
 
                                     <!-- Client Logo at Top Right -->
                                     <div id="cardClientLogoContainer" style="display: none; align-self: flex-start;">
-                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain; display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo Cliente">
+                                        <img id="cardClientLogo" style="max-height: 32px; max-width: 130px; object-fit: contain;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo Cliente">
                                     </div>
                                 </div>
 
@@ -1424,7 +1424,7 @@
             // Clean generic default values
             inputQuote.value = ""; // Clean empty title box
             inputSubtitle.value = ""; // Clean empty subtitle box
-            inputDate.value = "22/07/2026"; // Pure date string
+            inputDate.value = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }); // Data di oggi
 
             // Template Switcher (Speech, Banner, Editorial)
             let currentTemplate = 'speech';
@@ -3190,10 +3190,10 @@
             </div>
             <p style="font-size:0.82rem; color:rgba(255,255,255,0.7); margin-bottom:1.25rem; text-align:left;">Scegli il formato per il salvataggio</p>
             <div style="display:flex; flex-direction:column; gap:10px;">
-                <button type="button" id="btnDownloadPNG" class="btn btn-primary" onclick="downloadCardImage('png'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:700;">
+                <button type="button" id="btnDownloadPNG" class="btn btn-primary" onclick="closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:700;">
                     <i data-feather="download"></i> Scarica PNG HD (Alta Qualità)
                 </button>
-                <button type="button" id="btnDownloadJPG" class="btn btn-outline" onclick="downloadCardImage('jpg'); closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-color:rgba(255,255,255,0.3); color:white;">
+                <button type="button" id="btnDownloadJPG" class="btn btn-outline" onclick="closeDownloadModal();" style="width:100%; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-color:rgba(255,255,255,0.3); color:white;">
                     <i data-feather="image"></i> Scarica JPEG Standard
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeDownloadModal()" style="margin-top:0.4rem; height:38px;">Annulla / Chiudi</button>

@@ -17,10 +17,13 @@ function getAnthropicClient() {
  */
 async function callAnthropicMessages(anthropic, params, options = {}) {
     const isFastTask = options.type === 'fast';
+    // Un modello impostato a mano su Render (ANTHROPIC_MODEL) ha la precedenza sulla lista
+    const envModel = (process.env.ANTHROPIC_MODEL || '').trim() || null;
 
     const candidateModels = isFastTask
         ? [
             cachedFastModel,
+            envModel,
             'claude-haiku-4-5-20251001',
             'claude-sonnet-4-6',
             'claude-sonnet-5',
@@ -30,6 +33,7 @@ async function callAnthropicMessages(anthropic, params, options = {}) {
           ].filter(Boolean)
         : [
             cachedWorkingModel,
+            envModel,
             'claude-sonnet-4-6',
             'claude-sonnet-5',
             'claude-sonnet-4-5-20250929',

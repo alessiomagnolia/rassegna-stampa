@@ -127,8 +127,8 @@ router.post('/login', async (req, res) => {
 router.get('/profile', authMiddleware, (req, res) => {
     try {
         const db = getDb();
-        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, created_at FROM users WHERE id = ?').get(req.userId);
-        
+        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, full_name, role, phone, website, created_at FROM users WHERE id = ?').get(req.userId);
+
         if (!user) {
             return res.status(404).json({ error: 'Utente non trovato.' });
         }
@@ -143,12 +143,22 @@ router.get('/profile', authMiddleware, (req, res) => {
 // Update Profile
 router.put('/profile', authMiddleware, (req, res) => {
     try {
-        const { company_name } = req.body;
+        const { company_name, full_name, role, phone, website } = req.body;
         const db = getDb();
-        
-        db.prepare('UPDATE users SET company_name = ? WHERE id = ?').run(company_name, req.userId);
-        
-        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, created_at FROM users WHERE id = ?').get(req.userId);
+        const current = db.prepare('SELECT company_name, full_name, role, phone, website FROM users WHERE id = ?').get(req.userId) || {};
+        // Un campo non inviato mantiene il valore attuale (la pagina Rassegna invia solo company_name)
+        const keep = (value, old) => (value === undefined ? (old || '') : String(value).trim().slice(0, 300));
+
+        db.prepare('UPDATE users SET company_name = ?, full_name = ?, role = ?, phone = ?, website = ? WHERE id = ?').run(
+            keep(company_name, current.company_name),
+            keep(full_name, current.full_name),
+            keep(role, current.role),
+            keep(phone, current.phone),
+            keep(website, current.website),
+            req.userId
+        );
+
+        const user = db.prepare('SELECT id, email, company_name, logo_path, logo_data, full_name, role, phone, website, created_at FROM users WHERE id = ?').get(req.userId);
         res.json({ user });
     } catch (error) {
         console.error('Update profile error:', error);

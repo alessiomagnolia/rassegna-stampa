@@ -309,23 +309,25 @@ async function fallbackExtract(url) {
 // ---------------------------------------------------------------
 // Bot Challenge Detection & Entities Unescaping
 // ---------------------------------------------------------------
+const NAMED_ENTITIES = {
+    amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ',
+    rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', laquo: '«', raquo: '»',
+    ndash: '–', mdash: '—', hellip: '…', euro: '€',
+    agrave: 'à', egrave: 'è', eacute: 'é', igrave: 'ì', ograve: 'ò', ugrave: 'ù',
+    Agrave: 'À', Egrave: 'È', Eacute: 'É', Igrave: 'Ì', Ograve: 'Ò', Ugrave: 'Ù'
+};
+
 function decodeHtmlEntities(str) {
     if (!str) return '';
-    return str
-        .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
-        .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-        .replace(/&amp;/g, '&')
-        .replace(/&quot;/g, '"')
-        .replace(/&#039;/g, "'")
-        .replace(/&apos;/g, "'")
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&#8217;/g, "'")
-        .replace(/&#8220;/g, '“')
-        .replace(/&#8221;/g, '”')
-        .replace(/&#8211;/g, '–')
-        .replace(/&#8212;/g, '—');
+    let out = String(str);
+    // Due passaggi per gestire anche le entità codificate due volte (es. "&amp;#8217;")
+    for (let i = 0; i < 2; i++) {
+        out = out
+            .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+            .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+            .replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name] ?? m);
+    }
+    return out;
 }
 
 function isBotChallenge(title, content) {
@@ -1020,9 +1022,78 @@ async function extractWithSearchRescue(url) {
 // ---------------------------------------------------------------
 // Main extractor — Tier 1 (@extractus) + Tier 1.5 (WP REST API) + Tier 2 (Cheerio) + Tier 3 (Puppeteer) + Tier 4 (Search Rescue)
 // ---------------------------------------------------------------
+/**
+ * Controlla che il link porti davvero a una pagina esistente prima di avviare i tier di estrazione.
+ * Senza questo controllo i fallback (Jina, Puppeteer, Search Rescue) restituivano la homepage
+ * della testata come se fosse l'articolo richiesto.
+ * Blocca solo i casi certi (404/410 o rimando alla homepage): errori anti-bot o di rete non fermano l'estrazione.
+ */
+async function assertArticleExists(url) {
+    if (typeof fetch !== 'function') return;
+    let parsed;
+    try { parsed = new URL(url); } catch { throw new Error('Il link inserito non è un indirizzo web valido.'); }
+    if (parsed.hostname.endsWith('news.google.com')) return;
+
+    let res;
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        res = await fetch(url, { signal: controller.signal, redirect: 'follow', headers: BROWSER_PROFILES[0] });
+        clearTimeout(timer);
+        res.body?.cancel?.().catch(() => {});
+    } catch {
+        return;
+    }
+
+    if (res.status === 404 || res.status === 410) {
+        throw new Error(`La pagina non esiste (errore ${res.status}): controlla il link dell'articolo.`);
+    }
+
+    try {
+        const finalUrl = new URL(res.url || url);
+        const originalDepth = parsed.pathname.split('/').filter(Boolean).length;
+        const finalIsHome = finalUrl.pathname === '/' || finalUrl.pathname === '';
+        if (originalDepth >= 1 && finalIsHome && finalUrl.hostname.replace(/^www\./, '') === parsed.hostname.replace(/^www\./, '')) {
+            throw new Error('Il link rimanda alla homepage della testata: l\'articolo potrebbe essere stato rimosso o spostato.');
+        }
+    } catch (e) {
+        if (e.message.startsWith('Il link rimanda')) throw e;
+    }
+}
+
+/**
+ * Rimuove dal titolo il nome del sito aggiunto in coda (es. " - Notizie - Ansa.it", " - Il Quotidiano del Sud").
+ */
+function cleanArticleTitle(title, url, sourceName = '') {
+    if (!title) return title;
+    const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    let hostCore = '';
+    try { hostCore = norm(new URL(url).hostname.replace(/^www\./, '').split('.')[0]); } catch {}
+    const sourceNorm = norm(sourceName);
+    const genericSegments = ['notizie', 'news', 'ultimenotizie', 'home', 'homepage', 'ilsito'];
+
+    const isSiteSegment = (segment) => {
+        const s = norm(segment);
+        if (!s) return true;
+        if (genericSegments.includes(s)) return true;
+        if (hostCore && hostCore.length >= 3 && s.includes(hostCore)) return true;
+        if (sourceNorm && sourceNorm.length >= 3 && (s.includes(sourceNorm) || sourceNorm.includes(s))) return true;
+        return false;
+    };
+
+    const parts = String(title).trim().split(/\s+[-|–—]\s+/);
+    while (parts.length > 1 && isSiteSegment(parts[parts.length - 1])) {
+        parts.pop();
+    }
+    const cleaned = parts.join(' - ').trim();
+    return cleaned.length >= 10 ? cleaned : String(title).trim();
+}
+
 async function extractArticle(url, options = {}) {
     let article = null;
     let tierUsed = 'none';
+
+    await assertArticleExists(url);
 
     // 1) Tier 1: Primary @extractus/article-extractor (with safe 5s timeout)
     try {
@@ -1199,7 +1270,7 @@ async function extractArticle(url, options = {}) {
 
     return {
         url,
-        title: (article.title || 'Titolo non disponibile').trim(),
+        title: cleanArticleTitle(decodeHtmlEntities(article.title || 'Titolo non disponibile'), url, sourceName),
         author: article.author || 'Autore non disponibile',
         published_date: formatDate(article.published),
         source_name: sourceName,
@@ -1215,4 +1286,4 @@ async function extractArticle(url, options = {}) {
     };
 }
 
-module.exports = { extractArticle };
+module.exports = { extractArticle, cleanArticleTitle, decodeHtmlEntities };

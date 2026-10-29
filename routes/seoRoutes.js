@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
+const { callAnthropicMessages } = require('../services/aiHelper');
 
 const router = express.Router();
 
@@ -125,7 +126,6 @@ Web: www.${company.toLowerCase().replace(/[^a-z0-9]/g, '') || 'azienda'}.it`;
 
     try {
         const anthropic = new Anthropic({ apiKey });
-        const model = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
 
         const prompt = `Sei un esperto Capo Ufficio Stampa. Scrivi un Comunicato Stampa impeccabile in italiano giornalistico.
 Azienda/Soggetto: ${company}
@@ -143,8 +143,7 @@ Regole formali:
 6. Boilerplate finale "Informazioni su [Azienda]" e blocco Contatti Ufficio Stampa
 7. NON inserire commenti personali, restituisci solo il testo del comunicato.`;
 
-        const response = await anthropic.messages.create({
-            model,
+        const response = await callAnthropicMessages(anthropic, {
             max_tokens: 1200,
             system: "Sei un giornalista e addetto stampa professionista. Rispondi solo con il comunicato stampa formattato.",
             messages: [{ role: "user", content: prompt }]

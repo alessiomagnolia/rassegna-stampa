@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { callAnthropicMessages } = require('./aiHelper');
 
 let anthropicClient = null;
 
@@ -14,7 +15,50 @@ function getAnthropic() {
     return anthropicClient;
 }
 
-const DEFAULT_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
+const RISK_SCORES = { basso: 15, medio: 45, alto: 75 };
+
+/**
+ * Valutazione euristica per parole chiave: usata se l'AI non è configurata o non risponde,
+ * così un articolo critico non viene mai classificato come "neutro" per default.
+ */
+function heuristicSentiment(title, cleanContent) {
+    const lower = `${title} ${cleanContent}`.toLowerCase();
+    const badWords = ['scandalo', 'crisi', 'denuncia', 'indagine', 'indagato', 'fallimento', 'polemica', 'multa', 'accusa', 'ritardo', 'blocco', 'sciopero', 'truffa', 'frode', 'buco', 'arresto', 'sequestro', 'licenziament', 'crollo', 'condanna'];
+    const goodWords = ['successo', 'crescita', 'record', 'innovazione', 'premio', 'partnership', 'accordo', 'utile', 'leader', 'espansione', 'ottimo'];
+
+    const badCount = badWords.filter(w => lower.includes(w)).length;
+    const goodCount = goodWords.filter(w => lower.includes(w)).length;
+
+    let sentiment = 'neutro';
+    let score = 0;
+    let risk_level = 'basso';
+    let crisis_alert = false;
+
+    if (badCount > goodCount) {
+        sentiment = 'critico';
+        score = Math.max(-100, -25 * badCount);
+        risk_level = badCount >= 2 ? 'alto' : 'medio';
+        crisis_alert = badCount >= 2;
+    } else if (goodCount > badCount) {
+        sentiment = 'positivo';
+        score = Math.min(100, 25 * goodCount);
+        risk_level = 'basso';
+    }
+
+    const explanation = `Valutazione euristica: rilevati ${goodCount} indicatori favorevoli e ${badCount} elementi di potenziale criticità.`;
+    return {
+        sentiment,
+        score,
+        risk_level,
+        risk_score: RISK_SCORES[risk_level],
+        crisis_alert,
+        explanation,
+        summary: explanation,
+        defensive_actions: crisis_alert ? 'Preparare una nota di posizione e monitorare le riprese nelle prossime ore.' : '',
+        executive_takeaway: title,
+        key_quotes: []
+    };
+}
 
 /**
  * Analisi semantica avanzata del Sentiment e del Rischio Reputazionale (Crisis Detection)
@@ -25,39 +69,7 @@ async function analyzeSentimentAndRisk({ title, content, clientName = '' }) {
     const cleanContent = (content || '').slice(0, 3500);
 
     if (!client) {
-        // Fallback euristico se la chiave API non è attiva
-        const lower = `${title} ${cleanContent}`.toLowerCase();
-        const badWords = ['scandalo', 'crisi', 'denuncia', 'indagine', 'fallimento', 'polemica', 'multa', 'accusa', 'ritardo', 'blocco', 'sciopero', 'truffa', 'buco'];
-        const goodWords = ['successo', 'crescita', 'record', 'innovazione', 'premio', 'partnership', 'accordo', 'utile', 'leader', 'espansione', 'ottimo'];
-
-        const badCount = badWords.filter(w => lower.includes(w)).length;
-        const goodCount = goodWords.filter(w => lower.includes(w)).length;
-
-        let sentiment = 'neutro';
-        let score = 0;
-        let risk_level = 'basso';
-        let crisis_alert = false;
-
-        if (badCount > goodCount) {
-            sentiment = 'critico';
-            score = Math.max(-100, -25 * badCount);
-            risk_level = badCount >= 2 ? 'alto' : 'medio';
-            crisis_alert = badCount >= 2;
-        } else if (goodCount > badCount) {
-            sentiment = 'positivo';
-            score = Math.min(100, 25 * goodCount);
-            risk_level = 'basso';
-        }
-
-        return {
-            sentiment,
-            score,
-            risk_level,
-            crisis_alert,
-            explanation: `Valutazione euristica: rilevati ${goodCount} indicatori favorevoli e ${badCount} elementi di potenziale criticità.`,
-            executive_takeaway: title,
-            key_quotes: []
-        };
+        return heuristicSentiment(title, cleanContent);
     }
 
     try {
@@ -72,34 +84,28 @@ Rispondi SOLO con un oggetto JSON valido (senza testo di contorno o blocchi mark
   "risk_level": "basso" | "medio" | "alto",
   "crisis_alert": booleano (true solo se c'è un rischio reputazionale o scandalo che richiede smentita/reazione immediata),
   "explanation": "Spiegazione sintetica in massimo 2 frasi del perché del voto e dell'impatto sul brand",
+  "defensive_actions": "Se il rischio è medio o alto, 1-2 frasi su come deve reagire l'ufficio stampa; altrimenti stringa vuota",
   "executive_takeaway": "Sintesi di 1 frase per il CEO/Direzione Generale",
   "key_quotes": ["eventuale citazione importante 1", "eventuale citazione 2"]
 }`;
 
-        const response = await client.messages.create({
-            model: DEFAULT_MODEL,
-            max_tokens: 600,
+        const response = await callAnthropicMessages(client, {
+            max_tokens: 700,
             system: "Sei un analista senior di Media Intelligence e Crisis Management. Rispondi solo in formato JSON valido.",
             messages: [{ role: "user", content: prompt }]
-        });
+        }, { type: 'fast' });
 
         const text = response.content[0].text.trim();
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        return JSON.parse(text);
+        const result = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        // Campi letti dalla pagina Analisi Rischio
+        result.risk_score = RISK_SCORES[result.risk_level] ?? 15;
+        result.summary = result.summary || result.explanation || '';
+        result.defensive_actions = result.defensive_actions || '';
+        return result;
     } catch (err) {
         console.error('[AIService] Errore Sentiment Analysis:', err.message);
-        return {
-            sentiment: 'neutro',
-            score: 0,
-            risk_level: 'basso',
-            crisis_alert: false,
-            explanation: 'Analisi automatica di base completata.',
-            executive_takeaway: title,
-            key_quotes: []
-        };
+        return heuristicSentiment(title, cleanContent);
     }
 }
 
@@ -134,8 +140,7 @@ Regole:
 4. Concludi con un augurio di buon lavoro.
 5. NON usare parentesi di regia come [musica], scrivi SOLO il testo esatto che deve essere letto ad alta voce.`;
 
-        const response = await client.messages.create({
-            model: DEFAULT_MODEL,
+        const response = await callAnthropicMessages(client, {
             max_tokens: 700,
             system: "Sei uno speaker professionista di news radiofoniche. Scrivi solo il testo da leggere.",
             messages: [{ role: "user", content: prompt }]
@@ -187,8 +192,7 @@ ${items}
 
 Restituisci direttamente il testo formattato in Markdown elegante.`;
 
-        const response = await client.messages.create({
-            model: DEFAULT_MODEL,
+        const response = await callAnthropicMessages(client, {
             max_tokens: 500,
             system: "Sei un capo ufficio stampa istituzionale. Sii sintetico, autorevole e chiaro.",
             messages: [{ role: "user", content: prompt }]

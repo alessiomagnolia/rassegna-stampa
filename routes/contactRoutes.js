@@ -237,11 +237,24 @@ function parseRawLineToContact(line) {
         phone = parts[5] || '';
     }
 
-    if (!name && !email) return null;
-    if (!email) email = `${name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@media.it`;
+    // Riga di intestazione (es. "Nome,Testata,Ruolo,Settore,Email,...") o senza un'email valida: non è un contatto.
+    // Non inventiamo indirizzi: un'email fittizia rischierebbe di far arrivare comunicati a destinatari sconosciuti.
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
     if (!name) name = email.split('@')[0];
 
-    return { name, outlet, role, beat, email, phone, notes };
+    return { name, outlet, role, beat: normalizeBeat(beat), email, phone, notes };
+}
+
+// Converte il settore scritto per esteso ("Economia & Finanza") nella chiave usata dalla rubrica ("economia")
+function normalizeBeat(beat) {
+    const b = String(beat || '').toLowerCase();
+    if (b.includes('econom') || b.includes('finanz')) return 'economia';
+    if (b.includes('tecnolog') || /\bai\b/.test(b)) return 'tecnologia';
+    if (b.includes('cronaca') || b.includes('territor')) return 'cronaca';
+    if (b.includes('politic') || b.includes('istituz')) return 'politica';
+    if (b.includes('sanit') || b.includes('salute')) return 'sanita';
+    if (b.includes('lifestyle') || b.includes('cultur')) return 'lifestyle';
+    return 'generale';
 }
 
 /**
@@ -251,19 +264,21 @@ function parseRawLineToContact(line) {
 router.post('/import', (req, res) => {
     try {
         let contactList = [];
+        let skipped = 0;
 
         if (Array.isArray(req.body.contacts) && req.body.contacts.length > 0) {
             contactList = req.body.contacts;
         } else if (typeof req.body.text === 'string' && req.body.text.trim()) {
-            const lines = req.body.text.split(/\r?\n/);
+            const lines = req.body.text.split(/\r?\n/).filter(l => l.trim());
             for (const line of lines) {
                 const parsed = parseRawLineToContact(line);
                 if (parsed) contactList.push(parsed);
+                else skipped++;
             }
         }
 
         if (contactList.length === 0) {
-            return res.status(400).json({ error: 'Nessun contatto valido trovato nel testo o nella lista fornita.' });
+            return res.status(400).json({ error: 'Nessun contatto valido trovato: ogni riga deve contenere almeno un indirizzo email.' });
         }
 
         const db = getDb();
@@ -298,6 +313,7 @@ router.post('/import', (req, res) => {
             success: true,
             count: inserted,
             imported: inserted,
+            skipped,
             message: `${inserted} contatti importati con successo nella rubrica.`
         });
     } catch (error) {

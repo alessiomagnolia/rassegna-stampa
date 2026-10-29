@@ -163,9 +163,11 @@ REGOLE ESSENZIALI:
 2. TONE OF VOICE: Se sono presenti degli 'ESEMPI PRECEDENTI DEL CLIENTE', analizzali e replica fedelmente il loro stile e lessico.
 3. FORMATO TITOLO: Formatta il titolo con UN SINGOLO asterisco all'inizio e alla fine (es. *Cliente: Titolo del Comunicato*). Inserisci prima il soggetto (Cliente/Azienda) seguito da due punti o trattino e poi l'argomento. NON usare doppi asterischi **.`;
 
+        const todayLabel = new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' });
         const userPrompt = `${contextText}
 Crea un Comunicato Stampa completo con le seguenti specifiche:
 
+- DATA DI OGGI (da usare nella dateline, es. "Roma, ${todayLabel}"): ${todayLabel}. Non inventare altre date di pubblicazione.
 - TITOLO / ARGOMENTO: ${title}
 - CLIENTE / AZIENDA: ${client_name || 'Generico'}
 - VINCOLO LUNGHEZZA: ${lengthInstruction}
@@ -218,7 +220,9 @@ IMPORTANTE: Restituisci SOLTANTO il testo pulito del comunicato stampa a partire
             // 1. Remove leading disclaimers / chat preamble if title appears later
             const titleMatch = cleaned.match(/(?:#|\*\*|Headline:)?\s*([A-Z0-9À-Ü].*?:.*?)(?:\n|\r)/i) ||
                                cleaned.match(/(\*\*[^*]+\*\*|#[^#\n]+)/);
-            if (titleMatch && titleMatch.index > 0) {
+            // Taglia solo se prima del titolo c'è davvero del testo (non solo l'asterisco o il # del titolo stesso)
+            const preamble = titleMatch ? cleaned.slice(0, titleMatch.index).replace(/[\s*#]/g, '') : '';
+            if (titleMatch && titleMatch.index > 0 && preamble.length > 0) {
                 cleaned = cleaned.substring(titleMatch.index).trim();
             }
 
@@ -339,7 +343,14 @@ router.delete('/:id', authMiddleware, (req, res) => {
  */
 router.post('/pitch', authMiddleware, async (req, res) => {
     try {
-        const { title, content, client_name, beat, journalist_name, spokesperson_name } = req.body;
+        // press.js invia pressReleaseText / targetBeat / journalist / clientName: accettiamo entrambe le forme
+        const body = req.body || {};
+        const title = body.title;
+        const content = body.content || body.pressReleaseText;
+        const client_name = body.client_name || body.clientName;
+        const beat = body.beat || body.targetBeat;
+        const journalist_name = body.journalist_name || body.journalist;
+        const spokesperson_name = body.spokesperson_name || body.spokesperson;
 
         if (!title && !content) {
             return res.status(400).json({ error: 'Fornisci almeno il titolo o il testo del comunicato.' });
@@ -383,7 +394,7 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido strutturato così:
     "Opzione oggetto 2",
     "Opzione oggetto 3"
   ],
-  "salutation": "Gentile Collega | Gentile ${journalist || 'Nome Giornalista'}",
+  "salutation": "${journalist ? `Gentile ${journalist},` : 'Gentile Collega,'}",
   "hook": "Testo introduttivo di 1-2 frasi mirato al settore ${targetBeat}...",
   "bullet_points": [
     "Dato o fatto saliente 1",
@@ -406,6 +417,11 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido strutturato così:
                 const jsonMatch = raw.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     pitchResult = JSON.parse(jsonMatch[0]);
+                    // Se è indicato il giornalista, l'email deve rivolgersi a lui per nome
+                    if (journalist && pitchResult.full_email_text) {
+                        pitchResult.salutation = `Gentile ${journalist},`;
+                        pitchResult.full_email_text = pitchResult.full_email_text.replace(/^\s*Gentile\s+Collega\s*,?/i, `Gentile ${journalist},`);
+                    }
                 }
             }
         } catch (aiErr) {

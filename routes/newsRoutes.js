@@ -9,7 +9,7 @@ const decoder = new GoogleDecoder();
 const { buildSiteQuery, PRIORITY_SOURCES, getAllDomains, getAllRssFeeds } = require('../config/prioritySources');
 const { expandQueryWithAI } = require('../services/aiQueryService');
 const { analyzeSentimentAndRisk, generateAudioBriefingScript, generateExecutiveBoardSummary } = require('../services/aiService');
-const { extractArticle } = require('../services/articleExtractor');
+const { extractArticle, decodeHtmlEntities } = require('../services/articleExtractor');
 
 const router = express.Router();
 
@@ -889,6 +889,9 @@ router.get('/search', authMiddleware, async (req, res) => {
             delete r.timestamp;
             delete r._isPriority;
             r.isPrioritySource = isPriority;
+            // I feed RSS spesso contengono entità HTML (&#8217;) e tag nel sommario
+            r.title = decodeHtmlEntities(r.title).replace(/<[^>]+>/g, '').trim();
+            if (r.snippet) r.snippet = decodeHtmlEntities(r.snippet).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
             return r;
         });
 
@@ -1048,7 +1051,7 @@ router.post('/reader', authMiddleware, async (req, res) => {
         res.json(articleData);
     } catch (err) {
         console.error('[NewsRoutes] Errore reader:', err.message);
-        res.status(500).json({ error: err.message || 'Impossibile estrarre l\'articolo per la lettura.' });
+        res.status(422).json({ error: err.message || 'Impossibile estrarre l\'articolo per la lettura.' });
     }
 });
 
@@ -1079,7 +1082,12 @@ router.post('/audio-briefing', authMiddleware, async (req, res) => {
 
     try {
         const briefing = await generateAudioBriefingScript({ articles, clientName });
-        res.json(briefing);
+        // La dashboard legge script_60s / estimated_seconds
+        res.json({
+            ...briefing,
+            script_60s: briefing.script,
+            estimated_seconds: briefing.durationSecondsEstimated
+        });
     } catch (err) {
         console.error('[NewsRoutes] Errore audio briefing:', err);
         res.status(500).json({ error: 'Errore durante la generazione dell\'audio briefing' });
