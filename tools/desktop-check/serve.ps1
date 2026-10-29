@@ -54,8 +54,8 @@ while ((Get-Date) -lt $end) {
         $bytes = $null; $type = 'application/json'
         if ($p -eq '/__check/start') {
             $res.Redirect('/index.html?__check=0'); $res.Close(); continue
-        } elseif ($p -eq '/__check/snapshot.js') {
-            $bytes = [IO.File]::ReadAllBytes((Join-Path $PSScriptRoot 'snapshot.js')); $type = $types['.js']
+        } elseif ($p -eq '/__check/snapshot.js' -or $p -eq '/__check/mobile-audit.js') {
+            $bytes = [IO.File]::ReadAllBytes((Join-Path $PSScriptRoot ($p -replace '^/__check/', ''))); $type = $types['.js']
         } elseif ($p -eq '/__check/save' -and $req.HttpMethod -eq 'POST') {
             $name = ($req.QueryString['page'] -replace '[^a-z0-9\-]', '')
             $reader = New-Object IO.StreamReader($req.InputStream, $utf8); $body = $reader.ReadToEnd()
