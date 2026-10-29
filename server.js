@@ -108,6 +108,7 @@ const teamRoutes = require('./routes/teamRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const seoRoutes = require('./routes/seoRoutes');
 const transcribeRoutes = require('./routes/transcribeRoutes');
+const archiveLogoRoutes = require('./routes/archiveLogoRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
@@ -120,6 +121,7 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/transcribe', transcribeRoutes);
+app.use('/api/archive-logos', archiveLogoRoutes);
 
 // Health & Diagnostics Handler
 app.get('/api/health', (req, res) => {
@@ -151,9 +153,19 @@ app.get('/api/proxy-image', (req, res) => {
 
     // Se è un percorso locale in /public
     if (url.startsWith('/')) {
-        const localCleanPath = url.split('?')[0];
-        const localFilePath = path.join(__dirname, 'public', decodeURIComponent(localCleanPath));
-        if (fs.existsSync(localFilePath)) {
+        const publicDir = path.join(__dirname, 'public');
+        let localCleanPath;
+        try {
+            localCleanPath = decodeURIComponent(url.split('?')[0]);
+        } catch (e) {
+            return res.status(400).send('Invalid url');
+        }
+        const localFilePath = path.resolve(publicDir, '.' + path.sep + localCleanPath);
+        // Blocca il path traversal (es. "/../.env"): il file deve restare dentro /public
+        if (!localFilePath.startsWith(publicDir + path.sep)) {
+            return res.status(400).send('Invalid url');
+        }
+        if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).isFile()) {
             return res.sendFile(localFilePath);
         }
         return res.status(404).send('Not found');
@@ -162,11 +174,30 @@ app.get('/api/proxy-image', (req, res) => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
         return res.status(400).send('Invalid url');
     }
+    // Niente richieste verso indirizzi interni del server (localhost, reti private, metadati cloud)
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal') ||
+            /^(127\.|10\.|192\.168\.|169\.254\.|0\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || host === '[::1]') {
+            return res.status(400).send('Invalid url');
+        }
+    } catch (e) {
+        return res.status(400).send('Invalid url');
+    }
 
     const protocol = url.startsWith('https') ? https : http;
     protocol.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (imgRes) => {
-        if (imgRes.statusCode !== 200) return res.status(404).send('Not found');
-        res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/png');
+        if (imgRes.statusCode !== 200) {
+            imgRes.resume();
+            return res.status(404).send('Not found');
+        }
+        // Inoltra solo immagini: evita che il proxy venga usato per leggere pagine o API arbitrarie
+        const contentType = String(imgRes.headers['content-type'] || '').toLowerCase();
+        if (!contentType.startsWith('image/')) {
+            imgRes.resume();
+            return res.status(415).send('Not an image');
+        }
+        res.setHeader('Content-Type', contentType);
         imgRes.pipe(res);
     }).on('error', () => res.status(500).send('Error'));
 });

@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Source+Serif+4:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260908_01">
     <link rel="stylesheet" href="theme-ink.css?v=20261028">
+    <script src="dialogs.js?v=20261029"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
@@ -1728,7 +1729,7 @@
                 const inputEl = inputSource || document.getElementById('importUrl') || document.getElementById('importUrlMobile');
                 const url = (inputEl ? inputEl.value : '').trim();
                 if (!url) {
-                    alert('Inserisci un URL valido');
+                    appAlert('Inserisci un URL valido');
                     return;
                 }
 
@@ -1831,9 +1832,9 @@
                         if (window.resetUndoHistory) window.resetUndoHistory();
                     }, 300);
 
-                    alert('Notizia estratta con successo!');
+                    appAlert('Notizia estratta con successo!');
                 } catch(err) {
-                    alert('Impossibile estrarre la notizia: ' + err.message);
+                    appAlert('Impossibile estrarre la notizia: ' + err.message);
                 } finally {
                     if (dBtn) { dBtn.disabled = false; dBtn.textContent = origDesktop; }
                     if (mBtn) { mBtn.disabled = false; mBtn.textContent = origMobile; }
@@ -1902,7 +1903,7 @@
                     document.body.removeChild(a);
                     return dataUrl;
                 } catch(err) {
-                    alert('Errore durante la generazione dell\'immagine: ' + err.message);
+                    appAlert('Errore durante la generazione dell\'immagine: ' + err.message);
                 }
             }
 

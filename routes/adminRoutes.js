@@ -3,12 +3,24 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const crypto = require('crypto');
+const { JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Le credenziali admin arrivano solo dalle variabili d'ambiente: senza ADMIN_PASSWORD il pannello admin è disattivato
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@rassegna.io';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Yellow95';
-const JWT_SECRET = process.env.JWT_SECRET || 'rassegna-stampa-secret-key-dev';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+if (!ADMIN_PASSWORD) {
+    console.warn('[ADMIN] ADMIN_PASSWORD non impostata: login admin disattivato.');
+}
+
+// Confronto a tempo costante per non rivelare la password tramite i tempi di risposta
+function safeEqual(a, b) {
+    const ha = crypto.createHash('sha256').update(String(a || '')).digest();
+    const hb = crypto.createHash('sha256').update(String(b || '')).digest();
+    return crypto.timingSafeEqual(ha, hb);
+}
 const LOGOS_PATH = path.join(__dirname, '..', 'public', 'assets', 'logos.json');
 const LOGO_UPLOADS_DIR = path.join(__dirname, '..', 'public', 'assets', 'logos');
 
@@ -70,7 +82,12 @@ function writeLogos(logos) {
 // POST /api/admin/login
 router.post('/login', (req, res) => {
     const { email, password } = req.body;
-    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    if (!ADMIN_PASSWORD) {
+        return res.status(503).json({ error: 'Accesso admin non configurato.' });
+    }
+    const emailOk = safeEqual(email, ADMIN_EMAIL);
+    const passwordOk = safeEqual(password, ADMIN_PASSWORD);
+    if (!emailOk || !passwordOk) {
         return res.status(401).json({ error: 'Credenziali non valide.' });
     }
     const token = jwt.sign({ isAdmin: true, email }, JWT_SECRET, { expiresIn: '8h' });

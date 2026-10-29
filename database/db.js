@@ -271,6 +271,22 @@ function initDatabase() {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_coverage_reports_token ON coverage_reports(share_token)`).run();
     // ── FINE COVERAGE REPORTS ──────────────────────────────────────────────────
 
+    // Loghi caricati dall'utente nell'archivio testate (prima salvati solo nel browser)
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS archive_logos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            team_id INTEGER DEFAULT NULL,
+            name TEXT NOT NULL,
+            category TEXT DEFAULT 'nazionale',
+            logo_data TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_archive_logos_user ON archive_logos(user_id)`).run();
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_archive_logos_team ON archive_logos(team_id)`).run();
+
     console.log('✅ Database SQLite inizializzato.');
     return db;
 }

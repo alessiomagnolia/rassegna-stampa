@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const dns = require('dns').promises;
 const { getDb } = require('../database/db');
 const { authMiddleware, generateToken } = require('../middleware/auth');
 const { UPLOADS_DIR, resolveUploadPath } = require('../config/storage');
@@ -39,19 +40,46 @@ const upload = multer({
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Verifica che il dominio dell'email possa ricevere posta (record MX, o in mancanza un record A).
+ * Blocca solo i domini che non esistono (es. "@huib.vom"); in caso di errore DNS temporaneo lascia passare.
+ */
+async function emailDomainExists(email) {
+    const domain = String(email).split('@')[1];
+    if (!domain) return false;
+    const missing = (err) => err && ['ENOTFOUND', 'ENODATA', 'ENODOMAIN', 'ENONAME'].includes(err.code);
+    try {
+        const mx = await dns.resolveMx(domain);
+        if (mx && mx.length > 0) return true;
+    } catch (err) {
+        if (!missing(err)) return true;
+    }
+    try {
+        const a = await dns.resolve4(domain);
+        return a && a.length > 0;
+    } catch (err) {
+        return !missing(err);
+    }
+}
+
 // Register
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, company_name } = req.body;
+        const { password, company_name } = req.body;
+        const email = String(req.body.email || '').trim().toLowerCase();
 
-        if (!email || !EMAIL_REGEX.test(email.trim()) || !password || password.length < 6) {
+        if (!email || !EMAIL_REGEX.test(email) || !password || password.length < 6) {
             return res.status(400).json({ error: 'Inserisci un indirizzo email valido e una password di almeno 6 caratteri.' });
         }
 
+        if (!(await emailDomainExists(email))) {
+            return res.status(400).json({ error: 'Il dominio di questa email non esiste o non riceve posta: controlla l\'indirizzo.' });
+        }
+
         const db = getDb();
-        
+
         // Check if user exists
-        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        const existingUser = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
         if (existingUser) {
             return res.status(400).json({ error: 'Email già registrata.' });
         }
@@ -87,23 +115,12 @@ router.post('/login', async (req, res) => {
         }
 
         const db = getDb();
-        let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const user = db.prepare('SELECT * FROM users WHERE lower(email) = lower(?)').get(String(email).trim());
 
-        if (!user) {
-            // Auto-provision user account on login if DB was reset by Render restart
-            const salt = await bcrypt.genSalt(10);
-            const password_hash = await bcrypt.hash(password, salt);
-            const company_name = email.split('@')[0] || 'La Tua Azienda';
-
-            const info = db.prepare('INSERT INTO users (email, password_hash, company_name) VALUES (?, ?, ?)')
-                .run(email, password_hash, company_name);
-
-            user = { id: info.lastInsertRowid, email, password_hash, company_name, logo_path: '' };
-        } else {
-            const isMatch = await bcrypt.compare(password, user.password_hash);
-            if (!isMatch) {
-                return res.status(401).json({ error: 'Credenziali non valide.' });
-            }
+        // Nessuna creazione automatica dell'account al login; stesso messaggio per email inesistente
+        // e password errata, così non si rivela quali account esistono
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({ error: 'Credenziali non valide.' });
         }
 
         const token = generateToken(user.id);

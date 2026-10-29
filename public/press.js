@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 delBtn.onmouseout = () => { delBtn.style.opacity = '0.5'; delBtn.style.color = 'var(--text-muted)'; };
                 delBtn.onclick = async (e) => {
                     e.stopPropagation();
-                    if (!confirm(`Eliminare "${item.title}" dalla cronologia?`)) return;
+                    if (!(await appConfirm(`Eliminare "${item.title}" dalla cronologia?`, { danger: true }))) return;
                     try {
                         await fetchAPI(`/api/press/${item.id}`, { method: 'DELETE' });
                         let cached = JSON.parse(localStorage.getItem('rs_press_history') || '[]');
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePressRelease() {
         if (!currentPrId) return;
-        if (!confirm('Sei sicuro di voler eliminare questo comunicato? Verrà rimosso anche dalla memoria del "Tone of Voice" per questo cliente.')) return;
+        if (!(await appConfirm('Sei sicuro di voler eliminare questo comunicato? Verrà rimosso anche dalla memoria del "Tone of Voice" per questo cliente.', { danger: true }))) return;
 
         try {
             await fetchAPI(`/api/press/${currentPrId}`, { method: 'DELETE' });
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function generatePitch() {
         const content = prContentTextarea.value.trim();
         if (!content) {
-            alert('Nessun testo presente nel comunicato.');
+            appAlert('Nessun testo presente nel comunicato.');
             return;
         }
 
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPitchResult(data.pitch);
 
         } catch (err) {
-            alert('Errore generazione pitch: ' + err.message);
+            appAlert('Errore generazione pitch: ' + err.message);
         } finally {
             if (loader) loader.classList.add('hidden');
             if (btnGen) btnGen.disabled = false;
@@ -580,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const textarea = document.getElementById('pitchFullEmailTextarea');
         if (!textarea || !textarea.value) return;
         navigator.clipboard.writeText(textarea.value).then(() => {
-            alert('Email completa del pitch copiata negli appunti!');
+            appAlert('Email completa del pitch copiata negli appunti!');
         });
     };
 

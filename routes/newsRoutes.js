@@ -873,6 +873,12 @@ router.get('/search', authMiddleware, async (req, res) => {
             uniqueResults.push(item);
         }
 
+        // --- Senza un intervallo di date scelto, esclude gli articoli più vecchi di 12 mesi ---
+        if (!from && !to) {
+            const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+            uniqueResults = uniqueResults.filter(r => !r.timestamp || r.timestamp >= oneYearAgo);
+        }
+
         // --- SORT: PRIORITY SOURCE FIRST, THEN BY DATE ---
         uniqueResults.sort((a, b) => {
             if (a._isPriority && !b._isPriority) return -1;

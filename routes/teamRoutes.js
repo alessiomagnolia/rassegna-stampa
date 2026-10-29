@@ -118,10 +118,11 @@ router.get('/mine', authMiddleware, (req, res) => {
         // Recupera inviti pendenti (solo per l'owner)
         let pendingInvites = [];
         if (membership.role === 'owner') {
+            // Il link di invito diretto ("link_diretto") non è un invito a una persona: non va tra gli inviti in attesa
             pendingInvites = db.prepare(`
                 SELECT id, invited_email, created_at, expires_at, accepted
                 FROM team_invites
-                WHERE team_id = ? AND accepted = 0 AND expires_at > datetime('now')
+                WHERE team_id = ? AND accepted = 0 AND expires_at > datetime('now') AND invited_email != 'link_diretto'
                 ORDER BY created_at DESC
             `).all(membership.team_id);
         }
@@ -308,24 +309,8 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
             return res.status(403).json({ error: 'Non hai i permessi per visualizzare questo progetto.' });
         }
 
-        // Se la rassegna non è ancora associata a un team, la associamo al team dell'utente (o ne creiamo uno)
-        let teamId = review.team_id;
-        if (!teamId) {
-            let membership = db.prepare('SELECT team_id FROM team_members WHERE user_id = ?').get(req.userId);
-            if (!membership) {
-                const user = db.prepare('SELECT company_name, email FROM users WHERE id = ?').get(req.userId);
-                const tName = (user?.company_name && user.company_name !== 'La Tua Azienda')
-                    ? `Team ${user.company_name}`
-                    : 'Il Mio Team';
-                const teamInfo = db.prepare('INSERT INTO teams (name, owner_user_id) VALUES (?, ?)').run(tName, req.userId);
-                teamId = teamInfo.lastInsertRowid;
-                db.prepare("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')").run(teamId, req.userId);
-            } else {
-                teamId = membership.team_id;
-            }
-            db.prepare('UPDATE press_reviews SET team_id = ? WHERE id = ?').run(teamId, projectId);
-            review.team_id = teamId;
-        }
+        // Sola lettura: aprire la finestra "Team" non crea più team, condivisioni o inviti.
+        // Il link di invito si genera esplicitamente con POST /project/:id/invite-link.
 
         let collaborators = [];
         let teamName = null;
@@ -351,28 +336,17 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
             }];
         }
 
-        // Genera o recupera token di invito diretto attivo per questo team e progetto
-        let inviteToken;
-        const activeInvite = db.prepare(`
-            SELECT token FROM team_invites 
-            WHERE team_id = ? AND expires_at > datetime('now') AND invited_email = 'link_diretto'
-            ORDER BY id DESC LIMIT 1
-        `).get(review.team_id);
-
-        if (activeInvite) {
-            inviteToken = activeInvite.token;
-        } else {
-            inviteToken = generateInviteToken();
-            const expiresAt = expiresAt7Days();
-            db.prepare(`
-                INSERT INTO team_invites (team_id, invited_email, token, invited_by, expires_at)
-                VALUES (?, ?, ?, ?, ?)
-            `).run(review.team_id, 'link_diretto', inviteToken, req.userId, expiresAt);
-        }
-
-        let inviteLink = buildInviteLink(req, inviteToken);
-        if (projectId) {
-            inviteLink += `&project=${projectId}`;
+        // Link diretto già esistente (se in passato è stato generato): lo mostriamo, senza crearne di nuovi
+        let inviteLink = null;
+        if (review.team_id) {
+            const activeInvite = db.prepare(`
+                SELECT token FROM team_invites
+                WHERE team_id = ? AND expires_at > datetime('now') AND invited_email = 'link_diretto'
+                ORDER BY id DESC LIMIT 1
+            `).get(review.team_id);
+            if (activeInvite) {
+                inviteLink = buildInviteLink(req, activeInvite.token) + `&project=${projectId}`;
+            }
         }
 
         res.json({
@@ -392,6 +366,56 @@ router.get('/project/:id/collaborators', authMiddleware, (req, res) => {
     } catch (error) {
         console.error('Errore recupero collaboratori progetto:', error);
         res.status(500).json({ error: 'Impossibile recuperare i collaboratori.' });
+    }
+});
+
+/**
+ * POST /api/teams/project/:id/invite-link
+ * Su richiesta esplicita dell'utente: condivide la rassegna con il suo team (creandolo se serve)
+ * e genera (o recupera) il link di invito diretto valido 7 giorni.
+ */
+router.post('/project/:id/invite-link', authMiddleware, (req, res) => {
+    try {
+        const projectId = parseInt(req.params.id);
+        const db = getDb();
+
+        const review = db.prepare('SELECT id, user_id, team_id FROM press_reviews WHERE id = ?').get(projectId);
+        if (!review) return res.status(404).json({ error: 'Progetto non trovato.' });
+        const hasAccess = (review.user_id === req.userId) || (req.teamId && review.team_id === req.teamId);
+        if (!hasAccess) return res.status(403).json({ error: 'Non hai i permessi per questo progetto.' });
+
+        let teamId = review.team_id;
+        if (!teamId) {
+            const membership = db.prepare('SELECT team_id FROM team_members WHERE user_id = ?').get(req.userId);
+            if (membership) {
+                teamId = membership.team_id;
+            } else {
+                const user = db.prepare('SELECT company_name FROM users WHERE id = ?').get(req.userId);
+                const tName = (user?.company_name && user.company_name !== 'La Tua Azienda') ? `Team ${user.company_name}` : 'Il Mio Team';
+                teamId = db.prepare('INSERT INTO teams (name, owner_user_id) VALUES (?, ?)').run(tName, req.userId).lastInsertRowid;
+                db.prepare("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'owner')").run(teamId, req.userId);
+            }
+            db.prepare('UPDATE press_reviews SET team_id = ? WHERE id = ?').run(teamId, projectId);
+        }
+
+        const activeInvite = db.prepare(`
+            SELECT token FROM team_invites
+            WHERE team_id = ? AND expires_at > datetime('now') AND invited_email = 'link_diretto'
+            ORDER BY id DESC LIMIT 1
+        `).get(teamId);
+        let inviteToken = activeInvite ? activeInvite.token : null;
+        if (!inviteToken) {
+            inviteToken = generateInviteToken();
+            db.prepare(`
+                INSERT INTO team_invites (team_id, invited_email, token, invited_by, expires_at)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(teamId, 'link_diretto', inviteToken, req.userId, expiresAt7Days());
+        }
+
+        res.json({ success: true, teamId, inviteLink: buildInviteLink(req, inviteToken) + `&project=${projectId}` });
+    } catch (error) {
+        console.error('Errore generazione link invito progetto:', error);
+        res.status(500).json({ error: 'Impossibile generare il link di invito.' });
     }
 });
 

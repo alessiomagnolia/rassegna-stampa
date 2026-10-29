@@ -129,6 +129,7 @@ async function generateAudioBriefingScript({ articles = [], clientName = '' }) {
         const prompt = `Sei un conduttore radiofonico professionista e assistente esecutivo per il CEO/Direzione Generale.
 Scrivi lo script per un bollettino vocale quotidiano ("Executive Audio Briefing") della durata stimata di 60 secondi in italiano naturale, dinamico e chiaro.
 Cliente/Brand di riferimento: ${clientName || 'Azienda'}
+Data di oggi: ${new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })} (se citi il giorno, usa questo).
 
 Notizie selezionate:
 ${itemsSummary}

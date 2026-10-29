@@ -299,6 +299,7 @@
       "description": "Strumento gratuito basato su intelligenza artificiale per creare comunicati stampa istituzionali e aziendali."
     }
     </script>
+    <script src="dialogs.js?v=20261029"></script>
 </head>
 <body>
 
@@ -421,7 +422,7 @@
                 outputWrapper.style.display = 'block';
                 outputWrapper.scrollIntoView({ behavior: 'smooth' });
             } catch (err) {
-                alert(err.message || 'Errore durante la generazione del comunicato.');
+                appAlert(err.message || 'Errore durante la generazione del comunicato.');
             } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = `<i data-feather="feather"></i> Genera Comunicato Stampa con AI`;

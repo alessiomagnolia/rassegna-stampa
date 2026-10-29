@@ -949,7 +949,7 @@ async function startNewReview() {
 
     if (count > 0) {
         const confirmMsg = `Vuoi creare una nuova rassegna da zero?\n\nLa rassegna attuale (${count} articol${count === 1 ? 'o' : 'i'}) verrà archiviata automaticamente nel tuo Storico per non perdere nessun dato.`;
-        if (!confirm(confirmMsg)) {
+        if (!(await appConfirm(confirmMsg, { okLabel: 'Prosegui' }))) {
             return;
         }
 
@@ -1017,7 +1017,7 @@ async function startNewReview() {
         } catch (err) {
             console.error('Archiviazione fallita durante startNewReview:', err);
             // PROTEZIONE ANTI-PERDITA DATI: non cancelliamo MAI alla cieca!
-            const userChoice = confirm(
+            const userChoice = await appConfirm(
                 `Attenzione: il server non è temporaneamente raggiungibile (${err.message || 'errore di rete'}).\n\n` +
                 `I tuoi ${count} articoli sono stati comunque PROTETTI nella cassaforte locale del browser e sono visibili nello Storico.\n\n` +
                 `Vuoi procedere comunque con una nuova rassegna vuota o preferisci rimanere sulla rassegna attuale?`
@@ -2122,7 +2122,7 @@ async function loadHistory() {
 window.loadHistory = loadHistory;
 
 async function deleteHistory(id) {
-    if (!confirm('Sei sicuro di voler eliminare questa rassegna?')) return;
+    if (!(await appConfirm('Sei sicuro di voler eliminare questa rassegna?', { danger: true }))) return;
     
     try {
         if (typeof id === 'string' && id.startsWith('vault_')) {
@@ -2172,7 +2172,7 @@ async function reopenFromHistory(reviewId) {
                 showToast('Rassegna precedente archiviata con successo nello Storico!', 'success');
             } catch (saveErr) {
                 console.warn('Auto-save error before reopen:', saveErr);
-                const proceed = confirm(`Non è stato possibile salvare sul server la rassegna attuale (${saveErr.message}).\n\nI dati sono comunque al sicuro nella memoria locale del browser. Vuoi procedere e caricare quella selezionata?`);
+                const proceed = await appConfirm(`Non è stato possibile salvare sul server la rassegna attuale (${saveErr.message}).\n\nI dati sono comunque al sicuro nella memoria locale del browser. Vuoi procedere e caricare quella selezionata?`);
                 if (!proceed) {
                     return; // Protegge il lavoro dell'utente da perdite
                 }
@@ -3088,6 +3088,7 @@ async function searchNews() {
             if (toolbar) toolbar.classList.remove('hidden');
             renderNewsResults();
             updateNewsSelectionUI();
+            resolveNewsLinksInBackground();
         }
     } catch (err) {
         if (loadingState) loadingState.classList.add('hidden');
@@ -3103,6 +3104,46 @@ async function searchNews() {
     }
 }
 window.searchNews = searchNews;
+
+/**
+ * Dopo aver mostrato i risultati, converte in background i link Google News nell'indirizzo
+ * diretto della testata (a blocchi, per non rallentare la pagina). Si interrompe se parte una nuova ricerca.
+ */
+let newsLinkResolveRun = 0;
+async function resolveNewsLinksInBackground() {
+    const runId = ++newsLinkResolveRun;
+    const results = currentNewsResults;
+    const pending = results
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.url && item.url.includes('news.google.com'));
+    const BATCH = 15;
+
+    for (let i = 0; i < pending.length; i += BATCH) {
+        if (runId !== newsLinkResolveRun || results !== currentNewsResults) return;
+        const batch = pending.slice(i, i + BATCH);
+        try {
+            const res = await apiCall('POST', '/api/news/resolve-urls', {
+                items: batch.map(({ item }) => ({ url: item.url, title: item.title, domain: item.domain, source: item.source }))
+            });
+            if (runId !== newsLinkResolveRun || results !== currentNewsResults) return;
+            const resolved = (res && res.resolvedUrls) || [];
+            const grid = document.getElementById('newsResultsGrid');
+            batch.forEach(({ item }, k) => {
+                const newUrl = resolved[k];
+                if (!newUrl || newUrl.includes('news.google.com')) return;
+                const oldUrl = item.url;
+                item.url = newUrl;
+                if (grid) {
+                    grid.querySelectorAll('a[href]').forEach(a => {
+                        if (a.getAttribute('href') === oldUrl) a.setAttribute('href', newUrl);
+                    });
+                }
+            });
+        } catch (e) {
+            return; // risoluzione facoltativa: i link Google News restano comunque funzionanti
+        }
+    }
+}
 
 function renderNewsResults() {
     const grid = document.getElementById('newsResultsGrid');
@@ -3253,16 +3294,21 @@ async function resolveAndInsertUrlsIntoRassegna(itemsOrUrls) {
     }
 }
 
-function includeSingleNewsInRassegna(idx, event) {
+async function includeSingleNewsInRassegna(idx, event) {
     if (event) event.stopPropagation();
     const news = currentNewsResults[idx];
     if (!news || !news.url) return;
-    resolveAndInsertUrlsIntoRassegna([{
+    await resolveAndInsertUrlsIntoRassegna([{
         url: news.url,
         title: news.title,
         domain: news.domain,
         source: news.source
     }]);
+    // Estrazione immediata: l'articolo si aggiunge a quelli già in rassegna, senza passare da "Estrai tutti"
+    const textarea = document.getElementById('multiLinkTextarea');
+    if (textarea && textarea.value.trim() && !textarea.value.startsWith('Risoluzione')) {
+        startMultiLinkExtraction();
+    }
 }
 
 
@@ -3300,7 +3346,7 @@ function updateNewsSelectionUI() {
 
 async function saveNewsCollection() {
     if (selectedNewsIndices.size === 0) return;
-    const name = prompt('Dai un nome a questa raccolta (es. "Rassegna Tech Luglio"):');
+    const name = await appPrompt('Dai un nome a questa raccolta (es. "Rassegna Tech Luglio"):');
     if (!name) return;
 
     const selectedLinks = Array.from(selectedNewsIndices).map(idx => currentNewsResults[idx]);
@@ -3374,7 +3420,7 @@ async function useCollection(id) {
 }
 
 async function deleteCollection(id) {
-    if (!confirm('Sei sicuro di voler eliminare questa raccolta?')) return;
+    if (!(await appConfirm('Sei sicuro di voler eliminare questa raccolta?', { danger: true }))) return;
     try {
         await apiCall('DELETE', `/api/news/collections/${id}`);
         showToast('Raccolta eliminata', 'success');
@@ -4121,9 +4167,9 @@ window.deleteClient = function(id) {
         modal.style.display = 'flex';
         feather.replace();
     } else {
-        if (confirm(`Sei sicuro di voler eliminare definitivamente il cliente "${clientName}"?`)) {
-            executeDeleteClient(idStr, clientName);
-        }
+        appConfirm(`Sei sicuro di voler eliminare definitivamente il cliente "${clientName}"?`, { danger: true }).then(ok => {
+            if (ok) executeDeleteClient(idStr, clientName);
+        });
     }
 };
 
@@ -4545,8 +4591,8 @@ function savePlatformSettings() {
     showToast('Impostazioni salvate con successo!', 'success');
 }
 
-window.clearPlatformCache = function() {
-    if (confirm('Vuoi davvero pulire la cache locale? I dati salvati verranno mantenuti.')) {
+window.clearPlatformCache = async function() {
+    if (await appConfirm('Vuoi davvero pulire la cache locale? I dati salvati verranno mantenuti.', { okLabel: 'Pulisci cache' })) {
         sessionStorage.clear();
         showToast('Cache locale pulita!', 'success');
     }
@@ -4729,14 +4775,50 @@ window.toggleArchiveSort = function(btn) {
     renderArchiveLogos();
 };
 
-function loadCustomArchiveLogos() {
-    const saved = localStorage.getItem('rs_custom_archive_logos');
-    let customLogos = [];
-    if (saved) {
-        try {
-            customLogos = JSON.parse(saved);
-        } catch(e) {}
+// Loghi caricati dall'utente: salvati sul server (condivisi col team e disponibili su ogni dispositivo)
+let serverArchiveLogos = [];
+
+async function syncArchiveLogosFromServer() {
+    if (!(state.token || localStorage.getItem('rs_token'))) return;
+    try {
+        // Migrazione una tantum dei loghi che prima restavano solo nel browser
+        const legacy = JSON.parse(localStorage.getItem('rs_custom_archive_logos') || '[]');
+        if (Array.isArray(legacy) && legacy.length > 0) {
+            let allMigrated = true;
+            for (const l of legacy) {
+                if (!l || !l.base64) continue;
+                try {
+                    await apiCall('POST', '/api/archive-logos', { name: l.name, category: l.category, logo_data: l.base64 });
+                } catch (e) {
+                    allMigrated = false;
+                }
+            }
+            if (allMigrated) localStorage.removeItem('rs_custom_archive_logos');
+        }
+
+        const rows = await apiCall('GET', '/api/archive-logos');
+        serverArchiveLogos = (Array.isArray(rows) ? rows : []).map(r => ({
+            id: r.id,
+            name: r.name,
+            category: r.category,
+            base64: r.logo_data,
+            isCustom: true,
+            createdAt: parseServerDate(r.created_at).getTime()
+        }));
+    } catch (err) {
+        console.warn('Loghi archivio non caricati dal server:', err.message);
     }
+    loadCustomArchiveLogos();
+    renderArchiveLogos();
+}
+
+function loadCustomArchiveLogos() {
+    let customLogos = serverArchiveLogos.slice();
+    // Loghi non ancora migrati (es. server non raggiungibile): restano visibili
+    try {
+        const legacy = JSON.parse(localStorage.getItem('rs_custom_archive_logos') || '[]');
+        if (Array.isArray(legacy)) customLogos = customLogos.concat(legacy);
+    } catch(e) {}
 
     // Merge custom logos with the logos loaded from /assets/logos.json (logoArchive)
     // logoArchive is loaded at startup; if not ready yet, use fallback hardcoded list
@@ -4850,7 +4932,7 @@ window.renderArchiveLogos = function() {
             removeBtn.className = 'btn btn-outline btn-sm';
             removeBtn.style.cssText = 'font-size:0.7rem; color:#ff4d4d; border-color:rgba(255,77,77,0.3); padding:2px 8px;';
             removeBtn.innerHTML = '<i data-feather="trash-2" style="width:11px;height:11px;vertical-align:middle;margin-right:2px;"></i> Rimuovi';
-            removeBtn.onclick = (e) => { e.stopPropagation(); deleteCustomArchiveLogo(item.name); };
+            removeBtn.onclick = (e) => { e.stopPropagation(); deleteCustomArchiveLogo(item.id, item.name); };
             actionsDiv.appendChild(removeBtn);
         }
 
@@ -4899,20 +4981,18 @@ window.saveNewArchiveLogo = async function() {
 
     try {
         const base64 = await fileToBase64(fileInput.files[0]);
+        const saved = await apiCall('POST', '/api/archive-logos', { name, category, logo_data: base64 });
         const newLogoObj = {
+            id: saved.id,
             name,
-            category,
+            category: saved.category || category,
             base64,
             isCustom: true,
             createdAt: Date.now()
         };
 
+        serverArchiveLogos.unshift(newLogoObj);
         archiveLogosList.unshift(newLogoObj);
-
-        let saved = localStorage.getItem('rs_custom_archive_logos');
-        let customList = saved ? JSON.parse(saved) : [];
-        customList.unshift(newLogoObj);
-        localStorage.setItem('rs_custom_archive_logos', JSON.stringify(customList));
 
         showToast('Logo aggiunto con successo all\'archivio!', 'success');
         document.getElementById('archiveLogoNameInput').value = '';
@@ -4920,21 +5000,27 @@ window.saveNewArchiveLogo = async function() {
         toggleNewLogoForm();
         renderArchiveLogos();
     } catch (err) {
-        showToast('Errore durante il salvataggio del logo', 'error');
+        showToast('Errore durante il salvataggio del logo: ' + (err.message || 'riprova'), 'error');
     }
 };
 
-window.deleteCustomArchiveLogo = function(name) {
-    if (!confirm(`Vuoi rimuovere "${name}" dall'archivio?`)) return;
-    const saved = localStorage.getItem('rs_custom_archive_logos');
-    if (saved) {
-        let customList = JSON.parse(saved);
-        customList = customList.filter(l => l.name !== name);
-        localStorage.setItem('rs_custom_archive_logos', JSON.stringify(customList));
+window.deleteCustomArchiveLogo = async function(id, name) {
+    if (!(await appConfirm(`Vuoi rimuovere "${name}" dall'archivio?`, { danger: true, okLabel: 'Rimuovi' }))) return;
+    try {
+        if (id) {
+            await apiCall('DELETE', `/api/archive-logos/${id}`);
+        } else {
+            // Logo rimasto solo nel browser (non ancora migrato)
+            const legacy = JSON.parse(localStorage.getItem('rs_custom_archive_logos') || '[]');
+            localStorage.setItem('rs_custom_archive_logos', JSON.stringify(legacy.filter(l => l.name !== name)));
+        }
+        serverArchiveLogos = serverArchiveLogos.filter(l => (id ? l.id !== id : l.name !== name));
+        archiveLogosList = archiveLogosList.filter(l => (id ? l.id !== id : !(l.isCustom && l.name === name)));
+        renderArchiveLogos();
+        showToast('Logo rimosso', 'success');
+    } catch (err) {
+        showToast('Errore durante la rimozione del logo: ' + (err.message || 'riprova'), 'error');
     }
-    archiveLogosList = archiveLogosList.filter(l => l.name !== name);
-    renderArchiveLogos();
-    showToast('Logo rimosso', 'success');
 };
 
 window.filterArchiveLogos = function() {
@@ -4953,6 +5039,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPlatformSettings();
     loadCustomArchiveLogos();
     renderArchiveLogos();
+    syncArchiveLogosFromServer();
     if (window.location.hash === '#media-crm') {
         loadMediaContacts();
     }
@@ -6155,7 +6242,7 @@ window.saveMediaContact = async function(e) {
 };
 
 window.deleteMediaContact = async function(id) {
-    if (!confirm('Sei sicuro di voler rimuovere questo contatto dalla rubrica?')) return;
+    if (!(await appConfirm('Sei sicuro di voler rimuovere questo contatto dalla rubrica?', { danger: true, okLabel: 'Rimuovi' }))) return;
     try {
         await apiCall('DELETE', `/api/contacts/${id}`);
         selectedContactIds.delete(Number(id));
@@ -7568,7 +7655,7 @@ window.teamSendInvite = teamSendInvite;
 
 /** Rimuove un membro dal team (solo owner) */
 async function teamRemoveMember(userId) {
-    if (!confirm('Rimuovere questo membro dal team?')) return;
+    if (!(await appConfirm('Rimuovere questo membro dal team?', { danger: true, okLabel: 'Rimuovi' }))) return;
 
     try {
         const res  = await fetch(`/api/teams/members/${userId}`, {
@@ -7580,17 +7667,17 @@ async function teamRemoveMember(userId) {
         if (res.ok) {
             await loadTeamPage();
         } else {
-            alert(data.error || 'Impossibile rimuovere il membro.');
+            appAlert(data.error || 'Impossibile rimuovere il membro.');
         }
     } catch (e) {
-        alert('Errore di connessione. Riprova.');
+        appAlert('Errore di connessione. Riprova.');
     }
 }
 window.teamRemoveMember = teamRemoveMember;
 
 /** Il membro abbandona il team */
 async function teamLeave() {
-    if (!confirm('Vuoi davvero abbandonare il team? Non vedrai più le rassegne condivise.')) return;
+    if (!(await appConfirm('Vuoi davvero abbandonare il team? Non vedrai più le rassegne condivise.', { danger: true, okLabel: 'Abbandona' }))) return;
 
     try {
         const res  = await fetch('/api/teams/leave', {
@@ -7602,17 +7689,17 @@ async function teamLeave() {
         if (res.ok) {
             await loadTeamPage();
         } else {
-            alert(data.error || 'Impossibile abbandonare il team.');
+            appAlert(data.error || 'Impossibile abbandonare il team.');
         }
     } catch (e) {
-        alert('Errore di connessione. Riprova.');
+        appAlert('Errore di connessione. Riprova.');
     }
 }
 window.teamLeave = teamLeave;
 
 /** L'owner scioglie il team */
 async function teamDissolve() {
-    if (!confirm('Sciogliere il team? Tutti i membri perderanno l\'accesso condiviso. I tuoi dati personali resteranno intatti.')) return;
+    if (!(await appConfirm('Sciogliere il team? Tutti i membri perderanno l\'accesso condiviso. I tuoi dati personali resteranno intatti.', { danger: true, okLabel: 'Sciogli team' }))) return;
 
     try {
         const res  = await fetch('/api/teams', {
@@ -7624,10 +7711,10 @@ async function teamDissolve() {
         if (res.ok) {
             await loadTeamPage();
         } else {
-            alert(data.error || 'Impossibile sciogliere il team.');
+            appAlert(data.error || 'Impossibile sciogliere il team.');
         }
     } catch (e) {
-        alert('Errore di connessione. Riprova.');
+        appAlert('Errore di connessione. Riprova.');
     }
 }
 window.teamDissolve = teamDissolve;
@@ -7635,7 +7722,16 @@ window.teamDissolve = teamDissolve;
 /**
  * Sincronizza il banner Team nella Home e il contatore nella Navbar
  */
-async function syncHomeTeamBanner() {
+// Se la sincronizzazione è già in corso, le chiamate ravvicinate riusano la stessa richiesta
+let teamBannerSyncInFlight = null;
+function syncHomeTeamBanner() {
+    if (!teamBannerSyncInFlight) {
+        teamBannerSyncInFlight = doSyncHomeTeamBanner().finally(() => { teamBannerSyncInFlight = null; });
+    }
+    return teamBannerSyncInFlight;
+}
+
+async function doSyncHomeTeamBanner() {
     const token = (typeof state !== 'undefined' && state.token) || localStorage.getItem('rs_token');
     if (!token) return;
 
@@ -7865,11 +7961,13 @@ async function refreshProjectModalData(reviewId) {
             }).join('');
         }
 
-        // Popola sempre il link di accesso diretto non appena disponibile
+        // Link di accesso diretto: mostrato se esiste già, altrimenti si genera solo su richiesta
         if (linkBox) linkBox.style.display = 'block';
-        if (data.inviteLink && linkInput) {
-            linkInput.value = data.inviteLink;
+        if (linkInput) {
+            linkInput.value = data.inviteLink || '';
+            linkInput.placeholder = data.inviteLink ? '' : 'Nessun link attivo: clicca "Genera link" per crearne uno (valido 7 giorni)';
         }
+        setupProjectInviteLinkButton(reviewId, !data.inviteLink);
 
         updateProjectCollabStrip(data.project, collabs);
 
@@ -7878,6 +7976,43 @@ async function refreshProjectModalData(reviewId) {
     }
 }
 window.refreshProjectModalData = refreshProjectModalData;
+
+/**
+ * Bottone "Genera link" accanto al link di invito: crea team/condivisione/link solo quando l'utente lo chiede
+ */
+function setupProjectInviteLinkButton(reviewId, needsLink) {
+    const copyBtn = document.getElementById('btnCopyProjectInviteLink');
+    if (!copyBtn) return;
+    let genBtn = document.getElementById('btnGenerateProjectInviteLink');
+    if (!genBtn) {
+        genBtn = document.createElement('button');
+        genBtn.type = 'button';
+        genBtn.id = 'btnGenerateProjectInviteLink';
+        genBtn.className = 'btn btn-outline btn-sm';
+        genBtn.style.cssText = 'font-size:0.8rem; padding:6px 14px; white-space:nowrap; font-weight:700;';
+        genBtn.textContent = 'Genera link';
+        copyBtn.parentNode.insertBefore(genBtn, copyBtn);
+    }
+    genBtn.style.display = needsLink ? 'inline-flex' : 'none';
+    copyBtn.style.display = needsLink ? 'none' : 'inline-flex';
+    genBtn.onclick = async () => {
+        genBtn.disabled = true;
+        genBtn.textContent = 'Generazione...';
+        try {
+            const data = await apiCall('POST', `/api/teams/project/${reviewId}/invite-link`);
+            const input = document.getElementById('projectDirectInviteLinkInput');
+            if (input && data.inviteLink) input.value = data.inviteLink;
+            showToast('Link di invito creato: la rassegna ora è condivisa con il tuo team.', 'success');
+            await refreshProjectModalData(reviewId);
+            if (typeof syncHomeTeamBanner === 'function') syncHomeTeamBanner();
+        } catch (err) {
+            showToast('Impossibile generare il link: ' + (err.message || 'riprova'), 'error');
+        } finally {
+            genBtn.disabled = false;
+            genBtn.textContent = 'Genera link';
+        }
+    };
+}
 
 /** Helper per estrarre user_id da token JWT se state.user è null */
 function jwt_decode_id() {
@@ -8802,7 +8937,7 @@ async function downloadSingleReportPdf(reportId) {
 window.downloadSingleReportPdf = downloadSingleReportPdf;
 
 async function deleteReportItem(reportId) {
-    if (!confirm('Sei sicuro di voler eliminare questo report?')) return;
+    if (!(await appConfirm('Sei sicuro di voler eliminare questo report?', { danger: true }))) return;
     try {
         await apiCall('DELETE', `/api/reports/${reportId}`);
         showToast('Report eliminato con successo.', 'success');
