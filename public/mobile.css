@@ -422,6 +422,69 @@ html[data-theme="dark"] .article-source-logo {
 .modal-content [style*="justify-content:flex-end"] > .btn,
 .modal-content [style*="justify-content: flex-end"] > .btn { flex: 1 1 0; }
 
+/* Briefing Esecutivo: tasti sempre in vista, scorre solo il testo */
+#morningDigestModal .modal-content {
+    display: flex !important;
+    flex-direction: column;
+    max-height: 92dvh !important;
+    overflow: hidden !important;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+}
+#morningDigestModal .modal-content > div:first-child { flex: 0 0 auto; margin-bottom: 12px !important; }
+#digestContentView:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+#digestContentView > div:first-child { flex: 0 0 auto; padding: 10px 12px !important; margin-bottom: 10px !important; }
+#digestPreviewHtml {
+    flex: 1 1 auto;
+    min-height: 120px;
+    max-height: none !important;
+    margin-bottom: 0 !important;
+    padding: 14px !important;
+}
+
+/* Tasti del briefing (finestra e pagina): mail in primo piano, gli altri in griglia */
+#digestContentView > div:has(> #btnDigestOpenMail),
+#pageBriefingResult div:has(> #btnPageOpenMail) {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px !important;
+    width: 100%;
+}
+#digestContentView > div:has(> #btnDigestOpenMail) {
+    flex: 0 0 auto;
+    padding-top: 12px !important;
+}
+#digestContentView > div:has(> #btnDigestOpenMail) > div { display: contents !important; }
+#digestContentView > div:has(> #btnDigestOpenMail) .btn,
+#pageBriefingResult div:has(> #btnPageOpenMail) > .btn {
+    width: 100%;
+    min-width: 0;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 12.5px !important;
+    line-height: 1.2;
+    white-space: normal !important;
+    justify-content: center;
+}
+#digestContentView > div:has(> #btnDigestOpenMail) .btn svg,
+#pageBriefingResult div:has(> #btnPageOpenMail) > .btn svg { flex: 0 0 auto; }
+#digestContentView #btnDigestOpenMail,
+#pageBriefingResult #btnPageOpenMail {
+    grid-column: 1 / -1;
+    order: -1;
+    min-height: 50px;
+    background: #7B2CBF !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 14px rgba(123, 44, 191, 0.4);
+}
+
 /* Finestre di dialogo dell'app (conferme): pannello dal basso */
 .app-dialog-overlay { align-items: flex-end !important; padding: 0 !important; }
 .app-dialog { max-width: 100% !important; border-radius: 20px 20px 0 0 !important; padding-bottom: calc(22px + env(safe-area-inset-bottom)) !important; }

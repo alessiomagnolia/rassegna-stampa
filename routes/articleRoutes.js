@@ -215,42 +215,46 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
             ...(digestData.mood_sentiment ? [emailDivider, ``, `CLIMA MEDIA`, ``, digestData.mood_sentiment] : [])
         ].join('\n');
 
-        // Formatta Rich HTML per Email / Outlook (stessa identica gerarchia grafica dell'anteprima)
+        // Formatta Rich HTML per Email / Outlook (stessi colori e dimensioni dell'anteprima in piattaforma, tema scuro)
+        const escHtml = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        const mood = digestData.mood_sentiment || digestData.mood_summary || '';
         const emailHtml = `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; max-width: 650px; line-height: 1.5; background: #ffffff; padding: 10px 0;">
-    <div style="border-bottom: 2px solid #7c5cff; padding-bottom: 12px; margin-bottom: 20px;">
-        <h2 style="margin: 0 0 4px 0; color: #0f172a; font-size: 19px; font-weight: 700; letter-spacing: -0.2px;">Briefing Esecutivo Stampa &mdash; ${client}</h2>
-        <div style="color: #64748b; font-size: 13px;">Data: <strong>${todayStr}</strong> &bull; <strong>${articles.length} articoli</strong> &bull; Audience netta: <strong>~${analytics.formattedAudienceOTS}</strong> &bull; Letture stimate: <strong>~${analytics.formattedEstimatedReads}</strong></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#121212" style="width: 100%; max-width: 650px; background: #121212; border: 1px solid #333333; border-radius: 10px; border-collapse: separate;">
+<tr><td bgcolor="#121212" style="padding: 20px; background: #121212; border-radius: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #efece5; line-height: 1.5;">
+    <div style="border-bottom: 2px solid #a78bfa; padding-bottom: 12px; margin-bottom: 20px;">
+        <div style="margin: 0 0 4px 0; color: #efece5; font-size: 19px; font-weight: 700; letter-spacing: -0.2px;">Briefing Esecutivo Stampa &mdash; ${escHtml(client)}</div>
+        <div style="color: #888888; font-size: 13px;">Data: <strong style="color: #efece5;">${escHtml(todayStr)}</strong> &bull; <strong style="color: #efece5;">${articles.length} articoli</strong> &bull; Audience netta: <strong style="color: #efece5;">~${escHtml(analytics.formattedAudienceOTS)}</strong> &bull; Letture stimate: <strong style="color: #efece5;">~${escHtml(analytics.formattedEstimatedReads)}</strong></div>
     </div>
 
-    <div style="margin-bottom: 22px;">
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 8px;">SINTESI ESECUTIVA:</div>
-        <ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #1e293b; line-height: 1.6;">
-            ${digestData.highlights.map(h => `<li style="margin-bottom: 5px;">${h}</li>`).join('')}
-        </ul>
-    </div>
+    <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #888888; margin-bottom: 10px;">SINTESI ESECUTIVA:</div>
+    <ul style="margin: 0 0 20px 0; padding-left: 20px; font-size: 14px; color: #efece5; line-height: 1.65;">
+        ${digestData.highlights.map(h => `<li style="margin-bottom: 4px;">${escHtml(h)}</li>`).join('')}
+    </ul>
 
-    <div style="margin-bottom: 20px;">
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 12px;">CLIP STAMPA PRINCIPALI:</div>
-        ${digestData.clips.map(c => `
-        <div style="margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
-            <div style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: capitalize; margin-bottom: 2px;">
-                ${c.source} &bull; <span style="font-weight: 600; color: ${c.sentiment === 'positivo' ? '#16a34a' : (c.sentiment === 'critico' ? '#dc2626' : '#64748b')};">${c.sentiment}</span>
-            </div>
-            <div style="font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.35; margin-bottom: 4px;">
-                ${c.title}
-            </div>
-            <div style="font-size: 13px; color: #475569; line-height: 1.5;">
-                ${c.one_liner}
-            </div>
-        </div>`).join('')}
-    </div>
+    <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #888888; margin: 20px 0 10px 0;">CLIP STAMPA PRINCIPALI:</div>
+    ${digestData.clips.map(c => `
+    <div style="margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #262626;">
+        <div style="font-size: 12.5px; font-weight: 700; color: #a78bfa; text-transform: capitalize; margin-bottom: 2px;">
+            ${escHtml(c.source)} &bull; <span style="font-weight: 600; color: ${c.sentiment === 'positivo' ? '#10b981' : (c.sentiment === 'critico' ? '#ef4444' : '#888888')};">${escHtml(c.sentiment || 'Neutro')}</span>
+        </div>
+        <div style="font-size: 15.5px; font-weight: 700; color: #efece5; line-height: 1.35; margin: 2px 0 4px 0;">
+            ${escHtml(c.title)}
+        </div>
+        <div style="font-size: 13.5px; color: #888888; line-height: 1.5;">
+            ${escHtml(c.one_liner)}
+        </div>
+    </div>`).join('')}
 
-    ${digestData.mood_sentiment ? `
-    <div style="background: #f8fafc; border-left: 3px solid #7c5cff; padding: 10px 14px; border-radius: 4px; font-size: 12.5px; color: #475569;">
-        <strong>Clima Media:</strong> ${digestData.mood_sentiment}
+    ${mood ? `
+    <div style="margin-top: 16px; background: #1a1a1a; border-left: 3px solid #a78bfa; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #888888;">
+        <strong>Clima Media:</strong> ${escHtml(mood)}
     </div>` : ''}
-</div>`;
+</td></tr>
+</table>`;
 
         res.json({
             success: true,
