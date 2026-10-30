@@ -196,20 +196,24 @@ Genera una risposta ESCLUSIVAMENTE in formato JSON con la seguente struttura:
         ].filter(Boolean);
 
         // Formatta testo plain text pulito per email
+        const emailDivider = '────────────────────';
         const emailText = [
             `BRIEFING ESECUTIVO STAMPA — ${client.toUpperCase()}`,
             `Data: ${todayStr} | ${articles.length} articoli | Audience netta: ~${analytics.formattedAudienceOTS} | Letture stimate: ~${analytics.formattedEstimatedReads}`,
+            emailDivider,
             ``,
-            `SINTESI ESECUTIVA:`,
-            ...digestData.highlights.map(h => `• ${h}`),
+            `SINTESI ESECUTIVA`,
             ``,
-            `CLIP STAMPA PRINCIPALI:`,
+            ...digestData.highlights.map(h => `• ${h}\n`),
+            emailDivider,
             ``,
-            ...digestData.clips.map(c => 
+            `CLIP STAMPA PRINCIPALI`,
+            ``,
+            ...digestData.clips.map(c =>
                 `${(c.source || 'MEDIA').toUpperCase()} • ${(c.sentiment || 'neutro').toUpperCase()}\n${c.title}\n${c.one_liner}\n`
             ),
-            digestData.mood_sentiment ? `Clima Media: ${digestData.mood_sentiment}` : ''
-        ].filter(Boolean).join('\n');
+            ...(digestData.mood_sentiment ? [emailDivider, ``, `CLIMA MEDIA`, ``, digestData.mood_sentiment] : [])
+        ].join('\n');
 
         // Formatta Rich HTML per Email / Outlook (stessa identica gerarchia grafica dell'anteprima)
         const emailHtml = `

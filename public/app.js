@@ -5447,31 +5447,27 @@ window.copyDigestWhatsApp = async function(btnEl) {
     }
 };
 
-// Un link mailto: può portare solo testo semplice: la grafica passa dagli appunti e si incolla nella mail
 async function openBriefingMail(subject, data) {
     const htmlContent = data.emailHtml || '';
     const textContent = data.emailText || data.whatsappText || '';
 
-    let copied = false;
+    // Copia negli appunti la versione grafica Rich HTML (compatibile con Outlook e Gmail)
     try {
-        if (htmlContent && navigator.clipboard && window.ClipboardItem) {
+        if (navigator.clipboard && window.ClipboardItem) {
             const item = new ClipboardItem({
                 'text/html': new Blob([htmlContent], { type: 'text/html' }),
                 'text/plain': new Blob([textContent], { type: 'text/plain' })
             });
             await navigator.clipboard.write([item]);
-            copied = true;
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textContent);
         }
     } catch (err) {
         console.warn('Errore copia automatica appunti prima di mailto:', err);
     }
 
-    if (copied) {
-        await appAlert('Il briefing è stato copiato con la sua grafica. Nella mail che si apre tieni premuto nel testo e scegli Incolla (sul computer: Ctrl+V).', 'Incolla il briefing nella mail');
-        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}`;
-    } else {
-        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(textContent)}`;
-    }
+    // Apre il client email impostando l'oggetto e il corpo con il testo del briefing (mailto: porta solo testo semplice)
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(textContent)}`;
 }
 
 window.openDigestMailto = async function(btnEl) {
@@ -5502,7 +5498,7 @@ window.openDigestMailto = async function(btnEl) {
         }, 3000);
     }
 
-    showToast('Mail aperta: incolla il briefing nel testo.', 'success');
+    showToast('Apertura email con il testo del briefing precompilato!', 'success');
 };
 
 window.downloadBriefingEml = function(type = 'page') {
@@ -6755,7 +6751,7 @@ window.openPageBriefingMailto = async function(btnEl) {
         }, 3000);
     }
 
-    showToast('Mail aperta: incolla il briefing nel testo.', 'success');
+    showToast('Apertura email con il testo del briefing precompilato!', 'success');
 };
 
 // ==========================================================================
