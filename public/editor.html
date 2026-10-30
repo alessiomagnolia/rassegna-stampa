@@ -2450,6 +2450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEvents();
     if (window.innerWidth <= 900) {
         initPdfPreviewSwipe();
+        window.addEventListener('resize', fitMobileKpiPreview);
     }
     pushUndoState();
 });
@@ -2672,6 +2673,7 @@ function selectPage(idx) {
     if (window.innerWidth <= 900) {
         deselectPdfElement();
         attachPdfTouchResizing();
+        fitMobileKpiPreview();
         if (idx >= 0) {
             populateMobileEditForm(idx);
         }
@@ -5717,6 +5719,20 @@ function applyMobilePreviewSizes() {
         logo.style.setProperty('height', `${art.customLogoHeight}px`, 'important');
         logo.style.setProperty('max-height', `${art.customLogoHeight}px`, 'important');
     }
+}
+
+// La pagina KPI ha misure fisse: si impagina a larghezza intera e si rimpicciolisce tutta
+function fitMobileKpiPreview() {
+    const page = document.querySelector('#pagePreviewContent .pdf-kpi-preview');
+    if (!page) return;
+    if (window.innerWidth > 900) {
+        page.style.width = '';
+        page.style.zoom = '';
+        return;
+    }
+    const pageWidth = 760;
+    page.style.width = `${pageWidth}px`;
+    page.style.zoom = Math.min(1, page.parentElement.clientWidth / pageWidth);
 }
 
 function selectPdfElement(el) {
