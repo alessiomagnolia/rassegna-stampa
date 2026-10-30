@@ -12,7 +12,9 @@ Queste regole valgono per chiunque modifichi il progetto (persone, Claude, Antig
   e non può cambiare la versione desktop.
 - Non sistemare il mobile modificando `styles.css`, `theme-ink.css` o gli stili inline delle pagine.
 - Se serve JavaScript solo per il mobile, eseguirlo solo quando
-  `window.matchMedia('(max-width: 768px)').matches` è vero.
+  `window.matchMedia('(max-width: 768px)').matches` è vero (va in `public/mobile.js`).
+- Dopo ogni modifica a `mobile.css` o `mobile.js` cambiare il `?v=` nelle pagine che li caricano:
+  il server fa tenere i file in cache 24 ore e i telefoni continuerebbero a usare la versione vecchia.
 
 ## Grafica
 - Tasti, campi e funzionalità esistenti non vanno tolti né spostati: i restyling cambiano solo l'aspetto.

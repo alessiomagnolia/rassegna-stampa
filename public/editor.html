@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260914_02">
     <link rel="stylesheet" href="theme-ink.css?v=20261028">
-    <link rel="stylesheet" href="mobile.css?v=20261029-3" media="(max-width: 768px)">
+    <link rel="stylesheet" href="mobile.css?v=20261030-4" media="(max-width: 768px)">
     <script src="dialogs.js?v=20261029"></script>
     <script>
         (function() {
@@ -2036,7 +2036,7 @@
             </button>
         </div>
 
-        <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900) openPdfSheet('sheet-pdf-articles');">
+        <div class="preview-wrapper" id="previewWrapper" onclick="if(window.innerWidth <= 900 && !event.target.closest('[onclick]:not(#previewWrapper)')) openPdfSheet('sheet-pdf-articles');">
             <!-- TASTI EVIDENTI IN ALTO A DESTRA DELL'ANTEPRIMA: ANNULLA & MODIFICA ARTICOLO -->
             <div class="preview-actions-bar hide-mobile" id="previewActionsBar">
                 <button type="button" class="btn-prominent-undo" id="btnDesktopUndo" onclick="undoLastEdit()" title="Annulla ultima modifica (Ctrl+Z)">
@@ -2187,7 +2187,7 @@
         <input type="file" id="mMediaImageInput" accept="image/*" style="width:100%; color:white;">
     </div>
     <div class="field-group" style="margin-bottom:1rem;">
-        <label style="color:white; font-size:0.8rem; font-weight:600;">Logo Testata Giornalistica</label>
+        <label id="mMediaLogoLabel" style="color:white; font-size:0.8rem; font-weight:600;">Logo Testata Giornalistica</label>
         <div style="display:flex; gap:8px; margin-top:6px;">
             <button type="button" class="btn btn-primary btn-sm" onclick="closePdfSheets(); openEditorLogoArchive();" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600;">
                 <i data-feather="archive" style="width:14px;height:14px;"></i> Archivio loghi
@@ -2670,6 +2670,7 @@ function selectPage(idx) {
 
     // Mobile Only: Touch Resizing, Mobile Form & 1.5s Toast Page Indicator
     if (window.innerWidth <= 900) {
+        deselectPdfElement();
         attachPdfTouchResizing();
         if (idx >= 0) {
             populateMobileEditForm(idx);
@@ -3152,9 +3153,9 @@ function initSortable() {
     const mobList = document.getElementById('mobilePagesList');
 
     const handleSortEnd = (evt) => {
-        const coverOffset = hasCover ? 1 : 0;
-        const oldIdx = evt.oldIndex - coverOffset;
-        const newIdx = evt.newIndex - coverOffset;
+        // Copertina e KPI non sono trascinabili: questi indici contano solo gli articoli
+        const oldIdx = evt.oldDraggableIndex;
+        const newIdx = evt.newDraggableIndex;
         if (oldIdx < 0 || newIdx < 0 || oldIdx === newIdx) return;
 
         const [moved] = articles.splice(oldIdx, 1);
@@ -3171,6 +3172,7 @@ function initSortable() {
 
     if (list) {
         Sortable.create(list, {
+            draggable: '[data-idx]',
             handle: '.page-thumb-drag',
             animation: 200,
             ghostClass: 'sortable-ghost',
@@ -3182,6 +3184,7 @@ function initSortable() {
 
     if (mobList) {
         Sortable.create(mobList, {
+            draggable: '[data-idx]',
             animation: 200,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
@@ -3405,7 +3408,8 @@ function initGridSortable() {
         ghostClass: 'grid-card-ghost',
         chosenClass: 'grid-card-chosen',
         dragClass: 'grid-card-drag',
-        delay: 0,
+        delay: 200, // Sul telefono il dito scorre la griglia; tenendo premuto si trascina
+        delayOnTouchOnly: true,
         touchStartThreshold: 3,
         onMove: function(evt) {
             // Prevent dragging before locked cards (Cover, KPI)
@@ -3573,6 +3577,12 @@ function fillCoverForm() {
     }
 
     if (window.feather) feather.replace();
+}
+
+// Su mobile il modulo copertina è nascosto e vuoto: leggerlo cancellerebbe titolo e cliente
+function refreshCoverAfterLogo() {
+    if (window.innerWidth <= 900) selectPage(-1);
+    else syncLiveCoverPreview();
 }
 
 function syncLiveCoverPreview() {
@@ -4128,6 +4138,11 @@ function highlightDrawerSectionForType(type) {
 }
 
 function openDrawerForSelectedElement() {
+    // Mobile: il pannello laterale non esiste, il logo si cambia dal pannello Media
+    if (window.innerWidth <= 900) {
+        openPdfSheet('sheet-pdf-media');
+        return;
+    }
     const isCover = selectedIdx === -1 || (selectedPreviewElemType && selectedPreviewElemType.startsWith('cover_'));
     const idx = isCover ? -1 : ((editingIdx >= 0) ? editingIdx : (selectedIdx >= 0 ? selectedIdx : 0));
     openEditPanel(idx);
@@ -4248,6 +4263,7 @@ function changeSelectedElementSize(delta) {
         const currentTitleSize = (art.customTitleSize && art.customTitleSize !== 20 && art.customTitleSize !== 18 && art.customTitleSize !== 16) ? art.customTitleSize : defTitle;
         let val = currentTitleSize + delta;
         val = Math.max(12, Math.min(38, Math.round(val)));
+        if ([16, 18, 20].includes(val)) val += delta > 0 ? 1 : -1; // valori riservati: il titolo tornerebbe alla misura standard
         art.customTitleSize = (val === defTitle) ? undefined : val;
         selectedPreviewElem.style.fontSize = val + 'px';
         const slider = document.getElementById('editTitleSizeSlider');
@@ -4288,6 +4304,7 @@ function changeSelectedElementSize(delta) {
     } else if (type === 'image') {
         let val = ((art.customImageHeight && art.customImageHeight !== 160 && art.customImageHeight !== 260 && art.customImageHeight !== 320) ? art.customImageHeight : 280) + (delta * 10);
         val = Math.max(100, Math.min(450, Math.round(val)));
+        if ([160, 260, 320].includes(val)) val += delta > 0 ? 10 : -10; // valori riservati: la foto tornerebbe alla misura standard
         art.customImageHeight = val;
         const visualZone = selectedPreviewElem.closest('.pdf-visual-zone');
         if (visualZone) {
@@ -4500,7 +4517,7 @@ async function selectEditorLogo(url, name) {
             const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
             if (logoPrevCont) logoPrevCont.classList.remove('hidden');
 
-            syncLiveCoverPreview();
+            refreshCoverAfterLogo();
 
             try {
                 localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
@@ -4729,6 +4746,24 @@ async function generateAndDownload() {
 // ============================================================
 // FILE INPUTS (Image & Logo in edit panel)
 // ============================================================
+// Le foto del telefono pesano diversi MB: oltre i 1600px si riducono, altrimenti non si riesce a salvarle
+function shrinkMobilePhoto(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const scale = 1600 / Math.max(img.width, img.height);
+            if (scale >= 1) return resolve(dataUrl);
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+}
+
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -5094,7 +5129,7 @@ function initEvents() {
                 const logoPrevCont = document.getElementById('editCoverLogoPreviewContainer');
                 if (logoPrevCont) logoPrevCont.classList.remove('hidden');
 
-                syncLiveCoverPreview();
+                refreshCoverAfterLogo();
 
                 try {
                     localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
@@ -5153,9 +5188,11 @@ function initEvents() {
     if (mMediaImg) {
         mMediaImg.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (!file || selectedIdx < 0) return;
-            const b64 = await fileToBase64(file);
+            if (!file || !articles[selectedIdx]) return;
+            const b64 = await shrinkMobilePhoto(await fileToBase64(file));
             articles[selectedIdx].imageBase64 = b64;
+            e.target.value = '';
+            pushUndoState();
             selectPage(selectedIdx);
             closePdfSheets();
             showToast('Immagine caricata!', 'success');
@@ -5167,9 +5204,12 @@ function initEvents() {
     if (mMediaLogo) {
         mMediaLogo.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (!file || selectedIdx < 0) return;
+            if (!file || (selectedIdx !== -1 && !articles[selectedIdx])) return;
             const b64 = await fileToBase64(file);
-            articles[selectedIdx].logoBase64 = b64;
+            if (selectedIdx === -1) options.clientLogo = b64;
+            else articles[selectedIdx].logoBase64 = b64;
+            e.target.value = '';
+            pushUndoState();
             selectPage(selectedIdx);
             closePdfSheets();
             showToast('Logo caricato!', 'success');
@@ -5260,7 +5300,7 @@ function goBackToDashboard() {
     // so the dashboard can restore articles automatically.
     const currentTitle = document.getElementById('editorTitle').value.trim();
     options.title = currentTitle;
-    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    saveEditorStateLocal();
     localStorage.setItem('rs_open_page', 'rassegna');
     window.location.href = 'dashboard.html';
 }
@@ -5303,6 +5343,20 @@ function showToast(message, type = 'info') {
 // MOBILE CANVA PDF EDITOR HELPERS
 // ============================================================
 function openPdfSheet(sheetId, btn) {
+    // Testo, Fonte e Immagine appartengono a un articolo: da copertina e KPI si passa al primo.
+    // Fa eccezione Media sulla copertina, che cambia il logo della copertina stessa.
+    const needsArticle = ['sheet-pdf-text', 'sheet-pdf-source', 'sheet-pdf-media'].includes(sheetId);
+    const isCoverLogo = sheetId === 'sheet-pdf-media' && selectedIdx === -1;
+    if (needsArticle && !isCoverLogo && selectedIdx < 0) {
+        if (!articles.length) {
+            showToast('Nessun articolo nella rassegna', 'info');
+            return;
+        }
+        selectPage(0);
+        showToast('Stai modificando il primo articolo', 'info');
+    }
+
+    deselectPdfElement();
     closePdfSheets();
     const overlay = document.getElementById('pdfSheetOverlay');
     const sheet = document.getElementById(sheetId);
@@ -5328,6 +5382,22 @@ function openPdfSheet(sheetId, btn) {
         if (document.getElementById('mSourceType')) document.getElementById('mSourceType').value = art.source_type || 'Web';
     }
 
+    if (sheetId === 'sheet-pdf-media') {
+        const sheetTitle = sheet?.querySelector('.canva-sheet-title');
+        if (sheetTitle) sheetTitle.textContent = isCoverLogo ? 'Logo Copertina' : 'Immagine & Logo Testata';
+        const imgGroup = document.getElementById('mMediaImageInput')?.closest('.field-group');
+        if (imgGroup) imgGroup.style.display = isCoverLogo ? 'none' : '';
+        const logoLabel = document.getElementById('mMediaLogoLabel');
+        if (logoLabel) logoLabel.textContent = isCoverLogo ? 'Logo in Copertina' : 'Logo Testata Giornalistica';
+    }
+
+    if (sheetId === 'sheet-pdf-template') {
+        const current = options.templateId || 'classic';
+        sheet?.querySelectorAll('button[onclick*="selectMobilePdfTemplate"]').forEach(b => {
+            b.classList.toggle('is-current', b.getAttribute('onclick').includes(`'${current}'`));
+        });
+    }
+
     if (sheetId === 'sheet-pdf-options') {
         const tInput = document.getElementById('mobileOptionsTitle');
         const cInput = document.getElementById('mobileOptionsClient');
@@ -5338,6 +5408,11 @@ function openPdfSheet(sheetId, btn) {
         if (cInput) cInput.value = options.clientName || '';
         if (uInput && art) uInput.value = art.url || '';
         if (dToggle && art) dToggle.checked = !!art.darkHeader;
+        // Link e banner valgono per il singolo articolo: su copertina e KPI non hanno effetto
+        [uInput, dToggle].forEach(el => {
+            const group = el?.closest('.field-group');
+            if (group) group.style.display = art ? '' : 'none';
+        });
         const kToggle = document.getElementById('mobileIncludeKpiToggle');
         if (kToggle) kToggle.checked = options.includeAnalytics !== false;
     }
@@ -5355,6 +5430,13 @@ function getPageOrder() {
     if (options.includeAnalytics) list.push(-2);
     for (let i = 0; i < articles.length; i++) list.push(i);
     return list;
+}
+
+// La pagina aperta può sparire (copertina tolta, KPI disattivato, articolo annullato)
+function getValidPageIdx() {
+    const order = getPageOrder();
+    if (order.includes(selectedIdx)) return selectedIdx;
+    return order.length ? order[0] : -1;
 }
 
 function navigatePdfPage(direction) {
@@ -5481,7 +5563,7 @@ function saveMobilePdfOptions() {
     if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title;
     pushUndoState();
     renderPagesList();
-    selectPage(selectedIdx);
+    selectPage(getValidPageIdx());
     showToast('Impostazioni salvate!', 'success');
 }
 
@@ -5490,9 +5572,16 @@ function saveMobilePdfOptions() {
 // ============================================================
 let undoStack = [];
 
+function saveEditorStateLocal() {
+    try {
+        localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    } catch(e) {}
+}
+
 function pushUndoState() {
     if (undoStack.length >= 25) undoStack.shift();
     undoStack.push(JSON.stringify({ articles, options }));
+    saveEditorStateLocal();
     if (typeof _updateUndoBtnState === 'function') _updateUndoBtnState();
 }
 
@@ -5509,9 +5598,13 @@ function undoLastEdit() {
 
     if (document.getElementById('editorTitle')) document.getElementById('editorTitle').value = options.title || '';
     if (document.getElementById('editorTitleMobile')) document.getElementById('editorTitleMobile').value = options.title || '';
+    const kpiOn = !!options.includeAnalytics;
+    if (document.getElementById('editorIncludeKpi')) document.getElementById('editorIncludeKpi').checked = kpiOn;
+    if (document.getElementById('mobileIncludeKpiToggle')) document.getElementById('mobileIncludeKpiToggle').checked = kpiOn;
 
+    saveEditorStateLocal();
     renderPagesList();
-    selectPage(selectedIdx >= articles.length ? 0 : selectedIdx);
+    selectPage(getValidPageIdx());
     if (typeof _updateUndoBtnState === 'function') _updateUndoBtnState();
     showToast('Modifica annullata! (Ctrl+Z)', 'success');
 }
@@ -5523,14 +5616,20 @@ function syncMobileTitle(val) {
     if (newHasCover !== hasCover) {
         hasCover = newHasCover;
         renderPagesList();
-        if (selectedIdx === -1 && !hasCover) selectPage(0);
+        if (selectedIdx === -1 && !hasCover) selectPage(getValidPageIdx());
     }
+    clearTimeout(_liveSyncDebounce);
+    _liveSyncDebounce = setTimeout(() => {
+        pushUndoState();
+        renderPagesList();
+        if (selectedIdx === -1) document.getElementById('pagePreviewContent').innerHTML = renderCoverPreview();
+    }, 500);
 }
 
 async function saveRassegnaToArchive() {
     const currentTitle = options.title || document.getElementById('editorTitle')?.value.trim() || document.getElementById('editorTitleMobile')?.value.trim() || 'Rassegna Stampa';
     options.title = currentTitle;
-    localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+    saveEditorStateLocal();
 
     showToast('Archiviazione rassegna in corso...', 'info');
 
@@ -5554,7 +5653,7 @@ async function saveRassegnaToArchive() {
         const data = await res.json();
         if (res.ok) {
             if (data && data.id) currentReviewId = data.id;
-            localStorage.setItem('rs_editor_state', JSON.stringify({ articles, options, currentReviewId }));
+            saveEditorStateLocal();
             showToast('Rassegna salvata ed archiviata con successo nello Storico!', 'success');
         } else {
             showToast('Salvato in locale (Nota: ' + (data.error || 'Errore server') + ')', 'info');
@@ -5581,6 +5680,43 @@ function attachPdfTouchResizing() {
             selectPdfElement(el);
         });
     });
+    applyMobilePreviewSizes();
+}
+
+// L'anteprima del telefono è più piccola della pagina vera e styles.css ne fissa le misure:
+// le dimensioni scelte si riportano in proporzione, senza cambiare quelle del PDF.
+function applyMobilePreviewSizes() {
+    const art = articles[selectedIdx];
+    const preview = document.getElementById('pagePreviewContent');
+    if (!art || !preview) return;
+
+    const fitFont = (el, val, def) => {
+        if (!el) return;
+        el.style.removeProperty('font-size');
+        if (!val) return;
+        const base = parseFloat(window.getComputedStyle(el).fontSize);
+        el.style.setProperty('font-size', `${(base * val / def).toFixed(2)}px`, 'important');
+    };
+    const legacyTitle = [20, 18, 16].includes(art.customTitleSize);
+    const defTitle = options.templateId === 'minimal' ? 28 : (options.templateId === 'modern' ? 26 : 24);
+    fitFont(preview.querySelector('.pdf-article-title'), legacyTitle ? 0 : art.customTitleSize, defTitle);
+    fitFont(preview.querySelector('.pdf-content-text'), art.customTextSize, 11);
+
+    const zone = preview.querySelector('.pdf-visual-zone');
+    const img = preview.querySelector('.pdf-main-visual');
+    if (zone && img) {
+        const legacyImg = [160, 260, 320].includes(art.customImageHeight);
+        const zoneH = Math.round(140 * ((!legacyImg && art.customImageHeight) || 280) / 280);
+        zone.style.setProperty('height', `${zoneH}px`, 'important');
+        zone.style.setProperty('max-height', `${zoneH}px`, 'important');
+        img.style.setProperty('max-height', '100%', 'important');
+    }
+
+    const logo = preview.querySelector('.pdf-source-logo');
+    if (logo && art.customLogoHeight) {
+        logo.style.setProperty('height', `${art.customLogoHeight}px`, 'important');
+        logo.style.setProperty('max-height', `${art.customLogoHeight}px`, 'important');
+    }
 }
 
 function selectPdfElement(el) {
@@ -5588,6 +5724,8 @@ function selectPdfElement(el) {
     selectedPdfElement = el;
     el.classList.add('card-element-selected');
 
+    const sizeLabel = document.getElementById('cardElementSizeLabel');
+    if (sizeLabel) sizeLabel.textContent = el.dataset.elemName || 'Dimensione';
     const sizeBar = document.getElementById('cardElementSizeBar');
     if (sizeBar) {
         sizeBar.classList.remove('hidden');
@@ -5610,16 +5748,17 @@ function deselectPdfElement() {
 function changePdfElementSize(delta) {
     if (!selectedPdfElement) return;
 
-    if (selectedPdfElement.tagName.toLowerCase() === 'img') {
-        const curH = parseInt(window.getComputedStyle(selectedPdfElement).maxHeight) || 200;
-        const newH = Math.max(24, Math.min(600, curH + delta * 12));
-        selectedPdfElement.style.maxHeight = `${newH}px`;
-    } else {
-        const curSize = parseFloat(window.getComputedStyle(selectedPdfElement).fontSize) || 16;
-        const newSize = Math.max(10, Math.min(64, curSize + delta * 2));
-        selectedPdfElement.style.fontSize = `${newSize}px`;
-    }
-    pushUndoState();
+    // Stessa logica del computer: la misura resta nell'articolo e arriva nel PDF
+    selectedPreviewElem = selectedPdfElement;
+    selectedPreviewElemType = selectedPdfElement.dataset.elemType;
+    changeSelectedElementSize(delta);
+    selectedPreviewElem = null;
+    selectedPreviewElemType = null;
+    applyMobilePreviewSizes();
+
+    const sizeLabel = document.getElementById('cardElementSizeLabel');
+    const sizeVal = document.getElementById('selBarValue');
+    if (sizeLabel && sizeVal) sizeLabel.textContent = `${selectedPdfElement.dataset.elemName || 'Dimensione'}: ${sizeVal.textContent}`;
 }
 
 function closePdfSheets() {

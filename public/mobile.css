@@ -497,3 +497,122 @@ html[data-theme="dark"] .article-source-logo {
 .presets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .preset-btn, .btn-preset { min-width: 0 !important; white-space: normal !important; text-align: left; }
 *:has(> .btn-preset) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+/* --------------------------------------------------------------------------
+   11. EDITOR RASSEGNE
+   -------------------------------------------------------------------------- */
+/* Fondo scuro continuo attorno all'anteprima, senza la fascia chiara sopra il dock */
+body:has(.editor-body) { background: #0d0e12 !important; background-image: none !important; }
+
+/* Lo swipe cambia pagina della rassegna: non deve diventare il "torna indietro" del browser */
+html:has(.editor-body), body:has(.editor-body) { overscroll-behavior-x: none; }
+.preview-area { touch-action: pan-y pinch-zoom; overscroll-behavior: contain; }
+
+/* Tasti Indietro e Archivia leggibili sulla barra scura anche nel tema chiaro */
+.editor-navbar .btn.btn-outline {
+    color: #fff !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Barra del titolo: abbastanza alta per il campo da 16px, senza finire sotto la navbar */
+.editor-sub-header { height: 46px !important; gap: 8px; }
+.editor-title-input-mobile {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 16px !important;
+    padding: 0 10px !important;
+}
+.editor-sub-header .btn { height: 34px !important; min-height: 34px !important; flex-shrink: 0; }
+.editor-body { padding-top: 100px !important; height: 100dvh !important; box-sizing: border-box !important; }
+.preview-area {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding-top: 36px !important;
+    padding-bottom: 96px !important;
+}
+#mobilePdfPageIndicator { top: 106px !important; }
+
+/* Dock: i sei tasti sempre tutti a vista */
+.canva-bottom-dock { padding: 0 4px !important; gap: 2px !important; overflow-x: hidden !important; }
+.canva-dock-btn { flex: 1 1 0 !important; min-width: 0 !important; padding: 6px 0 !important; }
+
+/* Barra delle dimensioni: compare solo con un elemento selezionato */
+.card-element-size-bar.hidden { display: none !important; }
+.card-element-size-bar .btn { min-width: 38px; }
+
+/* Pannelli in basso */
+.canva-sheet-title { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.canva-sheet-header button { flex-shrink: 0; }
+.canva-sheet-header button.btn {
+    width: auto !important;
+    height: 34px !important;
+    min-height: 34px;
+    border-radius: 17px !important;
+    padding: 0 12px !important;
+    font-size: 0.78rem !important;
+}
+.canva-sheet-header button.canva-sheet-close-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    font-size: 0.85rem !important;
+}
+.canva-bottom-sheet label.btn {
+    color: #fff !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+#sheet-pdf-template .btn {
+    display: block;
+    width: 100%;
+    height: auto !important;
+    white-space: normal !important;
+}
+#sheet-pdf-template .btn.is-current { border-color: #00E676 !important; box-shadow: inset 0 0 0 1px #00E676; }
+
+/* Elenco pagine: testi leggibili sul fondo scuro del pannello in ogni tema */
+#mobilePagesList .page-thumb-num { color: rgba(255, 255, 255, 0.72) !important; }
+#mobilePagesList .page-thumb-title { color: #fff !important; }
+#mobilePagesList .page-thumb-source { color: rgba(255, 255, 255, 0.65) !important; }
+#mobilePagesList .page-thumb-drag { color: rgba(255, 255, 255, 0.8) !important; }
+
+/* Notifiche sotto le barre in alto: non coprono mai i tasti */
+body:has(.editor-body) .toast-container {
+    top: 106px !important;
+    left: 12px !important;
+    right: 12px !important;
+    align-items: center;
+    pointer-events: none;
+}
+
+/* Archivio loghi: filtri a piena altezza e finestra sopra il dock */
+#editorLogoArchiveModal { z-index: 100010 !important; }
+.editor-logo-modal-box { max-height: calc(100dvh - 24px) !important; padding: 1rem !important; }
+.editor-logo-cat-pills { flex-shrink: 0; align-items: center; }
+.editor-logo-cat-pill { flex-shrink: 0; min-height: 36px; display: inline-flex; align-items: center; }
+.editor-logo-modal-box .drop-zone, .editor-logo-modal-box .drop-zone * { color: #fff !important; }
+.editor-logo-modal-box .btn-icon { font-size: 1.6rem !important; }
+
+/* Vista griglia: tasti leggibili sulla barra scura e frecce comode da toccare */
+.grid-view-header { padding-left: 12px !important; padding-right: 12px !important; gap: 8px !important; }
+.grid-view-header-left { min-width: 0; gap: 8px !important; }
+.grid-view-header .btn.btn-outline {
+    color: #fff !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    flex-shrink: 0;
+}
+.grid-view-title-group { min-width: 0; }
+.grid-view-title, .grid-view-counter { white-space: nowrap; }
+.grid-view-header .btn-icon, .editor-logo-modal-box .btn-icon {
+    min-width: 38px;
+    min-height: 38px;
+    color: #fff !important;
+    background: transparent !important;
+    border: none !important;
+}
+.btn-grid-move { width: 38px !important; height: 38px !important; }
